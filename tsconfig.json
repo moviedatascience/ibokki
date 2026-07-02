@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@ibokki/cards": ["packages/cards/src/index.ts"],
+      "@ibokki/engine": ["packages/engine/src/index.ts"],
+      "@ibokki/sim": ["packages/sim/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/test/**/*.ts",
+    "tools/*/src/**/*.ts",
+    "apps/*/src/**/*.ts",
+    "vitest.config.ts"
+  ],
+  "exclude": [
+    "apps/client"
+  ]
+}

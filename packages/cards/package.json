@@ -1,0 +1,12 @@
+{
+  "name": "@ibokki/cards",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ibokki card data catalog: spells/reactions/items/gambits (generated from the spreadsheet) plus the V/S/M component definitions.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

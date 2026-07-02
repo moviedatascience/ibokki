@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ibokki</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --evo: #e0533d; --evo-dim: #3a2420;
+    --abj: #4a90e2; --abj-dim: #1f2c3d;
+    --div: #a070e0; --div-dim: #2c2440;
+    --neu: #8a90a0; --neu-dim: #23262f;
+    --v: #f0b352; --s: #5bc8c0; --m: #b98cf0;
+    --felt: #0e1411; --panel: #161b22; --line: #2b313c; --ink: #e6e7ea; --mute: #9aa0ad;
+    --good: #8ce99a; --warn: #ffd27d; --bad: #ff8b8b; --act: #ffd36b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(120% 90% at 50% -10%, #16201b 0%, var(--felt) 55%); color: var(--ink);
+    font: 14px/1.45 system-ui, "Segoe UI", sans-serif; min-height: 100vh; }
+  header { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding: 10px 16px;
+    background: #11161d; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: .04em; color: #d7c4ff; font-weight: 700; }
+  header .sub { color: var(--mute); font-size: 12.5px; }
+  .grow { flex: 1; }
+  select, button { font: inherit; }
+  select { background: #0e1218; color: var(--ink); border: 1px solid #3a3f4d; border-radius: 6px; padding: 4px 7px; }
+  button { background: #232a36; color: var(--ink); border: 1px solid #3a4150; border-radius: 7px; padding: 6px 11px; cursor: pointer; }
+  button:hover { background: #2c3441; }
+  button.primary { background: #2c3f63; border-color: #4670b0; }
+  button.primary:hover { background: #34507e; }
+  button:disabled { opacity: .4; cursor: default; }
+
+  main { display: grid; grid-template-columns: 1fr 300px; gap: 14px; padding: 14px; align-items: start; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  .board { display: flex; flex-direction: column; gap: 10px; }
+  .side { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; transition: box-shadow .25s ease, border-color .25s ease; }
+  .side.you { border-color: #2f5e3a; }
+  .side.opp { border-color: #5e2f3a; }
+  .side.active-turn { box-shadow: 0 0 0 1px rgba(255,211,107,.28), 0 0 18px rgba(255,211,107,.08); }
+
+  .nameplate { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .who { font-weight: 700; font-size: 13px; }
+  .turndot { width: 8px; height: 8px; border-radius: 50%; background: var(--act); box-shadow: 0 0 8px var(--act); display: none; }
+  .side.active-turn .turndot { display: inline-block; }
+  .schooltag { font-size: 11px; padding: 1px 7px; border-radius: 99px; border: 1px solid currentColor; }
+  .school-Evocation { color: var(--evo); } .school-Abjuration { color: var(--abj); } .school-Divination { color: var(--div); }
+  .hpwrap { display: flex; align-items: center; gap: 7px; min-width: 150px; }
+  .hpbar { height: 12px; flex: 1; background: #0c0f14; border: 1px solid #333a47; border-radius: 99px; overflow: hidden; }
+  .hpfill { height: 100%; background: linear-gradient(90deg, #3fae5a, #7bd986); transition: width .45s cubic-bezier(.4,0,.2,1); }
+  .hpfill.low { background: linear-gradient(90deg, #c0392b, #ff7849); }
+  .hpnum { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 42px; transition: color .2s ease; }
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; color: var(--mute); font-size: 12px; }
+  .stats b { color: var(--ink); }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 99px; background: #0e1218; border: 1px solid #333a47; }
+  .chip .ico { font-size: 11px; }
+  .ward { color: #8fd0ff; border-color: #2f5170; }
+  .burn { color: #ff9a6b; border-color: #6e3a26; }
+
+  .zone { margin-top: 8px; border-radius: 8px; transition: outline-color .15s ease; outline: 2px dashed transparent; outline-offset: 3px; }
+  .zone.dropzone { outline-color: var(--good); background: rgba(140,233,154,.05); }
+  .zone h4 { margin: 0 0 5px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: #767d8c; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; min-height: 8px; }
+
+  /* Cards */
+  .card { width: 116px; border-radius: 9px; border: 1px solid var(--line); background: #1b2029; overflow: hidden;
+    display: flex; flex-direction: column; user-select: none; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+  .card .head { padding: 4px 6px; font-size: 11px; font-weight: 700; line-height: 1.2; display: flex; justify-content: space-between; gap: 4px; }
+  .card .lvl { font-weight: 700; opacity: .85; }
+  .card .body { padding: 5px 6px; font-size: 10px; color: #c2c8d2; flex: 1; min-height: 30px; }
+  .card .foot { padding: 3px 6px; display: flex; justify-content: space-between; align-items: center; font-size: 9.5px; color: #8a90a0; border-top: 1px solid #2a2f3a; }
+  .card.school-Evocation .head { background: var(--evo-dim); color: #ffb4a6; }
+  .card.school-Abjuration .head { background: var(--abj-dim); color: #a9cdf6; }
+  .card.school-Divination .head { background: var(--div-dim); color: #d2b8ff; }
+  .card.school-Neutral .head, .card.school-Component .head { background: var(--neu-dim); color: #c4c9d3; }
+  .card.clickable { cursor: pointer; transition: transform .1s ease, box-shadow .1s ease; }
+  .card.clickable:hover { transform: translateY(-3px); box-shadow: 0 6px 14px rgba(0,0,0,.5); }
+  .card.actionable { outline: 2px solid var(--act); outline-offset: 1px; box-shadow: 0 0 12px rgba(255,211,107,.35); }
+  .card.target { outline: 2px dashed var(--good); outline-offset: 1px; }
+  .card.dragover { outline: 3px solid var(--good); outline-offset: 2px; box-shadow: 0 0 18px rgba(140,233,154,.55); transform: translateY(-3px); }
+  .card.dim { opacity: .45; }
+  .card.cast { filter: grayscale(.4) brightness(.85); }
+  .card.sealed { outline: 2px solid #b06; }
+  .card.dragging { opacity: .4; }
+  .card.reacttarget { outline: 2px solid var(--act); outline-offset: 2px; animation: reactPulse 1.15s ease-in-out infinite; }
+  @keyframes reactPulse { 0%,100% { box-shadow: 0 0 10px rgba(255,211,107,.35); } 50% { box-shadow: 0 0 22px rgba(255,211,107,.7); } }
+  .pips { display: flex; gap: 3px; }
+  .pip { width: 13px; height: 13px; border-radius: 50%; font-size: 9px; font-weight: 800; color: #14110a; display: grid; place-items: center; }
+  .pip.V { background: var(--v); } .pip.S { background: var(--s); color:#06201e;} .pip.M { background: var(--m); color:#1a0e2e;}
+  .attached { display: flex; gap: 3px; padding: 2px 6px 5px; }
+  .att { font-size: 8.5px; padding: 0 5px; border-radius: 99px; background:#0e1218; border:1px solid #38404f; color:#aeb4c0;}
+  .att.detachable { cursor: grab; border-color:#b9863f; }
+  .att.detachable:hover { background:#3a2a16; color:#ffd9a0; }
+  .att.dragging { opacity:.4; }
+  .badge { font-size: 8.5px; padding: 0 5px; border-radius: 4px; }
+  .badge.cast { background:#2a3340; color:#9fb4cc; } .badge.sealed { background:#3a0d2a; color:#ff9ad0; }
+
+  /* Component cards (smaller) + face-down backs */
+  .comp { width: 56px; min-height: 76px; border-radius: 8px; border: 1px solid #38404f; background: linear-gradient(160deg,#222936,#171c25);
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 6px 4px; }
+  .comp .cname { font-size: 8.5px; color: #9aa0ad; text-align: center; }
+  .comp[draggable="true"] { cursor: grab; }
+  .comp.dragging { opacity: .4; }
+  .back { width: 90px; height: 76px; border-radius: 9px; border: 1px solid #2b313c;
+    background: repeating-linear-gradient(135deg, #1d2430 0 7px, #232b39 7px 14px); display:grid; place-items:center; color:#4a5263; font-size: 18px; }
+  .back.sm { width: 44px; height: 62px; font-size: 13px; }
+
+  .stackzone { background: #12171f; border: 1px dashed #3a4660; border-radius: 12px; padding: 10px 12px; transition: box-shadow .25s ease, border-color .25s ease; }
+  .stackzone.empty { opacity: .5; }
+  .stackzone.react { border-color: var(--act); border-style: solid; box-shadow: 0 0 0 1px rgba(255,211,107,.4) inset, 0 0 18px rgba(255,211,107,.18); }
+  .stackzone.flash { animation: stackFlash .6s ease-out; }
+  @keyframes stackFlash { 0% { box-shadow: 0 0 0 0 rgba(255,211,107,0); } 25% { box-shadow: 0 0 0 2px var(--act), 0 0 26px rgba(255,211,107,.5); } 100% { box-shadow: none; } }
+  .center { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 4px; color: var(--mute); font-size: 12px; }
+  .turnbadge { padding: 3px 12px; border-radius: 99px; background:#11161d; border:1px solid var(--line); font-weight:600; }
+
+  #status { font-weight: 700; padding: 6px 0; }
+  #status.you { color: var(--good); } #status.wait { color: var(--warn); } #status.over { color: var(--bad); } #status.react { color:#ffd36b; }
+  .actbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .hint { color: var(--mute); font-size: 12px; margin: 2px 0; }
+
+  aside { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 60px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .panel h3 { margin: 0 0 7px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--mute); }
+  #log { max-height: 260px; overflow: auto; white-space: pre-wrap; font: 11.5px/1.4 ui-monospace, Menlo, monospace; color: #aeb6c4; margin: 0; }
+  #detail { min-height: 40px; font-size: 12px; color: #c7ccd6; }
+  #detail .dname { font-weight: 700; color: #d7c4ff; }
+  .legendrow { display:flex; gap:10px; flex-wrap:wrap; color: var(--mute); font-size: 11px; }
+
+  /* Damage-flash on a side + floating combat text overlay */
+  .side.hit { animation: hitFlash .55s ease-out; }
+  @keyframes hitFlash { 0% { box-shadow: 0 0 0 0 rgba(255,80,80,0); } 30% { box-shadow: 0 0 0 3px rgba(255,80,80,.55), 0 0 24px rgba(255,80,80,.4); } 100% { box-shadow: none; } }
+  .side.healed { animation: healFlash .55s ease-out; }
+  @keyframes healFlash { 0% { box-shadow: 0 0 0 0 rgba(120,240,150,0); } 30% { box-shadow: 0 0 0 3px rgba(120,240,150,.45), 0 0 22px rgba(120,240,150,.35); } 100% { box-shadow: none; } }
+  #fx { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+  .float { position: fixed; transform: translateX(-50%); font: 800 22px/1 system-ui, sans-serif; text-shadow: 0 2px 5px rgba(0,0,0,.8); white-space: nowrap; animation: floatUp 1.3s ease-out forwards; }
+  .float.dmg { color: #ff6a6a; } .float.burnfx { color: #ff9a4d; } .float.heal { color: #7df29a; } .float.wardfx { color: #8fd0ff; }
+  @keyframes floatUp {
+    0% { opacity: 0; transform: translate(-50%, 8px) scale(.75); }
+    18% { opacity: 1; transform: translate(-50%, 0) scale(1.15); }
+    100% { opacity: 0; transform: translate(-50%, -48px) scale(1); }
+  }
+  .chip.pulse { animation: chipPulse .6s ease-out; }
+  @keyframes chipPulse { 0% { transform: scale(1); } 40% { transform: scale(1.28); } 100% { transform: scale(1); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>IBOKKI</h1>
+  <span class="sub" id="matchinfo"></span>
+  <span class="grow"></span>
+  <label class="sub">You <select id="p0"></select></label>
+  <label class="sub">Opp <select id="p1"></select></label>
+  <label class="sub">Mode <select id="mode"><option value="bot">vs Bot</option><option value="agent">vs Agent (API)</option></select></label>
+  <button class="primary" id="new">New game</button>
+</header>
+
+<main>
+  <div class="board">
+    <div class="side opp" id="oppSide"></div>
+    <div class="stackzone" id="stackZone"></div>
+    <div class="center"><span class="turnbadge" id="turnBadge"></span></div>
+    <div class="side you" id="youSide"></div>
+    <div class="panel">
+      <div id="status">loading…</div>
+      <div class="hint" id="hint"></div>
+      <div class="actbar" id="actbar"></div>
+    </div>
+  </div>
+  <aside>
+    <div class="panel"><h3>Card detail</h3><div id="detail">Hover or tap a card.</div></div>
+    <div class="panel"><h3>Match log</h3><pre id="log"></pre></div>
+    <div class="panel"><h3>Legend</h3>
+      <div class="legendrow">
+        <span><span class="pip V" style="display:inline-grid">V</span> Verbal</span>
+        <span><span class="pip S" style="display:inline-grid">S</span> Somatic</span>
+        <span><span class="pip M" style="display:inline-grid">M</span> Material</span>
+      </div>
+      <div class="hint">Gold outline = playable. Dashed green = drop target. Drag a component onto a spell to attach.</div>
+    </div>
+  </aside>
+</main>
+<div id="fx"></div>
+
+<script>
+const SIDE = 0;
+const SCHOOLS = ["Evocation", "Abjuration", "Divination"];
+let CARDS = {};
+let V = null;            // last state
+let selectedHand = null; // defId of a hand component selected for attaching
+let replaceSlot = null;  // preparedIndex selected for replacement (prepare phase)
+let dragComp = null;     // defId of a hand component being dragged (attach)
+let dragDetach = null;   // legal-action index of an attached component being dragged off (detach)
+let lastEpoch = -1;      // last animated server epoch (see animateEvents)
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+async function loadCards() { try { CARDS = await (await fetch("/api/cards")).json(); } catch (e) {} }
+
+for (const sel of ["p0", "p1"]) {
+  const el = $(sel);
+  for (const s of SCHOOLS) { const o = document.createElement("option"); o.value = s; o.textContent = s; el.appendChild(o); }
+}
+$("p1").value = "Abjuration";
+
+function info(defId) { return CARDS[defId] || { name: defId, school: "Neutral", type: "?", level: null, cost: null, text: "" }; }
+
+function pipsHtml(cost) {
+  if (!cost) return "";
+  let h = '<span class="pips">';
+  for (const ch of cost) if ("VSM".includes(ch)) h += `<span class="pip ${ch}">${ch}</span>`;
+  return h + "</span>";
+}
+
+/** A full spell/trainer card element. opts: {cls, onClick, attached, detachActions, badges, onDrop, canDrop} */
+function spellCard(defId, opts = {}) {
+  const c = info(defId);
+  const el = document.createElement("div");
+  el.className = `card school-${c.school} ${opts.cls || ""}`.trim();
+  el.dataset.def = defId;
+  const lvl = c.level ? `L${c.level}` : (c.type === "Item" || c.type === "Gambit" ? "TR" : "");
+  el.innerHTML =
+    `<div class="head"><span>${esc(c.name)}</span><span class="lvl">${lvl}</span></div>` +
+    `<div class="body">${esc(c.text || "")}</div>` +
+    `<div class="foot"><span>${esc(c.type)}</span>${pipsHtml(c.cost)}</div>`;
+  el.onmouseenter = () => showDetail(defId);
+  if (opts.onClick) { el.classList.add("clickable"); el.onclick = opts.onClick; }
+  // Drop target for drag-to-attach.
+  if (opts.onDrop) {
+    el.ondragover = (e) => { if (opts.canDrop && opts.canDrop(dragComp)) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; el.classList.add("dragover"); } };
+    el.ondragleave = () => el.classList.remove("dragover");
+    el.ondrop = (e) => { e.preventDefault(); el.classList.remove("dragover"); const d = dragComp; if (opts.canDrop && opts.canDrop(d)) opts.onDrop(d); };
+  }
+  if (opts.attached && opts.attached.length) {
+    const a = document.createElement("div"); a.className = "attached";
+    const detachActions = (opts.detachActions || []).slice(); // consume matches so duplicates map 1:1
+    for (const ad of opts.attached) {
+      const s = document.createElement("span"); s.className = "att"; s.textContent = (info(ad).cost || "?");
+      const di = detachActions.findIndex((x) => x.defId === ad);
+      if (di >= 0) {
+        const action = detachActions.splice(di, 1)[0];
+        s.classList.add("detachable");
+        s.title = "Detach " + info(ad).name + " (click, or drag onto your hand)";
+        s.onclick = (e) => { e.stopPropagation(); act(action.index); };
+        s.draggable = true;
+        s.ondragstart = (e) => { dragDetach = action.index; e.dataTransfer.setData("text/plain", "detach"); e.dataTransfer.effectAllowed = "move"; s.classList.add("dragging"); };
+        s.ondragend = () => { dragDetach = null; s.classList.remove("dragging"); };
+      }
+      a.appendChild(s);
+    }
+    el.appendChild(a);
+  }
+  if (opts.badges) for (const b of opts.badges) { const s = document.createElement("span"); s.className = "badge " + b; s.textContent = b.toUpperCase(); el.querySelector(".foot").prepend(s); }
+  return el;
+}
+
+/** A component card. opts: {cls, onClick, drag} — drag = defId makes it draggable to attach. */
+function compCard(defId, opts = {}) {
+  const c = info(defId);
+  const el = document.createElement("div");
+  el.className = `comp ${opts.cls || ""}`.trim();
+  el.dataset.def = defId;
+  el.innerHTML = pipsHtml(c.cost) + `<div class="cname">${esc(c.name)}</div>`;
+  el.onmouseenter = () => showDetail(defId);
+  if (opts.onClick) { el.classList.add("clickable"); el.onclick = opts.onClick; }
+  if (opts.drag) {
+    el.draggable = true;
+    el.ondragstart = (e) => { dragComp = opts.drag; e.dataTransfer.setData("text/plain", opts.drag); e.dataTransfer.effectAllowed = "move"; el.classList.add("dragging"); };
+    el.ondragend = () => { dragComp = null; el.classList.remove("dragging"); };
+  }
+  return el;
+}
+
+function backCard(small) { const el = document.createElement("div"); el.className = "back" + (small ? " sm" : ""); el.textContent = "✦"; return el; }
+
+function showDetail(defId) {
+  const c = info(defId);
+  const meta = [c.cost ? "cost " + c.cost : null, c.level ? "L" + c.level : null, c.type].filter(Boolean).join(" · ");
+  $("detail").innerHTML = `<div class="dname">${esc(c.name)}</div><div class="hint">${esc(meta)}</div><div>${esc(c.text || "")}</div>`;
+}
+
+function sideHeader(v, who, schoolName, isYou) {
+  const s = isYou ? v.view.self : v.view.opponent;
+  const hpMax = 30, pct = Math.max(0, Math.min(100, (s.hp / hpMax) * 100));
+  const wards = (s.wards || []).map((w) => `<span class="chip ward"><span class="ico">🛡</span> ${w}</span>`).join(" ");
+  const burn = s.burn > 0 ? `<span class="chip burn"><span class="ico">🔥</span> ${s.burn}</span>` : "";
+  return `<div class="nameplate">
+      <span class="turndot"></span>
+      <span class="who">${who}</span>
+      <span class="schooltag school-${schoolName}">${schoolName}</span>
+      <span class="hpwrap"><span class="hpnum">♥ ${s.hp}</span><span class="hpbar"><span class="hpfill ${s.hp <= 10 ? "low" : ""}" style="width:${pct}%"></span></span></span>
+      ${wards} ${burn}
+    </div>
+    <div class="stats">
+      <span>Lv <b>${s.level}</b> (max L${s.maxSpellLevel})</span>
+      <span>slots <b>${s.slotsUsedThisRound}/${s.slots}</b></span>
+      <span>prepared <b>${s.prepared.length}/${s.preparedLimit}</b></span>
+      <span>${isYou ? "hand" : "hand"} <b>${isYou ? s.hand.length : s.handCount}</b></span>
+      <span>deck <b>${s.resourceDeckCount}</b></span>
+      <span>discard <b>${s.discard.length}</b></span>
+    </div>`;
+}
+
+// ---- legal-action lookups -------------------------------------------------
+function legalBy(type) { return (V.legal || []).filter((a) => a.type === type); }
+function attachTargetsFor(defId) { return legalBy("attach").filter((a) => a.defId === defId); }
+function castFor(preparedIndex) { return legalBy("cast").concat(legalBy("castReaction")).find((a) => a.preparedIndex === preparedIndex); }
+function prepareFor(defId) { return legalBy("prepareSpell").find((a) => a.defId === defId); }
+function replaceFor(preparedIndex, defId) { return legalBy("replacePrepared").find((a) => a.preparedIndex === preparedIndex && a.defId === defId); }
+function actionByType(type) { return (V.legal || []).find((a) => a.type === type); }
+
+// ---- rendering ------------------------------------------------------------
+function renderOpp(v) {
+  const s = v.view.opponent;
+  let html = sideHeader(v, "Opponent (P1)", v.schools[1], false);
+  const el = $("oppSide"); el.innerHTML = html;
+  // opponent prepared: face-down backs unless revealed (cast)
+  const prep = document.createElement("div"); prep.className = "zone";
+  prep.innerHTML = "<h4>Prepared</h4>";
+  const prow = document.createElement("div"); prow.className = "row";
+  for (const p of s.prepared) {
+    if (p.spellDefId) prow.appendChild(spellCard(p.spellDefId, { cls: p.cast ? "cast" : "", attached: p.attached, badges: p.cast ? ["cast"] : (p.sealed ? ["sealed"] : []) }));
+    else prow.appendChild(backCard(false));
+  }
+  if (!s.prepared.length) prow.innerHTML = '<span class="hint">none yet</span>';
+  prep.appendChild(prow); el.appendChild(prep);
+  // opponent hand (backs)
+  const hand = document.createElement("div"); hand.className = "zone";
+  hand.innerHTML = "<h4>Hand (" + s.handCount + ")</h4>";
+  const hrow = document.createElement("div"); hrow.className = "row";
+  for (let i = 0; i < s.handCount; i++) hrow.appendChild(backCard(true));
+  hand.appendChild(hrow); el.appendChild(hand);
+}
+
+function renderStack(v) {
+  const z = $("stackZone");
+  const st = v.view.stack || [];
+  if (!st.length) { z.className = "stackzone empty"; z.innerHTML = '<h4 style="margin:0;color:#767d8c;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase">The Stack — empty</h4>'; return; }
+  const canReact = (V.legal || []).some((a) => a.type === "castReaction");
+  // The opponent's spell on top of the stack resolves next — glow it so the player can see what's
+  // in flight (it's specifically your reaction target when you actually hold a castable Reaction).
+  const highlightTop = st[st.length - 1].controller !== SIDE;
+  z.className = "stackzone" + (highlightTop ? " react" : "");
+  const heading = !highlightTop
+    ? "The Stack — top resolves first →"
+    : (canReact ? "The Stack — the glowing spell is your reaction target ↓" : "The Stack — the glowing spell resolves next ↓");
+  z.innerHTML = "<h4 style='margin:0 0 6px;color:#9fb0d0;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase'>" + heading + "</h4>";
+  const row = document.createElement("div"); row.className = "row";
+  const retract = (V.legal || []).find((a) => a.type === "retractCast");
+  let topEl = null;
+  for (let i = st.length - 1; i >= 0; i--) {
+    const it = st[i];
+    const canRetract = it.controller === SIDE && retract; // your own just-cast spell → click to take back
+    let cls = (it.cancelled ? "cast " : "") + (canRetract ? "actionable" : "");
+    const card = spellCard(it.spellDefId, { cls: cls.trim(), badges: it.cancelled ? ["cast"] : [], onClick: canRetract ? () => act(retract.index) : null });
+    if (i === st.length - 1) topEl = card;
+    row.appendChild(card);
+  }
+  if (highlightTop && topEl) topEl.classList.add("reacttarget");
+  z.appendChild(row);
+}
+
+function renderYou(v) {
+  const s = v.view.self;
+  const el = $("youSide");
+  el.innerHTML = sideHeader(v, "You (P0)", v.schools[0], true);
+
+  // Prepared spells (face-up). Clickable to cast; drop target when a hand component is dragged; highlight as attach target when a hand card is selected.
+  const prep = document.createElement("div"); prep.className = "zone"; prep.innerHTML = "<h4>Your prepared spells</h4>";
+  const prow = document.createElement("div"); prow.className = "row";
+  s.prepared.forEach((p, i) => {
+    const cast = castFor(i);
+    const isAttachTarget = selectedHand && attachTargetsFor(selectedHand).some((a) => a.preparedIndex === i);
+    let cls = "";
+    if (p.cast) cls += " cast";
+    if (p.sealed) cls += " sealed";
+    if (cast && !selectedHand) cls += " actionable";
+    if (isAttachTarget) cls += " target";
+    if (replaceSlot === i) cls += " actionable";
+    const badges = []; if (p.cast) badges.push("cast"); if (p.sealed) badges.push("sealed");
+    const card = spellCard(p.spellDefId, {
+      cls: cls.trim(), attached: p.attached, badges,
+      detachActions: legalBy("detach").filter((a) => a.preparedIndex === i),
+      onClick: () => onPreparedClick(i),
+      onDrop: (defId) => { const t = attachTargetsFor(defId).find((a) => a.preparedIndex === i); if (t) act(t.index); },
+      canDrop: (defId) => !!(defId && attachTargetsFor(defId).some((a) => a.preparedIndex === i)),
+    });
+    prow.appendChild(card);
+  });
+  if (!s.prepared.length) prow.innerHTML = '<span class="hint">no prepared spells</span>';
+  prep.appendChild(prow); el.appendChild(prep);
+
+  // Prepare phase: choose from spellbook.
+  if (v.phase === "prepare") {
+    const book = document.createElement("div"); book.className = "zone"; book.innerHTML = "<h4>Spellbook — click to prepare" + (replaceSlot !== null ? " (replacing slot " + replaceSlot + ")" : "") + "</h4>";
+    const brow = document.createElement("div"); brow.className = "row";
+    const seen = new Set();
+    for (const defId of s.spellbook) {
+      if (seen.has(defId)) continue; seen.add(defId); // collapse duplicates (you own one of each anyway)
+      const canPrep = !!prepareFor(defId);
+      const canReplace = replaceSlot !== null && !!replaceFor(replaceSlot, defId);
+      const cls = (canPrep || canReplace) ? "actionable" : "dim";
+      brow.appendChild(spellCard(defId, { cls, onClick: (canPrep || canReplace) ? () => onSpellbookClick(defId) : null }));
+    }
+    book.appendChild(brow); el.appendChild(book);
+  } else {
+    // Main phase: your hand (components + trainers). The hand zone is a drop target for detach-by-drag.
+    const hand = document.createElement("div"); hand.className = "zone"; hand.innerHTML = "<h4>Your hand</h4>";
+    const hrow = document.createElement("div"); hrow.className = "row";
+    const handSeen = {};
+    for (const defId of s.hand) {
+      const c = info(defId);
+      const isComp = c.type === "Component";
+      if (isComp) {
+        const canAttach = attachTargetsFor(defId).length > 0;
+        const cls = (selectedHand === defId ? "actionable" : (canAttach ? "" : "dim"));
+        hrow.appendChild(compCard(defId, { cls, drag: canAttach ? defId : null, onClick: canAttach ? () => onHandComponentClick(defId) : null }));
+      } else {
+        const trainer = legalBy("playTrainer").find((a) => a.defId === defId);
+        hrow.appendChild(spellCard(defId, { cls: trainer ? "actionable" : "dim", onClick: trainer ? () => act(trainer.index) : null }));
+      }
+    }
+    if (!s.hand.length) hrow.innerHTML = '<span class="hint">empty</span>';
+    hand.ondragover = (e) => { if (dragDetach != null) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; hand.classList.add("dropzone"); } };
+    hand.ondragleave = () => hand.classList.remove("dropzone");
+    hand.ondrop = (e) => { e.preventDefault(); hand.classList.remove("dropzone"); if (dragDetach != null) act(dragDetach); };
+    hand.appendChild(hrow); el.appendChild(hand);
+  }
+}
+
+function renderStatus(v) {
+  const st = $("status"), hint = $("hint"), bar = $("actbar");
+  bar.innerHTML = ""; hint.textContent = "";
+  if (v.gameOver) {
+    st.className = "over";
+    st.textContent = v.winner === null ? "Game over — draw" : (v.winner === SIDE ? "Game over — YOU WIN 🎉" : "Game over — the opponent wins");
+    hint.textContent = "End reason: " + v.endReason;
+    return;
+  }
+  if (!v.yourTurn) { st.className = "wait"; st.textContent = `Waiting for ${v.bots.includes(1) ? "the bot" : "the opponent"}…`; return; }
+
+  // Pending look/loot/scry choice: present the revealed candidates to click.
+  const pc = v.view.pendingChoice;
+  if (pc && pc.mine) {
+    st.className = "react";
+    const verb = pc.mode === "bankToDeckTop" ? "Choose a card to put on top of your deck" : pc.reason;
+    st.textContent = "CHOOSE — " + verb + (pc.picksRemaining > 1 ? ` (${pc.picksRemaining} left)` : "");
+    const row = document.createElement("div"); row.className = "row"; row.style.marginTop = "8px";
+    for (const defId of pc.candidates) {
+      const ch = (V.legal || []).find((a) => a.type === "choose" && a.defId === defId);
+      const onClick = ch ? () => act(ch.index) : null;
+      const card = info(defId).type === "Component" ? compCard(defId, { cls: "actionable", onClick }) : spellCard(defId, { cls: "actionable", onClick });
+      row.appendChild(card);
+    }
+    bar.appendChild(row);
+    return;
+  }
+
+  const retract = actionByType("retractCast");
+  const detach = actionByType("detach");
+  const nReact = legalBy("castReaction").length;
+  if (retract) {
+    st.className = "react"; st.textContent = "Your spell is on the stack — Confirm to let it proceed, or Retract.";
+    hint.textContent = "Nothing is locked in until you pass priority.";
+  } else if (v.reactionWindow) {
+    st.className = "react";
+    st.textContent = nReact > 0
+      ? `REACTION WINDOW — respond with a Reaction (${nReact} ready) or pass`
+      : "REACTION WINDOW — you have no Reaction to cast; pass";
+    hint.textContent = "The opponent's spell sits on the stack (glowing). A prepared Reaction with its cost met is playable; otherwise pass to let it resolve.";
+  } else {
+    st.className = "you"; st.textContent = `Your turn — ${v.schools[SIDE]} · ${v.phase}`;
+  }
+
+  if (selectedHand) hint.textContent = "Pick a prepared spell (dashed) to attach " + info(selectedHand).name + ", or click the component again to cancel.";
+  else if (replaceSlot !== null) hint.textContent = "Pick a spellbook card to swap into slot " + replaceSlot + ", or click the slot again to cancel.";
+  else if (detach && !retract && !v.reactionWindow) hint.textContent = "Drag a component onto a spell to attach (or click it). Click / drag an attached pip to take it back.";
+
+  // Contextual buttons.
+  const mk = (label, cls, fn) => { const b = document.createElement("button"); b.textContent = label; if (cls) b.className = cls; b.onclick = fn; bar.appendChild(b); };
+  const mull = actionByType("mulligan"); if (mull) mk("Mulligan", "", () => act(mull.index));
+  const done = actionByType("donePreparing"); if (done) mk("Done preparing ✓", "primary", () => act(done.index));
+  if (retract) mk("↩ Retract cast", "", () => act(retract.index));
+  const pass = actionByType("pass");
+  if (pass) mk(retract ? "Confirm ▶" : (v.reactionWindow ? "Pass priority" : "End turn"), "primary", () => act(pass.index));
+  if (selectedHand) mk("Cancel", "", () => { selectedHand = null; render(V); });
+}
+
+function render(v) {
+  V = v;
+  $("matchinfo").textContent = `P0 ${v.schools[0]} vs P1 ${v.schools[1]} · round ${v.round} · turn ${v.turnCount}`;
+  $("turnBadge").textContent = `Round ${v.round} · ${v.phase.toUpperCase()} · active P${v.activePlayer}`;
+  renderOpp(v); renderStack(v); renderYou(v); renderStatus(v);
+  // Active-turn glow on whichever side is the active player.
+  $("youSide").classList.toggle("active-turn", !v.gameOver && v.activePlayer === SIDE);
+  $("oppSide").classList.toggle("active-turn", !v.gameOver && v.activePlayer !== SIDE);
+  $("log").textContent = (v.log || []).join("\n");
+  $("log").scrollTop = $("log").scrollHeight;
+  // Animate the events produced since the last human action — but only once per server epoch,
+  // so polling /api/state (which leaves the epoch unchanged) never re-triggers them.
+  if (typeof v.epoch === "number") {
+    if (lastEpoch !== -1 && v.epoch !== lastEpoch) animateEvents(v.events || []);
+    lastEpoch = v.epoch;
+  }
+}
+
+// ---- animations -----------------------------------------------------------
+function sideKeyOf(pid) { return pid === SIDE ? "you" : "opp"; }
+function sideEl(key) { return key === "you" ? $("youSide") : $("oppSide"); }
+
+/** Floating combat text over a player's nameplate. `i` staggers stacked hits. */
+function floatOver(key, text, cls, i) {
+  const host = sideEl(key);
+  if (!host) return;
+  const r = host.getBoundingClientRect();
+  const el = document.createElement("div");
+  el.className = "float " + cls;
+  el.textContent = text;
+  el.style.left = (r.left + 90) + "px";
+  el.style.top = (r.top + 18 + i * 6) + "px";
+  el.style.animationDelay = (i * 0.11) + "s";
+  $("fx").appendChild(el);
+  setTimeout(() => el.remove(), 1500 + i * 120);
+}
+
+function retrigger(el, cls, ms) { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), ms); }
+function pulseChip(key, selector) { const c = sideEl(key)?.querySelector(selector); if (c) retrigger(c, "pulse", 620); }
+
+function animateEvents(events) {
+  if (!events || !events.length) return;
+  const count = { you: 0, opp: 0 };
+  let struck = { you: false, opp: false }, healed = { you: false, opp: false };
+  let stackMoved = false;
+  for (const e of events) {
+    switch (e.type) {
+      case "damage": if (e.amount > 0) { const k = sideKeyOf(e.target); floatOver(k, "-" + e.amount, "dmg", count[k]++); struck[k] = true; } break;
+      case "burnTick": if (e.amount > 0) { const k = sideKeyOf(e.player); floatOver(k, "🔥 " + e.amount, "burnfx", count[k]++); struck[k] = true; pulseChip(k, ".chip.burn"); } break;
+      case "burnApplied": if (e.amount > 0) { pulseChip(sideKeyOf(e.target), ".chip.burn"); } break;
+      case "healed": if (e.amount > 0) { const k = sideKeyOf(e.player); floatOver(k, "+" + e.amount, "heal", count[k]++); healed[k] = true; } break;
+      case "wardCreated": { const k = sideKeyOf(e.player); floatOver(k, "🛡 +" + e.hp, "wardfx", count[k]++); pulseChip(k, ".chip.ward"); break; }
+      case "wardDamaged": if (e.amount > 0) { const k = sideKeyOf(e.player); floatOver(k, "🛡 -" + e.amount, "wardfx", count[k]++); pulseChip(k, ".chip.ward"); } break;
+      case "wardDestroyed": { const k = sideKeyOf(e.player); floatOver(k, "🛡 ✕", "wardfx", count[k]++); break; }
+      case "cast": case "reactionCast": case "spellResolved": case "spellCancelled": stackMoved = true; break;
+    }
+  }
+  for (const k of ["you", "opp"]) {
+    if (struck[k]) retrigger(sideEl(k), "hit", 560);
+    else if (healed[k]) retrigger(sideEl(k), "healed", 560);
+  }
+  if (stackMoved) retrigger($("stackZone"), "flash", 620);
+}
+
+// ---- interactions ---------------------------------------------------------
+function onHandComponentClick(defId) {
+  const targets = attachTargetsFor(defId);
+  if (targets.length === 0) return;
+  if (targets.length === 1) { selectedHand = null; act(targets[0].index); return; }
+  selectedHand = (selectedHand === defId) ? null : defId; // toggle; then pick a prepared target
+  render(V);
+}
+function onPreparedClick(i) {
+  if (selectedHand) {
+    const t = attachTargetsFor(selectedHand).find((a) => a.preparedIndex === i);
+    if (t) { selectedHand = null; act(t.index); }
+    return;
+  }
+  if (V.phase === "prepare" && legalBy("replacePrepared").some((a) => a.preparedIndex === i)) {
+    replaceSlot = (replaceSlot === i) ? null : i; render(V); return;
+  }
+  const cast = castFor(i);
+  if (cast) act(cast.index);
+}
+function onSpellbookClick(defId) {
+  if (replaceSlot !== null) { const r = replaceFor(replaceSlot, defId); if (r) { replaceSlot = null; act(r.index); } return; }
+  const p = prepareFor(defId); if (p) act(p.index);
+}
+
+async function act(index) {
+  selectedHand = null; replaceSlot = null; dragComp = null; dragDetach = null;
+  try {
+    const v = await (await fetch(`/api/act?side=${SIDE}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ index }) })).json();
+    render(v);
+    schedulePoll(v);
+  } catch (e) { setTimeout(() => refresh(), 1000); }
+}
+
+let pollTimer = null;
+function schedulePoll(v) {
+  clearTimeout(pollTimer);
+  if (!v.yourTurn && !v.gameOver) pollTimer = setTimeout(refresh, 900);
+}
+async function refresh() {
+  try { const v = await (await fetch(`/api/state?side=${SIDE}`)).json(); render(v); schedulePoll(v); }
+  catch (e) { pollTimer = setTimeout(refresh, 1500); }
+}
+
+$("new").onclick = async () => {
+  const body = { p0: $("p0").value, p1: $("p1").value, bots: $("mode").value === "bot" ? [1] : [] };
+  selectedHand = null; replaceSlot = null; dragComp = null; dragDetach = null;
+  const v = await (await fetch("/api/new", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).json();
+  render(v); schedulePoll(v);
+};
+
+loadCards().then(refresh);
+</script>
+</body>
+</html>

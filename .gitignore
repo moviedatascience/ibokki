@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+*.tsbuildinfo
+
+# test / coverage
+coverage/
+
+# logs
+*.log
+npm-debug.log*
+
+# editor / os
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# sim output
+sim-reports/
+
+# playtest session state (the .md logs ARE kept as artifacts)
+playtests/.sessions/

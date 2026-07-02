@@ -1,0 +1,500 @@
+import { Application, Container, Graphics, Text } from "pixi.js";
+import { CardVisual, type CardFace, type Highlight } from "./cardSprite.ts";
+import { Tweener, easeInOutCubic, easeOutCubic, lerp } from "./tween.ts";
+import { eventToFloater, isStackEvent, spawnFloater } from "./animations.ts";
+import {
+  CARD_H,
+  CARD_W,
+  CIRCLE,
+  HAND_H,
+  HAND_W,
+  OPP_DECK,
+  YOU_DECK,
+  YOU_DISCARD,
+  WORLD_H,
+  WORLD_W,
+  handLayout,
+  preparedCenter,
+  stackCenter,
+  type Pt,
+} from "./layout.ts";
+import type { CardCatalog, LegalAction, MatchState, PlayerView } from "../api.ts";
+
+const HP_MAX = 30;
+
+interface Sprite {
+  visual: CardVisual;
+  layer: Container;
+}
+
+interface Desired {
+  key: string;
+  layer: Container;
+  faceDef: string | null; // defId to show face-up; null = face-down back
+  w: number;
+  h: number;
+  x: number;
+  y: number;
+  rot: number;
+  z: number;
+  highlight: Highlight;
+  dim: boolean;
+  attached: string[];
+  onTap: (() => void) | null;
+  spawn: Pt | null; // enter-from position for new sprites
+  spawnScale: boolean; // scale-up on enter (hand draw / cast)
+}
+
+interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface Plate {
+  root: Container;
+  glow: Graphics;
+  bar: Graphics;
+  name: Text;
+  hp: Text;
+  stats: Text;
+  status: Text; // ward / burn
+  box: Box;
+  anchor: Pt; // floater anchor (center of plate, world coords)
+}
+
+export interface BoardCallbacks {
+  onAction: (index: number) => void;
+  onHover: (defId: string | null) => void;
+  /** Fired when an attach selection starts/clears, so the shell can show a Cancel affordance. */
+  onSelection?: (active: boolean) => void;
+}
+
+/**
+ * The Pixi "table". Renders the redacted match state as neutral placeholder cards laid out per the
+ * mockup, and animates transitions (draw → hand, cast → stack, damage floaters). All game
+ * interactions that live on the board (attach, cast, react, retract, play trainer) are handled here;
+ * prepare-phase spellbook selection + reaction "pass" / choices live in the React overlays.
+ */
+export class PixiBoard {
+  private app: Application | null = null;
+  private world = new Container();
+  private bgLayer = new Container();
+  private slotG = new Graphics();
+  private oppLayer = new Container();
+  private stackLayer = new Container();
+  private youLayer = new Container();
+  private pileLayer = new Container();
+  private handLayer = new Container();
+  private fxLayer = new Container();
+  private tweener = new Tweener();
+  private sprites = new Map<string, Sprite>();
+  private youPlate!: Plate;
+  private oppPlate!: Plate;
+
+  private cards: CardCatalog = {};
+  private last: MatchState | null = null;
+  private lastEpoch = -1;
+  private selHandDef: string | null = null;
+  private ro: ResizeObserver | null = null;
+
+  constructor(private host: HTMLElement, private cb: BoardCallbacks) {}
+
+  async mount(): Promise<void> {
+    const app = new Application();
+    await app.init({
+      background: 0x0e1411,
+      antialias: true,
+      resizeTo: this.host,
+      autoDensity: true,
+      resolution: Math.min(2, window.devicePixelRatio || 1),
+    });
+    this.app = app;
+    this.host.appendChild(app.canvas);
+
+    this.stackLayer.sortableChildren = true;
+    this.handLayer.sortableChildren = true;
+    this.world.addChild(this.bgLayer, this.slotG, this.oppLayer, this.stackLayer, this.youLayer, this.pileLayer, this.handLayer, this.fxLayer);
+    app.stage.addChild(this.world);
+
+    this.buildStatic();
+    app.ticker.add((t) => this.tweener.update(t.deltaMS));
+
+    this.ro = new ResizeObserver(() => {
+      app.resize();
+      this.relayout();
+    });
+    this.ro.observe(this.host);
+    this.relayout();
+  }
+
+  private relayout(): void {
+    if (!this.app) return;
+    const { width, height } = this.app.screen;
+    const s = Math.min(width / WORLD_W, height / WORLD_H);
+    this.world.scale.set(s);
+    this.world.position.set((width - WORLD_W * s) / 2, (height - WORLD_H * s) / 2);
+  }
+
+  private buildStatic(): void {
+    // Arcane circle (the ritual table) — placeholder rings only.
+    const ring = new Graphics();
+    ring.circle(CIRCLE.cx, CIRCLE.cy, CIRCLE.r).stroke({ width: 2, color: 0x3a4250, alpha: 0.9 });
+    ring.circle(CIRCLE.cx, CIRCLE.cy, CIRCLE.r - 14).stroke({ width: 1, color: 0x2a303c, alpha: 0.8 });
+    ring.circle(CIRCLE.cx, CIRCLE.cy, CIRCLE.r * 0.62).stroke({ width: 1, color: 0x2a303c, alpha: 0.6 });
+    ring.circle(CIRCLE.cx, CIRCLE.cy, 4).fill(0x3a4250);
+    this.bgLayer.addChild(ring);
+
+    this.oppPlate = this.makePlate({ x: 20, y: 16, w: 224, h: 74 });
+    this.youPlate = this.makePlate({ x: 20, y: 470, w: 224, h: 74 });
+    this.bgLayer.addChild(this.oppPlate.root, this.youPlate.root);
+  }
+
+  private makePlate(box: Box): Plate {
+    const root = new Container();
+    root.position.set(box.x, box.y);
+    const glow = new Graphics();
+    glow.roundRect(-3, -3, box.w + 6, box.h + 6, 12).stroke({ width: 2, color: 0xffd36b, alpha: 0.85 });
+    glow.visible = false;
+    const bg = new Graphics();
+    bg.roundRect(0, 0, box.w, box.h, 10).fill(0x161b22).stroke({ width: 1, color: 0x2b313c });
+    const name = new Text({ text: "", style: { fill: 0xe6e7ea, fontSize: 13, fontFamily: "system-ui", fontWeight: "700" } });
+    name.position.set(12, 9);
+    const hp = new Text({ text: "", style: { fill: 0xffffff, fontSize: 13, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
+    hp.position.set(box.w - 66, 9);
+    const bar = new Graphics();
+    const stats = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 10.5, fontFamily: "system-ui" } });
+    stats.position.set(12, box.h - 19);
+    const status = new Text({ text: "", style: { fill: 0x8fd0ff, fontSize: 11, fontFamily: "system-ui", fontWeight: "700" } });
+    status.position.set(12, 30);
+    root.addChild(glow, bg, name, hp, bar, stats, status);
+    return { root, glow, bar, name, hp, stats, status, box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
+  }
+
+  private updatePlate(plate: Plate, label: string, v: PlayerView, active: boolean): void {
+    const box = plate.box;
+    plate.name.text = label;
+    plate.hp.text = `♥ ${v.hp}`;
+    plate.hp.style.fill = v.hp <= 10 ? 0xff8b8b : 0xffffff;
+    const bw = box.w - 24;
+    const pct = Math.max(0, Math.min(1, v.hp / HP_MAX));
+    plate.bar.clear();
+    plate.bar.roundRect(12, 26, bw, 8, 4).fill(0x0c0f14).stroke({ width: 1, color: 0x333a47 });
+    plate.bar.roundRect(12, 26, bw * pct, 8, 4).fill(v.hp <= 10 ? 0xff7849 : 0x5fce76);
+    const handN = v.hand?.length ?? v.handCount ?? 0; // self view carries `hand`, opponent carries `handCount`
+    plate.stats.text = `Lv ${v.level} · slots ${v.slotsUsedThisRound}/${v.slots} · prep ${v.prepared.length}/${v.preparedLimit} · deck ${v.resourceDeckCount} · hand ${handN}`;
+    const wards = v.wards && v.wards.length ? `🛡 ${v.wards.join("/")}` : "";
+    const burn = v.burn > 0 ? `  🔥 ${v.burn}` : "";
+    plate.status.text = wards + burn;
+    plate.status.position.set(box.w - 12 - plate.status.width, 26);
+    plate.glow.visible = active;
+  }
+
+  private face(defId: string): CardFace {
+    const c = this.cards[defId];
+    return c
+      ? { name: c.name, school: c.school, type: c.type, level: c.level, cost: c.cost }
+      : { name: defId, school: "Neutral", type: "?", level: null, cost: null };
+  }
+
+  sync(state: MatchState, cards: CardCatalog): void {
+    this.cards = cards;
+    this.last = state;
+    if (this.lastEpoch !== -1 && state.epoch !== this.lastEpoch) {
+      if (this.selHandDef) {
+        this.selHandDef = null;
+        this.cb.onSelection?.(false);
+      }
+      this.runEvents(state);
+    }
+    this.lastEpoch = state.epoch;
+    this.draw();
+  }
+
+  /** Recompute desired card views from the last state (+ local selection) and reconcile. */
+  private draw(): void {
+    const state = this.last;
+    if (!state) return;
+    const you = state.view.self;
+    const opp = state.view.opponent;
+    const legal = state.yourTurn ? state.legal : [];
+
+    this.updatePlate(this.oppPlate, `Opponent · ${state.schools[1]}`, opp, !state.gameOver && state.activePlayer === 1);
+    this.updatePlate(this.youPlate, `You · ${state.schools[0]}`, you, !state.gameOver && state.activePlayer === 0);
+
+    const byType = (t: string) => legal.filter((a) => a.type === t);
+    const attachTargets = (def: string) => byType("attach").filter((a) => a.defId === def);
+    const castFor = (i: number): LegalAction | undefined => [...byType("cast"), ...byType("castReaction")].find((a) => a.preparedIndex === i);
+    const trainerFor = (def: string) => byType("playTrainer").find((a) => a.defId === def);
+    const retract = byType("retractCast")[0];
+
+    const desired: Desired[] = [];
+    const push = (d: Partial<Desired> & Pick<Desired, "key" | "layer" | "x" | "y">) =>
+      desired.push({ faceDef: null, w: CARD_W, h: CARD_H, rot: 0, z: 0, highlight: "none", dim: false, attached: [], onTap: null, spawn: null, spawnScale: false, ...d });
+
+    // --- opponent prepared (face-down until cast/revealed) + deck ---
+    opp.prepared.forEach((p, i) => {
+      const c = preparedCenter("opp", i);
+      push({ key: `p1:${i}`, layer: this.oppLayer, x: c.x, y: c.y, faceDef: p.spellDefId ?? null, dim: p.cast, attached: this.symsOf(p.attached) });
+    });
+    push({ key: "deck1", layer: this.oppLayer, x: OPP_DECK.x, y: OPP_DECK.y, faceDef: null });
+
+    // --- the stack ---
+    const n = state.view.stack.length;
+    state.view.stack.forEach((it, i) => {
+      const c = stackCenter(i, n);
+      const top = i === n - 1;
+      const canRetract = it.controller === 0 && !!retract && top;
+      const isReactTarget = it.controller !== 0 && top && state.reactionWindow;
+      push({
+        key: `s:${i}`,
+        layer: this.stackLayer,
+        x: c.x,
+        y: c.y,
+        z: i,
+        faceDef: it.spellDefId,
+        dim: it.cancelled,
+        highlight: canRetract ? "actionable" : isReactTarget ? "react" : "none",
+        onTap: canRetract ? () => this.cb.onAction(retract!.index) : null,
+        spawn: this.stackSpawn(state, it.controller, it.spellDefId),
+        spawnScale: true,
+      });
+    });
+
+    // --- your prepared spells ---
+    you.prepared.forEach((p, i) => {
+      const c = preparedCenter("you", i);
+      const cast = castFor(i);
+      const isTarget = !!this.selHandDef && attachTargets(this.selHandDef).some((a) => a.preparedIndex === i);
+      let highlight: Highlight = "none";
+      let onTap: (() => void) | null = null;
+      if (isTarget) {
+        highlight = "target";
+        const a = attachTargets(this.selHandDef!).find((x) => x.preparedIndex === i)!;
+        onTap = () => this.doAttach(a.index);
+      } else if (cast) {
+        highlight = cast.type === "castReaction" ? "react" : "actionable";
+        onTap = () => this.cb.onAction(cast.index);
+      }
+      push({
+        key: `p0:${i}`,
+        layer: this.youLayer,
+        x: c.x,
+        y: c.y,
+        faceDef: p.spellDefId ?? null,
+        dim: p.cast && !cast,
+        highlight,
+        onTap,
+        attached: this.symsOf(p.attached),
+      });
+    });
+
+    // --- your piles ---
+    push({ key: "deck0", layer: this.pileLayer, x: YOU_DECK.x, y: YOU_DECK.y, faceDef: null });
+    if (you.discard.length) push({ key: "disc0", layer: this.pileLayer, x: YOU_DISCARD.x, y: YOU_DISCARD.y, faceDef: you.discard[you.discard.length - 1]!, dim: true });
+
+    // --- your hand (main phase only; prepare uses the React spellbook tray) ---
+    if (state.phase !== "prepare") {
+      const hand = you.hand ?? [];
+      const fan = handLayout(hand.length);
+      hand.forEach((def, i) => {
+        const f = fan[i]!;
+        const info = this.cards[def];
+        const isComp = info?.type === "Component";
+        let highlight: Highlight = "none";
+        let onTap: (() => void) | null = null;
+        let dim = false;
+        if (isComp) {
+          const targets = attachTargets(def);
+          if (this.selHandDef === def) highlight = "target";
+          else if (targets.length) highlight = "actionable";
+          else dim = true;
+          if (targets.length) onTap = () => this.onHandComponent(def);
+        } else {
+          const tr = trainerFor(def);
+          if (tr) {
+            highlight = "actionable";
+            onTap = () => this.cb.onAction(tr.index);
+          } else dim = true;
+        }
+        push({ key: `h:${i}`, layer: this.handLayer, x: f.x, y: f.y, rot: f.rot, z: i, w: HAND_W, h: HAND_H, faceDef: def, highlight, dim, onTap, spawn: YOU_DECK, spawnScale: true });
+      });
+    }
+
+    this.reconcile(desired);
+  }
+
+  private symsOf(defIds: string[]): string[] {
+    return defIds.map((d) => this.cards[d]?.cost ?? "?");
+  }
+
+  /** Where a newly-cast stack card should fly in from: the caster's matching prepared slot. */
+  private stackSpawn(state: MatchState, controller: number, defId: string): Pt {
+    const arr = controller === 0 ? state.view.self.prepared : state.view.opponent.prepared;
+    const idx = arr.findIndex((p) => p.spellDefId === defId);
+    if (idx >= 0) return preparedCenter(controller === 0 ? "you" : "opp", idx);
+    return { x: CIRCLE.cx, y: controller === 0 ? CIRCLE.cy + 150 : CIRCLE.cy - 150 };
+  }
+
+  private reconcile(desired: Desired[]): void {
+    const keys = new Set(desired.map((d) => d.key));
+    // Exit sprites no longer wanted.
+    for (const [key, sp] of [...this.sprites]) {
+      if (keys.has(key)) continue;
+      this.sprites.delete(key);
+      const v = sp.visual;
+      const x0 = v.root.x;
+      const y0 = v.root.y;
+      this.tweener.add({
+        duration: 220,
+        tag: key + ":move",
+        onUpdate: (p) => {
+          v.root.alpha = 1 - p;
+          v.root.y = lerp(y0, y0 - 18, p);
+        },
+        onComplete: () => v.destroy(),
+      });
+    }
+    // Create / update.
+    for (const d of desired) {
+      let sp = this.sprites.get(d.key);
+      if (!sp) {
+        const visual = new CardVisual(d.w, d.h);
+        visual.onHover(() => d.faceDef && this.cb.onHover(d.faceDef), () => this.cb.onHover(null));
+        d.layer.addChild(visual.root);
+        sp = { visual, layer: d.layer };
+        this.sprites.set(d.key, sp);
+        const from = d.spawn ?? { x: d.x, y: d.y };
+        visual.root.position.set(from.x, from.y);
+        visual.root.rotation = d.rot;
+        this.applyFace(sp, d);
+        this.enter(sp, from, d);
+      } else {
+        this.applyFace(sp, d);
+        this.moveTo(sp, d);
+      }
+      sp.visual.root.zIndex = d.z;
+      sp.visual.setHighlight(d.highlight);
+      sp.visual.setDim(d.dim);
+      sp.visual.setInteractive(!!d.onTap, d.onTap ?? undefined);
+    }
+  }
+
+  private applyFace(sp: Sprite, d: Desired): void {
+    if (d.faceDef) {
+      sp.visual.setFace(this.face(d.faceDef));
+      sp.visual.setAttached(d.attached);
+    } else {
+      sp.visual.setFaceDown(true);
+    }
+  }
+
+  private enter(sp: Sprite, from: Pt, d: Desired): void {
+    const v = sp.visual;
+    v.root.alpha = 0;
+    this.tweener.add({
+      duration: 380,
+      ease: easeOutCubic,
+      tag: d.key + ":move",
+      onUpdate: (p) => {
+        v.root.x = lerp(from.x, d.x, p);
+        v.root.y = lerp(from.y, d.y, p);
+        v.root.rotation = lerp(0, d.rot, p);
+        v.root.alpha = Math.min(1, p * 1.6);
+        if (d.spawnScale) v.root.scale.set(lerp(0.72, 1, p));
+      },
+    });
+  }
+
+  private moveTo(sp: Sprite, d: Desired): void {
+    const v = sp.visual;
+    const x0 = v.root.x;
+    const y0 = v.root.y;
+    const r0 = v.root.rotation;
+    const moved = Math.abs(x0 - d.x) > 0.5 || Math.abs(y0 - d.y) > 0.5 || Math.abs(r0 - d.rot) > 0.001;
+    if (!moved) return;
+    this.tweener.add({
+      duration: 220,
+      ease: easeInOutCubic,
+      tag: d.key + ":move",
+      onUpdate: (p) => {
+        v.root.x = lerp(x0, d.x, p);
+        v.root.y = lerp(y0, d.y, p);
+        v.root.rotation = lerp(r0, d.rot, p);
+        v.root.alpha = 1;
+        v.root.scale.set(1);
+      },
+    });
+  }
+
+  // ---- board-local interactions ----
+  private onHandComponent(def: string): void {
+    const legal = this.last?.legal ?? [];
+    const targets = legal.filter((a) => a.type === "attach" && a.defId === def);
+    if (targets.length === 0) return;
+    if (targets.length === 1) {
+      this.doAttach(targets[0]!.index);
+      return;
+    }
+    this.setSel(this.selHandDef === def ? null : def); // toggle, then pick a prepared target
+  }
+
+  private setSel(def: string | null, redraw = true): void {
+    if (this.selHandDef === def) return;
+    this.selHandDef = def;
+    this.cb.onSelection?.(!!def);
+    if (redraw) this.draw();
+  }
+
+  private doAttach(index: number): void {
+    this.setSel(null, false);
+    this.cb.onAction(index);
+  }
+
+  /** Public: let the React "Cancel" button clear an in-progress attach selection. */
+  clearSelection(): void {
+    this.setSel(null);
+  }
+
+  hasSelection(): boolean {
+    return this.selHandDef !== null;
+  }
+
+  // ---- event-driven floaters / flashes ----
+  private runEvents(state: MatchState): void {
+    const stagger: [number, number] = [0, 0];
+    let stackMoved = false;
+    for (const e of state.events) {
+      if (isStackEvent(e)) stackMoved = true;
+      const f = eventToFloater(e);
+      if (!f) continue;
+      const plate = f.side === 0 ? this.youPlate : this.oppPlate;
+      spawnFloater(this.fxLayer, this.tweener, plate.anchor.x, plate.anchor.y, f.text, f.color, stagger[f.side]++);
+      this.flashPlate(plate, f.struck);
+    }
+    if (stackMoved) this.flashStack();
+  }
+
+  private flashPlate(plate: Plate, struck: boolean): void {
+    const { x, y, w, h } = plate.box;
+    const flash = new Graphics();
+    flash.roundRect(x - 3, y - 3, w + 6, h + 6, 12).stroke({ width: 3, color: struck ? 0xff5050 : 0x78f096 });
+    this.fxLayer.addChild(flash);
+    this.tweener.add({ duration: 520, onUpdate: (p) => (flash.alpha = 1 - p), onComplete: () => flash.destroy() });
+  }
+
+  private flashStack(): void {
+    const ring = new Graphics();
+    ring.circle(CIRCLE.cx, CIRCLE.cy, CIRCLE.r + 6).stroke({ width: 3, color: 0xffd36b });
+    this.fxLayer.addChild(ring);
+    this.tweener.add({ duration: 600, onUpdate: (p) => (ring.alpha = 1 - p), onComplete: () => ring.destroy() });
+  }
+
+  destroy(): void {
+    this.ro?.disconnect();
+    this.tweener.clear();
+    this.app?.destroy(true, { children: true });
+    this.app = null;
+  }
+}

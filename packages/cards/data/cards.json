@@ -1,0 +1,2366 @@
+[
+  {
+    "id": "ABJ-001",
+    "name": "Fortify",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 1,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Add 2 HP to a Ward you control. If you control no Ward, create one with 1 HP instead.",
+    "comment": "Good early-game Ward sustain. Rewards players who already established a Ward on a prior turn."
+  },
+  {
+    "id": "ABJ-002",
+    "name": "Arcane Shell",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 1,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Create a Ward with 1 HP. If this Ward is destroyed this round, draw 2 cards.",
+    "comment": "Lightweight Ward that cycles on destruction — encourages opponent to attack it and rewards the Abjuration player for taking hits."
+  },
+  {
+    "id": "ABJ-003",
+    "name": "Ward Pulse",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 1,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Each Ward you control gains 1 HP.",
+    "comment": "Scales with Ward density. Weak early but synergizes with multi-Ward strategies at higher levels."
+  },
+  {
+    "id": "ABJ-004",
+    "name": "Aegis",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 1,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Until the start of your next turn, you cannot be targeted by spells that have only 1 component attached.",
+    "comment": "Punishes opponents who haven't fully loaded their spells. Creates counterplay window pressure."
+  },
+  {
+    "id": "ABJ-005",
+    "name": "Stone Stance",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 1,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Until the end of the round, the first Reaction you play costs 1 fewer S component (minimum 1).",
+    "comment": "Enables early Reaction spam by discounting the first one. Strong opener for a reactive game plan."
+  },
+  {
+    "id": "ABJ-006",
+    "name": "Dampen",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 1,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "The next spell your opponent casts this turn deals 1 less damage.",
+    "comment": "Simple but versatile. Pairs with other damage-prevention Reactions to stack reduction."
+  },
+  {
+    "id": "ABJ-007",
+    "name": "Echo Shield",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 1,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Prevent 1 damage. If you have a Ward in play, prevent 2 damage instead.",
+    "comment": "Rewards proactive Ward setup. A tempo puzzle for the opponent: destroy the Ward first or risk extra mitigation."
+  },
+  {
+    "id": "ABJ-008",
+    "name": "Grounding",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 1,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Prevent 1 damage. Draw 1 card from your Component Deck.",
+    "comment": "Rare card draw for Abjuration. Small upside turns a pure-prevention Reaction into a slight tempo gain."
+  },
+  {
+    "id": "ABJ-009",
+    "name": "Mana Drain",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 1,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "When your opponent attaches a component to a prepared spell, you may discard this card to immediately remove that component and return it to their hand.",
+    "comment": "High disruption ceiling — delays a spell by a full turn. Telegraphed once face-up, so opponent can play around it."
+  },
+  {
+    "id": "ABJ-010",
+    "name": "Runic Seal",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 1,
+    "costText": "SS",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Place a Seal counter on target prepared spell. That spell cannot be cast this round.",
+    "comment": "Strong soft-lock. Costs 2 S symbols at Level 1, which makes it a premium Level 1 opener."
+  },
+  {
+    "id": "ABJ-011",
+    "name": "Absorb",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "SS",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Prevent all damage from one spell that targets you. Gain HP equal to half the prevented damage, rounded down.",
+    "comment": "Full prevention with a heal attached — turns the opponent's single biggest hit into HP for you. A strong reactive swing."
+  },
+  {
+    "id": "ABJ-012",
+    "name": "Reflective Ward",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 2,
+    "costText": "SS",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Create a Ward with 3 HP. When this Ward prevents damage, deal 1 damage to your opponent.",
+    "comment": "Turns defense into slow chip damage. Synergizes with anything that buffs Ward HP (Fortify / Ward Pulse)."
+  },
+  {
+    "id": "ABJ-013",
+    "name": "Interrupt",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "SS",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Remove all components from target prepared spell. Your opponent draws 1 card.",
+    "comment": "Strips a nearly-ready spell back to zero. The draw softens the hit but opponent loses tempo and the surprise factor."
+  },
+  {
+    "id": "ABJ-014",
+    "name": "Phase Shift",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "SS",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Cancel target spell. You may immediately attach 1 component from your hand to a prepared spell.",
+    "comment": "Combines cancellation with forward progression — reacts and sets up your own next cast simultaneously."
+  },
+  {
+    "id": "ABJ-015",
+    "name": "Counterbind",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "SM",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 1
+    },
+    "text": "Cancel target spell that requires a Material (M) component.",
+    "comment": "Tag-sensitive counter for Material (M) spells. Punishes the Divination school specifically; the off-color SM cost signals cross-school tech."
+  },
+  {
+    "id": "ABJ-016",
+    "name": "Break Form",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "SS",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Cancel target spell that requires a Somatic (S) component.",
+    "comment": "Anti-Abjuration tool that is itself an Abjuration card — great in the mirror match. Forms the Somatic (S) half of the tag-based cancel suite alongside Counterbind (M)."
+  },
+  {
+    "id": "ABJ-017",
+    "name": "Arcane Anchor",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 2,
+    "costText": "SS",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Until the start of your next turn, your opponent cannot play Reaction spells.",
+    "comment": "Offensive play for a defensive deck — punch your own spells through without fear of a Reaction. High-value surprise."
+  },
+  {
+    "id": "ABJ-018",
+    "name": "Aetheric Lock",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 2,
+    "costText": "SS",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Until the end of the round, your opponent's Reaction spells cost 1 additional S component to play.",
+    "comment": "Soft-taxes Reactions rather than banning them. Particularly brutal against opposing Abjuration mirrors."
+  },
+  {
+    "id": "ABJ-019",
+    "name": "Stonewarden",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 2,
+    "costText": "SS",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Create a Ward with 2 HP. While this Ward is active, you cannot be targeted by Level 1 spells.",
+    "comment": "Provides blanket immunity to the entire early-game toolbox. Pressures opponent to commit higher-level spells to break through."
+  },
+  {
+    "id": "ABJ-020",
+    "name": "Sentinel Rune",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VS",
+    "cost": {
+      "V": 1,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Create a Ward with 3 HP. While active, the first time each round your opponent casts a spell, draw 1 card.",
+    "comment": "Off-color cost (VS) signals it's a cross-school hybrid. Rewards sitting on the Ward — persistent card advantage as long as it lives."
+  },
+  {
+    "id": "ABJ-021",
+    "name": "Shatter Ward",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "SS",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Sacrifice one of your Wards. Negate all damage from target spell.",
+    "comment": "Converts an expendable Ward into a full cancel. Great with low-HP Wards like Arcane Shell that are about to break anyway."
+  },
+  {
+    "id": "ABJ-022",
+    "name": "Aegis Eternal",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSS",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 0
+    },
+    "text": "Create a Ward with 6 HP. While active, reduce all damage dealt to you by 1 (minimum 0).",
+    "comment": "Mid-level defensive anchor. The passive reduction stacks with Dampen and other prevention effects for near-immunity turns."
+  },
+  {
+    "id": "ABJ-023",
+    "name": "Total Negation",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 3,
+    "costText": "SSS",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 0
+    },
+    "text": "Cancel target spell. Your opponent cannot cast additional spells this turn.",
+    "comment": "The heavyweight Reaction payoff. Costs a full round of S-component investment but ends an opponent's offensive turn entirely."
+  },
+  {
+    "id": "ABJ-024",
+    "name": "Inversion Field",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSM",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 1
+    },
+    "text": "Until the end of the round, each time a spell would deal damage to you, gain that HP instead (maximum 5 HP gained this way).",
+    "comment": "Reverses an all-in offensive turn into a healing windfall. Costs SSM to balance — opponents who read it can pivot, making it a bluffing tool."
+  },
+  {
+    "id": "ABJ-025",
+    "name": "Sanctum",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSS",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 0
+    },
+    "text": "Until the end of the round, your opponent must target your Wards before targeting you directly. All your Wards gain 2 HP.",
+    "comment": "Combines forced targeting with a Ward buff — either opponent grinds through buffed Wards or wastes their turn."
+  },
+  {
+    "id": "ABJ-026",
+    "name": "Abjure the Wicked",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 3,
+    "costText": "SSV",
+    "cost": {
+      "V": 1,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Cancel target spell. Deal 2 damage to your opponent for each component attached to the cancelled spell.",
+    "comment": "Punishes fully loaded spells most — a 3-component VSM spell results in 6 damage on cancel. Off-color V cost signals aggression."
+  },
+  {
+    "id": "ABJ-027",
+    "name": "Ritual Ward",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSM",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 1
+    },
+    "text": "Create a Ward with 5 HP. When this Ward is destroyed, immediately create a replacement Ward with 2 HP.",
+    "comment": "Double-life Ward. The replacement is weak enough to be cleared but forces the opponent to commit two removal actions."
+  },
+  {
+    "id": "ABJ-028",
+    "name": "Unraveling",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 3,
+    "costText": "SSS",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 0
+    },
+    "text": "Remove all components from ALL of your opponent's prepared spells. They draw 1 card for each spell affected.",
+    "comment": "Nuclear disruption. Opponent draws cards, which softens the blow and prevents feel-bad moments, but they lose all setup simultaneously."
+  },
+  {
+    "id": "ABJ-029",
+    "name": "Fortress",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSS",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 0
+    },
+    "text": "Create a Ward with 4 HP. Wards you control cannot be targeted or destroyed by your opponent this round.",
+    "comment": "Protects your Ward infrastructure from removal effects. Forces the opponent to grind through your Wards the hard way."
+  },
+  {
+    "id": "ABJ-030",
+    "name": "Penumbral Seal",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSM",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 1
+    },
+    "text": "Choose a prepared spell your opponent controls. Exile it face-down until the end of the round. At end of round, return it to prepared spells face-up.",
+    "comment": "Temporarily removes a threat without destroying it — stalls their gameplan for a full round. Flavor: the spell is locked in magical shadow."
+  },
+  {
+    "id": "ABJ-031",
+    "name": "Ward Collapse",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSS",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 0
+    },
+    "text": "Destroy one of your Wards. Deal damage equal to that Ward's current HP to your opponent.",
+    "comment": "The core damage finisher for a Ward-heavy game. Converts a large late-game Ward (Aegis Eternal, Ritual Ward, Ward Eternal) into a direct damage burst. Rewards players who built Ward HP up with Fortify and Ward Pulse earlier."
+  },
+  {
+    "id": "ABJ-032",
+    "name": "Reckoning",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSS",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 0
+    },
+    "text": "Deal damage to your opponent equal to the total amount of damage you have prevented this round.",
+    "comment": "Rewards a patient defensive game — the more attacks you've weathered and mitigated, the harder this hits. Pairs naturally with Absorb and other prevention effects to set up a large burst in the same round."
+  },
+  {
+    "id": "ABJ-033",
+    "name": "Backlash",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSM",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 1
+    },
+    "text": "Deal 3 damage to your opponent for each Reaction spell you have played this round.",
+    "comment": "Turns a reactive turn into an offensive payoff — a player who has played 3 Reactions this round deals 9 damage. The SSM cost mirrors Inversion Field, reading the M component as the 'calculation and timing' cost."
+  },
+  {
+    "id": "ABJ-034",
+    "name": "Exhausting Aura",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSS",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 0
+    },
+    "text": "Until the end of the round, each time your opponent plays a Reaction, they take 3 damage.",
+    "comment": "Punishes a reactive opponent: every Reaction they play costs them 3 HP. Forces a dilemma — keep reacting and bleed out, or sit on their cards and let your spells through."
+  },
+  {
+    "id": "ABJ-035",
+    "name": "Banishing Bolt",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSS",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 0
+    },
+    "text": "Deal 5 damage to your opponent. If you have a Ward in play, deal 7 damage instead.",
+    "comment": "Simple and readable. The Ward bonus is modest enough that it isn't mandatory but rewards having one up. A pure damage card with a defensive condition — feels like Abjuration without being mechanical about it."
+  },
+  {
+    "id": "ABJ-036",
+    "name": "Overcharge",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSV",
+    "cost": {
+      "V": 1,
+      "S": 2,
+      "M": 0
+    },
+    "text": "Sacrifice all your Wards. Deal 2 damage to your opponent for each HP those Wards had combined.",
+    "comment": "High-risk, high-reward. A player sitting on Aegis Eternal (6 HP), Ritual Ward (5 HP), and a Reflective Ward (3 HP) could deal 28 damage in one cast. The SSV cost signals this is a deliberate off-school spike — you're converting your entire defensive position into a kill shot."
+  },
+  {
+    "id": "ABJ-037",
+    "name": "Retributive Strike",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 3,
+    "costText": "SSS",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 0
+    },
+    "text": "When a spell deals damage to you, cancel it and deal double that spell's damage to your opponent instead.",
+    "comment": "A damage-reflection Reaction that doesn't just mirror an incoming hit — it doubles it. The full SSS cost makes it compete with Total Negation for the same slot: a safe cancel versus a risky double-damage gamble."
+  },
+  {
+    "id": "ABJ-038",
+    "name": "Shieldbreaker Pulse",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 3,
+    "costText": "SSM",
+    "cost": {
+      "V": 0,
+      "S": 2,
+      "M": 1
+    },
+    "text": "Deal 4 damage to your opponent. If they have a Ward in play, destroy it and deal 4 additional damage instead.",
+    "comment": "Anti-Ward finisher for the mirror matchup. Removes the opponent's protection AND punishes them for having had it. Strong in any matchup where the opponent runs Wards, negligible bonus against Evocation."
+  },
+  {
+    "id": "ABJ-039",
+    "name": "Absolute Defense",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 4,
+    "costText": "SSSS",
+    "cost": {
+      "V": 0,
+      "S": 4,
+      "M": 0
+    },
+    "text": "Until the end of this round, you cannot be damaged by spells. Your opponent cannot play Reactions.",
+    "comment": "Full immunity. Requires two SS dual-component cards to satisfy the 2-card cap. Reserved for Level 15+ late-game dominance."
+  },
+  {
+    "id": "ABJ-040",
+    "name": "Ward Eternal",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 4,
+    "costText": "SSSM",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 1
+    },
+    "text": "Create a Ward with 10 HP. This Ward cannot be destroyed or targeted by your opponent's effects. When this Ward is destroyed by damage, you gain 5 HP.",
+    "comment": "The ultimate Ward. Needs SSM + S or SS + SM component pairing. Aspirational card players build toward — rarely seen but devastating."
+  },
+  {
+    "id": "ABJ-041",
+    "name": "Archmage's Seal",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 4,
+    "costText": "SSSS",
+    "cost": {
+      "V": 0,
+      "S": 4,
+      "M": 0
+    },
+    "text": "Cancel all spells currently on the stack. Neither player may cast spells or play Reactions until the start of your next turn.",
+    "comment": "Board-reset Reaction. Wipes the entire stack, not just one spell. For epic late-game stalebreaks. A true Archmage moment."
+  },
+  {
+    "id": "ABJ-042",
+    "name": "Warden's Wrath",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 4,
+    "costText": "SSSS",
+    "cost": {
+      "V": 0,
+      "S": 4,
+      "M": 0
+    },
+    "text": "Deal damage to your opponent equal to your current HP.",
+    "comment": "Scales with survivability — the more damage you have absorbed and prevented over the course of the game"
+  },
+  {
+    "id": "ABJ-043",
+    "name": "Final Reckoning",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 4,
+    "costText": "SSSM",
+    "cost": {
+      "V": 0,
+      "S": 3,
+      "M": 1
+    },
+    "text": "Deal 4 damage to your opponent for each round that has passed in this match.",
+    "comment": "Late-game bomb that rewards survival over time. In a round 7-8 game this deals 28-32 damage — enough to close from nearly full HP. The SSSM cost mirrors Ward Eternal, putting both at the same premium. A player has to choose which Level 4 bomb to build their deck toward."
+  },
+  {
+    "id": "ABJ-044",
+    "name": "Null Burst",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 4,
+    "costText": "SSSS",
+    "cost": {
+      "V": 0,
+      "S": 4,
+      "M": 0
+    },
+    "text": "Cancel all spells currently being cast by your opponent. Deal 3 damage for each spell cancelled this way.",
+    "comment": "Offensive version of Archmage's Seal. Where Archmage's Seal stops everything and freezes the game, Null Burst stops everything and punishes it. If your opponent has 3 spells on the stack this hits for 9. Rewards understanding when your opponent is likely to stack multiple casts."
+  },
+  {
+    "id": "ABJ-045",
+    "name": "Collapse the Veil",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 4,
+    "costText": "SSSS",
+    "cost": {
+      "V": 0,
+      "S": 4,
+      "M": 0
+    },
+    "text": "Destroy all Wards in play (yours and your opponent's). Deal 3 damage to your opponent for each Ward destroyed this way.",
+    "comment": "Board wipe for the Ward layer. Destroys everything — including your own — and deals 3 per Ward. Creates a dramatic reset moment late in the game and rewards whoever had more Wards built up. The self-destruction cost prevents it from being purely one-sided."
+  },
+  {
+    "id": "EVO-001",
+    "name": "Spark",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 2 damage to your opponent.",
+    "comment": "Baseline 1V damage. Mirrors Echo Shield as a clean reference point: a 1V spark hits for exactly the amount Echo Shield prevents on a Warded opponent."
+  },
+  {
+    "id": "EVO-002",
+    "name": "Firebolt",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 3 damage to your opponent. Discard 1 random card from your hand.",
+    "comment": "Premium 1V damage that burns a card to push damage through — captures the school's identity of spending resources faster than recovery."
+  },
+  {
+    "id": "EVO-003",
+    "name": "Burning Hands",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 1 damage. Place 1 Burn marker on your opponent. (At the start of each of your opponent's turns, each Burn marker on them deals 1 damage. Burns expire at end of round.)",
+    "comment": "First Burn card establishes the keyword. DoT is Evocation's answer to Abjuration's slow defensive game — it ticks while the opponent is busy building Wards."
+  },
+  {
+    "id": "EVO-004",
+    "name": "Searing Word",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 2 damage. Your opponent discards 1 random component card from their hand."
+  },
+  {
+    "id": "EVO-005",
+    "name": "Catalyst",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Until the end of the round, your damaging spells deal +1 damage."
+  },
+  {
+    "id": "EVO-006",
+    "name": "Kindle",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Place 2 Burn markers on your opponent."
+  },
+  {
+    "id": "EVO-007",
+    "name": "Wild Surge",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Discard 1 card from your hand. Deal 1 damage to your opponent for each component symbol on the discarded card.",
+    "comment": "Rewards decks that lean into multi-symbol cards. A discarded VSM tri-component deals 3 damage for a single V cast."
+  },
+  {
+    "id": "EVO-008",
+    "name": "Volatile Charge",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Take 1 damage. Deal 3 damage to your opponent."
+  },
+  {
+    "id": "EVO-009",
+    "name": "Battery",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "VM",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Deal 2 damage. Draw 1 card from your Resource Deck.",
+    "comment": "The signature Evocation/Divination splash card. Costs the dual to discourage pure Evo decks from running it for free card advantage."
+  },
+  {
+    "id": "EVO-010",
+    "name": "Crackle",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 1 damage to your opponent. Deal 2 additional damage to a target Ward they control."
+  },
+  {
+    "id": "EVO-011",
+    "name": "Inferno Lance",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 4 damage to your opponent."
+  },
+  {
+    "id": "EVO-012",
+    "name": "Hex Bolt",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 1,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 3 damage. This spell cannot be the target of Reactions.",
+    "comment": "Direct counterplay to Phase Shift and other Reaction-based removal — Evocation's tax on Abjuration's reaction-heavy gameplan."
+  },
+  {
+    "id": "EVO-013",
+    "name": "Backdraft",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "When your opponent casts a spell, deal 2 damage to them. The spell still resolves."
+  },
+  {
+    "id": "EVO-014",
+    "name": "Searing Riposte",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "When a spell or effect prevents or reduces damage you would deal, deal 2 damage to your opponent.",
+    "comment": "Punishes Echo Shield and Dampen specifically. Recovers tempo when the opponent successfully blunts your offense."
+  },
+  {
+    "id": "EVO-015",
+    "name": "Volatile Bolt",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 1,
+    "costText": "V",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 0
+    },
+    "text": "When your opponent attaches a Material (M) component card to a prepared spell, deal 2 damage to them.",
+    "comment": "The Divination hate-piece. Reinforces the rock-paper-scissors triangle: Evocation should beat pure Divination strategies."
+  },
+  {
+    "id": "EVO-016",
+    "name": "Combust",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 1,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "When your opponent plays a Reaction, deal 4 damage to them. The Reaction still resolves."
+  },
+  {
+    "id": "EVO-017",
+    "name": "Fireball",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 5 damage to your opponent.",
+    "comment": "Iconic spell at iconic cost. Anchors the L2 power curve."
+  },
+  {
+    "id": "EVO-018",
+    "name": "Lightning Bolt",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 4 damage to your opponent. This damage cannot be reduced below 1.",
+    "comment": "Damage-reduction effects like Dampen can chip Evo damage to nothing — Lightning Bolt guarantees a sting always lands."
+  },
+  {
+    "id": "EVO-019",
+    "name": "Inferno",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 3 damage. Place 2 Burn markers on your opponent."
+  },
+  {
+    "id": "EVO-020",
+    "name": "Scorching Ray",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 2 damage divided as you choose among your opponent and any Wards they control (minimum 1 damage to each chosen target). Up to three targets total.",
+    "comment": "Multi-target answer to Ward stacking. Lets Evocation chip through a Ritual Ward + Aegis Eternal board without overcommitting on a single spell."
+  },
+  {
+    "id": "EVO-021",
+    "name": "Detonate",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Discard your hand. Deal 2 damage to your opponent for each card discarded this way.",
+    "comment": "The all-in turn. Pairs naturally with hand-fixing Items or a freshly drawn 5-card opening hand."
+  },
+  {
+    "id": "EVO-022",
+    "name": "Wildfire",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Place 3 Burn markers on your opponent. Until the end of the round, Burn markers on your opponent also trigger at the start of your turns.",
+    "comment": "Doubles the Burn tick rate for the round. The Burn-archetype payoff at L2."
+  },
+  {
+    "id": "EVO-023",
+    "name": "Channel Pyromancy",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Until the end of the round, your damaging spells deal +2 damage. You take 1 damage at the start of each of your turns this round.",
+    "comment": "Self-damage to power up — the school's design pillar in card form."
+  },
+  {
+    "id": "EVO-024",
+    "name": "Wrath of the Mage",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VM",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Deal 4 damage. Draw 1 card.",
+    "comment": "L2 V/M splash. Evo/Div decks get sticky tempo here."
+  },
+  {
+    "id": "EVO-025",
+    "name": "Ember Storm",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 1 damage to your opponent for each component card attached to their prepared spells.",
+    "comment": "Punishes the opponent for stockpiling — strong against players setting up a big Ritual Ward or Sanctum."
+  },
+  {
+    "id": "EVO-026",
+    "name": "Concussive Blast",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VS",
+    "cost": {
+      "V": 1,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Deal 3 damage. Until the end of the round, your opponent's Reaction spells cost 1 additional component to play.",
+    "comment": "Anti-Abjuration tax card. A successful cast makes every subsequent Reaction one component more painful."
+  },
+  {
+    "id": "EVO-027",
+    "name": "Maelstrom",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 2 damage. Deal 1 additional damage for each Burn marker on your opponent.",
+    "comment": "Burn-archetype finisher at L2. Wildfire + Maelstrom is the natural combo line."
+  },
+  {
+    "id": "EVO-028",
+    "name": "Searing Backlash",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "When your opponent casts a spell, deal damage to them equal to the number of components attached to that spell. The spell still resolves.",
+    "comment": "Scales with the opponent's biggest plays. A VVV cast invites a 3-damage backlash; a VVM cast the same."
+  },
+  {
+    "id": "EVO-029",
+    "name": "Mana Burn",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "VM",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Cancel target spell that requires a Material (M) component. Deal 2 damage to your opponent.",
+    "comment": "The Evocation parallel to Counterbind — same anti-school role but with damage tacked on rather than pure denial."
+  },
+  {
+    "id": "EVO-030",
+    "name": "Flame Riposte",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "When a spell deals damage to you, deal 3 damage to your opponent."
+  },
+  {
+    "id": "EVO-031",
+    "name": "Combustive Counter",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "VV",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 0
+    },
+    "text": "When your opponent plays a Reaction, deal 3 damage to them. The Reaction still resolves.",
+    "comment": "L2 upgrade of Combust. Stacking both means Reactions become extremely costly for an Abjuration opponent."
+  },
+  {
+    "id": "EVO-032",
+    "name": "Meteor",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 3,
+    "costText": "VVV",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 7 damage to your opponent.",
+    "comment": "L3 baseline raw damage benchmark."
+  },
+  {
+    "id": "EVO-033",
+    "name": "Chain Lightning",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 3,
+    "costText": "VVV",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 4 damage to your opponent. Then deal 2 damage to each Ward they control.",
+    "comment": "Sweeps a Ward-heavy board while still pressuring HP. The hard answer to a stacked Abjuration setup."
+  },
+  {
+    "id": "EVO-034",
+    "name": "Pyroclasm",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 3,
+    "costText": "VVV",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Discard your entire hand. Deal 2 damage to your opponent for each card discarded this way.",
+    "comment": "L3 version of Detonate. With a full hand this is 8-10 damage — the kind of all-in turn the doc describes as the school's core fantasy."
+  },
+  {
+    "id": "EVO-035",
+    "name": "Unstoppable Bolt",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 3,
+    "costText": "VVV",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 5 damage. This spell cannot be cancelled, redirected, or reduced.",
+    "comment": "Hard counter to Abjuration's denial suite. Once cast it WILL resolve — the opponent's only recourse is Wards."
+  },
+  {
+    "id": "EVO-036",
+    "name": "Conflagration",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 3,
+    "costText": "VVV",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Place 4 Burn markers on your opponent. Until the end of the round, each Burn marker on them deals an additional 1 damage when it triggers.",
+    "comment": "Top-end Burn payoff. With Wildfire already in play this turn dials damage to absurd levels — the Burn-archetype's haymaker."
+  },
+  {
+    "id": "EVO-037",
+    "name": "Elemental Wrath",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 3,
+    "costText": "VVV",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 3 damage. Deal an additional 2 damage for each Reaction your opponent has cast this round.",
+    "comment": "Punishes Abjuration directly. The longer they protected themselves the harder this hits."
+  },
+  {
+    "id": "EVO-038",
+    "name": "Cataclysm",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 3,
+    "costText": "VVM",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Deal 4 damage. Draw 2 cards.",
+    "comment": "L3 V/M premium. Evo/Div decks chain Cataclysm into a follow-up cast next turn."
+  },
+  {
+    "id": "EVO-039",
+    "name": "Voltaic Overload",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 3,
+    "costText": "VVV",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Take 3 damage. Deal 8 damage to your opponent.",
+    "comment": "Net 5 damage with self-harm built in. The riskiest L3 — best when you're ahead on the race or out of safer options."
+  },
+  {
+    "id": "EVO-040",
+    "name": "Sunburst",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 3,
+    "costText": "VVV",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Destroy all Wards your opponent controls. Deal damage to your opponent equal to the total HP of Wards destroyed this way.",
+    "comment": "The Ward-Collapse-mirrored spell. Inverts Abjuration's own win condition: instead of converting your Wards to damage you convert THEIRS."
+  },
+  {
+    "id": "EVO-041",
+    "name": "Combustive Sigil",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 3,
+    "costText": "VVS",
+    "cost": {
+      "V": 2,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Until the end of the round, each time your opponent plays a Reaction, deal 3 damage to them.",
+    "comment": "Lock-out card for the Abjuration matchup. Once this is on the table the opponent must decide whether defending is even worth it."
+  },
+  {
+    "id": "EVO-042",
+    "name": "Annihilation Strike",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 3,
+    "costText": "VVV",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 0
+    },
+    "text": "When your opponent casts a spell, deal damage equal to twice that spell's level. The spell still resolves.",
+    "comment": "Scales 2/4/6/8 against L1/L2/L3/L4 spells. Designed to make casting big spells against you feel awful."
+  },
+  {
+    "id": "EVO-043",
+    "name": "Final Riposte",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 3,
+    "costText": "VVM",
+    "cost": {
+      "V": 2,
+      "S": 0,
+      "M": 1
+    },
+    "text": "When a spell deals damage to you, deal that damage doubled to your opponent."
+  },
+  {
+    "id": "EVO-044",
+    "name": "Cinder Storm",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 3,
+    "costText": "VVV",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 0
+    },
+    "text": "When your opponent casts a spell or Reaction, deal 6 damage to them. The opponent's card still resolves."
+  },
+  {
+    "id": "EVO-045",
+    "name": "Apocalypse",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 4,
+    "costText": "VVVV",
+    "cost": {
+      "V": 4,
+      "S": 0,
+      "M": 0
+    },
+    "text": "Deal 12 damage to your opponent. This spell cannot be cancelled, prevented, redirected, or reduced.",
+    "comment": "The signature finisher. Mirrors Absolute Defense in scope but inverted: where Absolute Defense ends a round in stalemate Apocalypse just ends the game."
+  },
+  {
+    "id": "EVO-046",
+    "name": "Phoenix Ascendant",
+    "school": "Evocation",
+    "type": "Spell",
+    "level": 4,
+    "costText": "VVVM",
+    "cost": {
+      "V": 3,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Deal 6 damage. Until the end of the round, your damaging spells deal +2 damage and your Burn markers deal double damage.",
+    "comment": "L4 setup card for an Evo/Div deck that wants to chain spells in the same round. Best when there are still spell slots left to capitalize on."
+  },
+  {
+    "id": "EVO-047",
+    "name": "Pyromancer's Reckoning",
+    "school": "Evocation",
+    "type": "Reaction",
+    "level": 4,
+    "costText": "VVVS",
+    "cost": {
+      "V": 3,
+      "S": 1,
+      "M": 0
+    },
+    "text": "When you take damage from an opponent's spell, deal that damage tripled back to your opponent.",
+    "comment": "The school's lone L4 Reaction. A 5-damage Fireball into Reckoning is 15 damage back — the threat of this card sitting face-down is itself the deterrent."
+  },
+  {
+    "id": "DIV-001",
+    "name": "Insight",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Draw 1 card from your Resource Deck.",
+    "comment": "The school's baseline cantrip and clean reference point: 1 M for 1 card. The consistency engine every Divination deck is built around."
+  },
+  {
+    "id": "DIV-002",
+    "name": "Foresight",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Look at the top 3 cards of your Resource Deck. Put one into your hand and the rest back on top in any order.",
+    "comment": "Selection over raw draw. Smooths your next two turns and stacks the top of your deck for Premonition or Calculated Draw."
+  },
+  {
+    "id": "DIV-003",
+    "name": "Divine",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Look at the top 2 cards of your Resource Deck. Put one into your hand and the other on the bottom.",
+    "comment": "Cheap filtering. Trades a little card economy for the guarantee that you keep the piece you actually need."
+  },
+  {
+    "id": "DIV-004",
+    "name": "Augury",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Reveal the top card of your Resource Deck. If it is a Material (M) component, draw it. Otherwise, put it on the bottom.",
+    "comment": "Rewards a heavily tuned M deck — the more Material you run, the more often this draws. Quietly punishes greedy multi-school splashes."
+  },
+  {
+    "id": "DIV-005",
+    "name": "Premonition",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Draw 1 card. If it is a multi-symbol component card, draw an additional card.",
+    "comment": "Pays off the dual- and tri-component cards Divination leans on to hit off-color costs. A tuned deck turns this into a two-for-one."
+  },
+  {
+    "id": "DIV-006",
+    "name": "Recover",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Return target component card from your discard pile to your hand.",
+    "comment": "The signature Divination recursion piece named in the design doc. Recycles spent components so the deck effectively never runs dry — the core of out-resourcing a slow Abjuration opponent."
+  },
+  {
+    "id": "DIV-007",
+    "name": "Refocus",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Return a face-up component attached to one of your prepared spells to your hand.",
+    "comment": "Pick a component back up to re-aim it at a different spell. Pure tempo — undoes a misread or frees a piece for a better line."
+  },
+  {
+    "id": "DIV-008",
+    "name": "Scry Glyph",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Look at the top card of each player's Resource Deck. You may put either one on the bottom of its owner's deck.",
+    "comment": "Information plus light disruption. Seeing — and pruning — the opponent's next draw is quietly powerful in a long grind."
+  },
+  {
+    "id": "DIV-009",
+    "name": "Attune",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Until the end of the round, the next component you attach to a prepared spell counts as having one additional symbol of a type you choose.",
+    "comment": "The precision fixer: bridges an off-color cost when you're a single symbol short. Embodies the doc's 'right piece at the right time.'"
+  },
+  {
+    "id": "DIV-010",
+    "name": "Mind's Eye",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Draw 1 card, then put one card from your hand on top of your Resource Deck.",
+    "comment": "Loots without losing cards. Stashes a situational piece for later while digging toward what you need now."
+  },
+  {
+    "id": "DIV-011",
+    "name": "Foretell",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Look at your opponent's hand.",
+    "comment": "Cheap information. Against a reactive Abjuration deck, knowing which counters they hold lets you sequence safely around them."
+  },
+  {
+    "id": "DIV-012",
+    "name": "Omen",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Look at the top 4 cards of your Resource Deck. Put one Material (M) component from among them into your hand and the rest on the bottom in any order.",
+    "comment": "A focused dig that rewards a Material-dense deck. Finds the symbol you need while burying what you don't."
+  },
+  {
+    "id": "DIV-014",
+    "name": "Anticipate",
+    "school": "Divination",
+    "type": "Reaction",
+    "level": 1,
+    "costText": "M",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 1
+    },
+    "text": "When your opponent casts a spell, draw 1 card.",
+    "comment": "You saw it coming. A Reaction that stops nothing — it simply converts the opponent's tempo into your card advantage."
+  },
+  {
+    "id": "DIV-015",
+    "name": "Reclaim",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Return up to 2 component cards from your discard pile to your hand.",
+    "comment": "Scales the recursion plan. Two pieces back from the discard in one cast is how Divination refuels mid-grind."
+  },
+  {
+    "id": "DIV-016",
+    "name": "Seek",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Search your Resource Deck for a component card, reveal it, add it to your hand, then shuffle.",
+    "comment": "Consistency incarnate — fetch the exact symbol or dual you're missing. The tutor that lets Divination always have the right piece."
+  },
+  {
+    "id": "DIV-017",
+    "name": "Foreknowledge",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Look at your opponent's hand, then draw 1 card.",
+    "comment": "Information with a card attached — the value-positive upgrade of Foretell. Reads their plan and pays you for looking."
+  },
+  {
+    "id": "DIV-018",
+    "name": "Alchemy",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Discard any number of cards, then draw that many cards.",
+    "comment": "Mass filtering. Trade a fistful of off-color bricks for fresh cards without losing card economy."
+  },
+  {
+    "id": "DIV-019",
+    "name": "Unbind",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Destroy target Ward or ongoing effect. Draw 1 card.",
+    "comment": "A big reason Divination beats Abjuration: it dismantles the Ward shell for free and replaces the card it spent. Nearly dead against Evocation, which runs no Wards."
+  },
+  {
+    "id": "DIV-020",
+    "name": "Foreclosure",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Your opponent puts the top 2 cards of their Resource Deck into their discard pile.",
+    "comment": "Opens the alternate win condition — decking the opponent out. Slow but inevitable against a defensive deck that wants long rounds."
+  },
+  {
+    "id": "DIV-021",
+    "name": "Quick Study",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Draw 2 cards, then put one card from your hand on top of your Resource Deck.",
+    "comment": "Net card advantage with a setup rider. Bank a situational piece on top for next turn while pulling ahead now."
+  },
+  {
+    "id": "DIV-022",
+    "name": "Index",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Look at the top 5 cards of your Resource Deck and put them back in any order.",
+    "comment": "Stacks your next several turns perfectly. Unflashy, but in a grind it is how Divination guarantees it never bricks."
+  },
+  {
+    "id": "DIV-023",
+    "name": "Far Sight",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Look at the top 3 cards of your opponent's Resource Deck. You may put one of them into their discard pile.",
+    "comment": "Information and light mill in one. Strips an answer off the top before they ever see it."
+  },
+  {
+    "id": "DIV-024",
+    "name": "Counter-Plan",
+    "school": "Divination",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "When your opponent casts a spell, return target component attached to it to their hand. If the spell no longer meets its cost, cancel it.",
+    "comment": "Divination's answer to the stack: not a wall, but a scalpel. Pull one symbol and a greedy, exactly-met spell fizzles itself."
+  },
+  {
+    "id": "DIV-025",
+    "name": "Read the Signs",
+    "school": "Divination",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "MM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 2
+    },
+    "text": "When your opponent casts a spell, look at their hand and draw 1 card.",
+    "comment": "The reactive value engine. Every cast they make tells you their hand and hands you a card."
+  },
+  {
+    "id": "DIV-026",
+    "name": "Misdirection",
+    "school": "Divination",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "MS",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 1
+    },
+    "text": "Change the target of target spell to another legal target of your choice.",
+    "comment": "Off-color MS splash signaling Abjuration tech. Send the opponent's removal or burn into a Ward — or somewhere harmless. The classic Divination gotcha."
+  },
+  {
+    "id": "DIV-027",
+    "name": "Borrowed Spell",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 2,
+    "costText": "MV",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 1
+    },
+    "text": "Choose a Level 1 spell in your discard pile. Cast a copy of it this turn without paying its cost.",
+    "comment": "The Evo/Div splash payoff — recast a spent Level 1 spell from your own discard for free. Patches Divination's thin damage with borrowed offense."
+  },
+  {
+    "id": "DIV-028",
+    "name": "Echoes of the Past",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 3,
+    "costText": "MMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 3
+    },
+    "text": "Shuffle your discard pile into your Resource Deck, then draw 2 cards.",
+    "comment": "Refills the whole deck mid-game — anti-deck-out insurance and a huge tempo reset. Against an Abjuration grind, you simply never run out."
+  },
+  {
+    "id": "DIV-029",
+    "name": "Calculated Draw",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 3,
+    "costText": "MMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 3
+    },
+    "text": "Search your Resource Deck for any card and put it on top, then draw 3 cards.",
+    "comment": "The payoff tutor: arrange the perfect topdeck, then bury yourself in cards. Card advantage on this scale is how Divination overpowers a defensive opponent."
+  },
+  {
+    "id": "DIV-030",
+    "name": "Manipulate Fate",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 3,
+    "costText": "MMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 3
+    },
+    "text": "Look at the top 5 cards of your Resource Deck, take 2 into your hand, and put the rest back on top in any order.",
+    "comment": "Deep selection plus advantage. Loads your hand and stacks the deck behind it in a single cast."
+  },
+  {
+    "id": "DIV-031",
+    "name": "Perfect Information",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 3,
+    "costText": "MMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 3
+    },
+    "text": "Look at your opponent's hand and the top 3 cards of their Resource Deck, then draw 2 cards.",
+    "comment": "The information bomb. Total read on their next several turns while you pull two cards ahead — the precision school at full power."
+  },
+  {
+    "id": "DIV-032",
+    "name": "Entropy",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 3,
+    "costText": "MMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 3
+    },
+    "text": "Your opponent puts the top 4 cards of their Resource Deck into their discard pile.",
+    "comment": "The mill plan's mid-game accelerant. Four cards a cast adds up fast against a slow deck that wants the game to go long."
+  },
+  {
+    "id": "DIV-033",
+    "name": "Premeditate",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 3,
+    "costText": "MMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 3
+    },
+    "text": "Search your Resource Deck for up to 2 component cards, reveal them, add them to your hand, then shuffle.",
+    "comment": "Double tutor — assemble both halves of an off-color cost at once. The setup that makes a Level 4 turn a certainty rather than a hope."
+  },
+  {
+    "id": "DIV-034",
+    "name": "Convergent Future",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 3,
+    "costText": "MMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 3
+    },
+    "text": "Draw cards until you have 7 cards in your hand.",
+    "comment": "Catch-up card advantage. The further behind on cards you are, the bigger it hits — swings a topdeck war hard in your favor."
+  },
+  {
+    "id": "DIV-035",
+    "name": "Spellbind",
+    "school": "Divination",
+    "type": "Reaction",
+    "level": 3,
+    "costText": "MMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 3
+    },
+    "text": "When your opponent casts a spell, place a Seal counter on it. It does not resolve and returns to their prepared spells face-down; it cannot be cast again this round.",
+    "comment": "Borrows Abjuration's Seal counter to lock a threat down for the round. Keeps their components attached but denies the cast — pure tempo theft."
+  },
+  {
+    "id": "DIV-036",
+    "name": "Rewind",
+    "school": "Divination",
+    "type": "Reaction",
+    "level": 3,
+    "costText": "MMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 3
+    },
+    "text": "Return target spell that is being cast to its owner's prepared spells face-down. Return all components attached to it to their owner's hand.",
+    "comment": "Not a counter — a do-over you force on the opponent. They keep the cards but lose the turn and the surprise. Divination's heaviest piece of stack interaction."
+  },
+  {
+    "id": "DIV-037",
+    "name": "Borrowed Power",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 3,
+    "costText": "MMV",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Choose a Level 1 or 2 spell in any discard pile. Cast a copy of it this turn without paying its cost.",
+    "comment": "Off-color MMV. Recur any spent spell — yours or theirs. The Evo/Div splash that finally gives a manipulation deck a real kill turn."
+  },
+  {
+    "id": "DIV-038",
+    "name": "Foretold Strike",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 3,
+    "costText": "MMV",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 2
+    },
+    "text": "Draw 2 cards. Deal 1 damage to your opponent for each card in your hand above five.",
+    "comment": "Divination's one concession to a clock: it only rewards the overflowing hand the deck naturally builds, and it costs off-color V. Still far too slow to race Evocation."
+  },
+  {
+    "id": "DIV-039",
+    "name": "Mind Theft",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 3,
+    "costText": "MMS",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 2
+    },
+    "text": "Look at your opponent's hand and choose a card. They discard it.",
+    "comment": "Off-color MMS hand attack. Rips the specific counter or bomb you spotted with Foretell out of their plan before they can use it."
+  },
+  {
+    "id": "DIV-040",
+    "name": "Omniscience",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 4,
+    "costText": "MMMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 4
+    },
+    "text": "Draw 4 cards. Your spells cannot be countered or redirected this turn.",
+    "comment": "The archmage's card-advantage engine. Draws into a kill and slams the door on the opponent's Reactions in the same breath."
+  },
+  {
+    "id": "DIV-041",
+    "name": "Eternal Return",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 4,
+    "costText": "MMMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 4
+    },
+    "text": "Return all component cards from your discard pile to your hand.",
+    "comment": "Empties the discard back into your hand. After a long grind this is a dozen-plus cards at once — the ultimate refuel and the recursion school's signature."
+  },
+  {
+    "id": "DIV-042",
+    "name": "Grand Design",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 4,
+    "costText": "MMMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 4
+    },
+    "text": "Search your Resource Deck for up to 3 cards, reveal them, add them to your hand, then shuffle.",
+    "comment": "Assemble any combination you want in one cast. Total control over what comes next — the aspirational Divination payoff."
+  },
+  {
+    "id": "DIV-043",
+    "name": "Oblivion",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 4,
+    "costText": "MMMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 4
+    },
+    "text": "Your opponent shuffles their hand into their Resource Deck, then puts the top 8 cards of their Resource Deck into their discard pile.",
+    "comment": "The deck-out win condition made real. Against an Abjuration deck content to durdle behind Wards, this ends the game from the deck itself."
+  },
+  {
+    "id": "DIV-044",
+    "name": "Time Spiral",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 4,
+    "costText": "MMMM",
+    "cost": {
+      "V": 0,
+      "S": 0,
+      "M": 4
+    },
+    "text": "Each player shuffles their hand and discard pile into their Resource Deck, then draws 5 cards.",
+    "comment": "Symmetric on paper, lopsided in practice — you fire it when your deck is thin and your plan is set, resetting the grind entirely on your terms."
+  },
+  {
+    "id": "DIV-045",
+    "name": "Convergence",
+    "school": "Divination",
+    "type": "Spell",
+    "level": 4,
+    "costText": "MMMV",
+    "cost": {
+      "V": 1,
+      "S": 0,
+      "M": 3
+    },
+    "text": "Cast a copy of target spell in any discard pile this turn without paying its cost. You may cast one additional spell this turn.",
+    "comment": "Off-color MMMV ultimate. Recur the biggest spell either player has cast and chain it into another — the Evo/Div deck's explosive finish."
+  },
+  {
+    "id": "ITM-001",
+    "name": "Scrying Lens",
+    "school": "Neutral",
+    "type": "Item",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Look at the top 2 cards of your Resource Deck. Put one into your hand and the other back on top.",
+    "role": "Complement — Any (consistency)",
+    "comment": "Card-neutral selection — no advantage, so it's safe at unlimited. Smooths every draw without accelerating you."
+  },
+  {
+    "id": "ITM-002",
+    "name": "Component Pouch",
+    "school": "Neutral",
+    "type": "Item",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Reveal the top card of your Resource Deck. If it is a component card, put it into your hand; otherwise, put it on the bottom.",
+    "role": "Complement — Any",
+    "comment": "Digs only for components and whiffs in trainer-heavy hands, which self-limits how many you'd run."
+  },
+  {
+    "id": "ITM-003",
+    "name": "Cantrip Scroll",
+    "school": "Neutral",
+    "type": "Item",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Draw a card, then put a card from your hand on top of your Resource Deck.",
+    "role": "Complement — Any",
+    "comment": "Card-neutral loot that banks a situational card for next turn. Pure smoothing, no card gain."
+  },
+  {
+    "id": "ITM-004",
+    "name": "Spare Reagents",
+    "school": "Neutral",
+    "type": "Item",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Discard a card, then draw a card.",
+    "role": "Complement — Any (anti-flood)",
+    "comment": "Turns a brick into a fresh card with no net advantage — fair to run in any quantity."
+  },
+  {
+    "id": "ITM-005",
+    "name": "Transmuter's Stone",
+    "school": "Neutral",
+    "type": "Item",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Choose a basic (single-symbol) component card in your hand. Until end of turn, treat it as a different basic component of your choice.",
+    "role": "Complement — Any (color-fixing)",
+    "comment": "Fixes color but not count, so it helps splashes hit off-color symbols without trivially building doubles. Only reshapes a card you already hold."
+  },
+  {
+    "id": "ITM-006",
+    "name": "Mnemonic Charm",
+    "school": "Neutral",
+    "type": "Item",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Return target component card from your discard pile to the top of your Resource Deck.",
+    "role": "Complement — Any (recursion)",
+    "comment": "Deliberately slower than Divination's Recover (top of deck, not hand) so it complements that school instead of replacing it."
+  },
+  {
+    "id": "ITM-007",
+    "name": "Empowered Chalk",
+    "school": "Neutral",
+    "type": "Item",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "The next damaging spell you cast this turn deals +1 damage.",
+    "role": "Complement — Evocation / aggro",
+    "comment": "Each one is a card spent, so stacking takes real investment; +1 is small enough to leave unlimited."
+  },
+  {
+    "id": "ITM-008",
+    "name": "Bulwark Shard",
+    "school": "Neutral",
+    "type": "Item",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "A Ward you control gains 2 HP.",
+    "role": "Complement — Abjuration",
+    "comment": "Free Ward sustain, but dead with no Ward in play — strictly a Ward-deck include."
+  },
+  {
+    "id": "GAM-001",
+    "name": "Arcane Study",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Draw 2 cards, then put a card from your hand on top of your Resource Deck.",
+    "role": "Complement — Any (draw)",
+    "comment": "Net +1 with a bank — the workhorse draw. The one-Gambit-per-turn cap is the main brake on free card advantage."
+  },
+  {
+    "id": "GAM-002",
+    "name": "Forbidden Tome",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Discard your hand, then draw 4 cards.",
+    "role": "Complement — Any (anti-flood / reset)",
+    "comment": "Costs your current hand, so it's a real decision rather than free value. Best when flooded or empty."
+  },
+  {
+    "id": "GAM-003",
+    "name": "Mentor's Guidance",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Discard a card, then search your Resource Deck for any one card, reveal it, add it to your hand, and shuffle.",
+    "role": "Complement — Any (consistency)",
+    "comment": "Universal tutor; the discard cost plus one-per-turn keep it honest. The enabler that lets splash decks find their off-color piece."
+  },
+  {
+    "id": "GAM-004",
+    "name": "Recharge",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Search your Resource Deck for a same-symbol dual component (VV, SS, or MM), reveal it, add it to your hand, and shuffle.",
+    "role": "Complement — Any (ramp)",
+    "comment": "Tutors the doubles that pay for L3/L4 costs — the clean way to make high-level ramp consistent without touching the 2-card cap."
+  },
+  {
+    "id": "GAM-005",
+    "name": "Salvage",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Return target component card from your discard pile to your hand.",
+    "role": "Complement — Any (recursion)",
+    "comment": "One component back, once per turn — slower than Divination's spell recursion, so it supports the plan rather than owning it."
+  },
+  {
+    "id": "GAM-006",
+    "name": "Premonition Charm",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Look at the top 4 cards of your Resource Deck and put them back on top in any order.",
+    "role": "Complement — Any (anti-brick)",
+    "comment": "Deep deck sculpting with no card gain. One-per-turn keeps it below Divination's Index."
+  },
+  {
+    "id": "GAM-007",
+    "name": "Ritual Circle",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Reveal the top card of your Resource Deck. If it is a component card, attach it to one of your prepared spells; otherwise, put it into your hand.",
+    "role": "Complement — Any (ramp / tempo)",
+    "comment": "A bonus attachment beyond your one-per-turn limit, but off the top of the deck — ramp with built-in variance."
+  },
+  {
+    "id": "GAM-008",
+    "name": "Overclock",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "This turn, you may cast 1 additional spell, provided you have a free spell slot and its components are already attached.",
+    "role": "Complement — Combo / aggro",
+    "comment": "Extra cast is the biggest tempo swing here — gated by needing a second spell pre-assembled and a free slot. The highest-variance trainer; playtest before printing many."
+  },
+  {
+    "id": "GAM-009",
+    "name": "Second Wind",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Gain 5 HP.",
+    "role": "Counter — Evocation / aggro",
+    "comment": "The anti-aggro stabilizer. One-per-turn stops burst healing, and it's dead against control, so it's a tech include, not a staple."
+  },
+  {
+    "id": "GAM-010",
+    "name": "Battle Trance",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Lose 2 HP. The next spell you cast this turn deals +3 damage.",
+    "role": "Complement — Evocation / aggro",
+    "comment": "Risk-for-reward, on theme for the burn school. Self-damage plus one-per-turn keep the lethal-turn push in check."
+  },
+  {
+    "id": "GAM-011",
+    "name": "Aegis Charm",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Create a Ward with 3 HP.",
+    "role": "Complement — Any (defense splash)",
+    "comment": "Gives any school a taste of defense, but deliberately vanilla — it can't match Abjuration's Ward engine of buffs, recursion, and damage conversion."
+  },
+  {
+    "id": "GAM-012",
+    "name": "Dispelling Powder",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Destroy target Ward or ongoing effect.",
+    "role": "Counter — Abjuration / Wards",
+    "comment": "The universal answer to the Ward shell; completely dead against Evocation, so running it is a matchup choice."
+  },
+  {
+    "id": "GAM-013",
+    "name": "Quenching Salts",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Remove all Burn markers from yourself, then gain 1 HP for each marker removed this way.",
+    "role": "Counter — Evocation / Burn",
+    "comment": "Pure anti-Burn tech, useless outside that matchup. The lifegain rider rewards letting Burn stack before you clear it."
+  },
+  {
+    "id": "GAM-014",
+    "name": "Resolve",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Until the start of your next turn, your spells cannot be canceled or redirected by your opponent.",
+    "role": "Counter — Abjuration (reactive)",
+    "comment": "Pushes a key spell through a wall of counters — the aggro and combo answer to a control deck."
+  },
+  {
+    "id": "GAM-015",
+    "name": "Iron Will",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Until the start of your next turn, your opponent cannot make you discard cards or remove cards from your hand or prepared spells.",
+    "role": "Counter — Divination (hand attack)",
+    "comment": "Shields a planned turn from hand-stripping like Mind Theft or Interrupt. Narrow and proactive."
+  },
+  {
+    "id": "GAM-016",
+    "name": "Sealed Vault",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Shuffle your discard pile into your Resource Deck.",
+    "role": "Counter — Divination (mill / deck-out)",
+    "comment": "The anti-deck-out tech — refill so the mill plan can't close. Dead against a fast clock."
+  },
+  {
+    "id": "GAM-017",
+    "name": "Mana Sickness",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Until the start of your next turn, your opponent cannot draw cards except their normal draw at the start of their turn.",
+    "role": "Counter — Divination (draw engine)",
+    "comment": "Shuts off the card-advantage turn. Useless against aggro, premium against a draw-heavy deck."
+  },
+  {
+    "id": "GAM-018",
+    "name": "Spite",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Until the start of your next turn, each time your opponent plays a Reaction spell, they lose 2 HP.",
+    "role": "Counter — Abjuration (reactive)",
+    "comment": "A free, splashable version of Evocation's reaction-punishers; dead against a deck that isn't holding up Reactions."
+  },
+  {
+    "id": "GAM-019",
+    "name": "Saboteur's Kit",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Your opponent puts the top 3 cards of their Resource Deck into their discard pile.",
+    "role": "Counter / Complement — Mill",
+    "comment": "Free mill for any deck — supports a deck-out plan or pressures a fragile combo deck. Modest at 3 cards and one-per-turn."
+  },
+  {
+    "id": "GAM-020",
+    "name": "Disarm",
+    "school": "Neutral",
+    "type": "Gambit",
+    "level": null,
+    "costText": null,
+    "cost": null,
+    "text": "Look at your opponent's hand. You may choose a component card in it; that card's owner puts it on top of their Resource Deck.",
+    "role": "Counter — Any (tempo / info)",
+    "comment": "Soft disruption: bounce a key piece for a tempo hit (they redraw it, so it's not a two-for-one) and read their hand."
+  }
+]

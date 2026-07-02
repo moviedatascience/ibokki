@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@ibokki/cards": ["../cards/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

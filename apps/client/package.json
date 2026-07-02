@@ -1,0 +1,24 @@
+{
+  "name": "@ibokki/client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ibokki web client — Vite + React shell around a PixiJS board. Renders the play server's redacted state (spatial 'ritual table' layout) and drives it via the /api contract.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "pixi.js": "^8.6.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@ibokki/import-cards",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Converts ibokki_spell_cards.xlsx into typed card data for @ibokki/cards. Zero runtime deps.",
+  "main": "./src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  }
+}

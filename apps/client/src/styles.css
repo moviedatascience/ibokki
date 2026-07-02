@@ -1,0 +1,154 @@
+:root {
+  color-scheme: dark;
+  --evo: #e0533d;
+  --abj: #4a90e2;
+  --div: #a070e0;
+  --neu: #8a90a0;
+  --felt: #0e1411;
+  --panel: #161b22;
+  --panel-2: #11161d;
+  --line: #2b313c;
+  --ink: #e6e7ea;
+  --mute: #9aa0ad;
+  --good: #8ce99a;
+  --warn: #ffd27d;
+  --bad: #ff8b8b;
+  --act: #ffd36b;
+}
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--felt);
+  color: var(--ink);
+  font: 14px/1.45 system-ui, "Segoe UI", sans-serif;
+  overflow: hidden;
+}
+
+.app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+
+/* ---- top strip: round · phase · priority ---- */
+.topbar {
+  display: flex; align-items: center; gap: 18px;
+  padding: 8px 18px; height: 46px; flex: none;
+  background: var(--panel-2); border-bottom: 1px solid var(--line);
+  letter-spacing: .06em; font-size: 12.5px;
+}
+.topbar .brand { font-weight: 800; letter-spacing: .12em; color: #d7c4ff; font-size: 15px; }
+.topbar .seg { color: var(--mute); text-transform: uppercase; }
+.topbar .seg b { color: var(--ink); font-weight: 700; }
+.topbar .grow { flex: 1; }
+.topbar .prio { padding: 2px 10px; border-radius: 99px; border: 1px solid var(--line); }
+.topbar .prio.you { color: #12140c; background: var(--act); border-color: var(--act); font-weight: 700; }
+.topbar .prio.wait { color: var(--warn); }
+
+/* ---- main split: board | rail ---- */
+.main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 300px; }
+.stage { position: relative; min-width: 0; overflow: hidden; }
+.canvas-host { position: absolute; inset: 0; }
+.canvas-host canvas { display: block; width: 100%; height: 100%; }
+
+/* ---- right rail panels ---- */
+.rail {
+  border-left: 1px solid var(--line); background: var(--panel);
+  padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: auto;
+}
+.panel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.panel h3 { margin: 0 0 8px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--mute); }
+.detail .dname { font-weight: 700; color: #d7c4ff; }
+.detail .dmeta { color: var(--mute); font-size: 12px; margin: 2px 0 4px; }
+.detail .dtext { font-size: 12.5px; color: #c7ccd6; }
+.log { max-height: 240px; overflow: auto; white-space: pre-wrap; margin: 0;
+  font: 11.5px/1.4 ui-monospace, Menlo, monospace; color: #aeb6c4; }
+
+/* ---- controls ---- */
+label.field { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--mute); margin-bottom: 6px; }
+select, button { font: inherit; }
+select { background: #0e1218; color: var(--ink); border: 1px solid #3a3f4d; border-radius: 6px; padding: 4px 7px; }
+button { background: #232a36; color: var(--ink); border: 1px solid #3a4150; border-radius: 7px; padding: 7px 12px; cursor: pointer; }
+button:hover { background: #2c3441; }
+button.primary { background: #2c3f63; border-color: #4670b0; }
+button.primary:hover { background: #34507e; }
+button:disabled { opacity: .4; cursor: default; }
+
+/* ---- floating action bar over the board ---- */
+.actionbar {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  padding: 8px 12px; max-width: 92%;
+  background: rgba(17, 22, 29, .82); border: 1px solid var(--line); border-radius: 12px;
+  backdrop-filter: blur(3px);
+}
+.actionbar .status { align-self: center; font-weight: 700; margin-right: 6px; }
+.actionbar .status.you { color: var(--good); }
+.actionbar .status.wait { color: var(--warn); }
+.actionbar .status.react { color: var(--act); }
+.actionbar .status.over { color: var(--bad); }
+
+/* ---- reaction / choice prompt, floats over the right of the table ---- */
+.prompt {
+  position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+  width: 232px; padding: 12px 14px;
+  background: rgba(17, 22, 29, .92); border: 1px solid var(--act); border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(255, 211, 107, .25), 0 8px 26px rgba(0, 0, 0, .5);
+}
+.prompt h4 { margin: 0 0 6px; font-size: 12px; color: var(--act); letter-spacing: .04em; }
+.prompt p { margin: 0 0 10px; font-size: 12px; color: #c7ccd6; }
+.prompt .row { display: flex; gap: 8px; }
+.prompt .choices { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.prompt .choice { font-size: 11px; padding: 5px 8px; border-radius: 6px; cursor: pointer;
+  background: #232a36; border: 1px solid #3a4150; }
+.prompt .choice:hover { background: #2c3441; border-color: var(--act); }
+
+.hint { color: var(--mute); font-size: 12px; }
+.err { color: var(--bad); font-size: 12px; }
+
+/* ---- prepare-phase spellbook bottom sheet ---- */
+.spellbook {
+  position: absolute; left: 50%; bottom: 66px; transform: translateX(-50%);
+  width: min(1200px, 96%); padding: 8px 10px;
+  background: rgba(17, 22, 29, .9); border: 1px solid var(--line); border-radius: 12px;
+  backdrop-filter: blur(3px);
+}
+.spellbook .sbhead {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 11px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;
+}
+.spellbook .sbpageno { text-transform: none; letter-spacing: normal; }
+.spellbook .sbbook { display: flex; align-items: stretch; gap: 8px; }
+.spellbook .sbturn {
+  flex: 0 0 auto; width: 30px; border-radius: 8px; font-size: 14px;
+  background: #1b2029; border: 1px solid var(--line); color: var(--ink); cursor: pointer;
+}
+.spellbook .sbturn:hover:not(:disabled) { background: #232c39; }
+.spellbook .sbturn:disabled { opacity: .3; cursor: default; }
+.spellbook .sbpage {
+  flex: 1; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px; padding-bottom: 4px;
+}
+
+/* A full card frame (2.5x3.5 proportions): school-tinted title band, art placeholder, type line,
+   rules text. Same placeholder language as the Pixi board cards — real art drops into .sbart later. */
+.sbcard {
+  aspect-ratio: 5 / 7; display: flex; flex-direction: column; overflow: hidden; cursor: pointer;
+  background: #1b2029; border: 1px solid var(--line); border-radius: 8px;
+}
+.sbcard.playable { outline: 2px solid var(--act); outline-offset: -1px; }
+.sbcard.playable:hover { background: #232c39; }
+.sbcard.dim { opacity: .45; cursor: default; }
+.sbcard .sbband {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 6px;
+  padding: 5px 8px; background: color-mix(in srgb, var(--school) 30%, transparent);
+}
+.sbcard .sbname { font-size: 12px; font-weight: 700; line-height: 1.15; }
+.sbcard .sbcost { font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700; color: #ffe6a6; white-space: nowrap; }
+.sbcard .sbart {
+  aspect-ratio: 2 / 1; border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--school) 38%, transparent) 0%, transparent 62%),
+    linear-gradient(165deg, color-mix(in srgb, var(--school) 22%, #131923) 0%, #10151d 100%);
+}
+.sbcard .sbtypeline { padding: 4px 8px 2px; font-size: 10px; color: var(--mute); }
+.sbcard .sbtext { padding: 2px 8px 7px; font-size: 10.5px; line-height: 1.35; color: #c9cdd6; overflow-y: auto; }
+.sbcard .sbslots { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; padding: 0 8px 7px; }
+.sbcard .sbslots button { font-size: 10px; padding: 2px 5px; border-radius: 5px; }

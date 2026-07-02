@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ibokki-playtest__new_match",
+      "mcp__ibokki-playtest__match_state",
+      "mcp__ibokki-playtest__act",
+      "mcp__ibokki-playtest__card",
+      "mcp__ibokki-playtest__simulate",
+      "mcp__ibokki-playtest__save_playtest"
+    ]
+  }
+}

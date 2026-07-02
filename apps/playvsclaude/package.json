@@ -1,0 +1,13 @@
+{
+  "name": "@ibokki/playvsclaude",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal local server to play a match in the browser against Claude (who acts via the HTTP API). Enforces per-player redaction so hands stay hidden.",
+  "main": "./src/server.ts",
+  "dependencies": {
+    "@ibokki/cards": "*",
+    "@ibokki/engine": "*",
+    "@ibokki/sim": "*"
+  }
+}
