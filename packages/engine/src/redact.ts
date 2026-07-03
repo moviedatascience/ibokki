@@ -24,6 +24,8 @@ interface SideCommon {
   wards: number[];
   /** Burn markers on this player. */
   burn: number;
+  /** Times this player's discard has recycled into their deck (exhaustion clock). Public. */
+  reshuffles: number;
   slotsUsedThisRound: number;
   slots: number;
   maxSpellLevel: number;
@@ -132,6 +134,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
       level: me.level,
       wards: me.wards.map((w) => w.hp),
       burn: me.burn,
+      reshuffles: me.reshuffles,
       slotsUsedThisRound: me.slotsUsedThisRound,
       slots: myTier.slots,
       maxSpellLevel: myTier.maxSpellLevel,
@@ -150,6 +153,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
       level: opp.level,
       wards: opp.wards.map((w) => w.hp),
       burn: opp.burn,
+      reshuffles: opp.reshuffles,
       slotsUsedThisRound: opp.slotsUsedThisRound,
       slots: oppTier.slots,
       maxSpellLevel: oppTier.maxSpellLevel,

@@ -41,7 +41,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Each Ward you control gains 1 HP.",
+    "text": "Each Ward you control gains 1 HP. If you control a Ward, deal 1 damage.",
     "comment": "Scales with Ward density. Weak early but synergizes with multi-Ward strategies at higher levels."
   },
   {
@@ -716,7 +716,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 1 damage. Place 1 Burn marker on your opponent. (At the start of each of your opponent's turns, each Burn marker on them deals 1 damage. Burns expire at end of round.)",
+    "text": "Deal 1 damage. Place 1 Burn marker on your opponent. (At the start of each of your opponent's turns, each Burn marker on them deals 1 damage; then one Burn marker is removed.)",
     "comment": "First Burn card establishes the keyword. DoT is Evocation's answer to Abjuration's slow defensive game — it ticks while the opponent is busy building Wards."
   },
   {
@@ -759,7 +759,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Place 2 Burn markers on your opponent."
+    "text": "Place 1 Burn marker on your opponent."
   },
   {
     "id": "EVO-007",
@@ -824,7 +824,7 @@
     "name": "Inferno Lance",
     "school": "Evocation",
     "type": "Spell",
-    "level": 1,
+    "level": 2,
     "costText": "VV",
     "cost": {
       "V": 2,
@@ -838,7 +838,7 @@
     "name": "Hex Bolt",
     "school": "Evocation",
     "type": "Spell",
-    "level": 1,
+    "level": 2,
     "costText": "VV",
     "cost": {
       "V": 2,
@@ -897,7 +897,7 @@
     "name": "Combust",
     "school": "Evocation",
     "type": "Reaction",
-    "level": 1,
+    "level": 2,
     "costText": "VV",
     "cost": {
       "V": 2,
@@ -1529,7 +1529,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Look at your opponent's hand.",
+    "text": "Look at your opponent's hand. Deal 1 damage.",
     "comment": "Cheap information. Against a reactive Abjuration deck, knowing which counters they hold lets you sequence safely around them."
   },
   {
@@ -1650,7 +1650,7 @@
       "M": 2
     },
     "text": "Your opponent puts the top 2 cards of their Resource Deck into their discard pile.",
-    "comment": "Opens the alternate win condition — decking the opponent out. Slow but inevitable against a defensive deck that wants long rounds."
+    "comment": "Accelerates the opponent’s exhaustion clock — every milled card brings their next reshuffle (and its escalating damage) closer."
   },
   {
     "id": "DIV-021",
@@ -1694,7 +1694,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Look at the top 3 cards of your opponent's Resource Deck. You may put one of them into their discard pile.",
+    "text": "Look at the top 3 cards of your opponent's Resource Deck. You may put one of them into their discard pile. Deal 1 damage.",
     "comment": "Information and light mill in one. Strips an answer off the top before they ever see it."
   },
   {
@@ -1770,7 +1770,7 @@
       "M": 3
     },
     "text": "Shuffle your discard pile into your Resource Deck, then draw 2 cards.",
-    "comment": "Refills the whole deck mid-game — anti-deck-out insurance and a huge tempo reset. Against an Abjuration grind, you simply never run out."
+    "comment": "A free reshuffle — resets your deck WITHOUT the exhaustion damage a forced recycle costs, then draws 2. Anti-mill and anti-exhaustion tech."
   },
   {
     "id": "DIV-029",
@@ -1995,7 +1995,7 @@
       "M": 4
     },
     "text": "Your opponent shuffles their hand into their Resource Deck, then puts the top 8 cards of their Resource Deck into their discard pile.",
-    "comment": "The deck-out win condition made real. Against an Abjuration deck content to durdle behind Wards, this ends the game from the deck itself."
+    "comment": "The mill haymaker — dumps 8 cards toward the opponent’s next exhaustion tick and scrambles their hand on the way."
   },
   {
     "id": "DIV-044",
@@ -2312,8 +2312,8 @@
     "costText": null,
     "cost": null,
     "text": "Shuffle your discard pile into your Resource Deck.",
-    "role": "Counter — Divination (mill / deck-out)",
-    "comment": "The anti-deck-out tech — refill so the mill plan can't close. Dead against a fast clock."
+    "role": "Counter — Divination (mill / exhaustion)",
+    "comment": "Anti-mill / anti-exhaustion tech — a free recycle that dodges the escalating reshuffle damage. Dead against a fast clock."
   },
   {
     "id": "GAM-017",
@@ -2349,7 +2349,7 @@
     "cost": null,
     "text": "Your opponent puts the top 3 cards of their Resource Deck into their discard pile.",
     "role": "Counter / Complement — Mill",
-    "comment": "Free mill for any deck — supports a deck-out plan or pressures a fragile combo deck. Modest at 3 cards and one-per-turn."
+    "comment": "Free mill for any deck — pushes the opponent toward their next exhaustion tick, or pressures a fragile combo deck. Modest at 3 cards and one-per-turn."
   },
   {
     "id": "GAM-020",

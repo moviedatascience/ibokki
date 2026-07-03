@@ -1,0 +1,26 @@
+# Merge into the site's deploy/docker-compose.prod.yml (services + volumes).
+services:
+  game:
+    image: ghcr.io/moviedatascience/ibokki-game:latest
+    restart: unless-stopped
+    volumes:
+      - ibokki_game_data:/app/data
+    environment:
+      - IBOKKI_BASE_URL=https://ibokki.com
+      - IBOKKI_PUBLIC_PATH=/play/
+      - IBOKKI_SECURE_COOKIES=1
+      - IBOKKI_DB=/app/data/ibokki.db
+      # OIDC against the site (see site-integration/README.md step 1)
+      - IBOKKI_OIDC_ISSUER=https://ibokki.com/o
+      - IBOKKI_OIDC_CLIENT_ID=${IBOKKI_OIDC_CLIENT_ID}
+      - IBOKKI_OIDC_CLIENT_SECRET=${IBOKKI_OIDC_CLIENT_SECRET}
+      - IBOKKI_OIDC_REDIRECT_URI=https://ibokki.com/play/api/auth/oidc/callback
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:7788/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    # No host port: only reachable via nginx on the internal network.
+
+volumes:
+  ibokki_game_data:

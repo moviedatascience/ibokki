@@ -1,4 +1,5 @@
 import type { CardCatalog, MatchState, School } from "../api.ts";
+import type { OnlineApi } from "../useMatch.ts";
 
 const SCHOOLS: School[] = ["Evocation", "Abjuration", "Divination"];
 
@@ -13,11 +14,41 @@ interface Props {
   setP1: (s: School) => void;
   setMode: (m: "bot" | "agent") => void;
   onNewGame: () => void;
+  online: OnlineApi;
+}
+
+/** Live room status while online (create/join live on the Home screen). */
+function OnlinePanel({ online }: { online: OnlineApi }) {
+  if (online.status === "idle") return null;
+  return (
+    <div className="panel">
+      <h3>Online</h3>
+      {online.status === "connecting" && <div className="hint">Connecting…</div>}
+      {online.status === "waiting" && (
+        <>
+          <div className="dname" data-testid="online-room-code">{online.code}</div>
+          <div className="hint">Share this code — waiting for an opponent to join.</div>
+        </>
+      )}
+      {online.status === "playing" && (
+        <>
+          <div className="dmeta" data-testid="online-room-code">Room {online.code}</div>
+          <div className="hint" data-testid="online-presence">
+            Opponent: {online.opponentConnected ? "connected" : "disconnected"}
+          </div>
+        </>
+      )}
+      <button style={{ width: "100%" }} onClick={online.leave} data-testid="online-leave">
+        Leave
+      </button>
+    </div>
+  );
 }
 
 /** Right rail: match controls, hovered-card detail, and the match log. */
-export function SidePanels({ state, cards, hoverDef, p0, p1, mode, setP0, setP1, setMode, onNewGame }: Props) {
+export function SidePanels({ state, cards, hoverDef, p0, p1, mode, setP0, setP1, setMode, onNewGame, online }: Props) {
   const c = hoverDef ? cards[hoverDef] : null;
+  const inOnline = online.status !== "idle";
   return (
     <div className="rail">
       <div className="panel">
@@ -32,27 +63,33 @@ export function SidePanels({ state, cards, hoverDef, p0, p1, mode, setP0, setP1,
             ))}
           </select>
         </label>
-        <label className="field">
-          Opponent
-          <select value={p1} onChange={(e) => setP1(e.target.value as School)}>
-            {SCHOOLS.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          Mode
-          <select value={mode} onChange={(e) => setMode(e.target.value as "bot" | "agent")}>
-            <option value="bot">vs Bot</option>
-            <option value="agent">vs Agent (API)</option>
-          </select>
-        </label>
-        <button className="primary" style={{ width: "100%" }} onClick={onNewGame}>
-          New game
-        </button>
+        {!inOnline && (
+          <>
+            <label className="field">
+              Opponent
+              <select value={p1} onChange={(e) => setP1(e.target.value as School)}>
+                {SCHOOLS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              Mode
+              <select value={mode} onChange={(e) => setMode(e.target.value as "bot" | "agent")}>
+                <option value="bot">vs Bot</option>
+                <option value="agent">vs Agent (API)</option>
+              </select>
+            </label>
+            <button className="primary" style={{ width: "100%" }} onClick={onNewGame}>
+              New game
+            </button>
+          </>
+        )}
       </div>
+
+      <OnlinePanel online={online} />
 
       <div className="panel detail">
         <h3>Card detail</h3>

@@ -81,8 +81,11 @@ export interface PlayerState {
   discard: CardInstance[];
   /** Persistent Wards this player controls. */
   wards: Ward[];
-  /** Burn markers on this player (tick at the start of their turns; expire end of round). */
+  /** Burn markers on this player (tick at the start of their turns, then one decays; persist across rounds). */
   burn: number;
+  /** Times this player's discard has been reshuffled into their Resource Deck. Each
+   * reshuffle deals escalating exhaustion damage (2 x reshuffle count) — the game's slow clock. */
+  reshuffles: number;
   /** Active ongoing effects this player owns. */
   ongoing: OngoingEffect[];
   /** Reactions this player has cast this round (read by reaction-punish/scaling cards). */
@@ -161,6 +164,8 @@ export interface PendingChoice {
 
 export type Phase = "prepare" | "main" | "gameover";
 
+/** "deckout" no longer occurs (an empty deck reshuffles with exhaustion damage) but stays
+ * in the union so persisted playtest sessions/replays from older engines still typecheck. */
 export type EndReason = "hp" | "deckout" | "turn-limit";
 
 export interface GameState {
@@ -185,6 +190,9 @@ export interface GameState {
   endReason: EndReason | null;
   /** A look/loot/scry choice awaiting the controller's input, or null. */
   pendingChoice: PendingChoice | null;
+  /** Set when a wizard exhausts their slots: the OTHER wizard gets one final turn, then the
+   * round ends. Removes the first-player bias of slot-exhaustion round-ending. */
+  finalTurnFor: PlayerId | null;
 }
 
 /** Player intents. iid-keyed where order could otherwise drift. */
@@ -226,6 +234,7 @@ export type GameEvent =
   | { type: "burnApplied"; target: PlayerId; amount: number }
   | { type: "healed"; player: PlayerId; amount: number }
   | { type: "discarded"; player: PlayerId; count: number }
+  | { type: "reshuffled"; player: PlayerId; count: number; damage: number }
   | { type: "milled"; player: PlayerId; count: number }
   | { type: "recovered"; player: PlayerId; count: number }
   | { type: "searched"; player: PlayerId; count: number }
@@ -244,6 +253,8 @@ export type GameEvent =
   | { type: "prepareComplete"; round: number }
   | { type: "passed"; player: PlayerId }
   | { type: "roundEnded"; round: number }
+  | { type: "finalTurn"; player: PlayerId }
+  | { type: "handCapDiscard"; player: PlayerId; count: number }
   | { type: "leveledUp"; player: PlayerId; level: number }
   | { type: "gameOver"; winner: PlayerId | null; reason: EndReason };
 

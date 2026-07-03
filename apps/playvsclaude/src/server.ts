@@ -26,30 +26,14 @@ import {
   type GameState,
   type PlayerId,
 } from "@ibokki/engine";
-import { CARDS, COMPONENTS } from "@ibokki/cards";
+import { buildCardCatalog, buildMatchState } from "@ibokki/protocol";
 import { describeAction, describeEvent, makeAgent, type Agent } from "@ibokki/sim";
 
 const PORT = Number(process.env.PORT ?? 7777);
 const HERE = dirname(fileURLToPath(import.meta.url));
 const HTML_PATH = resolve(HERE, "../public/index.html");
 
-/** Static card catalog for the UI: id -> { name, school, type, level, cost, text }. */
-interface CardInfo {
-  name: string;
-  school: string;
-  type: string;
-  level: number | null;
-  cost: string | null;
-  text: string;
-}
-const CARD_INFO: Record<string, CardInfo> = {};
-for (const c of CARDS) {
-  CARD_INFO[c.id] = { name: c.name, school: c.school, type: c.type, level: c.level, cost: c.costText, text: c.text };
-}
-for (const c of COMPONENTS) {
-  const sym = "V".repeat(c.symbols.V) + "S".repeat(c.symbols.S) + "M".repeat(c.symbols.M);
-  CARD_INFO[c.id] = { name: c.name, school: "Component", type: "Component", level: null, cost: sym, text: `Resource component — provides ${sym}.` };
-}
+const CARD_INFO = buildCardCatalog();
 
 type School = "Evocation" | "Abjuration" | "Divination";
 const SCHOOLS: School[] = ["Evocation", "Abjuration", "Divination"];
@@ -128,68 +112,18 @@ function autoPlayBots(m: Match): void {
   }
 }
 
-/** The card defId an action centers on (for mapping clicks to rendered cards). */
-function actionCardDefId(state: GameState, side: PlayerId, action: Action): string | null {
-  const p = state.players[side];
-  switch (action.type) {
-    case "prepareSpell":
-      return p.spellbook.find((c) => c.iid === action.spellIid)?.defId ?? null;
-    case "replacePrepared":
-      return p.spellbook.find((c) => c.iid === action.spellIid)?.defId ?? null;
-    case "attach":
-      return p.hand.find((c) => c.iid === action.handIid)?.defId ?? null;
-    case "playTrainer":
-      return p.hand.find((c) => c.iid === action.handIid)?.defId ?? null;
-    case "cast":
-    case "castReaction":
-      return p.prepared[action.preparedIndex]?.spell.defId ?? null;
-    case "choose":
-      return state.pendingChoice?.candidates.find((c) => c.iid === action.iid)?.defId ?? null;
-    case "detach":
-      return p.prepared[action.preparedIndex]?.attached.find((c) => c.iid === action.componentIid)?.defId ?? null;
-    case "retractCast":
-      return state.stack[state.stack.length - 1]?.defId ?? null;
-    default:
-      return null;
-  }
-}
-
-/** Enriched legal action for the client: index + label + the fields needed to wire clicks. */
-function legalForClient(state: GameState, side: PlayerId) {
-  return legalActions(state, side).map((a, index) => ({
-    index,
-    type: a.type,
-    label: describeAction(state, a),
-    defId: actionCardDefId(state, side, a),
-    preparedIndex: "preparedIndex" in a ? a.preparedIndex : null,
-    handIid: "handIid" in a ? a.handIid : null,
-  }));
-}
-
 function stateJson(m: Match, side: PlayerId): unknown {
-  const st = m.state;
-  const over = isTerminal(st);
-  const yourTurn = !over && st.priorityPlayer === side && !m.bots.has(side);
-  return {
-    schools: m.schools,
+  return buildMatchState(
+    {
+      state: m.state,
+      schools: m.schools,
+      bots: [...m.bots],
+      log: m.transcript,
+      epoch: actionEpoch,
+      events: m.recentEvents,
+    },
     side,
-    phase: st.phase,
-    round: st.round,
-    turnCount: st.turnCount,
-    activePlayer: st.activePlayer,
-    priorityPlayer: st.priorityPlayer,
-    reactionWindow: st.stack.length > 0,
-    yourTurn,
-    gameOver: over,
-    winner: st.winner,
-    endReason: st.endReason,
-    bots: [...m.bots],
-    view: redact(st, side),
-    legal: yourTurn ? legalForClient(st, side) : [],
-    log: m.transcript.slice(-100),
-    epoch: actionEpoch,
-    events: m.recentEvents,
-  };
+  );
 }
 
 function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {

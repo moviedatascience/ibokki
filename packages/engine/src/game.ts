@@ -35,6 +35,7 @@ export function createGame(config: GameConfig): GameState {
       discard: [],
       wards: [],
       burn: 0,
+      reshuffles: 0,
       ongoing: [],
       reactionsCastThisRound: 0,
       damagePreventedThisRound: 0,
@@ -83,5 +84,6 @@ export function createGame(config: GameConfig): GameState {
     winner: null,
     endReason: null,
     pendingChoice: null,
+    finalTurnFor: null,
   };
 }

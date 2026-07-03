@@ -18,8 +18,11 @@
     "playtest": "tsx packages/sim/src/playtest.ts",
     "mcp": "tsx packages/mcp/src/server.ts",
     "play": "tsx apps/playvsclaude/src/server.ts",
+    "online": "tsx apps/server/src/server.ts",
     "client": "npm --workspace @ibokki/client run dev",
-    "uitest": "node apps/playvsclaude/uitest.mjs"
+    "build:client": "npm --workspace @ibokki/client run build",
+    "uitest": "node apps/playvsclaude/uitest.mjs",
+    "test:client": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

@@ -37,10 +37,36 @@ export function endGame(
   events.push({ type: "gameOver", winner, reason: reason! });
 }
 
-/** Draw up to n cards from the resource deck into hand. Returns the count drawn. */
-export function drawN(player: PlayerState, n: number): number {
+/**
+ * Draw up to n cards from the resource deck into hand. When the deck runs empty the
+ * discard pile is shuffled back in and the player takes escalating exhaustion damage
+ * (2 x their reshuffle count) — the deck is a cycling engine, not a loss condition,
+ * and exhaustion is the game's slow clock (also what makes milling a pressure plan).
+ * Exhaustion is internal strain, not an attack: it BYPASSES wards, reduction, and
+ * prevention entirely and hits HP directly (otherwise ward walls stretch the clock
+ * into hundreds of turns — playtest cvc6).
+ * Returns the count drawn (short only if deck AND discard are empty, or the game ends).
+ */
+export function drawN(state: GameState, playerId: PlayerId, n: number, events: GameEvent[]): number {
+  const player = state.players[playerId];
   let drawn = 0;
-  for (let i = 0; i < n && player.resourceDeck.length > 0; i++) {
+  while (drawn < n) {
+    if (player.resourceDeck.length === 0) {
+      if (player.discard.length === 0) break; // nothing anywhere to draw
+      player.resourceDeck = player.discard;
+      player.discard = [];
+      state.rngState = shuffleInPlace(player.resourceDeck, state.rngState);
+      player.reshuffles++;
+      const damage = 2 * player.reshuffles;
+      events.push({ type: "reshuffled", player: playerId, count: player.reshuffles, damage });
+      player.hp -= damage; // unpreventable: no wards, no reduction, no heal-conversion
+      events.push({ type: "damage", target: playerId, amount: damage });
+      if (player.hp <= 0) {
+        endGame(state, otherPlayer(playerId), "hp", events);
+        return drawn;
+      }
+      continue;
+    }
     player.hand.push(player.resourceDeck.pop()!);
     drawn++;
   }
@@ -107,9 +133,8 @@ export function dealDamageToPlayer(
 
 /** Fire a ward's on-destroy trigger (combat destruction only): refuel / replace / heal. */
 function fireWardDestroyed(state: GameState, ownerId: PlayerId, ward: Ward, events: GameEvent[]): void {
-  const owner = state.players[ownerId];
   if (ward.onDestroy === "draw2") {
-    const d = drawN(owner, 2);
+    const d = drawN(state, ownerId, 2, events);
     if (d > 0) events.push({ type: "drew", player: ownerId, count: d });
   } else if (ward.onDestroy === "replace2") {
     createWard(state, ownerId, 2, events);
@@ -420,7 +445,7 @@ export function drawThenBankWorst(
   events: GameEvent[],
 ): void {
   const player = state.players[id];
-  const drawn = drawN(player, drawCount);
+  const drawn = drawN(state, id, drawCount, events);
   if (drawn > 0) events.push({ type: "drew", player: id, count: drawn });
   for (let i = 0; i < bankCount && player.hand.length > 0; i++) {
     let worst = 0;

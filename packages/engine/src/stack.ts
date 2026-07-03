@@ -58,7 +58,7 @@ export function pushToStack(
     events.push({ type: "cast", player: controller, preparedIndex, spellDefId: item.defId });
     // First-cast-each-round ward trigger (Sentinel Rune): the opponent's ward owner draws.
     if (player.spellsCastThisRound === 1 && opponent.wards.some((w) => w.firstOppCastDraw)) {
-      const drawn = drawN(opponent, 1);
+      const drawn = drawN(state, opponent.id, 1, events);
       if (drawn > 0) events.push({ type: "drew", player: opponent.id, count: drawn });
     }
   }

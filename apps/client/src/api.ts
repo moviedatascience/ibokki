@@ -31,6 +31,8 @@ export interface PlayerView {
   hp: number;
   wards: number[];
   burn: number;
+  /** Times the discard has been reshuffled into the deck (exhaustion clock). */
+  reshuffles: number;
   level: number;
   maxSpellLevel: number;
   slots: number;
@@ -104,30 +106,94 @@ export interface MatchState {
   error?: string;
 }
 
-const SIDE: Side = 0; // the human always plays P0 in this client
+// ---- accounts & decks (the online server's HTTP API; cookie-session) ----
 
-async function getJson<T>(url: string): Promise<T> {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`${url} -> ${r.status}`);
-  return (await r.json()) as T;
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  emailVerified: boolean;
 }
 
-async function postJson<T>(url: string, body: unknown): Promise<T> {
-  const r = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!r.ok) throw new Error(`${url} -> ${r.status}`);
-  return (await r.json()) as T;
+/** A deck in the shared DeckDefinition shape; saved decks carry an id, presets don't. */
+export interface Deck {
+  id?: number;
+  name: string;
+  spellbook: string[];
+  resourceDeck: string[];
 }
+
+/** Deck-construction limits, served by the backend so UI counters match the validator. */
+export interface DeckRules {
+  resourceDeckSize: number;
+  maxTrainers: number;
+  maxTrainerCopies: number;
+  maxSameSymbolDuals: number;
+  maxTriComponents: number;
+  spellbookMin: number;
+  spellbookMax: number;
+  minLevel1Spells: number;
+}
+
+export interface DeckListResponse {
+  rules: DeckRules;
+  presets: Deck[];
+  decks: Deck[];
+}
+
+export interface DeckError {
+  zone: "spellbook" | "resourceDeck" | "deck";
+  message: string;
+}
+
+/** Non-2xx API responses carry {error} (and deck saves may add {errors}). */
+export class ApiError extends Error {
+  errors?: DeckError[];
+  constructor(message: string, errors?: DeckError[]) {
+    super(message);
+    this.errors = errors;
+  }
+}
+
+const SIDE: Side = 0; // the human always plays P0 in local (vs bot) mode
+
+/**
+ * Deployment base path ("/" in dev, "/play/" when built into the site).
+ * Every API/WS path is prefixed so the same bundle works at either mount point.
+ */
+export const BASE = import.meta.env.BASE_URL;
+
+async function request<T>(url: string, init?: RequestInit): Promise<T> {
+  const r = await fetch(url, init);
+  const body = (await r.json().catch(() => null)) as (T & { error?: string; errors?: DeckError[] }) | null;
+  if (!r.ok) throw new ApiError(body?.error ?? `${url} -> ${r.status}`, body?.errors);
+  return body as T;
+}
+
+const getJson = <T>(url: string) => request<T>(url);
+const postJson = <T>(url: string, body: unknown) =>
+  request<T>(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 export const api = {
-  cards: () => getJson<CardCatalog>("/api/cards"),
-  state: () => getJson<MatchState>(`/api/state?side=${SIDE}`),
-  act: (index: number) => postJson<MatchState>(`/api/act?side=${SIDE}`, { index }),
+  cards: () => getJson<CardCatalog>(`${BASE}api/cards`),
+  state: () => getJson<MatchState>(`${BASE}api/state?side=${SIDE}`),
+  act: (index: number) => postJson<MatchState>(`${BASE}api/act?side=${SIDE}`, { index }),
   newGame: (p0: School, p1: School, mode: "bot" | "agent") =>
-    postJson<MatchState>("/api/new", { p0, p1, bots: mode === "bot" ? [1] : [] }),
+    postJson<MatchState>(`${BASE}api/new`, { p0, p1, bots: mode === "bot" ? [1] : [] }),
+
+  authConfig: () => getJson<{ oidcEnabled: boolean }>(`${BASE}api/auth/config`),
+  me: () => getJson<{ user: User | null }>(`${BASE}api/auth/me`),
+  register: (email: string, username: string, password: string) =>
+    postJson<{ user: User }>(`${BASE}api/auth/register`, { email, username, password }),
+  login: (usernameOrEmail: string, password: string) =>
+    postJson<{ user: User }>(`${BASE}api/auth/login`, { usernameOrEmail, password }),
+  logout: () => postJson<{ ok: true }>(`${BASE}api/auth/logout`, {}),
+  forgot: (email: string) => postJson<{ ok: true }>(`${BASE}api/auth/forgot`, { email }),
+  resetPassword: (token: string, password: string) => postJson<{ user: User }>(`${BASE}api/auth/reset`, { token, password }),
+
+  decks: () => getJson<DeckListResponse>(`${BASE}api/decks`),
+  saveDeck: (deck: Deck) => postJson<{ deck: Deck & { id: number } }>(`${BASE}api/decks`, deck),
+  deleteDeck: (id: number) => request<{ ok: true }>(`${BASE}api/decks/${id}`, { method: "DELETE" }),
 };
 
 export const MY_SIDE = SIDE;

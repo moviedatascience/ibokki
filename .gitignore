@@ -21,5 +21,8 @@ Thumbs.db
 # sim output
 sim-reports/
 
+# server database (SQLite + WAL sidecars)
+data/
+
 # playtest session state (the .md logs ARE kept as artifacts)
 playtests/.sessions/

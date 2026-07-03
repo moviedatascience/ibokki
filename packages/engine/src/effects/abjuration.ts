@@ -11,7 +11,10 @@ import { register } from "./registry.ts";
 // ---- Level 1 ----
 register("ABJ-001", (c) => c.buffOneOwnWardOrCreate(2, 1)); // Fortify
 register("ABJ-002", (c) => c.createWardForSelfWith(1, { onDestroy: "draw2" })); // Arcane Shell
-register("ABJ-003", (c) => c.buffAllOwnWards(1)); // Ward Pulse
+register("ABJ-003", (c) => {
+  c.buffAllOwnWards(1); // Ward Pulse
+  if (c.selfHasWard()) c.dealDamage(1); // ward-thorn: Abjuration's slow clock scales with keeping wards alive
+});
 register("ABJ-004", (c) => c.addUntargetableBySingle()); // Aegis
 register("ABJ-005", (c) => c.addReactionDiscountS(1)); // Stone Stance
 register("ABJ-010", (c) => {

@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@ibokki/cards": ["../../packages/cards/src/index.ts"],
+      "@ibokki/engine": ["../../packages/engine/src/index.ts"],
+      "@ibokki/protocol": ["../../packages/protocol/src/index.ts"],
+      "@ibokki/sim": ["../../packages/sim/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

@@ -39,8 +39,9 @@ Build the engine first; it unblocks online PvP and Claude playtesting simultaneo
 
 ## 2. What we're building (from the design doc + card sheets)
 
-- **1v1, best-of-1** wizard duel. Win by reducing opponent HP to 0 **or** decking them out of
-  their Resource Deck. Target: 10–25 min, frequent interaction, deep skill expression.
+- **1v1, best-of-1** wizard duel. Win by reducing opponent HP to 0; an empty Resource Deck
+  reshuffles with escalating **exhaustion damage** (2 × reshuffle count) rather than losing
+  outright. Target: 10–25 min, frequent interaction, deep skill expression.
 - **Two decks per player:** a **Spell Deck** (prepared face-down) and a **Resource/Component
   Deck** (V/S/M components + Items + Gambits).
 - **Component system (V/S/M):** Verbal/Somatic/Material symbols on Basic / Dual / Tri component

@@ -22,7 +22,7 @@ register("EVO-004", (c) => {
   c.discardOpponentRandomComponent(1);
 });
 register("EVO-005", (c) => c.addDamageBuffThisRound(1)); // Catalyst
-register("EVO-006", (c) => c.addBurnToOpponent(2)); // Kindle
+register("EVO-006", (c) => c.addBurnToOpponent(1)); // Kindle (2→1: persistent burn made repeated Kindle compound to lethal-by-R4; playtests cvc3/cvc4)
 register("EVO-007", (c) => {
   const symbols = c.discardSelfHighestSymbol(); // Wild Surge
   c.dealDamage(symbols);

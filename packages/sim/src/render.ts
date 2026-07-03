@@ -103,10 +103,16 @@ export function describeEvent(e: GameEvent): string | null {
       return `P${e.player} ward destroyed`;
     case "milled":
       return `P${e.player} mills ${e.count}`;
+    case "reshuffled":
+      return `P${e.player} reshuffles discard into deck (#${e.count}) — exhaustion ${e.damage}`;
     case "mulliganed":
       return `P${e.player} mulligans to ${e.newHandSize} cards`;
     case "roundEnded":
       return `round ${e.round} ends — level up`;
+    case "finalTurn":
+      return `slots exhausted — P${e.player} gets one final turn`;
+    case "handCapDiscard":
+      return `P${e.player} discards ${e.count} (hand cap)`;
     case "gameOver":
       return `GAME OVER — ${e.winner === null ? "draw" : `P${e.winner} wins`} (${e.reason})`;
     default:

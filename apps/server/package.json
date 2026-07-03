@@ -1,0 +1,23 @@
+{
+  "name": "@ibokki/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Authoritative online Ibokki server (M5 vertical slice). Rooms with join codes over WebSocket; clients send action intents, the server validates with legalActions, applies via the engine, and pushes per-viewer redacted MatchState frames. Full state never leaves the server.",
+  "main": "./src/server.ts",
+  "dependencies": {
+    "@ibokki/cards": "*",
+    "@ibokki/engine": "*",
+    "@ibokki/protocol": "*",
+    "@ibokki/sim": "*",
+    "argon2": "^0.44.0",
+    "better-sqlite3": "^12.11.1",
+    "nodemailer": "^9.0.3",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/nodemailer": "^8.0.1",
+    "@types/ws": "^8.5.13"
+  }
+}

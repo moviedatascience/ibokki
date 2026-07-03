@@ -1,0 +1,17 @@
+{
+  "name": "@ibokki/protocol",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared client-facing contract for Ibokki servers: the MatchState payload builder, per-viewer event/log redaction, and the static card catalog. Both the local play server and the online server speak exactly this shape; the web client mirrors it in apps/client/src/api.ts.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ibokki/cards": "*",
+    "@ibokki/engine": "*",
+    "@ibokki/sim": "*"
+  }
+}

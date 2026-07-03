@@ -13,6 +13,8 @@ import {
   type PlayerState,
   type StackItem,
 } from "../src/index.ts";
+import { endRoundAndLevelUp } from "../src/mechanics.ts";
+import { drawN } from "../src/state-ops.ts";
 
 function blankPlayer(id: PlayerId): PlayerState {
   return {
@@ -26,6 +28,7 @@ function blankPlayer(id: PlayerId): PlayerState {
     discard: [],
     wards: [],
     burn: 0,
+    reshuffles: 0,
     ongoing: [],
     reactionsCastThisRound: 0,
     damagePreventedThisRound: 0,
@@ -59,6 +62,7 @@ function blankState(): GameState {
     winner: null,
     endReason: null,
     pendingChoice: null,
+    finalTurnFor: null,
   };
 }
 
@@ -421,6 +425,109 @@ describe("Burn ticks through the turn machinery", () => {
     const { state: next } = apply(state, { type: "pass" }); // hands turn to player 1
     expect(next.activePlayer).toBe(1);
     expect(next.players[1].hp).toBe(28); // took 2 Burn damage at turn start
+    expect(next.players[1].burn).toBe(1); // …then one marker decays
+  });
+
+  it("decays one marker per tick and persists across rounds", () => {
+    const state = blankState();
+    state.players[0].turnsTakenThisRound = 1;
+    state.players[0].resourceDeck = [inst("CMP-V")];
+    state.players[1].turnsTakenThisRound = 1;
+    state.players[1].resourceDeck = [inst("CMP-V"), inst("CMP-V")];
+    state.players[1].burn = 3;
+
+    const { state: next } = apply(state, { type: "pass" });
+    expect(next.players[1].hp).toBe(27); // 3 markers = 3 damage
+    expect(next.players[1].burn).toBe(2); // decayed to 2, NOT cleared
+
+    // Round end does not clear the remaining markers.
+    const events: GameEvent[] = [];
+    endRoundAndLevelUp(next, events);
+    expect(next.players[1].burn).toBe(2);
+  });
+});
+
+describe("Deck recycling with exhaustion", () => {
+  it("reshuffles the discard into an empty deck at escalating damage instead of losing", () => {
+    const state = blankState();
+    const p = state.players[0];
+    const events: GameEvent[] = [];
+
+    // First recycle: 3-card discard becomes the deck, 2 exhaustion damage.
+    p.discard = [inst("CMP-V"), inst("CMP-S"), inst("CMP-M")];
+    expect(drawN(state, 0, 2, events)).toBe(2);
+    expect(p.reshuffles).toBe(1);
+    expect(p.hp).toBe(28);
+    expect(p.discard).toHaveLength(0);
+    expect(p.resourceDeck.length + p.hand.length).toBe(3);
+
+    // Second recycle escalates to 4 damage.
+    p.resourceDeck = [];
+    p.discard = [inst("CMP-V")];
+    expect(drawN(state, 0, 1, events)).toBe(1);
+    expect(p.reshuffles).toBe(2);
+    expect(p.hp).toBe(24);
+
+    // Deck AND discard empty: nothing to draw, no damage, no phantom reshuffle.
+    p.resourceDeck = [];
+    expect(drawN(state, 0, 1, events)).toBe(0);
+    expect(p.reshuffles).toBe(2);
+    expect(p.hp).toBe(24);
+    expect(events.filter((e) => e.type === "reshuffled")).toHaveLength(2);
+  });
+
+  it("round end grants the non-exhausting wizard one final turn", () => {
+    const state = blankState();
+    // P0 (active) has spent all slots at tier 1 (2 slots); flag should be set, not an instant round end.
+    state.players[0].slotsUsedThisRound = 2;
+    state.players[0].spellCastThisTurn = true;
+    // Simulate the post-resolution check path: P0 passes turn; P1 must get a turn in the same round.
+    state.finalTurnFor = 1; // as flagRoundEnd would set after P0's last cast resolved
+    state.players[0].resourceDeck = [inst("CMP-V"), inst("CMP-V")];
+    state.players[1].resourceDeck = [inst("CMP-S"), inst("CMP-S")];
+    state.players[1].turnsTakenThisRound = 1;
+    state.players[0].turnsTakenThisRound = 1;
+
+    const { state: s1 } = apply(state, { type: "pass" }); // P0 ends turn -> P1's FINAL turn begins
+    expect(s1.round).toBe(1);
+    expect(s1.activePlayer).toBe(1);
+
+    const { state: s2 } = apply(s1, { type: "pass" }); // P1's final turn ends -> round ends
+    expect(s2.round).toBe(2);
+    expect(s2.finalTurnFor).toBeNull();
+  });
+
+  it("a round ends once both wizards hit the per-round turn limit", () => {
+    const state = blankState();
+    state.players[0].turnsTakenThisRound = 8;
+    state.players[1].turnsTakenThisRound = 8;
+    state.players[0].resourceDeck = [inst("CMP-V")];
+    const { state: next } = apply(state, { type: "pass" });
+    expect(next.round).toBe(2); // stalemate valve fired
+  });
+
+  it("hand cap discards down to 10 at end of turn", () => {
+    const state = blankState();
+    state.players[0].hand = Array.from({ length: 13 }, () => inst("CMP-V"));
+    state.players[0].resourceDeck = [inst("CMP-V")];
+    state.players[1].resourceDeck = [inst("CMP-S")];
+    state.players[0].turnsTakenThisRound = 1;
+    const { state: next, events } = apply(state, { type: "pass" });
+    expect(next.players[0].hand.length).toBe(10);
+    expect(next.players[0].discard.length).toBe(3);
+    expect(events.some((e) => e.type === "handCapDiscard")).toBe(true);
+  });
+
+  it("exhaustion bypasses wards and hits HP directly", () => {
+    const state = blankState();
+    const p = state.players[0];
+    p.wards = [{ wid: 1, hp: 10 }];
+    p.resourceDeck = [];
+    p.discard = [inst("CMP-V")];
+    const events: GameEvent[] = [];
+    drawN(state, 0, 1, events);
+    expect(p.hp).toBe(28); // 2 exhaustion straight to face
+    expect(p.wards[0]!.hp).toBe(10); // ward untouched
   });
 });
 
@@ -747,7 +854,10 @@ describe("Take-backs (detach / retract)", () => {
 
     let s = apply(state, legalActions(state, 0).find((a) => a.type === "cast")!).state; // cast -> slot 2/2
     s = apply(s, { type: "pass" }).state; // caster passes
-    s = apply(s, { type: "pass" }).state; // opponent passes -> resolve -> round ends
+    s = apply(s, { type: "pass" }).state; // opponent passes -> resolve -> round-end FLAGGED
+    expect(s.finalTurnFor).toBe(1);
+    s = apply(s, { type: "pass" }).state; // P0 ends turn -> P1's final turn
+    s = apply(s, { type: "pass" }).state; // final turn ends -> round ends
 
     expect(s.phase).toBe("prepare");
     expect(s.players[0].prepared.every((pp) => pp.attached.length === 0)).toBe(true); // leftover discarded

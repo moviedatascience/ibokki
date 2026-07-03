@@ -27,15 +27,27 @@ clutter; deep skill expression.
 ## Core Rules Overview
 
 - **Match Structure:** Best of 1.
-- **Win Conditions:** Reduce the opponent's HP to 0, or make them run out of cards in
-  their Resource Deck (deck-out).
+- **Win Condition:** Reduce the opponent's HP to 0. (An empty Resource Deck is *not* a
+  loss — see Exhaustion below.)
+- **Exhaustion:** When a Wizard must draw and their Resource Deck is empty, they shuffle
+  their discard pile back into the deck and take **exhaustion damage equal to 2 × the
+  number of times they have reshuffled this game** (2, then 4, then 6, …). Exhaustion is
+  internal strain, not an attack: it **cannot be prevented, reduced, or absorbed by
+  Wards** — it hits the Wizard's HP directly. The deck is a cycling engine, not a clock —
+  but each cycle strains the Wizard a little more. Milling an opponent's deck therefore
+  pressures them toward their next exhaustion tick rather than toward an instant loss.
 - **Zones:** Hand, Prepared Spells, Casting Zone, Discard.
 - **Objects:** Spell Deck, Resource Deck, HP / Level / Slot tracker, Status Markers
   (Spent, Channel, Delayed, Ward).
 
 At a high level the game consists of turns within rounds. Wizards take turns to either
-attach component cards to spell cards or cast spells. A round ends the first time a
-Wizard exhausts their spell slots. Each time a round ends, the Wizards level up.
+attach component cards to spell cards or cast spells. When a Wizard exhausts their spell
+slots, the **other Wizard takes one final turn** and then the round ends (the final turn
+keeps slot-exhaustion from being a first-player tempo weapon). A round **also** ends once
+both Wizards have taken 8 turns in it, so two passive Wizards can't stall a round forever.
+Each time a round ends, the Wizards level up.
+
+**Maximum hand size:** at the end of a Wizard's turn they discard down to 10 cards.
 
 ---
 

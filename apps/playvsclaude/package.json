@@ -8,6 +8,7 @@
   "dependencies": {
     "@ibokki/cards": "*",
     "@ibokki/engine": "*",
+    "@ibokki/protocol": "*",
     "@ibokki/sim": "*"
   }
 }

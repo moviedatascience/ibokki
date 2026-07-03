@@ -277,12 +277,12 @@ export function makeContext(
 
     draw(n) {
       if (sumOngoing(opponent, "drawLock") > 0) return 0; // Mana Sickness: only your normal turn-draw
-      const drawn = drawN(self, n);
+      const drawn = drawN(state, selfId, n, events);
       if (drawn > 0) events.push({ type: "drew", player: selfId, count: drawn });
       return drawn;
     },
     opponentDraws(n) {
-      const drawn = drawN(opponent, n);
+      const drawn = drawN(state, opponentId, n, events);
       if (drawn > 0) events.push({ type: "drew", player: opponentId, count: drawn });
       return drawn;
     },
@@ -377,7 +377,7 @@ export function makeContext(
           return;
         }
       }
-      const drawn = drawN(self, 1); // not a component, or nowhere to attach -> draw it
+      const drawn = drawN(state, selfId, 1, events); // not a component, or nowhere to attach -> draw it
       if (drawn > 0) events.push({ type: "drew", player: selfId, count: drawn });
     },
     bounceOpponentComponentToTheirTop() {
@@ -398,7 +398,7 @@ export function makeContext(
 
     drawUntil(target) {
       const need = Math.max(0, target - self.hand.length);
-      const drawn = drawN(self, need);
+      const drawn = drawN(state, selfId, need, events);
       if (drawn > 0) events.push({ type: "drew", player: selfId, count: drawn });
       return drawn;
     },
@@ -423,7 +423,7 @@ export function makeContext(
       for (const id of [selfId, opponentId] as PlayerId[]) {
         shuffleHandIntoDeck(state, id, events);
         shuffleDiscardIntoDeck(state, id, events);
-        const drawn = drawN(state.players[id], n);
+        const drawn = drawN(state, id, n, events);
         if (drawn > 0) events.push({ type: "drew", player: id, count: drawn });
       }
     },

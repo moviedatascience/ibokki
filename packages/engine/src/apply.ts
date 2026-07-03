@@ -2,9 +2,9 @@
 import { getCard, getComponent, type ComponentDef } from "@ibokki/cards";
 import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
 import { tierForLevel } from "./levels.ts";
-import { beginTurn, completePrepare, endRoundAndLevelUp } from "./mechanics.ts";
+import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
-import { drawN, shuffleHandIntoDeck, sumOngoing } from "./state-ops.ts";
+import { drawN, sculptValue, shuffleHandIntoDeck, sumOngoing } from "./state-ops.ts";
 import { pushToStack, resolveTop, topOpposingStackItem } from "./stack.ts";
 import {
   isComponentDefId,
@@ -13,6 +13,7 @@ import {
   type ApplyResult,
   type GameEvent,
   type GameState,
+  type PlayerId,
   type PreparedSpell,
 } from "./types.ts";
 
@@ -25,15 +26,42 @@ function attachedComponents(prep: PreparedSpell): ComponentDef[] {
   return comps;
 }
 
-/** After a pending choice resolves, return priority to the active player and end the round if slots are spent. */
+/**
+ * A wizard just spent their last spell slot. The round does NOT end on the spot — the
+ * OTHER wizard gets one final turn first (otherwise slot-exhaustion round-ending is a
+ * first-player tempo weapon: dump your slots fast and strip the opponent's remaining
+ * ones). The flag is consumed at the end of that final turn.
+ */
+function flagRoundEnd(state: GameState, events: GameEvent[]): void {
+  if (state.finalTurnFor !== null) return; // already flagged
+  state.finalTurnFor = otherPlayer(state.activePlayer);
+  events.push({ type: "finalTurn", player: state.finalTurnFor });
+}
+
+/** After a pending choice resolves, return priority to the active player and flag round end if slots are spent. */
 function resumeAfterChoice(state: GameState, events: GameEvent[]): void {
   state.priorityPlayer = state.activePlayer;
   if (state.phase === "main" && state.stack.length === 0) {
     const tier = tierForLevel(state.players[state.activePlayer].level);
     if (state.players[state.activePlayer].slotsUsedThisRound >= tier.slots) {
-      endRoundAndLevelUp(state, events);
+      flagRoundEnd(state, events);
     }
   }
+}
+
+/** End-of-turn hand cap: discard lowest-value cards down to MAX_HAND_SIZE. */
+function enforceHandCap(state: GameState, id: PlayerId, events: GameEvent[]): void {
+  const player = state.players[id];
+  let count = 0;
+  while (player.hand.length > MAX_HAND_SIZE) {
+    let worst = 0;
+    for (let i = 1; i < player.hand.length; i++) {
+      if (sculptValue(player.hand[i]!.defId) < sculptValue(player.hand[worst]!.defId)) worst = i;
+    }
+    player.discard.push(player.hand.splice(worst, 1)[0]!);
+    count++;
+  }
+  if (count > 0) events.push({ type: "handCapDiscard", player: id, count });
 }
 
 /** True if a prepared spell's attached components (plus any Attune bonus) satisfy its cost. */
@@ -124,7 +152,7 @@ export function apply(prev: GameState, action: Action): ApplyResult {
       }
       const newSize = Math.max(0, p.hand.length - 1);
       shuffleHandIntoDeck(state, me, events); // hand back into the Resource Deck (reshuffled)
-      const drawn = drawN(p, newSize); // draw a fresh hand of one fewer
+      const drawn = drawN(state, me, newSize, events); // draw a fresh hand of one fewer
       if (drawn > 0) events.push({ type: "drew", player: me, count: drawn });
       events.push({ type: "mulliganed", player: me, newHandSize: drawn });
       break;
@@ -321,9 +349,19 @@ export function apply(prev: GameState, action: Action): ApplyResult {
       events.push({ type: "priorityPassed", player: me });
       if (state.stack.length === 0) {
         // Active player passing with an empty stack ends their turn.
-        state.activePlayer = otherPlayer(state.activePlayer);
+        enforceHandCap(state, me, events);
         state.passStreak = 0;
-        beginTurn(state, events);
+        const bothAtTurnLimit =
+          state.players[0].turnsTakenThisRound >= ROUND_TURN_LIMIT &&
+          state.players[1].turnsTakenThisRound >= ROUND_TURN_LIMIT;
+        if (state.finalTurnFor === state.activePlayer) {
+          endRoundAndLevelUp(state, events); // the post-exhaustion final turn just finished
+        } else if (bothAtTurnLimit) {
+          endRoundAndLevelUp(state, events); // stalemate valve: neither wizard is casting
+        } else {
+          state.activePlayer = otherPlayer(state.activePlayer);
+          beginTurn(state, events);
+        }
       } else {
         state.passStreak++;
         if (state.passStreak >= 2) {
@@ -334,10 +372,10 @@ export function apply(prev: GameState, action: Action): ApplyResult {
           } else {
             state.priorityPlayer = state.activePlayer;
             if (state.phase === "main" && state.stack.length === 0) {
-              // First wizard to exhaust spell slots ends the round.
+              // First wizard to exhaust spell slots flags the round (opponent gets a final turn).
               const tier = tierForLevel(state.players[state.activePlayer].level);
               if (state.players[state.activePlayer].slotsUsedThisRound >= tier.slots) {
-                endRoundAndLevelUp(state, events);
+                flagRoundEnd(state, events);
               }
             }
           }

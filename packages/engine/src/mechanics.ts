@@ -9,9 +9,17 @@ import { otherPlayer, type GameEvent, type GameState } from "./types.ts";
 
 /**
  * Hard safety cap so a pathological game can never loop forever. Real games end
- * far sooner (HP or deck-out); this should never trigger in practice.
+ * far sooner (HP, helped along by escalating exhaustion damage); this should never trigger in practice.
  */
 export const TURN_CAP = 1000;
+
+/** A round also ends once BOTH wizards have taken this many turns in it — two passive
+ * wizards can otherwise stall a round forever (rounds normally end on slot exhaustion,
+ * which requires someone to cast; playtest cvc6 sat in one round for 60+ turns). */
+export const ROUND_TURN_LIMIT = 8;
+
+/** End-of-turn maximum hand size; excess cards are discarded (lowest-value first). */
+export const MAX_HAND_SIZE = 10;
 
 /** Enter the Prepare phase: the starting player chooses/adjusts prepared spells first. */
 export function enterPrepare(state: GameState): void {
@@ -31,7 +39,7 @@ export function completePrepare(state: GameState, events: GameEvent[]): void {
     // Opening hand: each Wizard draws 5 from the Resource Deck a single time, at the start of the
     // game. Later rounds have NO bulk draw — the hand persists and grows one card per turn.
     for (const player of state.players) {
-      drawN(player, 5);
+      drawN(state, player.id, 5, events);
       events.push({ type: "drew", player: player.id, count: 5 });
     }
   }
@@ -59,20 +67,23 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
   player.gambitPlayedThisTurn = false;
   player.noCastThisTurn = false;
 
-  // Burn markers tick at the start of the player's turn. The opponent owns any
-  // amplifier (Conflagration/Phoenix add +1 damage per marker).
+  // Burn markers tick at the start of the burned player's turn: deal damage equal to the
+  // marker count, then remove ONE marker. Burns persist across rounds (no round-clear) and
+  // decay one per tick. The opponent owns any amplifier (Conflagration/Phoenix +1 per marker).
   const opp = state.players[otherPlayer(player.id)];
   if (player.burn > 0) {
     const dmg = player.burn * (1 + sumOngoing(opp, "burnDoubleDamage"));
     events.push({ type: "burnTick", player: player.id, amount: dmg });
     dealDamageToPlayer(state, player.id, dmg, events);
+    player.burn--;
     if (state.phase === "gameover") return;
   }
-  // Wildfire: while the active player owns this, the opponent's Burn also ticks now.
+  // Wildfire: while the active player owns this, the opponent's Burn also ticks (and decays) now.
   if (sumOngoing(player, "burnAlsoTicksOwnTurn") > 0 && opp.burn > 0) {
     const dmg = opp.burn * (1 + sumOngoing(player, "burnDoubleDamage"));
     events.push({ type: "burnTick", player: opp.id, amount: dmg });
     dealDamageToPlayer(state, opp.id, dmg, events);
+    opp.burn--;
     if (state.phase === "gameover") return;
   }
 
@@ -86,16 +97,14 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
   }
 
   // Per-turn draw of 1. You open the game with a 5-card hand and act on your first turn without
-  // an extra draw; every turn after that — this round and all later rounds — draws 1 (there is no
-  // per-round bulk draw anymore).
+  // an extra draw; every turn after that — this round and all later rounds — draws 1. An empty
+  // deck is NOT a loss: drawN reshuffles the discard back in at the cost of escalating
+  // exhaustion damage (the game's slow clock).
   const openingTurn = state.round === 1 && player.turnsTakenThisRound === 0;
   if (!openingTurn) {
-    if (player.resourceDeck.length === 0) {
-      endGame(state, otherPlayer(player.id), "deckout", events);
-      return;
-    }
-    drawN(player, 1);
-    events.push({ type: "drew", player: player.id, count: 1 });
+    const drawn = drawN(state, player.id, 1, events);
+    if (state.phase === "gameover") return; // exhaustion damage can be lethal
+    if (drawn > 0) events.push({ type: "drew", player: player.id, count: drawn });
   }
   player.turnsTakenThisRound++;
   events.push({ type: "turnBegan", player: player.id, round: state.round });
@@ -109,6 +118,7 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
 export function endRoundAndLevelUp(state: GameState, events: GameEvent[]): void {
   events.push({ type: "roundEnded", round: state.round });
   state.round++;
+  state.finalTurnFor = null;
 
   for (const player of state.players) {
     player.level = Math.min(player.level + 1, MAX_LEVEL);
@@ -118,7 +128,7 @@ export function endRoundAndLevelUp(state: GameState, events: GameEvent[]): void 
     player.turnsTakenThisRound = 0;
     player.componentPlayedThisTurn = false;
     player.noCastThisTurn = false;
-    player.burn = 0; // Burns expire at end of round.
+    // Burn persists across rounds — it decays one marker per tick in beginTurn instead.
     player.ongoing = player.ongoing.filter((o) => o.expiry !== "endOfRound");
     player.reactionsCastThisRound = 0;
     player.damagePreventedThisRound = 0;

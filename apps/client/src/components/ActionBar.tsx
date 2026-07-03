@@ -1,7 +1,8 @@
-import type { MatchState } from "../api.ts";
+import type { CardCatalog, MatchState } from "../api.ts";
 
 interface Props {
   state: MatchState | null;
+  cards: CardCatalog;
   selectionActive: boolean;
   onAction: (index: number) => void;
   onCancel: () => void;
@@ -9,7 +10,7 @@ interface Props {
 }
 
 /** Floating status + contextual buttons over the bottom of the table (mirrors the old board's status bar). */
-export function ActionBar({ state, selectionActive, onAction, onCancel, error }: Props) {
+export function ActionBar({ state, cards, selectionActive, onAction, onCancel, error }: Props) {
   if (!state) return <div className="actionbar"><span className="status wait">Connecting…</span></div>;
 
   if (state.gameOver) {
@@ -35,6 +36,14 @@ export function ActionBar({ state, selectionActive, onAction, onCancel, error }:
   const mulligan = by("mulligan");
   const done = by("donePreparing");
   const pass = by("pass");
+  // Take an attached component back to hand: "↩ VV ← Fireball". Only offered at sorcery speed.
+  const detaches = state.legal.filter((a) => a.type === "detach");
+  const detachLabel = (a: (typeof detaches)[number]) => {
+    const sym = (a.defId && cards[a.defId]?.cost) || cards[a.defId ?? ""]?.name || "component";
+    const spellDef = a.preparedIndex != null ? state.view.self.prepared[a.preparedIndex]?.spellDefId : undefined;
+    const spell = spellDef ? (cards[spellDef]?.name ?? spellDef) : `slot ${a.preparedIndex}`;
+    return `↩ ${sym} ← ${spell}`;
+  };
   const top = state.view.stack[state.view.stack.length - 1];
   const reacting = state.reactionWindow && top?.controller === 1;
 
@@ -55,6 +64,11 @@ export function ActionBar({ state, selectionActive, onAction, onCancel, error }:
       <span className={`status ${cls}`}>{status}</span>
       {error && <span className="err">{error}</span>}
       {mulligan && <button onClick={() => onAction(mulligan.index)}>Mulligan</button>}
+      {detaches.map((a) => (
+        <button key={a.index} className="detach" title="Return this component to your hand" onClick={() => onAction(a.index)}>
+          {detachLabel(a)}
+        </button>
+      ))}
       {done && <button className="primary" onClick={() => onAction(done.index)}>Done preparing ✓</button>}
       {retract && <button onClick={() => onAction(retract.index)}>↩ Retract</button>}
       {selectionActive && <button onClick={onCancel}>Cancel</button>}

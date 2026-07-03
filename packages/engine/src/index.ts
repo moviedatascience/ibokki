@@ -4,6 +4,7 @@ export * from "./rng.ts";
 export * from "./cost.ts";
 export * from "./levels.ts";
 export * from "./decks.ts";
+export * from "./deckrules.ts";
 export { createGame, DEFAULT_STARTING_HP, type GameConfig, type PlayerConfig } from "./game.ts";
 export { apply } from "./apply.ts";
 export { legalActions } from "./legal.ts";

@@ -31,7 +31,7 @@ register("DIV-007", (c) => {
 register("DIV-008", (c) => c.scryOpponentTopToBottom()); // Scry Glyph (bottom opponent's top)
 register("DIV-009", (c) => c.addAttuneBonus()); // Attune — next attach counts as +1 needed symbol
 register("DIV-010", (c) => { c.draw(1); c.requestBankToDeckTop(1); }); // Mind's Eye (draw 1, choose 1 to bank on top)
-register("DIV-011", () => {}); // Foretell (pure information — mechanical no-op headless)
+register("DIV-011", (c) => c.dealDamage(1)); // Foretell (info + psychic sting — gives Div an L1 damage axis)
 register("DIV-012", (c) => c.lookSelectMaterialToHand(4)); // Omen (look 4, take an M, rest to bottom)
 // DIV-013 Quicken RETIRED — redundant now that attaching is unlimited per turn.
 
@@ -51,7 +51,7 @@ register("DIV-019", (c) => {
 register("DIV-020", (c) => c.millOpponent(2)); // Foreclosure
 register("DIV-021", (c) => { c.draw(2); c.requestBankToDeckTop(1); }); // Quick Study (draw 2, choose 1 to bank on top)
 register("DIV-022", (c) => c.reorderTop(5)); // Index (look at top 5, reorder)
-register("DIV-023", (c) => c.millOpponent(1)); // Far Sight (SIMPLIFIED: info + top-of-deck mill)
+register("DIV-023", (c) => { c.millOpponent(1); c.dealDamage(1); }); // Far Sight (mill-sting)
 
 // ---- Level 3 ----
 // Recast cards: the doc says "a spell in your discard," but cast spells return to

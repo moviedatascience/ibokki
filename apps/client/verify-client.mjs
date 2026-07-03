@@ -9,10 +9,14 @@
  *   node apps/client/verify-client.mjs
  */
 import { chromium } from "@playwright/test";
+import { mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const BASE = process.env.CLIENT_BASE || "http://localhost:5173";
-const OUT = process.env.CLIENT_OUT ||
-  "C:/Users/ericd/AppData/Local/Temp/claude/c--Users-ericd-OneDrive-Desktop-Programming-ibokki/45aa2e24-0edb-4119-8f8c-d86e97803871/scratchpad";
+const OUT = process.env.CLIENT_OUT || join(tmpdir(), "ibokki-shots");
+mkdirSync(OUT, { recursive: true });
+console.log("screenshots →", OUT);
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1500, height: 950 } });

@@ -1,5 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type CardCatalog, type MatchState, type School } from "./api.ts";
+import { OnlineClient, storedSeat, storeSeat, type DeckChoice } from "./online.ts";
+
+export type OnlineStatus = "idle" | "connecting" | "waiting" | "playing";
+
+export interface OnlineApi {
+  status: OnlineStatus;
+  /** Room join code (share with the opponent) once created/joined. */
+  code: string | null;
+  opponentConnected: boolean;
+  create: (deck: DeckChoice) => void;
+  join: (code: string, deck: DeckChoice) => void;
+  leave: () => void;
+  rematch: () => void;
+}
 
 export interface UseMatch {
   cards: CardCatalog;
@@ -8,24 +22,49 @@ export interface UseMatch {
   error: string | null;
   act: (index: number) => Promise<void>;
   newGame: (p0: School, p1: School, mode: "bot" | "agent") => Promise<void>;
+  online: OnlineApi;
 }
 
+const REJOIN_RETRY_MS = 2000;
+const REJOIN_MAX_TRIES = 5;
+
 /**
- * Owns the match data lifecycle: loads the card catalog once, fetches state, and — while it's not
- * your turn and the game isn't over — polls so the bot's moves stream in. Mirrors the poll/act loop
- * of the old zero-dep board, but as a hook the Pixi board + React shell both read from.
+ * Owns the match data lifecycle in both transports.
+ *
+ * Local (vs bot/agent): loads the catalog once, fetches state over HTTP, and —
+ * while it's not your turn and the game isn't over — polls so the bot's moves
+ * stream in.
+ *
+ * Online: a WebSocket to the authoritative server pushes redacted, viewer-relative
+ * MatchState frames (same shape as local, so the board renders both identically);
+ * `act` sends the legal-action index as an intent. The seat token lives in
+ * sessionStorage so a refreshed tab rejoins its match automatically.
  */
 export function useMatch(): UseMatch {
   const [cards, setCards] = useState<CardCatalog>({});
   const [state, setState] = useState<MatchState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>("idle");
+  const [code, setCode] = useState<string | null>(null);
+  const [opponentConnected, setOpponentConnected] = useState(false);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onlineRef = useRef<OnlineClient | null>(null);
+  const statusRef = useRef<OnlineStatus>("idle");
+  const retryRef = useRef<{ timer: ReturnType<typeof setTimeout> | null; tries: number }>({ timer: null, tries: 0 });
+  statusRef.current = onlineStatus;
 
   const clearPoll = () => {
     if (pollRef.current) clearTimeout(pollRef.current);
     pollRef.current = null;
   };
+
+  const clearRejoinRetry = () => {
+    if (retryRef.current.timer) clearTimeout(retryRef.current.timer);
+    retryRef.current = { timer: null, tries: 0 };
+  };
+
+  // ---- local (HTTP) transport ----
 
   // Poll again only while we're waiting on the opponent/bot.
   const schedulePoll = useCallback((s: MatchState) => {
@@ -56,8 +95,102 @@ export function useMatch(): UseMatch {
       .catch((e) => setError(String(e)));
   }, [schedulePoll]);
 
+  // ---- online (WebSocket) transport ----
+
+  const onlineClient = useCallback((): OnlineClient => {
+    if (onlineRef.current) return onlineRef.current;
+    const client: OnlineClient = new OnlineClient({
+      onLobby: (info, catalog) => {
+        clearRejoinRetry();
+        setCards(catalog);
+        setCode(info.code);
+        setError(null);
+        // "waiting" until the first state frame arrives (P1 joins ⇒ immediate).
+        setOnlineStatus("waiting");
+      },
+      onState: (s, err) => {
+        setOnlineStatus("playing");
+        setState(s);
+        setError(err ?? null);
+      },
+      onPresence: (connected) => setOpponentConnected(connected),
+      onError: (message) => {
+        // A dead seat (server restarted / room swept) can't be rejoined — go idle.
+        if (message.includes("no seat matches") || message.includes("no room with code")) {
+          storeSeat(null);
+          clearRejoinRetry();
+          setOnlineStatus("idle");
+        }
+        setError(message);
+      },
+      onClose: () => {
+        // Unexpected drop: retry the stored seat a few times, then give up.
+        const seat = storedSeat();
+        if (statusRef.current === "idle" || !seat) return;
+        setOpponentConnected(false);
+        if (retryRef.current.tries >= REJOIN_MAX_TRIES) {
+          setOnlineStatus("idle");
+          setError("connection lost");
+          clearRejoinRetry();
+          return;
+        }
+        setOnlineStatus("connecting");
+        retryRef.current.tries++;
+        retryRef.current.timer = setTimeout(() => client.rejoin(seat.code, seat.token), REJOIN_RETRY_MS);
+      },
+    });
+    onlineRef.current = client;
+    return client;
+  }, []);
+
+  const goOnline = useCallback(() => {
+    clearPoll();
+    setState(null);
+    setError(null);
+    setOpponentConnected(false);
+    setOnlineStatus("connecting");
+  }, []);
+
+  const online: OnlineApi = {
+    status: onlineStatus,
+    code,
+    opponentConnected,
+    create: useCallback(
+      (deck: DeckChoice) => {
+        goOnline();
+        onlineClient().create(deck);
+      },
+      [goOnline, onlineClient],
+    ),
+    join: useCallback(
+      (roomCode: string, deck: DeckChoice) => {
+        goOnline();
+        onlineClient().join(roomCode, deck);
+      },
+      [goOnline, onlineClient],
+    ),
+    leave: useCallback(() => {
+      setOnlineStatus("idle");
+      storeSeat(null);
+      clearRejoinRetry();
+      onlineRef.current?.close();
+      setCode(null);
+      setOpponentConnected(false);
+      setState(null);
+      api.cards().then(setCards).catch(() => {});
+      refreshInner();
+    }, [refreshInner]),
+    rematch: useCallback(() => onlineRef.current?.rematch(), []),
+  };
+
+  // ---- shared surface ----
+
   const act = useCallback(
     async (index: number) => {
+      if (statusRef.current !== "idle") {
+        onlineRef.current?.act(index);
+        return;
+      }
       clearPoll();
       setBusy(true);
       try {
@@ -77,6 +210,7 @@ export function useMatch(): UseMatch {
 
   const newGame = useCallback(
     async (p0: School, p1: School, mode: "bot" | "agent") => {
+      if (statusRef.current !== "idle") online.leave();
       clearPoll();
       setBusy(true);
       try {
@@ -90,15 +224,32 @@ export function useMatch(): UseMatch {
         setBusy(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [schedulePoll],
   );
 
   useEffect(() => {
-    api.cards().then(setCards).catch(() => {});
-    refreshInner();
-    return clearPoll;
+    const seat = storedSeat();
+    if (seat) {
+      // A refreshed tab resumes its online seat instead of hitting the local server.
+      setOnlineStatus("connecting");
+      onlineClient().rejoin(seat.code, seat.token);
+    } else {
+      api.cards().then(setCards).catch(() => {});
+      refreshInner();
+    }
+    return () => {
+      clearPoll();
+      clearRejoinRetry();
+      onlineRef.current?.close();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { cards, state, busy, error, act, newGame };
+  // Test/debug hook: lets headless drivers read the frame and act by index.
+  useEffect(() => {
+    (window as unknown as Record<string, unknown>).__ibokki = { state, act, online };
+  });
+
+  return { cards, state, busy, error, act, newGame, online };
 }

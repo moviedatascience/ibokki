@@ -16,6 +16,9 @@ const SCHOOL_VAR: Record<string, string> = {
  * lives in the DOM rather than the Pixi board. It reads like a book: pages of spells ordered from
  * lowest to highest level, with prev/next buttons on either side. Click a card to prepare it into
  * the next free slot, or use its slot buttons to replace an already-prepared spell.
+ *
+ * Preparing moves the card out of the spellbook (engine rule), and the sheet covers the board's
+ * prepared row — so a numbered "Prepared" strip at the bottom shows what's already in each slot.
  */
 export function SpellbookTray({ state, cards, onAction, onHover }: { state: MatchState | null; cards: CardCatalog; onAction: (i: number) => void; onHover: (d: string | null) => void }) {
   const [page, setPage] = useState(0);
@@ -34,6 +37,9 @@ export function SpellbookTray({ state, cards, onAction, onHover }: { state: Matc
 
   const prepareFor = (def: string) => state.legal.find((a) => a.type === "prepareSpell" && a.defId === def);
   const replaceFor = (def: string) => state.legal.filter((a) => a.type === "replacePrepared" && a.defId === def);
+
+  const prepared = state.view.self.prepared;
+  const preparedLimit = state.view.self.preparedLimit;
 
   return (
     <div className="spellbook">
@@ -85,6 +91,37 @@ export function SpellbookTray({ state, cards, onAction, onHover }: { state: Matc
         <button className="sbturn" disabled={cur >= pageCount - 1} onClick={() => setPage(cur + 1)} aria-label="Next page">
           ▶
         </button>
+      </div>
+      <div className="sbprep">
+        <span className="sbpreplabel">
+          Prepared {prepared.length}/{preparedLimit}
+        </span>
+        {Array.from({ length: preparedLimit }, (_, i) => {
+          const def = prepared[i]?.spellDefId;
+          if (!def) {
+            return (
+              <div key={i} className="sbprepslot empty">
+                <span className="sbprepno">{i}</span> empty
+              </div>
+            );
+          }
+          const info = cards[def];
+          return (
+            <div
+              key={i}
+              className="sbprepslot"
+              style={{ "--school": SCHOOL_VAR[info?.school ?? ""] ?? "var(--neu)" } as CSSProperties}
+              onMouseEnter={() => onHover(def)}
+              onMouseLeave={() => onHover(null)}
+            >
+              <span className="sbprepno">{i}</span>
+              <span className="sbprepname">{info?.name ?? def}</span>
+              <span className="sbprepmeta">
+                {info?.level ? `L${info.level}` : ""} {info?.cost ?? ""}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
