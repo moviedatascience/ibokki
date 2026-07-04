@@ -338,6 +338,117 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(state.pendingChoice).toBeNull();
   });
 
+  it("Foretell (DIV-011): reveals the opponent's hand — nothing pickable, nothing moves", () => {
+    const { state } = play("DIV-011", (s) => {
+      s.players[1].hand = [inst("CMP-V"), inst("GAM-001")];
+    });
+    expect(state.players[1].hp).toBe(28); // the 2 damage landed
+    const pc = state.pendingChoice!;
+    expect(pc.mode).toBe("reveal");
+    expect(pc.candidates.map((c) => c.defId)).toEqual(["CMP-V", "GAM-001"]);
+    const legal = legalActions(state, 0);
+    expect(legal.every((a) => a.type === "pass")).toBe(true); // information only: Done is the only action
+    const after = apply(state, { type: "pass" }).state;
+    expect(after.pendingChoice).toBeNull();
+    expect(after.players[1].hand).toHaveLength(2); // untouched
+  });
+
+  it("Perfect Information (DIV-031): reveals hand AND their top 3 without moving them", () => {
+    const { state } = play("DIV-031", (s) => {
+      s.players[0].resourceDeck = [inst("CMP-V"), inst("CMP-V"), inst("CMP-V")]; // fuel the draw 2
+      s.players[1].hand = [inst("GAM-001")];
+      s.players[1].resourceDeck = ["CMP-S", "CMP-M", "CMP-SS", "CMP-MM"].map(inst); // top 3 = M, SS, MM
+    });
+    const pc = state.pendingChoice!;
+    expect(pc.mode).toBe("reveal");
+    expect(pc.candidates.map((c) => c.defId)).toEqual(["GAM-001", "CMP-M", "CMP-SS", "CMP-MM"]);
+    const after = apply(state, { type: "pass" }).state;
+    expect(after.players[1].resourceDeck).toHaveLength(4); // deck untouched
+    expect(after.players[1].hand).toHaveLength(1);
+  });
+
+  it("Alchemy (DIV-018): discard ANY NUMBER of your choice, then draw that many", () => {
+    const { state } = play("DIV-018", (s) => {
+      s.players[0].hand = ["CMP-V", "CMP-S", "CMP-M"].map(inst);
+      s.players[0].resourceDeck = [inst("CMP-VV"), inst("CMP-SS")]; // top = SS
+    });
+    expect(state.pendingChoice!.mode).toBe("discardThenDraw");
+    let s = choose(state, "CMP-V");
+    s = choose(s, "CMP-M");
+    expect(s.players[0].hand.map((c) => c.defId)).toEqual(["CMP-S"]); // draws NOT yet dealt
+    s = apply(s, { type: "pass" }).state; // done — stop at two
+    expect(s.pendingChoice).toBeNull();
+    expect(s.players[0].discard.map((c) => c.defId)).toEqual(["CMP-V", "CMP-M"]);
+    expect(s.players[0].hand.map((c) => c.defId)).toEqual(["CMP-S", "CMP-SS", "CMP-VV"]); // drew exactly 2
+  });
+
+  it("Mind Theft (DIV-039): the CASTER picks which card the opponent discards", () => {
+    const { state } = play("DIV-039", (s) => {
+      s.players[1].hand = ["CMP-VV", "GAM-001", "CMP-M"].map(inst);
+    });
+    expect(state.pendingChoice!.mode).toBe("discardFromOpponentHand");
+    expect(legalActions(state, 0).some((a) => a.type === "pass")).toBe(false); // "choose a card" — mandatory
+    const after = choose(state, "GAM-001");
+    expect(after.players[1].discard.map((c) => c.defId)).toEqual(["GAM-001"]);
+    expect(after.players[1].hand.map((c) => c.defId)).toEqual(["CMP-VV", "CMP-M"]);
+  });
+
+  it("Mind Theft vs Iron Will: no choice, no discard", () => {
+    const { state } = play("DIV-039", (s) => {
+      s.players[1].hand = [inst("CMP-VV")];
+      s.players[1].ongoing.push({ id: 1, owner: 1, kind: "cannotBeForcedToDiscard", value: 1, expiry: "endOfRound" });
+    });
+    expect(state.pendingChoice).toBeNull();
+    expect(state.players[1].hand).toHaveLength(1);
+  });
+
+  it("Mnemonic Charm (ITM-006): pick a discard COMPONENT — it goes to your deck TOP", () => {
+    const { state } = play("ITM-006", (s) => {
+      s.players[0].discard = ["GAM-001", "CMP-VV", "CMP-M"].map(inst);
+      s.players[0].resourceDeck = [inst("CMP-V")];
+    });
+    const pc = state.pendingChoice!;
+    expect(pc.mode).toBe("discardToDeckTop");
+    expect(pc.candidates.map((c) => c.defId)).toEqual(["CMP-VV", "CMP-M"]); // trainers not offered
+    const after = choose(state, "CMP-M");
+    expect(after.players[0].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-M"]); // top = end
+    expect(after.players[0].discard.map((c) => c.defId)).toEqual(["GAM-001", "CMP-VV"]);
+  });
+
+  it("Calculated Draw (DIV-029): pick ANY deck card; the rest keep their order, then draw 2", () => {
+    const { state } = play("DIV-029", (s) => {
+      s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-M", "CMP-VV"].map(inst); // top = VV
+    });
+    expect(state.pendingChoice!.candidates).toHaveLength(4); // the WHOLE deck is searchable
+    const after = choose(state, "CMP-S");
+    expect(after.pendingChoice).toBeNull();
+    // Took CMP-S, leftovers [V, M, VV] kept order, then drew 2 off the top (VV, M).
+    expect(after.players[0].hand.map((c) => c.defId)).toEqual(["CMP-S", "CMP-VV", "CMP-M"]);
+    expect(after.players[0].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V"]);
+  });
+
+  it("Reclaim (DIV-015): return UP TO 2 discard components of your choice to hand", () => {
+    const { state } = play("DIV-015", (s) => {
+      s.players[0].discard = ["CMP-V", "GAM-001", "CMP-SS", "CMP-M"].map(inst);
+    });
+    const pc = state.pendingChoice!;
+    expect(pc.mode).toBe("discardToHand");
+    expect(pc.candidates.map((c) => c.defId)).toEqual(["CMP-V", "CMP-SS", "CMP-M"]); // components only
+    let s = choose(state, "CMP-SS");
+    expect(legalActions(s, 0).some((a) => a.type === "pass")).toBe(true); // "up to 2" — may stop
+    s = apply(s, { type: "pass" }).state;
+    expect(s.players[0].hand.map((c) => c.defId)).toEqual(["CMP-SS"]);
+    expect(s.players[0].discard.map((c) => c.defId)).toEqual(["CMP-V", "GAM-001", "CMP-M"]);
+  });
+
+  it("Calculated Draw with an empty deck: just the draws (exhaustion path)", () => {
+    const { state } = play("DIV-029", (s) => {
+      s.players[0].resourceDeck = [];
+      s.players[0].discard = [inst("CMP-V")]; // reshuffle fodder
+    });
+    expect(state.pendingChoice).toBeNull(); // nothing to search — drew straight through
+  });
+
   it("Mentor's Guidance (GAM-003): YOUR discard, then search for ANY one card", () => {
     const { state } = play("GAM-003", (s) => {
       s.players[0].hand = [inst("CMP-V"), inst("GAM-001")];

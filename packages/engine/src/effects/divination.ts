@@ -1,14 +1,14 @@
 /**
  * Divination (Material) — tempo, card advantage, recursion, mill, and DECK SCULPTING.
  *
- * The school's identity is "look at the top N / select / reorder" — implemented via
- * the sculpting primitives in state-ops (selectFromTop / reorderTopByValue /
- * drawThenBankWorst / tutorBestToTop). The engine auto-resolves the *choice* with a
- * deterministic value heuristic; a UI can later make it interactive. Still SIMPLIFIED:
- * pure-information riders (Foretell, the "look at opp hand" halves) are mechanical
- * no-ops in a headless engine. Recast-from-discard (Borrowed Spell/Power, Convergence)
- * is a SPEC GAP — cast spells return to `prepared`, never to discard, so there is no
- * spell in discard to copy; left as placeholders. Attune (cost-fixing) deferred.
+ * The school's identity is "look at the top N / select / reorder" — every card with
+ * a real decision now PAUSES for the player via pendingChoice (take/order/search/
+ * reveal modes); only decision-free conditionals (Augury, Component Pouch — a rule
+ * decides, not the player) resolve automatically. "Look at your opponent's hand"
+ * halves use the `reveal` mode (information shown, nothing moves).
+ * Recast-from-discard (Borrowed Spell/Power, Convergence) is a documented SPEC
+ * ADAPTATION — cast spells return to `prepared`, never to discard, so these recast
+ * an already-cast prepared spell instead.
  */
 import { register } from "./registry.ts";
 import { componentSymbols } from "./context.ts";
@@ -26,25 +26,22 @@ register("DIV-005", (c) => {
   const drawn = c.self.hand.slice(before);
   if (drawn.some((d) => componentSymbols(d.defId) >= 2)) c.draw(1);
 });
-register("DIV-006", (c) => c.returnComponentsFromDiscard(1)); // Recover
+register("DIV-006", (c) => c.requestReturnDiscardComponentsToHand(1)); // Recover — YOU pick the component
 register("DIV-007", (c) => {
   c.returnOwnAttachedComponent(); // Refocus
 });
 register("DIV-008", (c) => c.scryOpponentTopToBottom()); // Scry Glyph (bottom opponent's top)
 register("DIV-009", (c) => c.addAttuneBonus()); // Attune — next attach counts as +1 needed symbol
 register("DIV-010", (c) => { c.draw(1); c.requestBankToDeckTop(1); }); // Mind's Eye (draw 1, choose 1 to bank on top)
-register("DIV-011", (c) => c.dealDamage(2)); // Foretell (1→2: Div's L1 damage axis — "Div's Spark, plus intel"; balance 2026-07-04)
+register("DIV-011", (c) => { c.dealDamage(2); c.requestRevealOpponentHand(); }); // Foretell — the "intel" half is real now
 register("DIV-012", (c) => c.requestPickMaterialFromTop(4)); // Omen — interactive: see all 4, pick which M
 // DIV-013 Quicken RETIRED — redundant now that attaching is unlimited per turn.
 
 // ---- Level 2 ----
-register("DIV-015", (c) => c.returnComponentsFromDiscard(2)); // Reclaim
+register("DIV-015", (c) => c.requestReturnDiscardComponentsToHand(2, true)); // Reclaim — up to 2, your picks
 register("DIV-016", (c) => c.requestSearchDeck({ filter: "component", takeN: 1, reason: "Search: take a component to hand" })); // Seek
-register("DIV-017", (c) => c.draw(1)); // Foreknowledge (SIMPLIFIED: info + draw)
-register("DIV-018", (c) => {
-  const n = c.discardSelfHand(); // Alchemy (SIMPLIFIED: discard all, redraw same)
-  c.draw(n);
-});
+register("DIV-017", (c) => { c.draw(1); c.requestRevealOpponentHand(); }); // Foreknowledge — see their hand, draw 1
+register("DIV-018", (c) => c.requestDiscardThenDraw()); // Alchemy — YOU pick which (and how many) to churn
 register("DIV-019", (c) => {
   if (c.opponentHasWard()) c.destroyOneOpponentWard(); // Unbind — destroy a Ward or an ongoing effect
   else c.destroyOneOpponentOngoing();
@@ -64,12 +61,11 @@ register("DIV-028", (c) => {
   c.shuffleOwnDiscardIntoDeck(); // Echoes of the Past
   c.draw(2);
 });
-register("DIV-029", (c) => {
-  c.tutorAnyToTop(); // Calculated Draw — search any card to the top, then draw 3 (drawing it)
-  c.draw(3);
-});
+// Calculated Draw: "search any card to top, then draw 3" ≡ pick any card to hand
+// (rest keep their order — sculpted tops survive, no shuffle), then draw 2 more.
+register("DIV-029", (c) => c.requestTutorAnyThenDraw(2));
 register("DIV-030", (c) => c.requestTakeFromTop(5, 2, "top")); // Manipulate Fate (look 5, choose 2, rest on top)
-register("DIV-031", (c) => c.draw(2)); // Perfect Information (info on opp hand/deck is a no-op headless) + draw 2
+register("DIV-031", (c) => { c.draw(2); c.requestRevealOpponentHand(3); }); // Perfect Information — hand + their top 3, draw 2
 register("DIV-032", (c) => c.millOpponent(4)); // Entropy
 register("DIV-033", (c) => c.requestSearchDeck({ filter: "component", takeN: 2, optional: true, reason: "Search: take up to 2 components to hand" })); // Premeditate
 register("DIV-034", (c) => c.drawUntil(7)); // Convergent Future
@@ -78,7 +74,7 @@ register("DIV-038", (c) => {
   c.draw(2); // Foretold Strike
   c.dealRawDamage(Math.max(0, c.self.hand.length - 5));
 });
-register("DIV-039", (c) => c.discardOpponentRandom(1)); // Mind Theft (SIMPLIFIED: random)
+register("DIV-039", (c) => c.requestOpponentDiscardChoice()); // Mind Theft — the caster picks the discard
 
 // ---- Reactions ----
 register("DIV-014", (c) => {

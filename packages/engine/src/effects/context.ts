@@ -128,6 +128,21 @@ export interface EffectContext {
   /** Far Sight: look at the opponent's top `lookN`; MAY pick one → their discard,
    *  the rest return on top in order (interactive mill). */
   requestMillOpponentTop(lookN: number): void;
+  /** Pure information: reveal the opponent's hand (plus their top `alsoTopN` deck
+   *  cards) to the caster; nothing moves, Done dismisses (Foretell / Perfect Info). */
+  requestRevealOpponentHand(alsoTopN?: number): void;
+  /** Alchemy: pick ANY NUMBER of hand cards to discard, then draw that many. */
+  requestDiscardThenDraw(): void;
+  /** Mind Theft: see the opponent's hand and CHOOSE the card they discard. */
+  requestOpponentDiscardChoice(): void;
+  /** Mnemonic Charm: pick a component in your discard → top of your deck. */
+  requestReturnDiscardComponentToTop(): void;
+  /** Recover / Salvage / Reclaim: pick `n` components in your discard → hand.
+   *  `optional` = "up to n" (Done may end early). */
+  requestReturnDiscardComponentsToHand(n: number, optional?: boolean): void;
+  /** Calculated Draw: search the WHOLE deck for any card to hand (order of the
+   *  rest preserved — no shuffle), then draw `drawAfter` more. */
+  requestTutorAnyThenDraw(drawAfter: number): void;
   returnComponentsFromDiscard(n: number): number;
   returnAllComponentsFromDiscard(): number;
   shuffleOwnDiscardIntoDeck(): number;
@@ -427,6 +442,100 @@ export function makeContext(
         optional: true,
       };
       events.push({ type: "choicePending", player: selfId, reason: "disarm" });
+    },
+    requestRevealOpponentHand(alsoTopN = 0) {
+      const deck = opponent.resourceDeck;
+      const top = alsoTopN > 0 ? deck.slice(Math.max(0, deck.length - alsoTopN)) : [];
+      const candidates = [...opponent.hand, ...top]; // aliases — nothing moves
+      if (candidates.length === 0) return;
+      state.pendingChoice = {
+        player: selfId,
+        reason:
+          alsoTopN > 0
+            ? `Opponent's hand and their top ${top.length} deck card${top.length === 1 ? "" : "s"} — Done to continue`
+            : "Opponent's hand — Done to continue",
+        mode: "reveal",
+        candidates,
+        picksRemaining: 0,
+        leftover: "top",
+        eligibleIids: [], // information only — nothing is pickable
+        optional: true,
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "reveal" });
+    },
+    requestDiscardThenDraw() {
+      if (self.hand.length === 0) return;
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Discard any number of cards — you draw that many when done",
+        mode: "discardThenDraw",
+        candidates: [...self.hand],
+        picksRemaining: self.hand.length,
+        leftover: "top",
+        optional: true,
+        picked: [],
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "discard" });
+    },
+    requestOpponentDiscardChoice() {
+      if (opponent.hand.length === 0) return;
+      if (sumOngoing(opponent, "cannotBeForcedToDiscard") > 0) return; // Iron Will
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Opponent's hand — choose the card they discard",
+        mode: "discardFromOpponentHand",
+        candidates: [...opponent.hand],
+        picksRemaining: 1,
+        leftover: "top",
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "discard" });
+    },
+    requestReturnDiscardComponentToTop() {
+      const components = self.discard.filter((c) => isComponentDefId(c.defId));
+      if (components.length === 0) return;
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Your discard — choose a component to put on top of your deck",
+        mode: "discardToDeckTop",
+        candidates: components,
+        picksRemaining: 1,
+        leftover: "top",
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "return" });
+    },
+    requestReturnDiscardComponentsToHand(n, optional) {
+      const components = self.discard.filter((c) => isComponentDefId(c.defId));
+      if (components.length === 0) return;
+      state.pendingChoice = {
+        player: selfId,
+        reason:
+          n > 1
+            ? `Your discard — return up to ${n} components to your hand`
+            : "Your discard — choose a component to return to your hand",
+        mode: "discardToHand",
+        candidates: components,
+        picksRemaining: Math.min(n, components.length),
+        leftover: "top",
+        ...(optional ? { optional: true } : {}),
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "return" });
+    },
+    requestTutorAnyThenDraw(drawAfter) {
+      const deck = self.resourceDeck;
+      if (deck.length === 0) {
+        drawN(state, selfId, drawAfter + 1, events); // nothing to search — just the draws
+        return;
+      }
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Search: take ANY card from your deck to hand (the rest keep their order)",
+        mode: "takeToHand",
+        candidates: deck.splice(0, deck.length),
+        picksRemaining: 1,
+        leftover: "top", // leftovers return in original order — deliberately NO shuffle
+        drawAfter,
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "search" });
     },
     requestMillOpponentTop(lookN) {
       const deck = opponent.resourceDeck;

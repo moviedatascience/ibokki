@@ -83,6 +83,12 @@ function finishPendingChoice(state: GameState, events: GameEvent[]): void {
     state.players[otherPlayer(pc.player)].resourceDeck.push(...pc.candidates);
   }
   if (pc.shuffleAfter) state.rngState = shuffleInPlace(p.resourceDeck, state.rngState);
+  // Alchemy: "discard any number, THEN draw that many" — draws land after the picks.
+  if (pc.mode === "discardThenDraw" && (pc.picked?.length ?? 0) > 0) {
+    drawN(state, pc.player, pc.picked!.length, events);
+  }
+  // Calculated Draw: the follow-up draws happen once the deck is whole again.
+  if (pc.drawAfter) drawN(state, pc.player, pc.drawAfter, events);
   state.pendingChoice = null;
   resumeAfterChoice(state, events);
 }
@@ -438,6 +444,40 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
           const owner = state.players[otherPlayer(pc.player)];
           owner.discard.push(card);
           events.push({ type: "milled", player: owner.id, count: 1 });
+          break;
+        }
+        case "reveal":
+          break; // information only — nothing is pickable, so this never runs
+        case "discardThenDraw": {
+          // Alchemy: each pick is discarded now; the draws land when the choice ends.
+          const hidx = p.hand.findIndex((c) => c.iid === card.iid);
+          if (hidx >= 0) p.hand.splice(hidx, 1);
+          p.discard.push(card);
+          (pc.picked ??= []).push(card);
+          events.push({ type: "discarded", player: me, count: 1 });
+          break;
+        }
+        case "discardFromOpponentHand": {
+          // Mind Theft: the pick is in the OPPONENT'S hand; it goes to their discard.
+          const owner = state.players[otherPlayer(pc.player)];
+          const hidx = owner.hand.findIndex((c) => c.iid === card.iid);
+          if (hidx >= 0) owner.hand.splice(hidx, 1);
+          owner.discard.push(card);
+          events.push({ type: "discarded", player: owner.id, count: 1 });
+          break;
+        }
+        case "discardToDeckTop": {
+          // Mnemonic Charm: the pick is in YOUR discard; it goes on top of your deck.
+          const didx = p.discard.findIndex((c) => c.iid === card.iid);
+          if (didx >= 0) p.discard.splice(didx, 1);
+          p.resourceDeck.push(card);
+          break;
+        }
+        case "discardToHand": {
+          // Recover / Salvage / Reclaim: the pick returns from YOUR discard to hand.
+          const didx = p.discard.findIndex((c) => c.iid === card.iid);
+          if (didx >= 0) p.discard.splice(didx, 1);
+          p.hand.push(card);
           break;
         }
       }

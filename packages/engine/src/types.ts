@@ -176,8 +176,30 @@ export interface PendingChoice {
    *  "bounceToOwnersDeckTop": candidates are the OPPONENT'S hand (revealed to
    *   the chooser); the pick goes on top of its owner's deck (Disarm).
    *  "millFromTop": candidates are staged off the OPPONENT'S deck top; the pick
-   *   goes to their discard, leftovers return on top in order (Far Sight). */
-  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage" | "discardForSearch" | "orderToTop" | "bounceToOwnersDeckTop" | "millFromTop";
+   *   goes to their discard, leftovers return on top in order (Far Sight).
+   *  "reveal": pure information — candidates are shown to the chooser (nothing is
+   *   pickable, nothing moves); pass = Done (Foretell / Foreknowledge / Perfect Info).
+   *  "discardThenDraw": pick ANY NUMBER of hand cards to discard, then draw that
+   *   many when the choice ends (Alchemy).
+   *  "discardFromOpponentHand": candidates are the OPPONENT'S hand (revealed to
+   *   the chooser); the pick goes to its owner's discard (Mind Theft).
+   *  "discardToDeckTop": candidates are components in YOUR discard; the pick goes
+   *   on top of your Resource Deck (Mnemonic Charm).
+   *  "discardToHand": candidates are components in YOUR discard; picks return to
+   *   your hand (Recover / Salvage / Reclaim). */
+  mode:
+    | "takeToHand"
+    | "bankToDeckTop"
+    | "discardForDamage"
+    | "discardForSearch"
+    | "orderToTop"
+    | "bounceToOwnersDeckTop"
+    | "millFromTop"
+    | "reveal"
+    | "discardThenDraw"
+    | "discardFromOpponentHand"
+    | "discardToDeckTop"
+    | "discardToHand";
   candidates: CardInstance[];
   picksRemaining: number;
   /** Where unchosen staged cards go when a takeToHand choice finishes. */
@@ -192,8 +214,10 @@ export interface PendingChoice {
   eligibleIids?: number[];
   /** "Up to N" / "you may": `pass` is legal and ends the choice early. */
   optional?: boolean;
-  /** orderToTop: picks accumulate here until the choice completes. */
+  /** orderToTop / discardThenDraw: picks accumulate here until the choice completes. */
   picked?: CardInstance[];
+  /** Draw this many cards for the chooser once the choice completes (Calculated Draw). */
+  drawAfter?: number;
 }
 
 export type Phase = "prepare" | "main" | "gameover";

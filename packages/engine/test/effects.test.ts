@@ -195,12 +195,15 @@ describe("Divination effects", () => {
     expect(state.players[1].discard).toHaveLength(2);
   });
 
-  it("Recover (DIV-006) returns a component from discard to hand", () => {
+  it("Recover (DIV-006) pauses for the player to pick the discard component", () => {
     const { state } = cast("DIV-006", (s) => {
       s.players[0].discard = [inst("CMP-M")];
     });
-    expect(state.players[0].hand.map((c) => c.defId)).toEqual(["CMP-M"]);
-    expect(state.players[0].discard).toHaveLength(0);
+    const pc = state.pendingChoice!;
+    expect(pc.mode).toBe("discardToHand");
+    const next = apply(state, { type: "choose", iid: pc.candidates[0]!.iid }).state;
+    expect(next.players[0].hand.map((c) => c.defId)).toEqual(["CMP-M"]);
+    expect(next.players[0].discard).toHaveLength(0);
   });
 
   it("Unbind (DIV-019) destroys an opponent ward and draws", () => {

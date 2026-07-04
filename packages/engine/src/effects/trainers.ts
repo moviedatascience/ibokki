@@ -3,9 +3,10 @@
  * own turn, then discarded. Items are unlimited per turn; Gambits are capped at
  * one per turn (enforced in legalActions/apply, not here).
  *
- * Deck-sculpting cards ("look at the top N, reorder") are simplified to their net
- * card flow (SIMPLIFIED); a few protective/anti-disruption riders need systems
- * that don't exist yet and are no-ops (DEFERRED).
+ * Cards with real decisions pause for the player via pendingChoice (search/order/
+ * return/bounce modes); decision-free conditionals (Component Pouch) auto-resolve.
+ * Transmuter's Stone approximates its treat-as-another-symbol wording with an
+ * Attune-style bonus on the next attach (SIMPLIFIED — same practical effect).
  */
 import { register } from "./registry.ts";
 
@@ -18,7 +19,7 @@ register("ITM-004", (c) => {
   c.draw(1);
 });
 register("ITM-005", (c) => c.addAttuneBonus()); // Transmuter's Stone (color-fix ~ next attach counts as a needed symbol)
-register("ITM-006", (c) => c.returnComponentsFromDiscard(1)); // Mnemonic Charm (to hand vs top SIMPLIFIED)
+register("ITM-006", (c) => c.requestReturnDiscardComponentToTop()); // Mnemonic Charm — pick the component, to deck TOP per text
 register("ITM-007", (c) => c.addNextSpellDamage(1)); // Empowered Chalk — next spell THIS turn
 register("ITM-008", (c) => {
   if (c.selfHasWard()) c.buffOneOwnWardOrCreate(2, 0); // Bulwark Shard
@@ -32,7 +33,7 @@ register("GAM-002", (c) => {
 });
 register("GAM-003", (c) => c.requestDiscardThenSearch()); // Mentor's Guidance — YOUR discard, then search ANY card
 register("GAM-004", (c) => c.requestSearchDeck({ filter: "sameSymbolDual", takeN: 1, reason: "Search: take a same-symbol dual (VV / SS / MM) to hand" })); // Recharge
-register("GAM-005", (c) => c.returnComponentsFromDiscard(1)); // Salvage
+register("GAM-005", (c) => c.requestReturnDiscardComponentsToHand(1)); // Salvage — YOU pick the component
 register("GAM-006", (c) => c.requestOrderTopOfDeck(4)); // Premonition Charm — interactive reorder
 register("GAM-007", (c) => c.attachTopComponentElseDraw()); // Ritual Circle (attach top component, else draw)
 register("GAM-008", (c) => c.grantExtraCast()); // Overclock
