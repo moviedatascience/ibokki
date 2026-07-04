@@ -5,7 +5,7 @@
  */
 import { MAX_LEVEL, tierForLevel } from "./levels.ts";
 import { dealDamageToPlayer, drawN, endGame, sumOngoing, winnerByHp } from "./state-ops.ts";
-import { otherPlayer, type GameEvent, type GameState } from "./types.ts";
+import { otherPlayer, type GameEvent, type GameState, type PlayerId } from "./types.ts";
 
 /**
  * Hard safety cap so a pathological game can never loop forever. Real games end
@@ -21,10 +21,19 @@ export const ROUND_TURN_LIMIT = 8;
 /** End-of-turn maximum hand size; excess cards are discarded (lowest-value first). */
 export const MAX_HAND_SIZE = 10;
 
-/** Enter the Prepare phase: the starting player chooses/adjusts prepared spells first. */
+/**
+ * Who takes the first turn of `round`: the coin-flip winner leads round 1, then
+ * the lead ALTERNATES every round — leading is an advantage (first cast, first
+ * slot pressure), so neither wizard keeps it all game.
+ */
+export function roundLeader(state: GameState): PlayerId {
+  return ((state.startingPlayer + (state.round - 1)) % 2) as PlayerId;
+}
+
+/** Enter the Prepare phase (simultaneous; priority marker parks on the round leader). */
 export function enterPrepare(state: GameState): void {
   state.phase = "prepare";
-  state.priorityPlayer = state.startingPlayer;
+  state.priorityPlayer = roundLeader(state);
   for (const player of state.players) {
     player.prepareDone = false;
     player.replacementsThisRound = 0;
@@ -43,7 +52,7 @@ export function completePrepare(state: GameState, events: GameEvent[]): void {
       events.push({ type: "drew", player: player.id, count: 5 });
     }
   }
-  state.activePlayer = state.startingPlayer;
+  state.activePlayer = roundLeader(state);
   beginTurn(state, events);
 }
 

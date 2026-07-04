@@ -1379,7 +1379,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Draw 1 card from your Resource Deck.",
+    "text": "Draw 2 cards from your Resource Deck.",
     "comment": "The school's baseline cantrip and clean reference point: 1 M for 1 card. The consistency engine every Divination deck is built around."
   },
   {
@@ -1439,7 +1439,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Draw 1 card. If it is a multi-symbol component card, draw an additional card.",
+    "text": "Draw 2 cards. If either is a multi-symbol component card, draw a third.",
     "comment": "Pays off the dual- and tri-component cards Divination leans on to hit off-color costs. A tuned deck turns this into a two-for-one."
   },
   {

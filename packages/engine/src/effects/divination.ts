@@ -14,15 +14,17 @@ import { register } from "./registry.ts";
 import { componentSymbols } from "./context.ts";
 
 // ---- Level 1 ----
-register("DIV-001", (c) => c.draw(1)); // Insight
+register("DIV-001", (c) => c.draw(2)); // Insight (1→2: draw-1-for-M was strictly dominated by Foresight/Divine; balance 2026-07-03)
 register("DIV-002", (c) => c.requestTakeFromTop(3, 1, "top")); // Foresight (look 3, choose 1, rest on top)
 register("DIV-003", (c) => c.requestTakeFromTop(2, 1, "bottom")); // Divine (look 2, choose 1, other to bottom)
 register("DIV-004", (c) => c.lookSelectMaterialToHand(1)); // Augury (top card: draw if M, else bottom)
 register("DIV-005", (c) => {
-  // Premonition — draw 1, draw another if it's a multi-symbol component.
-  c.draw(1);
-  const drawn = c.self.hand[c.self.hand.length - 1];
-  if (drawn && componentSymbols(drawn.defId) >= 2) c.draw(1);
+  // Premonition — draw 2; if either is a multi-symbol component, draw a third.
+  // (Bumped alongside Insight 1→2 so its gamble ceiling stays above the flat draw.)
+  const before = c.self.hand.length;
+  c.draw(2);
+  const drawn = c.self.hand.slice(before);
+  if (drawn.some((d) => componentSymbols(d.defId) >= 2)) c.draw(1);
 });
 register("DIV-006", (c) => c.returnComponentsFromDiscard(1)); // Recover
 register("DIV-007", (c) => {

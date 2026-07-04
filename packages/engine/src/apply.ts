@@ -1,6 +1,7 @@
 /** The pure reducer: apply one action to a state, producing a new state + events. */
 import { getCard, getComponent, type ComponentDef } from "@ibokki/cards";
 import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
+import { ATTACH_M_TRAPS } from "./cardFlags.ts";
 import { tierForLevel } from "./levels.ts";
 import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
@@ -40,6 +41,31 @@ function flagRoundEnd(state: GameState, events: GameEvent[]): void {
 }
 
 /** After a pending choice resolves, return priority to the active player and flag round end if slots are spent. */
+/**
+ * Trap Reactions (Volatile Bolt): while prepared face-down and fueled, they fire
+ * AUTOMATICALLY when the opponent attaches an M component — no reaction window,
+ * no stack. The trap flips face-up, spends itself and its components, and stings.
+ */
+function fireAttachTraps(state: GameState, attacher: PlayerId, events: GameEvent[]): void {
+  const owner = state.players[otherPlayer(attacher)];
+  if (sumOngoing(state.players[attacher], "reactionsLocked") > 0) return; // Arcane Anchor etc. silence traps too
+  for (const prep of owner.prepared) {
+    const dmg = ATTACH_M_TRAPS[prep.spell.defId];
+    if (dmg === undefined || prep.cast || prep.sealed) continue;
+    const def = getCard(prep.spell.defId);
+    if (!def?.cost) continue;
+    if ((def.level ?? 1) > tierForLevel(owner.level).maxSpellLevel) continue;
+    if (!meetsCost(def.cost, combinedSymbols(attachedComponents(prep)))) continue; // must be armed
+    prep.cast = true;
+    prep.faceDown = false;
+    owner.discard.push(...prep.attached);
+    prep.attached = [];
+    events.push({ type: "reactionCast", player: owner.id, spellDefId: prep.spell.defId, targetSid: null });
+    dealDamageToPlayer(state, attacher, dmg + sumOngoing(owner, "damageBuff"), events);
+    events.push({ type: "spellResolved", controller: owner.id, spellDefId: prep.spell.defId });
+  }
+}
+
 /** Wrap up the pending choice: return/lay out leftovers, shuffle searches, resume flow. */
 function finishPendingChoice(state: GameState, events: GameEvent[]): void {
   const pc = state.pendingChoice!;
@@ -207,6 +233,9 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
         preparedIndex: action.preparedIndex,
         componentDefId: card.defId,
       });
+      // Volatile Bolt: an armed opposing trap fires the moment this attach carries an M symbol.
+      if ((getComponent(card.defId)?.symbols.M ?? 0) > 0) fireAttachTraps(state, me, events);
+
       // Attune: the next component you attach counts as +1 of the symbol the spell still needs.
       const attuneIdx = p.ongoing.findIndex((o) => o.kind === "attuneBonus");
       if (attuneIdx >= 0) {

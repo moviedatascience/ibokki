@@ -93,6 +93,9 @@ same-symbol duals in the Resource Deck — that ratio is the ramp dial, not the 
 
 ## Round Structure
 
+**Turn order:** a coin flip decides who leads round 1; the lead then **alternates every
+round**, so neither Wizard keeps the first-turn advantage all game. *(Ruling 2026-07-03.)*
+
 ### Prepare Spells
 
 Wizards simultaneously pull cards directly from their Spell Deck and place them
@@ -130,7 +133,10 @@ face-down into the prepared spells area. At Level 1, a Wizard may have 4 prepare
   cast per turn. Like any spell, a Reaction can only be cast if its required components are
   **already attached** — its cost cannot be paid from hand mid-window. "Holding components
   in reserve" means attaching them to your face-down Reactions on your own turns so they
-  sit ready. *(Ruling 2026-07-03.)*
+  sit ready. *(Ruling 2026-07-03.)* **Trigger-style Reactions** (e.g. Volatile Bolt) are
+  never cast from a reaction window at all: while prepared face-down with their components
+  attached, they fire **automatically** the moment their printed trigger occurs — like a
+  trap — and are then spent like any cast spell. *(Ruling 2026-07-03.)*
 - **Resolution:** Cast spells return face-up to the prepared area. Components used to
   cast a spell are discarded into the discard pile; the spell card returns, now face-up,
   to the prepared spells section.

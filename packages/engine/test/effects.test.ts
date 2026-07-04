@@ -167,12 +167,24 @@ describe("Evocation effects", () => {
 });
 
 describe("Divination effects", () => {
-  it("Insight (DIV-001) draws a card", () => {
+  it("Insight (DIV-001) draws two cards (2026-07 buff)", () => {
     const { state } = cast("DIV-001", (s) => {
-      s.players[0].resourceDeck = [inst("CMP-M"), inst("CMP-M")];
+      s.players[0].resourceDeck = [inst("CMP-M"), inst("CMP-M"), inst("CMP-M")];
     });
-    expect(state.players[0].hand).toHaveLength(1);
+    expect(state.players[0].hand).toHaveLength(2);
     expect(state.players[0].resourceDeck).toHaveLength(1);
+  });
+
+  it("Premonition (DIV-005) draws two, plus a third if either is multi-symbol", () => {
+    const hit = cast("DIV-005", (s) => {
+      s.players[0].resourceDeck = [inst("CMP-M"), inst("CMP-VV"), inst("CMP-V")]; // top two: V, VV
+    });
+    expect(hit.state.players[0].hand).toHaveLength(3); // VV triggers the bonus
+
+    const miss = cast("DIV-005", (s) => {
+      s.players[0].resourceDeck = [inst("CMP-M"), inst("CMP-S"), inst("CMP-V")];
+    });
+    expect(miss.state.players[0].hand).toHaveLength(2); // singles only — no bonus
   });
 
   it("Foreclosure (DIV-020) mills the opponent for 2", () => {

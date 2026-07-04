@@ -20,3 +20,12 @@ export const UNSTOPPABLE: ReadonlySet<string> = new Set([
 export const MIN_DAMAGE: Readonly<Record<string, number>> = {
   "EVO-018": 1, // Lightning Bolt
 };
+
+/**
+ * Trap-style Reactions that fire AUTOMATICALLY on their printed trigger while
+ * prepared face-down and fueled — they are never cast in a reaction window.
+ * Value = damage dealt to the triggering opponent.
+ */
+export const ATTACH_M_TRAPS: Readonly<Record<string, number>> = {
+  "EVO-015": 2, // Volatile Bolt — fires when the OPPONENT attaches an M component
+};

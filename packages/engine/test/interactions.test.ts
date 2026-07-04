@@ -10,6 +10,8 @@
 import { describe, expect, it } from "vitest";
 import {
   apply,
+  createGame,
+  deckFor,
   getEffect,
   legalActions,
   makeContext,
@@ -20,7 +22,7 @@ import {
   type PlayerState,
 } from "../src/index.ts";
 import { pushToStack, resolveTop } from "../src/stack.ts";
-import { beginTurn } from "../src/mechanics.ts";
+import { beginTurn, endRoundAndLevelUp } from "../src/mechanics.ts";
 
 let iid = 1;
 const inst = (defId: string): CardInstance => ({ iid: iid++, defId });
@@ -323,6 +325,69 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
       s.players[0].resourceDeck = [inst("CMP-M")];
     });
     expect(state.pendingChoice!.mode).toBe("takeToHand");
+  });
+});
+
+describe("Volatile Bolt attach-trap (EVO-015)", () => {
+  /** P1 active with an M in hand and a prepared spell to attach to; P0 holds the Bolt. */
+  function trapState(boltAttached: string[], handDef = "CMP-M"): GameState {
+    const s = blankState();
+    s.players[0].prepared = [{ spell: inst("EVO-015"), faceDown: true, attached: boltAttached.map(inst), cast: false, sealed: false }];
+    s.players[1].prepared = [{ spell: inst("EVO-001"), faceDown: true, attached: [], cast: false, sealed: false }];
+    s.players[1].hand = [inst(handDef)];
+    s.activePlayer = 1;
+    s.priorityPlayer = 1;
+    return s;
+  }
+  const attach = (s: GameState) =>
+    apply(s, { type: "attach", preparedIndex: 0, handIid: s.players[1].hand[0]!.iid }, 1);
+
+  it("fires automatically when the opponent attaches an M — spent like a cast", () => {
+    const { state: s, events } = attach(trapState(["CMP-V"]));
+    expect(s.players[1].hp).toBe(28); // stung for 2
+    const bolt = s.players[0].prepared[0]!;
+    expect(bolt.cast).toBe(true); // spent
+    expect(bolt.faceDown).toBe(false); // revealed
+    expect(bolt.attached).toHaveLength(0); // fuel discarded
+    expect(s.players[0].discard.map((c) => c.defId)).toEqual(["CMP-V"]);
+    expect(events.some((e) => e.type === "reactionCast" && e.spellDefId === "EVO-015")).toBe(true);
+  });
+
+  it("stays silent for non-M attaches and while unfueled", () => {
+    expect(attach(trapState(["CMP-V"], "CMP-S")).state.players[1].hp).toBe(30); // S attach — no trigger
+    const unfueled = attach(trapState([]));
+    expect(unfueled.state.players[1].hp).toBe(30); // no V attached — not armed
+    expect(unfueled.state.players[0].prepared[0]!.cast).toBe(false); // still lying in wait
+  });
+
+  it("is never offered as a castable reaction in a window", () => {
+    const s = blankState();
+    s.players[0].prepared = [{ spell: inst("EVO-015"), faceDown: true, attached: [inst("CMP-V")], cast: false, sealed: false }];
+    s.players[1].prepared = [{ spell: inst("EVO-001"), faceDown: false, attached: [inst("CMP-V")], cast: false, sealed: false }];
+    s.activePlayer = 1;
+    s.priorityPlayer = 1;
+    let t = apply(s, { type: "cast", preparedIndex: 0 }).state;
+    t = apply(t, { type: "pass" }).state; // reaction window for P0
+    expect(legalActions(t, 0).some((a) => a.type === "castReaction")).toBe(false);
+  });
+});
+
+describe("round leader alternates (ruling 2026-07-03)", () => {
+  it("the coin-flip winner leads round 1; the other player leads round 2", () => {
+    let s = createGame({ seed: 3, players: [deckFor("Evocation"), deckFor("Evocation")] });
+    const first = s.startingPlayer;
+    expect(s.priorityPlayer).toBe(first); // round 1 lead
+    // Fast-forward: both done preparing, then force the round to end.
+    s = apply(s, { type: "donePreparing" }, 0).state;
+    s = apply(s, { type: "donePreparing" }, 1).state;
+    expect(s.activePlayer).toBe(first);
+    const events: GameEvent[] = [];
+    endRoundAndLevelUp(s, events);
+    expect(s.round).toBe(2);
+    expect(s.priorityPlayer).toBe((first ^ 1) as PlayerId); // round 2: the OTHER wizard leads
+    s = apply(s, { type: "donePreparing" }, 0).state;
+    s = apply(s, { type: "donePreparing" }, 1).state;
+    expect(s.activePlayer).toBe((first ^ 1) as PlayerId);
   });
 });
 
