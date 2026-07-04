@@ -39,9 +39,11 @@ export function pushToStack(
     unstoppable: UNSTOPPABLE.has(defId) || sumOngoing(player, "spellsUncounterable") > 0,
     reactionProof: REACTION_PROOF.has(defId),
     minDamage: MIN_DAMAGE[defId] ?? 0,
+    damageBonus: player.nextSpellBonus, // one-shot next-spell buff rides this cast
     wasFaceDown: prep.faceDown,
     retractable: !isReaction,
   };
+  player.nextSpellBonus = 0;
 
   // Anything joining the stack commits every earlier cast — no take-backs
   // once a response exists.

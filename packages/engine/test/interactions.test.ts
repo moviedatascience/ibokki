@@ -19,7 +19,8 @@ import {
   type PlayerId,
   type PlayerState,
 } from "../src/index.ts";
-import { pushToStack } from "../src/stack.ts";
+import { pushToStack, resolveTop } from "../src/stack.ts";
+import { beginTurn } from "../src/mechanics.ts";
 
 let iid = 1;
 const inst = (defId: string): CardInstance => ({ iid: iid++, defId });
@@ -49,6 +50,7 @@ function blankPlayer(id: PlayerId): PlayerState {
     turnsTakenThisRound: 0,
     componentPlayedThisTurn: false,
     spellCastThisTurn: false,
+    nextSpellBonus: 0,
     noCastThisTurn: false,
   };
 }
@@ -149,6 +151,59 @@ describe("Recharge interactive search (GAM-004)", () => {
     expect(state.pendingChoice).toBeNull();
     expect(state.players[0].resourceDeck).toHaveLength(3);
     expect(events.some((e) => e.type === "searched" && e.count === 0)).toBe(true);
+  });
+});
+
+describe("Battle Trance buffs ONE spell, THIS turn (GAM-010) — live-match regression", () => {
+  const play = (s: GameState, id: string, events: GameEvent[]) => {
+    const card = inst(id);
+    getEffect(id)!(makeContext(s, 0, card, events), card);
+  };
+  /** Cast + resolve `spellId` for P0 through the real stack. */
+  const castAndResolve = (s: GameState, spellId: string, events: GameEvent[]) => {
+    s.players[0].prepared.push({ spell: inst(spellId), faceDown: false, attached: [], cast: false, sealed: false });
+    pushToStack(s, 0, s.players[0].prepared.length - 1, false, null, events);
+    resolveTop(s, events);
+  };
+
+  it("the +3 rides only the next cast; later spells get Catalyst's +1 alone", () => {
+    const s = blankState();
+    const events: GameEvent[] = [];
+    play(s, "EVO-005", events); // Catalyst: +1 all round (correct, unchanged)
+    play(s, "GAM-010", events); // Battle Trance: -2 HP, +3 on the NEXT spell this turn
+    expect(s.players[0].hp).toBe(28);
+    expect(s.players[0].nextSpellBonus).toBe(3);
+
+    castAndResolve(s, "EVO-004", events); // Searing Word, base 2
+    expect(s.players[1].hp).toBe(30 - (2 + 1 + 3)); // 24 — Trance consumed here
+    expect(s.players[0].nextSpellBonus).toBe(0);
+
+    castAndResolve(s, "EVO-009", events); // Battery, base 2 — the fatal 6 from the match log
+    expect(s.players[1].hp).toBe(24 - (2 + 1)); // 21 — Catalyst only, NO stale +3
+  });
+
+  it("an unspent bonus dies at the turn boundary", () => {
+    const s = blankState();
+    const events: GameEvent[] = [];
+    // Cards in both decks so beginTurn's draw can't trigger exhaustion noise.
+    s.players[0].resourceDeck = ["CMP-V", "CMP-V"].map(inst);
+    s.players[1].resourceDeck = ["CMP-V", "CMP-V"].map(inst);
+    play(s, "GAM-010", events);
+    expect(s.players[0].nextSpellBonus).toBe(3);
+    s.activePlayer = 1;
+    beginTurn(s, events); // P0's turn ended without casting — the buff is wasted
+    expect(s.players[0].nextSpellBonus).toBe(0);
+  });
+
+  it("retracting returns the unspent bonus with the cast", () => {
+    const s = blankState();
+    const events: GameEvent[] = [];
+    play(s, "GAM-010", events);
+    s.players[0].prepared = [{ spell: inst("EVO-004"), faceDown: true, attached: [], cast: false, sealed: false }];
+    pushToStack(s, 0, 0, false, null, events);
+    expect(s.players[0].nextSpellBonus).toBe(0); // consumed by the cast
+    const next = apply(s, { type: "retractCast" }).state;
+    expect(next.players[0].nextSpellBonus).toBe(3); // back with the take-back
   });
 });
 

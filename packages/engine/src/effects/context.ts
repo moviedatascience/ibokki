@@ -129,6 +129,8 @@ export interface EffectContext {
   // ---- burn / ongoing ----
   addBurnToOpponent(n: number): void;
   addDamageBuffThisRound(amount: number): void;
+  /** One-shot: the NEXT spell you cast THIS TURN deals +amount (Battle Trance, Empowered Chalk). */
+  addNextSpellDamage(amount: number): void;
   addSelfDamageEachTurn(amount: number): void;
   addReactionTax(amount: number): void;
   addReactionPunish(amount: number): void;
@@ -267,7 +269,7 @@ export function makeContext(
     card,
 
     dealDamage(amount) {
-      const base = amount + sumOngoing(self, "damageBuff");
+      const base = amount + sumOngoing(self, "damageBuff") + (item ? item.damageBonus : 0);
       let dmg = applyItemReduction(base);
       if (item && item.minDamage > 0) dmg = Math.max(dmg, Math.min(base, item.minDamage)); // Lightning Bolt
       dealDamageToPlayer(state, opponentId, dmg, events);
@@ -496,6 +498,9 @@ export function makeContext(
     },
     addDamageBuffThisRound(amount) {
       addOngoing(state, selfId, "damageBuff", amount, "endOfRound", events);
+    },
+    addNextSpellDamage(amount) {
+      self.nextSpellBonus += amount;
     },
     addSelfDamageEachTurn(amount) {
       addOngoing(state, selfId, "selfDamageEachTurn", amount, "endOfRound", events);

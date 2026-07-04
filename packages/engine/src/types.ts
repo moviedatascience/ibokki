@@ -109,6 +109,10 @@ export interface PlayerState {
   componentPlayedThisTurn: boolean;
   /** True once you've cast a (non-Reaction) spell this turn — you may cast only one per turn. */
   spellCastThisTurn: boolean;
+  /** One-shot "+N damage to the next spell you cast this turn" (Battle Trance,
+   *  Empowered Chalk). Consumed into StackItem.damageBonus at cast; expires at
+   *  the next turn boundary. */
+  nextSpellBonus: number;
   /** Set by Total Negation: this player may not cast more spells until their next turn. */
   noCastThisTurn: boolean;
 }
@@ -141,6 +145,8 @@ export interface StackItem {
   reactionProof: boolean;
   /** This item's damage can't be reduced below this floor (Lightning Bolt). */
   minDamage: number;
+  /** One-shot bonus consumed from the caster's nextSpellBonus at cast time. */
+  damageBonus: number;
   /** The prepared spell's face-down state before this cast (restored if the cast is retracted). */
   wasFaceDown: boolean;
   /**

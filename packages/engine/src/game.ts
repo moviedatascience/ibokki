@@ -49,6 +49,7 @@ export function createGame(config: GameConfig): GameState {
       componentPlayedThisTurn: false,
       spellCastThisTurn: false,
       noCastThisTurn: false,
+      nextSpellBonus: 0,
     };
   };
 

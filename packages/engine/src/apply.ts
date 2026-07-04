@@ -253,6 +253,7 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
       p.slotsUsedThisRound = Math.max(0, p.slotsUsedThisRound - 1);
       p.spellsCastThisRound = Math.max(0, p.spellsCastThisRound - 1);
       p.spellCastThisTurn = false; // taking it back frees your one cast this turn
+      p.nextSpellBonus += top.damageBonus; // an unspent next-spell buff returns with the cast
       events.push({ type: "retracted", player: me, spellDefId: top.defId });
       // priority stays with you; passStreak is still 0.
       break;

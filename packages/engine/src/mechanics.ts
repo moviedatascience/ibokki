@@ -66,6 +66,10 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
   player.spellCastThisTurn = false;
   player.gambitPlayedThisTurn = false;
   player.noCastThisTurn = false;
+  // "Next spell THIS TURN" buffs (Battle Trance / Empowered Chalk) die at the
+  // turn boundary for both players — unspent means wasted.
+  state.players[0].nextSpellBonus = 0;
+  state.players[1].nextSpellBonus = 0;
 
   // Burn markers tick at the start of the burned player's turn: deal damage equal to the
   // marker count, then remove ONE marker. Burns persist across rounds (no round-clear) and

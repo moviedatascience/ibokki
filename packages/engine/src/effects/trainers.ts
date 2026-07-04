@@ -19,7 +19,7 @@ register("ITM-004", (c) => {
 });
 register("ITM-005", (c) => c.addAttuneBonus()); // Transmuter's Stone (color-fix ~ next attach counts as a needed symbol)
 register("ITM-006", (c) => c.returnComponentsFromDiscard(1)); // Mnemonic Charm (to hand vs top SIMPLIFIED)
-register("ITM-007", (c) => c.addDamageBuffThisRound(1)); // Empowered Chalk
+register("ITM-007", (c) => c.addNextSpellDamage(1)); // Empowered Chalk — next spell THIS turn
 register("ITM-008", (c) => {
   if (c.selfHasWard()) c.buffOneOwnWardOrCreate(2, 0); // Bulwark Shard
 });
@@ -41,8 +41,8 @@ register("GAM-007", (c) => c.attachTopComponentElseDraw()); // Ritual Circle (at
 register("GAM-008", (c) => c.grantExtraCast()); // Overclock
 register("GAM-009", (c) => c.heal(5)); // Second Wind
 register("GAM-010", (c) => {
-  c.takeSelfDamage(2); // Battle Trance
-  c.addDamageBuffThisRound(3);
+  c.takeSelfDamage(2); // Battle Trance — ONE spell, THIS turn (was wrongly round-long)
+  c.addNextSpellDamage(3);
 });
 register("GAM-011", (c) => c.createWardForSelf(3)); // Aegis Charm
 register("GAM-012", (c) => {

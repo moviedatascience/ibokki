@@ -41,6 +41,7 @@ function blankPlayer(id: PlayerId): PlayerState {
     turnsTakenThisRound: 0,
     componentPlayedThisTurn: false,
     spellCastThisTurn: false,
+    nextSpellBonus: 0,
     noCastThisTurn: false,
   };
 }
@@ -293,6 +294,7 @@ function runReaction(
     minDamage: 0,
     wasFaceDown: false,
     retractable: false,
+    damageBonus: 0,
   };
   state.stack = [targetItem];
   const reactionItem: StackItem = {
@@ -312,6 +314,7 @@ function runReaction(
     minDamage: 0,
     wasFaceDown: false,
     retractable: false,
+    damageBonus: 0,
   };
   const events: GameEvent[] = [];
   const card = inst(reactionId);
@@ -365,6 +368,7 @@ describe("Reactions", () => {
       minDamage: 0,
       wasFaceDown: false,
       retractable: false,
+      damageBonus: 0,
     };
     getEffect("EVO-017")!(makeContext(state, 0, inst("EVO-017"), events, item), inst("EVO-017"));
     expect(state.players[1].hp).toBe(26); // Fireball 5 -> 4
@@ -377,15 +381,16 @@ describe("Trainers (Items & Gambits)", () => {
     expect(state.players[0].hp).toBe(35);
   });
 
-  it("Battle Trance (GAM-010) self-damages and buffs the next spell", () => {
+  it("Battle Trance (GAM-010) self-damages and arms a one-shot next-spell bonus", () => {
+    // The +3 is consumed at CAST time (StackItem.damageBonus), not a round
+    // buff — the full cast/expiry flow is covered in interactions.test.ts.
     const state = blankState();
     const events: GameEvent[] = [];
     const bt = inst("GAM-010");
     getEffect("GAM-010")!(makeContext(state, 0, bt, events), bt);
     expect(state.players[0].hp).toBe(28); // lost 2
-    const fb = inst("EVO-017");
-    getEffect("EVO-017")!(makeContext(state, 0, fb, events), fb);
-    expect(state.players[1].hp).toBe(30 - 8); // Fireball 5 + 3 buff
+    expect(state.players[0].nextSpellBonus).toBe(3);
+    expect(state.players[0].ongoing).toHaveLength(0); // NOT a round-long buff
   });
 
   it("Quenching Salts (GAM-013) clears Burn and heals per marker", () => {
