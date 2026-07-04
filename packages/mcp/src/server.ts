@@ -21,17 +21,24 @@ const server = new McpServer({ name: "ibokki-playtest", version: "0.1.0" });
 
 server.tool(
   "new_match",
-  "Start a new Ibokki match between two schools. `controls` picks which side(s) you (Claude) play: \"0\", \"1\", or \"both\". Returns the opening position and your numbered legal actions.",
+  "Start a new Ibokki match between two schools. `controls` picks which side(s) you (Claude) play: \"0\", \"1\", or \"both\". `deck1`/`deck2` optionally override a side's deck: a preset name (Emberworks/Bastion/Riptide) or a JSON DeckDefinition {name?, spellbook, resourceDeck} validated against the construction rules. Returns the opening position and your numbered legal actions.",
   {
     school1: SCHOOL.describe("Player 0's school"),
     school2: SCHOOL.describe("Player 1's school"),
     controls: CONTROLS.optional().describe("Which side you control (default \"0\")"),
     seed: z.number().int().optional().describe("Deterministic seed (default random)"),
+    deck1: z.string().optional().describe("Player 0's deck: preset name or JSON DeckDefinition (default: school archetype)"),
+    deck2: z.string().optional().describe("Player 1's deck: preset name or JSON DeckDefinition (default: school archetype)"),
   },
-  async ({ school1, school2, controls, seed }) => {
-    const match = createMatch(school1, school2, seed ?? Math.floor(Math.random() * 2_000_000_000), controls ?? "0");
+  async ({ school1, school2, controls, seed, deck1, deck2 }) => {
+    let match;
+    try {
+      match = createMatch(school1, school2, seed ?? Math.floor(Math.random() * 2_000_000_000), controls ?? "0", deck1, deck2);
+    } catch (err) {
+      return text(`Could not start match: ${err instanceof Error ? err.message : String(err)}`);
+    }
     autoPlayBots(match);
-    const header = `Started ${match.id}: P0=${school1} vs P1=${school2}; you control ${controls ?? "0"}.`;
+    const header = `Started ${match.id}: P0=${match.labels[0]} vs P1=${match.labels[1]}; you control ${controls ?? "0"}.`;
     return text(`${header}\n${renderState(match)}`);
   },
 );

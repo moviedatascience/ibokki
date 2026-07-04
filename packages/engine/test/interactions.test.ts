@@ -305,6 +305,39 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(picked.players[1].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-VV"]); // top = end
   });
 
+  it("Far Sight (DIV-023): sting lands, caster sees opp top 3, may mill ONE or decline", () => {
+    const setup = (s: GameState) => {
+      // top = end of array: top 3 are CMP-S, CMP-M, CMP-VV (VV topmost)
+      s.players[1].resourceDeck = ["CMP-V", "CMP-S", "CMP-M", "CMP-VV"].map(inst);
+    };
+    const { state } = play("DIV-023", setup);
+    expect(state.players[1].hp).toBe(29); // the 1 damage is immediate
+    const pc = state.pendingChoice!;
+    expect(pc.mode).toBe("millFromTop");
+    expect(pc.candidates.map((c) => c.defId)).toEqual(["CMP-S", "CMP-M", "CMP-VV"]);
+    expect(legalActions(state, 0).some((a) => a.type === "pass")).toBe(true); // "you MAY"
+
+    // Decline: everything returns to the opponent's deck top in original order.
+    const declined = apply(state, { type: "pass" }).state;
+    expect(declined.pendingChoice).toBeNull();
+    expect(declined.players[1].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-S", "CMP-M", "CMP-VV"]);
+    expect(declined.players[1].discard).toHaveLength(0);
+
+    // Pick: the chosen card goes to THEIR discard, the rest back on top in order.
+    const milled = choose(play("DIV-023", setup).state, "CMP-M");
+    expect(milled.players[1].discard.map((c) => c.defId)).toEqual(["CMP-M"]);
+    expect(milled.players[1].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-S", "CMP-VV"]);
+    expect(milled.pendingChoice).toBeNull();
+  });
+
+  it("Far Sight with an empty opponent deck: damage only, no pause", () => {
+    const { state } = play("DIV-023", (s) => {
+      s.players[1].resourceDeck = [];
+    });
+    expect(state.players[1].hp).toBe(29);
+    expect(state.pendingChoice).toBeNull();
+  });
+
   it("Mentor's Guidance (GAM-003): YOUR discard, then search for ANY one card", () => {
     const { state } = play("GAM-003", (s) => {
       s.players[0].hand = [inst("CMP-V"), inst("GAM-001")];

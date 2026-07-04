@@ -38,6 +38,8 @@ interface SideCommon {
 
 export interface SelfView extends SideCommon {
   hand: string[];
+  /** Instance ids parallel to `hand`, so agents can map action iids to cards. */
+  handIids: number[];
   /** Your spellbook (defIds) — the spells you may prepare. */
   spellbook: string[];
   prepareDone: boolean;
@@ -59,7 +61,7 @@ export interface StackItemView {
 export interface PendingChoiceView {
   /** True if this viewer is the one who must choose. */
   mine: boolean;
-  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage" | "discardForSearch" | "orderToTop" | "bounceToOwnersDeckTop";
+  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage" | "discardForSearch" | "orderToTop" | "bounceToOwnersDeckTop" | "millFromTop";
   reason: string;
   picksRemaining: number;
   /** Candidate card defIds — only populated for the chooser (private information). */
@@ -144,6 +146,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
       discard: me.discard.map((c) => c.defId),
       prepared: me.prepared.map((prep) => preparedView(prep, false)),
       hand: me.hand.map((c) => c.defId),
+      handIids: me.hand.map((c) => c.iid),
       spellbook: me.spellbook.map((c) => c.defId),
       prepareDone: me.prepareDone,
     },

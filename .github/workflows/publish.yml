@@ -17,6 +17,8 @@ jobs:
       - run: npm ci
       - run: npx tsc -p tsconfig.json
       - run: npx vitest run
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
 
   publish:
     needs: test

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { act, createMatch, renderState } from "../src/matches.ts";
+import { presetDeck } from "@ibokki/engine";
+import { act, createMatch, renderState, resolveDeck } from "../src/matches.ts";
 
 describe("MCP match loop", () => {
   it("drives a vs-bot match to completion (index 0 is always 'pass')", () => {
@@ -30,5 +31,27 @@ describe("MCP match loop", () => {
     expect(text).toContain("Legal actions");
     expect(text).toMatch(/0: done preparing/);
     expect(text).toMatch(/\d+: prepare /); // at least one spell can be prepared
+  });
+
+  it("resolves decks: default, preset name, custom JSON, and rejects bad specs", () => {
+    expect(resolveDeck("Evocation").label).toBe("Evocation");
+    expect(resolveDeck("Evocation", "Bastion").label).toBe("Bastion");
+
+    const custom = { ...presetDeck("Riptide")!, name: "My Riptide" };
+    const r = resolveDeck("Divination", JSON.stringify(custom));
+    expect(r.label).toBe("My Riptide");
+    expect(r.deck.resourceDeck).toHaveLength(40);
+
+    expect(() => resolveDeck("Evocation", "NoSuchPreset")).toThrow(/preset name/);
+    // legal JSON but violates construction rules (empty deck)
+    expect(() => resolveDeck("Evocation", JSON.stringify({ spellbook: [], resourceDeck: [] }))).toThrow(/deck rules/);
+  });
+
+  it("plays a match with an overridden deck and labels it by deck name", () => {
+    const m = createMatch("Evocation", "Abjuration", 11, "0", "Emberworks", "Bastion");
+    expect(m.labels).toEqual(["Emberworks", "Bastion"]);
+    expect(m.transcript[0]).toContain("Emberworks (P0) vs Bastion (P1)");
+    act(m, 0);
+    expect(m.state.phase).not.toBe("gameover");
   });
 });

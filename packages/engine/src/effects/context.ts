@@ -125,6 +125,9 @@ export interface EffectContext {
   requestDiscardThenSearch(): void;
   /** Disarm: reveal the opponent's hand; MAY pick one component → owner's deck top. */
   requestBounceOpponentComponent(): void;
+  /** Far Sight: look at the opponent's top `lookN`; MAY pick one → their discard,
+   *  the rest return on top in order (interactive mill). */
+  requestMillOpponentTop(lookN: number): void;
   returnComponentsFromDiscard(n: number): number;
   returnAllComponentsFromDiscard(): number;
   shuffleOwnDiscardIntoDeck(): number;
@@ -424,6 +427,22 @@ export function makeContext(
         optional: true,
       };
       events.push({ type: "choicePending", player: selfId, reason: "disarm" });
+    },
+    requestMillOpponentTop(lookN) {
+      const deck = opponent.resourceDeck;
+      const look = Math.min(lookN, deck.length);
+      if (look === 0) return;
+      const staged = deck.splice(deck.length - look, look); // top `look` cards (top = end)
+      state.pendingChoice = {
+        player: selfId,
+        reason: `Opponent's top ${look} — you MAY put one into their discard`,
+        mode: "millFromTop",
+        candidates: staged,
+        picksRemaining: 1,
+        leftover: "top",
+        optional: true,
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "mill" });
     },
     requestDiscardForDamage() {
       if (self.hand.length === 0) return; // nothing to discard, no damage

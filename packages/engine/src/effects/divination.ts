@@ -53,7 +53,7 @@ register("DIV-019", (c) => {
 register("DIV-020", (c) => c.millOpponent(2)); // Foreclosure
 register("DIV-021", (c) => { c.draw(2); c.requestBankToDeckTop(1); }); // Quick Study (draw 2, choose 1 to bank on top)
 register("DIV-022", (c) => c.requestOrderTopOfDeck(5)); // Index — interactive reorder
-register("DIV-023", (c) => { c.millOpponent(1); c.dealDamage(1); }); // Far Sight (mill-sting)
+register("DIV-023", (c) => { c.dealDamage(1); c.requestMillOpponentTop(3); }); // Far Sight: see opp top 3, MAY mill one (+sting)
 
 // ---- Level 3 ----
 // Recast cards: the doc says "a spell in your discard," but cast spells return to

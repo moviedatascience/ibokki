@@ -1,0 +1,73 @@
+# Ibokki — notes for Claude
+
+Ibokki is a 1v1 stack-based wizard dueling card game: V/S/M components, LIFO stack with
+Reactions, round→level ramp (1–21), Evocation/Abjuration/Divination school triangle.
+`Design_Doc.md` is the rules source of truth; cards are authored in `ibokki_spell_cards.xlsx`
+and imported to `packages/cards/data/cards.json` (canonical, version-controlled).
+
+## Architecture
+
+npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by everything:
+
+- `packages/engine` — rules: `createGame`/`apply`/`legalActions`, per-player `redact()`,
+  seeded RNG, effect DSL in `src/effects/`, decks/presets in `src/decks.ts`,
+  deck-construction rules in `src/deckrules.ts`.
+- `packages/cards` — JSON card DB + loader (bundled via `resolveJsonModule`, not a runtime DB).
+- `packages/sim` — bots (Random/Heuristic), balance CLI, file-persisted playtest CLI.
+- `packages/mcp` — MCP playtest server (registered in `.mcp.json`) so Claude can pilot matches.
+- `packages/protocol` — the single client-facing contract (catalog, per-viewer redaction of
+  events, relative player-id remapping) spoken by both servers.
+- `apps/playvsclaude` — zero-dep local play server (:7777) + HTML board; HTTP `/api` contract.
+- `apps/server` — online PvP (:7788): ws rooms, SQLite accounts (better-sqlite3), OIDC SSO
+  against the Django site, deck CRUD; serves the built client in production.
+- `apps/client` — Vite + React 18 + PixiJS v8 client (:5173 dev; proxies `/api`+`/ws`).
+
+## Commands
+
+| Command | What |
+|---|---|
+| `npm run typecheck` | root tsc (excludes apps/client — it has its own tsconfig) |
+| `npm run test` | vitest (engine/sim/mcp/server; includes `apps/*/test`) |
+| `npm run test:client` | Playwright e2e (boots play+online+vite servers) |
+| `npm run sim -- --matrix` | heuristic balance matrix |
+| `npm run playtest -- new\|show\|act\|note\|auto\|finish\|log` | file-persisted playtest CLI |
+| `npm run mcp` | MCP playtest server (long-running; RESTART it after engine changes — it holds stale code) |
+| `npm run play` / `npm run online` / `npm run client` | local board / PvP server / Vite dev |
+| `npm run import-cards` | xlsx → cards.json (run after any xlsx edit) |
+| `npm run build:client` | vite build → apps/client/dist |
+
+## Environment quirks
+
+- **Node 20 lives at `C:\Program Files\nodejs` and is NOT on PATH** in the shell tools.
+  PowerShell: `$env:Path = "C:\Program Files\nodejs;" + $env:Path` first.
+- **Editing the xlsx:** adm-zip FAILS on this file (zip descriptor quirk). Use PowerShell
+  .NET `ZipArchive` in Update mode on `xl/sharedStrings.xml`. Anchor replacements to whole
+  cell strings (`>text<`) — substrings collide across cards — and note apostrophes are
+  sometimes `&apos;` entities (match both). Then `npm run import-cards`.
+- **PowerShell traps:** comma binds tighter than `+` (`@("a"+$x, "b")` ≠ what you think —
+  build strings in variables first); ArrayList-of-arrays flattens.
+- **Playwright specs failing mysteriously?** Stale dev servers on 5173/7777/7788 —
+  `reuseExistingServer: true` reuses OLD code. Kill them.
+- New `PlayerState`/`StackItem` fields must also be added to the hand-built literals in
+  `packages/engine/test/effects.test.ts` and `interactions.test.ts`.
+
+## Testing for bugs — what works
+
+- Piloted play via the MCP tools (`new_match`/`act`/`match_state`/`simulate`/`card`) is the
+  meaningful balance/bug channel. Logs go in `playtests/` (see prior matches there).
+- **The heuristic bot cannot pilot Reactions** (it never pre-attaches their cost since the
+  pre-attach ruling) or Divination's card advantage — `simulate` matrices involving Abj/Div
+  are artifacts. Trust piloted matches, not bot win rates.
+- Live-bug pattern so far: every production bug was a `SIMPLIFIED`/auto-resolve stand-in for
+  a real player decision, or a proxy condition for intent. `grep -rn SIMPLIFIED packages/engine`
+  is the suspect list when a card misbehaves.
+- Verify UIs headlessly: Playwright scripts save PNGs, then Read the PNG (renders visually).
+  Client debug hook: `window.__ibokki = {state, act, online}`.
+
+## Deploy
+
+Live at ibokki.com/play, mounted inside the separate Django site repo (ibokkiSite) via
+prebuilt image: push to main → CI (tests gate) → `ghcr.io/moviedatascience/ibokki-game` →
+`docker compose pull game && up -d game` on the Vultr box (drops in-memory rooms — redeploy
+between matches). Client is built with `IBOKKI_BASE=/play/`; nginx strips the prefix.
+Build-version handshake: GIT_SHA baked into bundle + server; mismatch shows a refresh banner.

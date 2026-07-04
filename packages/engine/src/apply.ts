@@ -78,6 +78,10 @@ function finishPendingChoice(state: GameState, events: GameEvent[]): void {
     p.resourceDeck.push(...pc.candidates); // safety: unpicked stage stays on top
     p.resourceDeck.push(...[...(pc.picked ?? [])].reverse()); // first pick ends topmost
   }
+  if (pc.mode === "millFromTop" && pc.candidates.length > 0) {
+    // Unpicked stage returns to the OPPONENT'S deck top in its original order.
+    state.players[otherPlayer(pc.player)].resourceDeck.push(...pc.candidates);
+  }
   if (pc.shuffleAfter) state.rngState = shuffleInPlace(p.resourceDeck, state.rngState);
   state.pendingChoice = null;
   resumeAfterChoice(state, events);
@@ -427,6 +431,13 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
           if (hidx >= 0) owner.hand.splice(hidx, 1);
           owner.resourceDeck.push(card);
           events.push({ type: "bounced", player: owner.id, defId: card.defId });
+          break;
+        }
+        case "millFromTop": {
+          // Far Sight: the pick was staged off the OPPONENT'S deck top; discard it.
+          const owner = state.players[otherPlayer(pc.player)];
+          owner.discard.push(card);
+          events.push({ type: "milled", player: owner.id, count: 1 });
           break;
         }
       }

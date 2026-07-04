@@ -7,11 +7,13 @@ import {
   isTerminal,
   legalActions,
   meetsCost,
+  otherPlayer,
   outcomeHash,
   redact,
   rngInt,
   tierForLevel,
   type Action,
+  type CardInstance,
   type GameState,
 } from "../src/index.ts";
 import { COMPONENTS_BY_ID, getCard } from "@ibokki/cards";
@@ -161,5 +163,70 @@ describe("random self-play", () => {
     const a = playOut(123, 456);
     const b = playOut(123, 456);
     expect(outcomeHash(a)).toBe(outcomeHash(b));
+  });
+});
+
+describe("pendingChoice fuzz invariants", () => {
+  /** Choice modes whose candidates are STAGED OUT of a zone (the choice owns them).
+   *  The other modes (bank/discard/bounce) alias cards still sitting in a hand. */
+  const STAGED_MODES = new Set(["takeToHand", "orderToTop", "millFromTop"]);
+
+  function assertZonesSane(state: GameState, step: number): void {
+    const seen = new Map<number, string>();
+    const check = (cards: readonly (CardInstance | undefined | null)[], where: string): void => {
+      for (const c of cards) {
+        if (!c) throw new Error(`step ${step}: undefined card in ${where}`);
+        const prev = seen.get(c.iid);
+        if (prev) throw new Error(`step ${step}: iid ${c.iid} (${c.defId}) in BOTH ${prev} and ${where}`);
+        seen.set(c.iid, where);
+      }
+    };
+    for (const p of state.players) {
+      check(p.hand, `P${p.id} hand`);
+      check(p.resourceDeck, `P${p.id} deck`);
+      check(p.discard, `P${p.id} discard`);
+      check(p.spellbook, `P${p.id} spellbook`);
+      for (const prep of p.prepared) {
+        check([prep.spell], `P${p.id} prepared`);
+        check(prep.attached, `P${p.id} attached`);
+      }
+    }
+    const pc = state.pendingChoice;
+    if (pc && STAGED_MODES.has(pc.mode)) {
+      check(pc.candidates, "pendingChoice.candidates");
+      check(pc.picked ?? [], "pendingChoice.picked");
+    }
+    if (pc && !isTerminal(state)) {
+      // Only the chooser may act, and they must be able to (no deadlock).
+      if (legalActions(state, otherPlayer(pc.player)).length !== 0) {
+        throw new Error(`step ${step}: non-chooser has actions during a pending choice`);
+      }
+      if (legalActions(state, pc.player).length === 0) {
+        throw new Error(`step ${step}: chooser is deadlocked (no legal actions)`);
+      }
+    }
+  }
+
+  it("random playouts biased toward casts keep every zone consistent through choice chains", () => {
+    for (let seed = 200; seed < 220; seed++) {
+      let state = newGame(seed);
+      let s = (seed * 7 + 5) | 0;
+      let step = 0;
+      let choicesSeen = 0;
+      while (!isTerminal(state) && step < 60_000) {
+        const legal = legalActions(state, state.priorityPlayer);
+        expect(legal.length).toBeGreaterThan(0);
+        // Bias: prefer effect-triggering actions so choice chains actually occur.
+        const preferred = legal.filter((a) => a.type === "cast" || a.type === "playTrainer" || a.type === "choose");
+        const pool = preferred.length > 0 ? preferred : legal;
+        let idx: number;
+        [idx, s] = rngInt(s, pool.length);
+        state = apply(state, pool[idx] as Action).state;
+        if (state.pendingChoice) choicesSeen++;
+        assertZonesSane(state, ++step);
+      }
+      expect(state.phase).toBe("gameover");
+      expect(choicesSeen, `seed ${seed} never exercised a pending choice`).toBeGreaterThan(0);
+    }
   });
 });

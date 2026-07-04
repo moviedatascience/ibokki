@@ -174,8 +174,10 @@ export interface PendingChoice {
    *  "orderToTop": candidates are the staged top N; picks go back on top of the
    *   deck, FIRST pick topmost (Index / Premonition Charm).
    *  "bounceToOwnersDeckTop": candidates are the OPPONENT'S hand (revealed to
-   *   the chooser); the pick goes on top of its owner's deck (Disarm). */
-  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage" | "discardForSearch" | "orderToTop" | "bounceToOwnersDeckTop";
+   *   the chooser); the pick goes on top of its owner's deck (Disarm).
+   *  "millFromTop": candidates are staged off the OPPONENT'S deck top; the pick
+   *   goes to their discard, leftovers return on top in order (Far Sight). */
+  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage" | "discardForSearch" | "orderToTop" | "bounceToOwnersDeckTop" | "millFromTop";
   candidates: CardInstance[];
   picksRemaining: number;
   /** Where unchosen staged cards go when a takeToHand choice finishes. */

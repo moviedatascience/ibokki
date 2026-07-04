@@ -1,6 +1,6 @@
 /** Agent interface — anything that can choose an action from a redacted view. */
-import { getCard } from "@ibokki/cards";
-import { rngInt, type Action, type PlayerView } from "@ibokki/engine";
+import { getCard, getComponent, type Cost } from "@ibokki/cards";
+import { combinedSymbols, emptyCost, rngInt, type Action, type PlayerView, type PreparedView } from "@ibokki/engine";
 
 export interface Agent {
   readonly name: string;
@@ -79,6 +79,26 @@ export class HeuristicBot implements Agent {
 
     const attaches = legal.filter((a) => a.type === "attach");
     if (attaches.length > 0) {
+      // Reactions must be fueled BEFORE the reaction window (their cost is
+      // pre-attached, never paid from hand mid-window), so aim attaches first at
+      // unfueled prepared Reactions the component actually helps pay, then at
+      // unfueled castable spells, then fall back to a random attach.
+      const useful = (a: Action, wantReaction: boolean): boolean => {
+        if (a.type !== "attach") return false;
+        const prep = view.self.prepared[a.preparedIndex];
+        const handIdx = view.self.handIids.indexOf(a.handIid);
+        const comp = handIdx >= 0 ? getComponent(view.self.hand[handIdx]!) : undefined;
+        if (!prep || !comp) return false;
+        const def = prep.spellDefId ? getCard(prep.spellDefId) : undefined;
+        if (!def || !def.cost || prep.cast || prep.sealed) return false;
+        if ((def.type === "Reaction") !== wantReaction) return false;
+        const missing = missingCost(def.cost, prep);
+        return comp.symbols.V * missing.V + comp.symbols.S * missing.S + comp.symbols.M * missing.M > 0;
+      };
+      const reactionFuel = attaches.find((a) => useful(a, true));
+      if (reactionFuel) return reactionFuel;
+      const spellFuel = attaches.find((a) => useful(a, false));
+      if (spellFuel) return spellFuel;
       let idx: number;
       [idx, this.state] = rngInt(this.state, attaches.length);
       return attaches[idx]!;
@@ -86,6 +106,17 @@ export class HeuristicBot implements Agent {
 
     return { type: "pass" };
   }
+}
+
+/** Symbols a prepared spell still needs beyond what's already attached. */
+function missingCost(cost: Cost, prep: PreparedView): Cost {
+  const comps = prep.attached.map((defId) => getComponent(defId)).filter((c) => c !== undefined);
+  const have = comps.length > 0 ? combinedSymbols(comps) : emptyCost();
+  return {
+    V: Math.max(0, cost.V - have.V),
+    S: Math.max(0, cost.S - have.S),
+    M: Math.max(0, cost.M - have.M),
+  };
 }
 
 /** The spell's level (used as a tie-breaker to cast the bigger spell first). */
