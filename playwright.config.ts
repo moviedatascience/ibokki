@@ -3,35 +3,43 @@ import { defineConfig } from "@playwright/test";
 /**
  * Client e2e tests (apps/client/test). Boots the play server (:7777), the online
  * server (:7788) and the Vite client (:5173) automatically; reuses them if
- * they're already running locally.
+ * they're already running locally (never on CI — fresh servers there).
  *   npx playwright test
  */
+const CI = !!process.env.CI;
+
 export default defineConfig({
   testDir: "apps/client/test",
   timeout: 60_000,
-  retries: 0,
+  // CI runners are slow 2-core boxes: one worker (three node servers already
+  // share the box), one retry to ride out cold-start flakes, and an HTML report
+  // saved for the failure artifact.
+  workers: CI ? 1 : undefined,
+  retries: CI ? 1 : 0,
+  reporter: CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: "http://localhost:5173",
     viewport: { width: 1500, height: 950 },
+    trace: CI ? "on-first-retry" : "off",
   },
   webServer: [
     {
       command: "npm run play",
       url: "http://localhost:7777/api/cards",
-      reuseExistingServer: true,
-      timeout: 30_000,
+      reuseExistingServer: !CI,
+      timeout: 120_000,
     },
     {
       command: "npm run online",
       url: "http://localhost:7788/health",
-      reuseExistingServer: true,
-      timeout: 30_000,
+      reuseExistingServer: !CI,
+      timeout: 120_000,
     },
     {
       command: "npm run client",
       url: "http://localhost:5173",
-      reuseExistingServer: true,
-      timeout: 30_000,
+      reuseExistingServer: !CI,
+      timeout: 120_000,
     },
   ],
 });
