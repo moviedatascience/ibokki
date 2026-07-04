@@ -26,3 +26,7 @@ data/
 
 # playtest session state (the .md logs ARE kept as artifacts)
 playtests/.sessions/
+
+# playwright output
+test-results/
+playwright-report/
