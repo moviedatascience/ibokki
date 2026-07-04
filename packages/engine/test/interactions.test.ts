@@ -80,6 +80,47 @@ function blankState(): GameState {
   };
 }
 
+describe("no-op trainer plays are not offered (playtest m10 finding)", () => {
+  function trainerOffered(defId: string, setup: (s: GameState) => void): boolean {
+    const s = blankState();
+    const card = inst(defId);
+    s.players[0].hand.push(card);
+    setup(s);
+    return legalActions(s, 0).some((a) => a.type === "playTrainer" && a.handIid === card.iid);
+  }
+
+  it("Bulwark Shard needs a ward; Quenching Salts needs burn; Powder needs a target", () => {
+    expect(trainerOffered("ITM-008", () => {})).toBe(false);
+    expect(trainerOffered("ITM-008", (s) => { s.players[0].wards = [{ wid: 1, hp: 1 }]; })).toBe(true);
+
+    expect(trainerOffered("GAM-013", () => {})).toBe(false);
+    expect(trainerOffered("GAM-013", (s) => { s.players[0].burn = 2; })).toBe(true);
+
+    expect(trainerOffered("GAM-012", () => {})).toBe(false);
+    expect(trainerOffered("GAM-012", (s) => { s.players[1].wards = [{ wid: 1, hp: 3 }]; })).toBe(true);
+  });
+
+  it("deck/discard/hand-dependent trainers are gated on their zones", () => {
+    expect(trainerOffered("ITM-001", () => {})).toBe(false); // Scrying Lens, empty deck
+    expect(trainerOffered("ITM-001", (s) => { s.players[0].resourceDeck = [inst("CMP-V")]; })).toBe(true);
+
+    expect(trainerOffered("GAM-005", (s) => { s.players[0].discard = [inst("GAM-001")]; })).toBe(false); // Salvage, no component
+    expect(trainerOffered("GAM-005", (s) => { s.players[0].discard = [inst("CMP-M")]; })).toBe(true);
+
+    expect(trainerOffered("GAM-019", () => {})).toBe(false); // Saboteur's Kit, opp deck empty
+    expect(trainerOffered("GAM-020", () => {})).toBe(false); // Disarm, opp hand empty
+    expect(trainerOffered("GAM-016", () => {})).toBe(false); // Sealed Vault, empty discard
+  });
+
+  it("apply refuses a forced no-op play; gamble trainers stay playable", () => {
+    const s = blankState();
+    const shard = inst("ITM-008");
+    s.players[0].hand.push(shard);
+    expect(() => apply(s, { type: "playTrainer", handIid: shard.iid })).toThrow(/no effect/);
+    expect(trainerOffered("GAM-008", () => {})).toBe(true); // Overclock is a plan, not a no-op
+  });
+});
+
 describe("Overclock (GAM-008) — one extra cast this turn (playtest m9 regression)", () => {
   function armed(): GameState {
     const s = blankState();

@@ -123,7 +123,10 @@ face-down into the prepared spells area. At Level 1, a Wizard may have 4 prepare
   number of times per turn; you may play at most one Gambit per turn. Trainers are played
   only on your own turn — reactive interaction stays on Reaction spells, so trainers
   never become free "gotcha" counters. Because component-recursion effects return
-  component cards specifically, trainers cannot be recurred. Deckbuilding guideline: keep
+  component cards specifically, trainers cannot be recurred. A trainer that would
+  currently have **no effect at all** (e.g. Bulwark Shard with no Ward, Quenching Salts
+  with no Burn) cannot be played — plays that merely *might* whiff (Overclock without a
+  second cast lined up) remain legal. Deckbuilding guideline: keep
   trainers to roughly a third of the Resource Deck or less, since every trainer is a
   component you won't draw.
 - **Cast:** Once per turn, a Wizard can cast **one** (non-Reaction) spell, if they have

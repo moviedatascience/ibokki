@@ -1,7 +1,7 @@
 /** Enumerate the legal actions for the player who holds priority. */
 import { getCard, getComponent, type ComponentDef, type Cost } from "@ibokki/cards";
 import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
-import { ATTACH_M_TRAPS } from "./cardFlags.ts";
+import { ATTACH_M_TRAPS, trainerHasEffect } from "./cardFlags.ts";
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { sumOngoing } from "./state-ops.ts";
 import {
@@ -121,10 +121,12 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
     }
 
     // Play trainers from hand (Items unlimited; at most one Gambit per turn).
+    // Plays that would deterministically do nothing are not offered (feel-bad guard).
     for (const card of p.hand) {
       const def = getCard(card.defId);
       if (!def) continue;
       if (def.type === "Item" || (def.type === "Gambit" && !p.gambitPlayedThisTurn)) {
+        if (!trainerHasEffect(state, playerId, card.defId)) continue;
         actions.push({ type: "playTrainer", handIid: card.iid });
       }
     }

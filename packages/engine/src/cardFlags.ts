@@ -29,3 +29,44 @@ export const MIN_DAMAGE: Readonly<Record<string, number>> = {
 export const ATTACH_M_TRAPS: Readonly<Record<string, number>> = {
   "EVO-015": 2, // Volatile Bolt — fires when the OPPONENT attaches an M component
 };
+
+import { isComponentDefId, otherPlayer, type GameState, type PlayerId } from "./types.ts";
+
+/**
+ * False when playing this trainer right now would deterministically do NOTHING
+ * (Bulwark Shard with no ward, Quenching Salts with no burn, …). legalActions
+ * doesn't offer such plays and apply refuses them — a feel-bad-whiff guard for
+ * human players (playtest m10 finding). Trainers whose value merely MIGHT whiff
+ * (Overclock with no second cast lined up) stay playable: that's a gamble, not
+ * a no-op.
+ */
+export function trainerHasEffect(state: GameState, me: PlayerId, defId: string): boolean {
+  const p = state.players[me];
+  const opp = state.players[otherPlayer(me)];
+  switch (defId) {
+    case "ITM-001": // Scrying Lens — nothing to look at
+    case "ITM-002": // Component Pouch — nothing to reveal
+    case "GAM-004": // Recharge — nothing to search
+    case "GAM-006": // Premonition Charm — nothing to reorder
+      return p.resourceDeck.length > 0;
+    case "ITM-006": // Mnemonic Charm — needs a component in your discard
+    case "GAM-005": // Salvage — same
+      return p.discard.some((c) => isComponentDefId(c.defId));
+    case "ITM-008": // Bulwark Shard — buffs a ward you must already control
+      return p.wards.length > 0;
+    case "GAM-003": // Mentor's Guidance — needs another hand card to discard or a deck to search
+      return p.hand.length > 1 || p.resourceDeck.length > 0;
+    case "GAM-012": // Dispelling Powder — needs an opposing ward or ongoing effect
+      return opp.wards.length > 0 || opp.ongoing.length > 0;
+    case "GAM-013": // Quenching Salts — needs your own burn to cleanse
+      return p.burn > 0;
+    case "GAM-016": // Sealed Vault — needs a discard pile to recycle
+      return p.discard.length > 0;
+    case "GAM-019": // Saboteur's Kit — needs an opposing deck to mill
+      return opp.resourceDeck.length > 0;
+    case "GAM-020": // Disarm — needs an opposing hand to look at
+      return opp.hand.length > 0;
+    default:
+      return true;
+  }
+}

@@ -1,7 +1,7 @@
 /** The pure reducer: apply one action to a state, producing a new state + events. */
 import { getCard, getComponent, type ComponentDef } from "@ibokki/cards";
 import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
-import { ATTACH_M_TRAPS } from "./cardFlags.ts";
+import { ATTACH_M_TRAPS, trainerHasEffect } from "./cardFlags.ts";
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
@@ -369,6 +369,7 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
       const def = getCard(card.defId);
       if (!def || (def.type !== "Item" && def.type !== "Gambit")) throw new Error(`${card.defId} is not a trainer`);
       if (def.type === "Gambit" && p.gambitPlayedThisTurn) throw new Error("Already played a Gambit this turn");
+      if (!trainerHasEffect(state, me, card.defId)) throw new Error(`${def.name} would have no effect right now`);
 
       p.hand.splice(handIdx, 1);
       events.push({ type: "trainerPlayed", player: me, defId: card.defId });
