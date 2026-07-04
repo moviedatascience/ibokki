@@ -100,7 +100,7 @@ export function legalForClient(state: GameState, side: PlayerId): LegalActionPay
   return legalActions(state, side).map((a, index) => ({
     index,
     type: a.type,
-    label: describeAction(state, a),
+    label: describeAction(state, a, side),
     defId: actionCardDefId(state, side, a),
     preparedIndex: "preparedIndex" in a ? a.preparedIndex : null,
     handIid: "handIid" in a ? a.handIid : null,
@@ -145,12 +145,13 @@ export function eventForViewer(e: GameEvent, viewer: PlayerId, relative: boolean
 }
 
 /**
- * Transcript label for `action` (about to be applied by `state.priorityPlayer`),
- * as `viewer` may see it. The actor sees the full `describeAction` label; the
- * opponent gets a generic label for actions whose specifics are hidden.
+ * Transcript label for `action` (about to be applied by `actor`), as `viewer`
+ * may see it. The actor sees the full `describeAction` label; the opponent
+ * gets a generic label for actions whose specifics are hidden.
  */
-export function actionLabelFor(viewer: PlayerId, state: GameState, action: Action): string {
-  if (state.priorityPlayer !== viewer) {
+export function actionLabelFor(viewer: PlayerId, state: GameState, action: Action, actor?: PlayerId): string {
+  const who = actor ?? state.priorityPlayer;
+  if (who !== viewer) {
     switch (action.type) {
       case "prepareSpell":
         return "prepare a spell";
@@ -162,7 +163,7 @@ export function actionLabelFor(viewer: PlayerId, state: GameState, action: Actio
         break;
     }
   }
-  return describeAction(state, action);
+  return describeAction(state, action, who);
 }
 
 // ---------------------------------------------------------------------------
@@ -215,7 +216,10 @@ export function buildMatchState(snap: MatchSnapshot, side: PlayerId, opts: Build
   const st = snap.state;
   const relative = opts.relative ?? false;
   const over = isTerminal(st);
-  const yourTurn = !over && st.priorityPlayer === side && !snap.bots.includes(side);
+  // Prepare is simultaneous: each un-done player may act regardless of priority.
+  const myTurnNow =
+    st.phase === "prepare" && !st.pendingChoice ? !st.players[side].prepareDone : st.priorityPlayer === side;
+  const yourTurn = !over && myTurnNow && !snap.bots.includes(side);
   const rel = (p: PlayerId): PlayerId => (relative ? relSide(side, p) : p);
   const view = redact(st, side);
   if (relative) {

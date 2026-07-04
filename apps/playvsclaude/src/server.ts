@@ -80,8 +80,8 @@ function newMatch(s0: School, s1: School, seed: number, botSides: PlayerId[]): M
 
 /** Apply a concrete action (logging label + events into the transcript + recentEvents). */
 function applyActionLogged(m: Match, side: PlayerId, action: Action): void {
-  const label = describeAction(m.state, action);
-  const { state, events } = apply(m.state, action);
+  const label = describeAction(m.state, action, side);
+  const { state, events } = apply(m.state, action, side);
   m.state = state;
   m.recentEvents.push(...events);
   m.transcript.push(`P${side}: ${label}`);
@@ -99,16 +99,21 @@ function applyIndexLogged(m: Match, side: PlayerId, index: number): string | nul
   return null;
 }
 
-/** Let any bot-controlled side that holds priority play until it's a human's turn. */
+/**
+ * Let bot-controlled sides play until only humans can act. Keyed on legal
+ * actions rather than priority: outside prepare only the priority holder has
+ * any, and during the simultaneous prepare phase a bot may lay its spells
+ * while the human is still picking theirs.
+ */
 function autoPlayBots(m: Match): void {
   let guard = 0;
-  while (!isTerminal(m.state) && m.bots.has(m.state.priorityPlayer)) {
-    const side = m.state.priorityPlayer;
+  for (;;) {
+    if (isTerminal(m.state) || ++guard > 1000) break;
+    const side = [...m.bots].find((s) => legalActions(m.state, s).length > 0);
+    if (side === undefined) break;
     const legal = legalActions(m.state, side);
-    if (legal.length === 0) break;
     const action = m.agents[side]!.chooseAction(redact(m.state, side), legal);
     applyActionLogged(m, side, action);
-    if (++guard > 1000) break; // safety
   }
 }
 
@@ -175,7 +180,9 @@ const server = createServer(async (req, res) => {
       actionEpoch++;
       let error: string | null = null;
       for (const idx of indices) {
-        if (isTerminal(match.state) || match.state.priorityPlayer !== side) break;
+        // legalActions is the authority — during the simultaneous prepare
+        // phase either side may act regardless of priority.
+        if (isTerminal(match.state) || legalActions(match.state, side).length === 0) break;
         error = applyIndexLogged(match, side, idx);
         if (error) break;
       }

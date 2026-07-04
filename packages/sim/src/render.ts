@@ -9,6 +9,7 @@ import {
   type Action,
   type GameEvent,
   type GameState,
+  type PlayerId,
 } from "@ibokki/engine";
 
 export function cardName(defId: string): string {
@@ -19,8 +20,9 @@ export function cardName(defId: string): string {
   return defId;
 }
 
-export function describeAction(state: GameState, action: Action): string {
-  const p = state.players[state.priorityPlayer];
+export function describeAction(state: GameState, action: Action, actor?: PlayerId): string {
+  // Prepare is simultaneous, so the actor may not be the priority holder.
+  const p = state.players[actor ?? state.priorityPlayer];
   switch (action.type) {
     case "prepareSpell": {
       const s = p.spellbook.find((c) => c.iid === action.spellIid);

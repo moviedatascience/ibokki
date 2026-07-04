@@ -73,16 +73,21 @@ function costMet(prep: PreparedSpell): boolean {
 }
 
 /**
- * Apply `action` taken by the player who currently holds priority. Pure: clones
- * state, never mutates the input. Throws on an illegal action (callers should
- * only submit actions from legalActions()).
+ * Apply `action`. The actor is the priority holder, except in the SIMULTANEOUS
+ * prepare phase, where servers pass `actor` explicitly so both players can lay
+ * spells concurrently (they're face-down — there is nothing to wait for).
+ * Pure: clones state, never mutates the input. Throws on an illegal action
+ * (callers should only submit actions from legalActions()).
  */
-export function apply(prev: GameState, action: Action): ApplyResult {
+export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyResult {
   const state: GameState = structuredClone(prev);
   const events: GameEvent[] = [];
   if (state.phase === "gameover") return { state, events };
 
-  const me = state.priorityPlayer;
+  // Outside prepare, the actor is always the priority holder — an explicit
+  // `actor` there must agree (it exists only for concurrent preparing).
+  const me = state.phase === "prepare" ? (actor ?? state.priorityPlayer) : state.priorityPlayer;
+  if (actor !== undefined && actor !== me) throw new Error("Only the priority holder may act outside the prepare phase");
   const p = state.players[me];
 
   if (state.pendingChoice && action.type !== "choose") {
@@ -92,6 +97,7 @@ export function apply(prev: GameState, action: Action): ApplyResult {
   const isPrepareAction =
     action.type === "prepareSpell" || action.type === "replacePrepared" || action.type === "donePreparing";
   if (isPrepareAction && state.phase !== "prepare") throw new Error("Prepare actions only valid in the Prepare phase");
+  if (isPrepareAction && p.prepareDone) throw new Error("You have already finished preparing");
   if (!isPrepareAction && state.phase !== "main") throw new Error("Main actions only valid in the Main phase");
 
   switch (action.type) {

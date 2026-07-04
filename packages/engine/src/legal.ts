@@ -79,13 +79,13 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
     if (playerId !== state.pendingChoice.player) return [];
     return state.pendingChoice.candidates.map((c) => ({ type: "choose", iid: c.iid }));
   }
-  if (playerId !== state.priorityPlayer) return [];
-
-  const p = state.players[playerId];
-  const tier = tierForLevel(p.level);
-
-  // Prepare phase: choose which spells to prepare (level-constrained), then finish.
+  // Prepare phase is SIMULTANEOUS (spells go down face-down, so there is no
+  // information to wait for): each player acts independently until they are
+  // done, regardless of who holds priority.
   if (state.phase === "prepare") {
+    const p = state.players[playerId];
+    const tier = tierForLevel(p.level);
+    if (p.prepareDone) return [];
     const prep: Action[] = [{ type: "donePreparing" }];
     const castable = (defId: string): boolean => {
       const def = getCard(defId);
@@ -106,6 +106,11 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
     }
     return prep;
   }
+
+  if (playerId !== state.priorityPlayer) return [];
+
+  const p = state.players[playerId];
+  const tier = tierForLevel(p.level);
 
   const actions: Action[] = [{ type: "pass" }];
 

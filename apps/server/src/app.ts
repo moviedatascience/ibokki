@@ -172,8 +172,8 @@ function pushBoth(room: Room): void {
 /** Apply one action for `side`, appending per-viewer transcript lines. */
 function applyAction(room: Room, side: PlayerId, action: Action): void {
   const state = room.state!;
-  const labels: [string, string] = [actionLabelFor(0, state, action), actionLabelFor(1, state, action)];
-  const { state: next, events } = apply(state, action);
+  const labels: [string, string] = [actionLabelFor(0, state, action, side), actionLabelFor(1, state, action, side)];
+  const { state: next, events } = apply(state, action, side);
   room.state = next;
   room.recentEvents.push(...events);
   for (const viewer of [0, 1] as PlayerId[]) {
@@ -198,8 +198,11 @@ function handleAct(room: Room, side: PlayerId, indices: number[]): void {
   room.lastActivity = Date.now();
   let error: string | null = null;
   for (const idx of indices) {
-    if (isTerminal(room.state) || room.state.priorityPlayer !== side) break;
+    if (isTerminal(room.state)) break;
+    // legalActions is the authority on whether it's this side's window —
+    // during the simultaneous prepare phase both sides can have actions.
     const legal = legalActions(room.state, side);
+    if (legal.length === 0) break;
     if (!Number.isInteger(idx) || idx < 0 || idx >= legal.length) {
       error = `invalid action index ${idx} (0..${legal.length - 1})`;
       break;
