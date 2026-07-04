@@ -40,8 +40,12 @@ export function pushToStack(
     reactionProof: REACTION_PROOF.has(defId),
     minDamage: MIN_DAMAGE[defId] ?? 0,
     wasFaceDown: prep.faceDown,
+    retractable: !isReaction,
   };
 
+  // Anything joining the stack commits every earlier cast — no take-backs
+  // once a response exists.
+  for (const it of state.stack) it.retractable = false;
   prep.cast = true;
   prep.faceDown = false;
   state.stack.push(item);

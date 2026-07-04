@@ -4,7 +4,7 @@ import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./
 import { tierForLevel } from "./levels.ts";
 import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
-import { drawN, sculptValue, shuffleHandIntoDeck, sumOngoing } from "./state-ops.ts";
+import { dealDamageToPlayer, drawN, sculptValue, shuffleHandIntoDeck, sumOngoing, symbolCount } from "./state-ops.ts";
 import { pushToStack, resolveTop, topOpposingStackItem } from "./stack.ts";
 import {
   isComponentDefId,
@@ -242,6 +242,7 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
       const top = state.stack[state.stack.length - 1]!;
       if (top.controller !== me) throw new Error("You can only retract your own spell");
       if (top.isReaction) throw new Error("Reactions cannot be retracted");
+      if (!top.retractable) throw new Error("Too late to retract — the cast was committed");
       state.stack.pop();
       const prep = p.prepared[top.preparedIndex];
       if (prep) {
@@ -333,10 +334,19 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
       const card = pc.candidates.splice(cidx, 1)[0]!;
       if (pc.mode === "takeToHand") {
         p.hand.push(card); // staged card -> hand
-      } else {
-        const hidx = p.hand.findIndex((c) => c.iid === card.iid); // bankToDeckTop: hand card -> deck top
+      } else if (pc.mode === "bankToDeckTop") {
+        const hidx = p.hand.findIndex((c) => c.iid === card.iid); // hand card -> deck top
         if (hidx >= 0) p.hand.splice(hidx, 1);
         p.resourceDeck.push(card);
+      } else {
+        // discardForDamage (Wild Surge): discard the pick, opponent takes 1 per symbol.
+        const hidx = p.hand.findIndex((c) => c.iid === card.iid);
+        if (hidx >= 0) p.hand.splice(hidx, 1);
+        p.discard.push(card);
+        events.push({ type: "discarded", player: me, count: 1 });
+        const base = symbolCount(card.defId) + sumOngoing(p, "damageBuff");
+        const dmg = Math.max(0, base - (pc.damageReduction ?? 0));
+        dealDamageToPlayer(state, otherPlayer(me), dmg, events);
       }
       events.push({ type: "chose", player: me, defId: card.defId });
       pc.picksRemaining--;
@@ -369,6 +379,8 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
           beginTurn(state, events);
         }
       } else {
+        // Passing over a live stack commits every cast on it (see StackItem.retractable).
+        for (const it of state.stack) it.retractable = false;
         state.passStreak++;
         if (state.passStreak >= 2) {
           resolveTop(state, events);

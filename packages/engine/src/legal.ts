@@ -161,10 +161,11 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
       }
     }
   } else {
-    // Stack non-empty. You may take back your own just-cast spell while you still hold
-    // priority and nobody has responded yet (passStreak 0).
+    // Stack non-empty. You may take back your own just-cast spell only in the
+    // window right after casting — once you pass (or anything responds), the
+    // cast is committed, so you can't retract after seeing a Reaction.
     const top = state.stack[state.stack.length - 1]!;
-    if (top.controller === playerId && !top.isReaction && state.passStreak === 0) {
+    if (top.controller === playerId && !top.isReaction && top.retractable && state.passStreak === 0) {
       actions.push({ type: "retractCast" });
     }
     // Reaction window: cast a prepared Reaction in response (no slot needed), unless the

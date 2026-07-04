@@ -23,10 +23,8 @@ register("EVO-004", (c) => {
 });
 register("EVO-005", (c) => c.addDamageBuffThisRound(1)); // Catalyst
 register("EVO-006", (c) => c.addBurnToOpponent(1)); // Kindle (2→1: persistent burn made repeated Kindle compound to lethal-by-R4; playtests cvc3/cvc4)
-register("EVO-007", (c) => {
-  const symbols = c.discardSelfHighestSymbol(); // Wild Surge
-  c.dealDamage(symbols);
-});
+// Wild Surge — the PLAYER picks the discard (interactive); damage resolves on the pick.
+register("EVO-007", (c) => c.requestDiscardForDamage());
 register("EVO-008", (c) => {
   c.takeSelfDamage(1); // Volatile Charge
   c.dealDamage(3);

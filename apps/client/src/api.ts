@@ -54,7 +54,7 @@ export interface StackItemView {
 
 export interface PendingChoiceView {
   mine: boolean;
-  mode: "takeToHand" | "bankToDeckTop";
+  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage";
   reason: string;
   picksRemaining: number;
   candidates: string[]; // defIds

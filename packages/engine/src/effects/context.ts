@@ -72,8 +72,11 @@ export interface EffectContext {
   opponentDraws(n: number): number;
   discardSelfRandom(n: number): number;
   discardSelfHand(): number;
-  /** Discard the highest-symbol card in hand; returns its symbol count (Wild Surge). */
+  /** Discard the highest-symbol card in hand; returns its symbol count (auto, non-interactive). */
   discardSelfHighestSymbol(): number;
+  /** Pause for the controller to pick a hand card to discard; the opponent then
+   *  takes 1 damage per component symbol on it (Wild Surge, interactive). */
+  requestDiscardForDamage(): void;
   discardOpponentRandomComponent(n: number): number;
   discardOpponentRandom(n: number): number;
   millOpponent(n: number): number;
@@ -309,6 +312,20 @@ export function makeContext(
       return millPlayer(state, opponentId, n, events);
     },
 
+    requestDiscardForDamage() {
+      if (self.hand.length === 0) return; // nothing to discard, no damage
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Discard a card — deal 1 damage per component symbol on it",
+        mode: "discardForDamage",
+        candidates: [...self.hand],
+        picksRemaining: 1,
+        leftover: "top",
+        // Prevention applied to the casting item carries into the deferred damage.
+        damageReduction: item?.damageReduction ?? 0,
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "discard" });
+    },
     requestTakeFromTop(lookN, takeN, leftover) {
       const deck = self.resourceDeck;
       const look = Math.min(lookN, deck.length);

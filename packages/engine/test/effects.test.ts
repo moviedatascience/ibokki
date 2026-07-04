@@ -292,6 +292,7 @@ function runReaction(
     reactionProof: false,
     minDamage: 0,
     wasFaceDown: false,
+    retractable: false,
   };
   state.stack = [targetItem];
   const reactionItem: StackItem = {
@@ -310,6 +311,7 @@ function runReaction(
     reactionProof: false,
     minDamage: 0,
     wasFaceDown: false,
+    retractable: false,
   };
   const events: GameEvent[] = [];
   const card = inst(reactionId);
@@ -362,6 +364,7 @@ describe("Reactions", () => {
       reactionProof: false,
       minDamage: 0,
       wasFaceDown: false,
+      retractable: false,
     };
     getEffect("EVO-017")!(makeContext(state, 0, inst("EVO-017"), events, item), inst("EVO-017"));
     expect(state.players[1].hp).toBe(26); // Fireball 5 -> 4

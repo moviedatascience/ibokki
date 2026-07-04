@@ -13,7 +13,12 @@ export function Prompt({ state, onAction, cardName }: { state: MatchState | null
 
   const pc = state.view.pendingChoice;
   if (pc && pc.mine) {
-    const title = pc.mode === "bankToDeckTop" ? "Put a card on top of your deck" : pc.reason || "Choose a card";
+    const title =
+      pc.mode === "bankToDeckTop"
+        ? "Put a card on top of your deck"
+        : pc.mode === "discardForDamage"
+          ? "Discard a card — 1 damage per symbol on it"
+          : pc.reason || "Choose a card";
     return (
       <div className="prompt">
         <h4>CHOOSE{pc.picksRemaining > 1 ? ` (${pc.picksRemaining} left)` : ""}</h4>

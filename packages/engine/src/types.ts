@@ -143,6 +143,12 @@ export interface StackItem {
   minDamage: number;
   /** The prepared spell's face-down state before this cast (restored if the cast is retracted). */
   wasFaceDown: boolean;
+  /**
+   * True only in the take-back window right after casting: the moment the caster
+   * passes or ANYTHING else joins the stack, the cast is committed. Prevents
+   * dodging a Reaction by retracting after seeing the response.
+   */
+  retractable: boolean;
 }
 
 /**
@@ -154,12 +160,16 @@ export interface PendingChoice {
   player: PlayerId;
   reason: string;
   /** "takeToHand": candidates are staged out of the deck; pick some into hand.
-   *  "bankToDeckTop": candidates are hand cards; pick one to put on top of the deck. */
-  mode: "takeToHand" | "bankToDeckTop";
+   *  "bankToDeckTop": candidates are hand cards; pick one to put on top of the deck.
+   *  "discardForDamage": candidates are hand cards; the pick is discarded and the
+   *   opponent takes 1 damage per component symbol on it (Wild Surge). */
+  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage";
   candidates: CardInstance[];
   picksRemaining: number;
   /** Where unchosen staged cards go when a takeToHand choice finishes. */
   leftover: "top" | "bottom";
+  /** discardForDamage: prevention already applied to the casting stack item. */
+  damageReduction?: number;
 }
 
 export type Phase = "prepare" | "main" | "gameover";
