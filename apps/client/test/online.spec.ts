@@ -22,14 +22,32 @@ interface HookState {
 const hookState = (page: Page) =>
   page.evaluate(() => (window as unknown as { __ibokki?: { state: unknown } }).__ibokki?.state ?? null) as Promise<HookState | null>;
 
-/** If it's this tab's turn, play one random legal action. Returns true if it acted. */
-const actOnce = (page: Page) =>
+/**
+ * Install an in-page driver: a fast interval that plays a random legal action
+ * whenever it's this tab's turn. Driving from inside the page keeps the match
+ * moving at WS speed — one Playwright round-trip per action was far too slow on
+ * CI runners (the match timed out mid-game). Each server frame builds a NEW
+ * state object, so act once per state identity (with a 500ms stall re-try in
+ * case an intent was rejected as stale). NB: `epoch` is HTTP-transport-only —
+ * online frames don't carry it.
+ */
+const startDriver = (page: Page) =>
   page.evaluate(() => {
-    const hook = (window as unknown as { __ibokki?: { state: HookState | null; act: (i: number) => void } }).__ibokki;
-    const s = hook?.state as HookState | null;
-    if (!hook || !s || !s.yourTurn || s.gameOver || s.legal.length === 0) return false;
-    hook.act(s.legal[Math.floor(Math.random() * s.legal.length)]!.index);
-    return true;
+    const w = window as unknown as {
+      __ibokki?: { state: HookState | null; act: (i: number) => void };
+      __driver?: number;
+    };
+    if (w.__driver) return;
+    let lastState: HookState | null = null;
+    let stall = 0;
+    w.__driver = window.setInterval(() => {
+      const s = w.__ibokki?.state as HookState | null;
+      if (!w.__ibokki || !s || !s.yourTurn || s.gameOver || s.legal.length === 0) return;
+      if (s === lastState && ++stall < 50) return;
+      lastState = s;
+      stall = 0;
+      w.__ibokki.act(s.legal[Math.floor(Math.random() * s.legal.length)]!.index);
+    }, 10);
   });
 
 test("two tabs play a full online match to game over", async ({ browser }) => {
@@ -57,16 +75,17 @@ test("two tabs play a full online match to game over", async ({ browser }) => {
   const sB = await hookState(b);
   expect(sB!.schools).toEqual(["Emberworks", "Emberworks"]);
 
-  // Drive both tabs with random legal actions until the match terminates.
+  // Drive both tabs with in-page random players until the match terminates.
+  await startDriver(a);
+  await startDriver(b);
   let over = false;
-  for (let guard = 0; guard < 6000 && !over; guard++) {
-    const acted = (await actOnce(a)) || (await actOnce(b));
-    if (!acted) await a.waitForTimeout(25); // frames in flight
+  for (let guard = 0; guard < 800 && !over; guard++) {
+    await a.waitForTimeout(250);
     const [xa, xb] = [await hookState(a), await hookState(b)];
     over = !!xa?.gameOver && !!xb?.gameOver;
 
     // Redaction spot-checks while the match runs.
-    if (xb && guard % 50 === 0) {
+    if (xb && guard % 8 === 0) {
       expect(xb.view.opponent.hand).toBeUndefined();
       expect(typeof xb.view.opponent.handCount).toBe("number");
       for (const p of xb.view.opponent.prepared) {
