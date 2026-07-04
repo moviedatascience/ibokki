@@ -36,6 +36,7 @@ import {
   tutorComponents,
   type WardFlags,
 } from "../state-ops.ts";
+import { shuffleInPlace } from "../rng.ts";
 import {
   isComponentDefId,
   otherPlayer,
@@ -110,6 +111,9 @@ export interface EffectContext {
   // ---- Divination: search / recursion / tempo ----
   drawUntil(target: number): number;
   tutorComponentsToHand(n: number): number;
+  /** Pause for the controller to search their deck for a same-symbol dual
+   *  (VV/SS/MM), reveal it to hand, then shuffle (Recharge, interactive). */
+  requestSearchSameSymbolDual(): void;
   returnComponentsFromDiscard(n: number): number;
   returnAllComponentsFromDiscard(): number;
   shuffleOwnDiscardIntoDeck(): number;
@@ -312,6 +316,30 @@ export function makeContext(
       return millPlayer(state, opponentId, n, events);
     },
 
+    requestSearchSameSymbolDual() {
+      const deck = self.resourceDeck;
+      const DUALS = new Set(["CMP-VV", "CMP-SS", "CMP-MM"]);
+      const staged: typeof deck = [];
+      for (let i = deck.length - 1; i >= 0; i--) {
+        if (DUALS.has(deck[i]!.defId)) staged.push(...deck.splice(i, 1));
+      }
+      if (staged.length === 0) {
+        // Searched and found nothing — the deck still gets shuffled.
+        state.rngState = shuffleInPlace(deck, state.rngState);
+        events.push({ type: "searched", player: selfId, count: 0 });
+        return;
+      }
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Search: take a same-symbol dual (VV / SS / MM) to hand",
+        mode: "takeToHand",
+        candidates: staged,
+        picksRemaining: 1,
+        leftover: "top",
+        shuffleAfter: true, // it's a search — the deck shuffles when the pick lands
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "search" });
+    },
     requestDiscardForDamage() {
       if (self.hand.length === 0) return; // nothing to discard, no damage
       state.pendingChoice = {

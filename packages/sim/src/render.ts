@@ -105,6 +105,8 @@ export function describeEvent(e: GameEvent): string | null {
       return `P${e.player} ward destroyed`;
     case "milled":
       return `P${e.player} mills ${e.count}`;
+    case "tutored":
+      return `P${e.player} searches out ${cardName(e.defId)}`;
     case "reshuffled":
       return `P${e.player} reshuffles discard into deck (#${e.count}) — exhaustion ${e.damage}`;
     case "mulliganed":

@@ -113,6 +113,45 @@ describe("Wild Surge interactive discard (EVO-007)", () => {
   });
 });
 
+describe("Recharge interactive search (GAM-004)", () => {
+  function playRecharge(deck: string[]): { state: GameState; events: GameEvent[] } {
+    const state = blankState();
+    state.players[0].resourceDeck = deck.map(inst);
+    const events: GameEvent[] = [];
+    const card = inst("GAM-004");
+    getEffect("GAM-004")!(makeContext(state, 0, card, events), card);
+    return { state, events };
+  }
+
+  it("offers ONLY same-symbol duals from the deck as candidates", () => {
+    const { state } = playRecharge(["CMP-V", "CMP-VV", "CMP-VS", "CMP-SS", "CMP-M", "CMP-VSM"]);
+    const pc = state.pendingChoice!;
+    expect(pc).toBeTruthy();
+    expect(pc.mode).toBe("takeToHand");
+    expect(pc.candidates.map((c) => c.defId).sort()).toEqual(["CMP-SS", "CMP-VV"]); // no basics, cross-duals or tris
+  });
+
+  it("the PLAYER'S pick goes to hand (not the engine's pick) and the deck reshuffles", () => {
+    const { state } = playRecharge(["CMP-V", "CMP-VV", "CMP-SS", "CMP-M"]);
+    const ss = state.pendingChoice!.candidates.find((c) => c.defId === "CMP-SS")!;
+    const { state: next, events } = apply(state, { type: "choose", iid: ss.iid });
+    expect(next.players[0].hand.map((c) => c.defId)).toEqual(["CMP-SS"]);
+    expect(next.pendingChoice).toBeNull();
+    // Unpicked dual returns to the deck; nothing was lost.
+    expect(next.players[0].resourceDeck.map((c) => c.defId).sort()).toEqual(["CMP-M", "CMP-V", "CMP-VV"]);
+    expect(next.rngState).not.toBe(state.rngState); // the search shuffled
+    // The pick is REVEALED (public event), unlike private loot picks.
+    expect(events.some((e) => e.type === "tutored" && e.defId === "CMP-SS")).toBe(true);
+  });
+
+  it("with no duals in the deck, no choice pends and the deck still shuffles", () => {
+    const { state, events } = playRecharge(["CMP-V", "CMP-VS", "CMP-M"]);
+    expect(state.pendingChoice).toBeNull();
+    expect(state.players[0].resourceDeck).toHaveLength(3);
+    expect(events.some((e) => e.type === "searched" && e.count === 0)).toBe(true);
+  });
+});
+
 describe("retract window", () => {
   /** P0 with a freshly cast Fireball on the stack (holds priority, streak 0). */
   function stateWithFreshCast(): GameState {

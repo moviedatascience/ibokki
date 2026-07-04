@@ -34,7 +34,7 @@ register("GAM-003", (c) => {
   c.discardSelfRandom(1); // Mentor's Guidance (SIMPLIFIED: tutor any -> component)
   c.tutorComponentsToHand(1);
 });
-register("GAM-004", (c) => c.tutorComponentsToHand(1)); // Recharge (SIMPLIFIED: any dual)
+register("GAM-004", (c) => c.requestSearchSameSymbolDual()); // Recharge — interactive: pick a VV/SS/MM, reveal, shuffle
 register("GAM-005", (c) => c.returnComponentsFromDiscard(1)); // Salvage
 register("GAM-006", (c) => c.reorderTop(4)); // Premonition Charm (look at top 4, reorder)
 register("GAM-007", (c) => c.attachTopComponentElseDraw()); // Ritual Circle (attach top component, else draw)

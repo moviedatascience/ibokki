@@ -25,6 +25,12 @@ const HP_MAX = 30;
 interface Sprite {
   visual: CardVisual;
   layer: Container;
+  /**
+   * The defId currently shown. Sprites are keyed by POSITION (`p0:2`, `h:5`),
+   * so the card at a key can change (prep replace, hand shifting); hover must
+   * read this live value, never a creation-time closure.
+   */
+  faceDef: string | null;
 }
 
 interface Desired {
@@ -361,9 +367,11 @@ export class PixiBoard {
       let sp = this.sprites.get(d.key);
       if (!sp) {
         const visual = new CardVisual(d.w, d.h);
-        visual.onHover(() => d.faceDef && this.cb.onHover(d.faceDef), () => this.cb.onHover(null));
         d.layer.addChild(visual.root);
-        sp = { visual, layer: d.layer };
+        const created: Sprite = { visual, layer: d.layer, faceDef: d.faceDef };
+        // Read the LIVE face at hover time — the card at this position changes.
+        visual.onHover(() => created.faceDef && this.cb.onHover(created.faceDef), () => this.cb.onHover(null));
+        sp = created;
         this.sprites.set(d.key, sp);
         const from = d.spawn ?? { x: d.x, y: d.y };
         visual.root.position.set(from.x, from.y);
@@ -382,6 +390,7 @@ export class PixiBoard {
   }
 
   private applyFace(sp: Sprite, d: Desired): void {
+    sp.faceDef = d.faceDef; // keep the live hover face in sync with what's painted
     if (d.faceDef) {
       sp.visual.setFace(this.face(d.faceDef));
       sp.visual.setAttached(d.attached);

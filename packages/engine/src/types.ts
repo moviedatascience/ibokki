@@ -170,6 +170,9 @@ export interface PendingChoice {
   leftover: "top" | "bottom";
   /** discardForDamage: prevention already applied to the casting stack item. */
   damageReduction?: number;
+  /** Deck searches (Recharge): shuffle the deck once the pick lands, and the
+   *  pick is REVEALED (public `tutored` event) rather than private. */
+  shuffleAfter?: boolean;
 }
 
 export type Phase = "prepare" | "main" | "gameover";
@@ -248,6 +251,8 @@ export type GameEvent =
   | { type: "milled"; player: PlayerId; count: number }
   | { type: "recovered"; player: PlayerId; count: number }
   | { type: "searched"; player: PlayerId; count: number }
+  /** A revealed search pick (Recharge) — public, unlike private `chose` picks. */
+  | { type: "tutored"; player: PlayerId; defId: string }
   | { type: "shuffledIn"; player: PlayerId; count: number }
   | { type: "wardCreated"; player: PlayerId; hp: number }
   | { type: "wardDamaged"; player: PlayerId; amount: number }

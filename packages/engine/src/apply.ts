@@ -5,6 +5,7 @@ import { tierForLevel } from "./levels.ts";
 import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
 import { dealDamageToPlayer, drawN, sculptValue, shuffleHandIntoDeck, sumOngoing, symbolCount } from "./state-ops.ts";
+import { shuffleInPlace } from "./rng.ts";
 import { pushToStack, resolveTop, topOpposingStackItem } from "./stack.ts";
 import {
   isComponentDefId,
@@ -349,12 +350,14 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
         dealDamageToPlayer(state, otherPlayer(me), dmg, events);
       }
       events.push({ type: "chose", player: me, defId: card.defId });
+      if (pc.shuffleAfter) events.push({ type: "tutored", player: me, defId: card.defId }); // searches reveal the pick
       pc.picksRemaining--;
       if (pc.picksRemaining <= 0 || pc.candidates.length === 0) {
         if (pc.mode === "takeToHand" && pc.candidates.length > 0) {
           if (pc.leftover === "top") p.resourceDeck.push(...pc.candidates);
           else p.resourceDeck.unshift(...pc.candidates);
         }
+        if (pc.shuffleAfter) state.rngState = shuffleInPlace(p.resourceDeck, state.rngState);
         state.pendingChoice = null;
         resumeAfterChoice(state, events); // hand priority back; round may end if slots were exhausted
       }
