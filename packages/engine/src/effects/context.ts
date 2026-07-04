@@ -214,7 +214,8 @@ export interface EffectContext {
   reactionsCastThisRound(): number;
 
   // ---- trainers ----
-  /** Give back one spell slot this round, allowing an extra cast (Overclock). */
+  /** Allow one cast beyond the one-per-turn rule THIS turn; it still needs a
+   *  free spell slot and attached components (Overclock). */
   grantExtraCast(): void;
   /** Remove all your Burn markers and gain 1 HP per marker removed (Quenching Salts). */
   removeOwnBurnGainHp(): void;
@@ -830,7 +831,7 @@ export function makeContext(
     },
 
     grantExtraCast() {
-      self.slotsUsedThisRound = Math.max(0, self.slotsUsedThisRound - 1);
+      self.extraCastsThisTurn += 1;
     },
     removeOwnBurnGainHp() {
       const n = self.burn;

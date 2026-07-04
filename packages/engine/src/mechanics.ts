@@ -73,6 +73,7 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
   player.ongoing = player.ongoing.filter((o) => o.expiry !== "startOfOwnNextTurn");
   player.componentPlayedThisTurn = false;
   player.spellCastThisTurn = false;
+  player.extraCastsThisTurn = 0;
   player.gambitPlayedThisTurn = false;
   player.noCastThisTurn = false;
   // "Next spell THIS TURN" buffs (Battle Trance / Empowered Chalk) die at the

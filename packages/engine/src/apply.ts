@@ -286,7 +286,7 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
       if (!prep) throw new Error(`No prepared spell at ${action.preparedIndex}`);
       if (prep.cast || prep.sealed) throw new Error("Spell is not castable");
       if (p.noCastThisTurn) throw new Error("You cannot cast more spells this turn");
-      if (p.spellCastThisTurn) throw new Error("You may cast only one spell per turn");
+      if (p.spellCastThisTurn && p.extraCastsThisTurn <= 0) throw new Error("You may cast only one spell per turn");
       const def = getCard(prep.spell.defId);
       if (!def || !def.cost) throw new Error(`${prep.spell.defId} is not a castable spell`);
       if (def.type === "Reaction") throw new Error("Reactions are cast with castReaction");
@@ -294,7 +294,13 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
       if (!costMet(prep)) throw new Error("Cost not met");
 
       pushToStack(state, me, action.preparedIndex, false, null, events);
-      p.spellCastThisTurn = true; // one non-Reaction spell per turn (Reactions are separate)
+      // One non-Reaction spell per turn; Overclock grants extras (still slot-bound).
+      if (p.spellCastThisTurn) {
+        p.extraCastsThisTurn--;
+        state.stack[state.stack.length - 1]!.usedExtraCast = true;
+      } else {
+        p.spellCastThisTurn = true;
+      }
       state.priorityPlayer = me; // you keep priority — you may retract or pass to let it proceed
       state.passStreak = 0;
       break;
@@ -315,7 +321,8 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
       }
       p.slotsUsedThisRound = Math.max(0, p.slotsUsedThisRound - 1);
       p.spellsCastThisRound = Math.max(0, p.spellsCastThisRound - 1);
-      p.spellCastThisTurn = false; // taking it back frees your one cast this turn
+      if (top.usedExtraCast) p.extraCastsThisTurn++; // refund the Overclock grant
+      else p.spellCastThisTurn = false; // taking it back frees your one cast this turn
       p.nextSpellBonus += top.damageBonus; // an unspent next-spell buff returns with the cast
       events.push({ type: "retracted", player: me, spellDefId: top.defId });
       // priority stays with you; passStreak is still 0.

@@ -109,7 +109,7 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
     }
 
     // Cast a (non-Reaction) spell: one per turn, if a slot is free and you aren't cast-locked.
-    if (p.slotsUsedThisRound < tier.slots && !p.noCastThisTurn && !p.spellCastThisTurn) {
+    if (p.slotsUsedThisRound < tier.slots && !p.noCastThisTurn && (!p.spellCastThisTurn || p.extraCastsThisTurn > 0)) {
       for (let i = 0; i < p.prepared.length; i++) {
         const prep = p.prepared[i]!;
         if (prep.cast || prep.sealed) continue;

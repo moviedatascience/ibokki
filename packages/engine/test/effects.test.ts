@@ -41,6 +41,7 @@ function blankPlayer(id: PlayerId): PlayerState {
     turnsTakenThisRound: 0,
     componentPlayedThisTurn: false,
     spellCastThisTurn: false,
+    extraCastsThisTurn: 0,
     nextSpellBonus: 0,
     noCastThisTurn: false,
   };

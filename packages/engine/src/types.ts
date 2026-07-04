@@ -109,6 +109,9 @@ export interface PlayerState {
   componentPlayedThisTurn: boolean;
   /** True once you've cast a (non-Reaction) spell this turn — you may cast only one per turn. */
   spellCastThisTurn: boolean;
+  /** Extra casts granted this turn beyond the one-per-turn rule (Overclock). Each
+   *  still consumes a spell slot; reset at every turn boundary. */
+  extraCastsThisTurn: number;
   /** One-shot "+N damage to the next spell you cast this turn" (Battle Trance,
    *  Empowered Chalk). Consumed into StackItem.damageBonus at cast; expires at
    *  the next turn boundary. */
@@ -149,6 +152,8 @@ export interface StackItem {
   damageBonus: number;
   /** The prepared spell's face-down state before this cast (restored if the cast is retracted). */
   wasFaceDown: boolean;
+  /** This cast consumed an Overclock extra cast (refunded on retract). */
+  usedExtraCast?: boolean;
   /**
    * True only in the take-back window right after casting: the moment the caster
    * passes or ANYTHING else joins the stack, the cast is committed. Prevents

@@ -212,6 +212,15 @@ export function renderDecision(state: GameState, schools?: [string, string], vie
     lines.push(`   Revealed prepared: ${oppVisible.map((p) => cardName(p.spellDefId!)).join(", ")}`);
   }
 
+  // A pending choice YOU must resolve: always show what was revealed/staged.
+  // Without this, information-only choices (reveal / Disarm's look) rendered as a
+  // bare "pass" and the intel never reached a text-mode pilot.
+  const pc = v.pendingChoice;
+  if (pc?.mine) {
+    lines.push(`── CHOICE: ${pc.reason}${pc.picksRemaining > 0 ? ` (${pc.picksRemaining} pick${pc.picksRemaining === 1 ? "" : "s"} left)` : ""}`);
+    lines.push(`   Revealed: ${pc.candidates.map(cardName).join(", ") || "(nothing)"}`);
+  }
+
   listLegal();
   return lines.join("\n");
 }

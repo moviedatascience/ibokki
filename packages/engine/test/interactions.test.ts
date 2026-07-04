@@ -53,6 +53,7 @@ function blankPlayer(id: PlayerId): PlayerState {
     turnsTakenThisRound: 0,
     componentPlayedThisTurn: false,
     spellCastThisTurn: false,
+    extraCastsThisTurn: 0,
     nextSpellBonus: 0,
     noCastThisTurn: false,
   };
@@ -78,6 +79,49 @@ function blankState(): GameState {
     finalTurnFor: null,
   };
 }
+
+describe("Overclock (GAM-008) — one extra cast this turn (playtest m9 regression)", () => {
+  function armed(): GameState {
+    const s = blankState();
+    const p = s.players[0];
+    p.hand = [inst("GAM-008")];
+    p.prepared = [
+      { spell: inst("EVO-001"), faceDown: true, attached: [inst("CMP-V")], cast: false, sealed: false },
+      { spell: inst("EVO-001"), faceDown: true, attached: [inst("CMP-V")], cast: false, sealed: false },
+    ];
+    return s;
+  }
+  /** Cast prepared[i] and resolve it (caster passes, opponent passes). */
+  const castResolve = (s: GameState, i: number): GameState => {
+    let st = apply(s, { type: "cast", preparedIndex: i }).state;
+    st = apply(st, { type: "pass" }).state;
+    return apply(st, { type: "pass" }).state;
+  };
+
+  it("was a no-op when played BEFORE the first cast — now the second cast is offered", () => {
+    let s = armed();
+    s = apply(s, { type: "playTrainer", handIid: s.players[0].hand[0]!.iid }).state;
+    expect(s.players[0].extraCastsThisTurn).toBe(1);
+    s = castResolve(s, 0);
+    // The old grantExtraCast refunded a slot and left the turn gate shut: no cast here.
+    expect(legalActions(s, 0).some((a) => a.type === "cast")).toBe(true);
+    s = castResolve(s, 1);
+    expect(s.players[0].slotsUsedThisRound).toBe(2); // extra cast still CONSUMES a slot per text
+    expect(s.players[0].extraCastsThisTurn).toBe(0);
+    expect(legalActions(s, 0).some((a) => a.type === "cast")).toBe(false); // and no third
+  });
+
+  it("retracting the extra cast refunds the Overclock grant, not the base cast", () => {
+    let s = armed();
+    s = apply(s, { type: "playTrainer", handIid: s.players[0].hand[0]!.iid }).state;
+    s = castResolve(s, 0);
+    s = apply(s, { type: "cast", preparedIndex: 1 }).state;
+    s = apply(s, { type: "retractCast" }).state;
+    expect(s.players[0].extraCastsThisTurn).toBe(1); // grant back
+    expect(s.players[0].spellCastThisTurn).toBe(true); // first cast still counts
+    expect(legalActions(s, 0).some((a) => a.type === "cast")).toBe(true); // may recast
+  });
+});
 
 describe("Wild Surge interactive discard (EVO-007)", () => {
   function castWildSurge(hand: string[]): GameState {
