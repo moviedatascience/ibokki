@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { deckFor } from "@ibokki/engine";
-import { makeAgent, runMatch, runMatchup } from "../src/index.ts";
+import { deckFor, type Action, type PlayerView } from "@ibokki/engine";
+import { HeuristicBot, makeAgent, runMatch, runMatchup } from "../src/index.ts";
 
 describe("runMatch", () => {
   it("produces a terminal result", () => {
@@ -23,6 +23,52 @@ describe("runMatch", () => {
     const a = runMatch({ ...cfg(), decks: [...cfg().decks], agents: [...cfg().agents] });
     const b = runMatch({ ...cfg(), decks: [...cfg().decks], agents: [...cfg().agents] });
     expect(a.hash).toBe(b.hash);
+  });
+});
+
+describe("HeuristicBot reaction timing", () => {
+  /** A minimal reaction-window view: opponent's spell on top, our reaction(s) ready. */
+  function windowView(threatDefId: string, hp: number, reactionDefIds: string[]): PlayerView {
+    const view = {
+      you: 0,
+      stack: [{ sid: 1, controller: 1, spellDefId: threatDefId, isReaction: false, cancelled: false, targetSid: null }],
+      self: {
+        hp,
+        prepared: reactionDefIds.map((defId) => ({ spellDefId: defId, faceDown: true, attached: [], cast: false, sealed: false })),
+        hand: [],
+        handIids: [],
+      },
+    };
+    return view as unknown as PlayerView;
+  }
+  const legalFor = (n: number): Action[] => [
+    { type: "pass" },
+    ...Array.from({ length: n }, (_, i) => ({ type: "castReaction", preparedIndex: i }) as Action),
+  ];
+
+  it("a cheap 1-S prevent happily eats a 2-damage Spark", () => {
+    const action = new HeuristicBot(1).chooseAction(windowView("EVO-001", 30, ["ABJ-007"]), legalFor(1));
+    expect(action.type).toBe("castReaction");
+  });
+
+  it("holds a 2-card cancel (Phase Shift) against a Spark — a losing trade", () => {
+    const action = new HeuristicBot(1).chooseAction(windowView("EVO-001", 30, ["ABJ-014"]), legalFor(1));
+    expect(action.type).toBe("pass");
+  });
+
+  it("fires the 2-card cancel at a 5-damage Fireball", () => {
+    const action = new HeuristicBot(1).chooseAction(windowView("EVO-017", 30, ["ABJ-014"]), legalFor(1));
+    expect(action.type).toBe("castReaction");
+  });
+
+  it("with both ready, fires the CHEAPEST sufficient reaction", () => {
+    const action = new HeuristicBot(1).chooseAction(windowView("EVO-017", 30, ["ABJ-014", "ABJ-007"]), legalFor(2));
+    expect(action).toEqual({ type: "castReaction", preparedIndex: 1 }); // Echo Shield (S), not Phase Shift (SS)
+  });
+
+  it("desperation: at low HP it fires even a losing trade at a cantrip", () => {
+    const action = new HeuristicBot(1).chooseAction(windowView("EVO-001", 8, ["ABJ-014"]), legalFor(1));
+    expect(action.type).toBe("castReaction");
   });
 });
 

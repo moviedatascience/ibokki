@@ -73,9 +73,28 @@ export class HeuristicBot implements Agent {
       return best;
     }
 
-    // Greedily fire a Reaction when one is ready (cheap way to exercise counters).
+    // Reaction timing: a Reaction's fuel cost real cards, so make the trade pay.
+    // Fire the CHEAPEST ready reaction whose card cost the threat's value beats
+    // (a 1-S Echo Shield happily eats a 2-damage Spark; an SS cancel holds for
+    // bigger spells). When desperate (low HP), fire anything at anything.
     const reactions = legal.filter((a) => a.type === "castReaction");
-    if (reactions.length > 0) return reactions[0]!;
+    if (reactions.length > 0 && top) {
+      const threat = top.spellDefId ? threatValue(top.spellDefId) : 1;
+      const desperate = view.self.hp <= 10;
+      let best: Action | undefined;
+      let bestCost = Infinity;
+      for (const r of reactions) {
+        if (r.type !== "castReaction") continue;
+        const defId = view.self.prepared[r.preparedIndex]?.spellDefId;
+        const cost = defId ? symbolCost(defId) : 1;
+        if (cost < bestCost) {
+          bestCost = cost;
+          best = r;
+        }
+      }
+      if (best && (desperate || threat >= bestCost + 1)) return best;
+      // else: hold the Reactions, fall through to pass and let the small spell resolve.
+    }
 
     const attaches = legal.filter((a) => a.type === "attach");
     if (attaches.length > 0) {
@@ -123,6 +142,24 @@ function missingCost(cost: Cost, prep: PreparedView): Cost {
 function estimateLevel(spellDefId: string | null): number {
   if (!spellDefId) return 0;
   return getCard(spellDefId)?.level ?? 1;
+}
+
+/** Total symbols in a card's cost — the cards a Reaction's fuel is worth. */
+function symbolCost(defId: string): number {
+  const cost = getCard(defId)?.cost;
+  return cost ? cost.V + cost.S + cost.M : 1;
+}
+
+/** Rough worth of an incoming spell: its biggest "deal N damage", plus a burn
+ *  engine bump; non-damage utility spells scale with level. */
+function threatValue(defId: string): number {
+  const def = getCard(defId);
+  if (!def) return 1;
+  let v = 0;
+  for (const m of def.text.matchAll(/deal (\d+)/gi)) v = Math.max(v, Number(m[1]));
+  if (/burn marker/i.test(def.text)) v += 2;
+  if (v === 0) v = (def.level ?? 1) >= 2 ? 3 : 1;
+  return v;
 }
 
 export type AgentKind = "random" | "heuristic";

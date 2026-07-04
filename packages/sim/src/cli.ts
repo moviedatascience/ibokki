@@ -102,11 +102,12 @@ function main(): void {
     console.log("\n(Design intent: Evo>Div, Div>Abj, Abj>Evo — the rock-paper-scissors triangle.)");
     console.log(coverageLine());
     console.log(
-      "NOTE: all spells + Reactions are implemented. The heuristic bot pre-attaches\n" +
-        "reaction costs and fires counters, but its TIMING is naive (it reacts to the\n" +
-        "first thing it can) and it can't pilot Divination's card advantage, so the\n" +
-        "intended triangle (Abj>Evo, Div>Abj) does not emerge from naive self-play.\n" +
-        "Surfacing it needs a stronger agent — e.g. Claude via the MCP server (npm run mcp).",
+      "NOTE: all spells + Reactions are implemented. The heuristic bot fuels its\n" +
+        "Reactions and fires the cheapest one whose cost the threat's value beats\n" +
+        "(economic timing), but it can't pilot Divination's card advantage or plan\n" +
+        "multi-turn defenses, so the intended triangle (Abj>Evo, Div>Abj) does not\n" +
+        "emerge from naive self-play. Surfacing it needs a stronger agent — e.g.\n" +
+        "Claude via the MCP server (npm run mcp).",
     );
     return;
   }
