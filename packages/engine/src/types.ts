@@ -168,17 +168,30 @@ export interface PendingChoice {
   /** "takeToHand": candidates are staged out of the deck; pick some into hand.
    *  "bankToDeckTop": candidates are hand cards; pick one to put on top of the deck.
    *  "discardForDamage": candidates are hand cards; the pick is discarded and the
-   *   opponent takes 1 damage per component symbol on it (Wild Surge). */
-  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage";
+   *   opponent takes 1 damage per component symbol on it (Wild Surge).
+   *  "discardForSearch": pick a hand card to discard, then a search choice for
+   *   any one deck card follows (Mentor's Guidance).
+   *  "orderToTop": candidates are the staged top N; picks go back on top of the
+   *   deck, FIRST pick topmost (Index / Premonition Charm).
+   *  "bounceToOwnersDeckTop": candidates are the OPPONENT'S hand (revealed to
+   *   the chooser); the pick goes on top of its owner's deck (Disarm). */
+  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage" | "discardForSearch" | "orderToTop" | "bounceToOwnersDeckTop";
   candidates: CardInstance[];
   picksRemaining: number;
   /** Where unchosen staged cards go when a takeToHand choice finishes. */
   leftover: "top" | "bottom";
   /** discardForDamage: prevention already applied to the casting stack item. */
   damageReduction?: number;
-  /** Deck searches (Recharge): shuffle the deck once the pick lands, and the
-   *  pick is REVEALED (public `tutored` event) rather than private. */
+  /** Deck searches (Recharge/Seek/…): shuffle the deck once the choice ends, and
+   *  picks are REVEALED (public `tutored` event) rather than private. */
   shuffleAfter?: boolean;
+  /** When present, only these candidate iids may be picked; the rest are shown
+   *  for information only (Omen's non-M cards, Disarm's non-components). */
+  eligibleIids?: number[];
+  /** "Up to N" / "you may": `pass` is legal and ends the choice early. */
+  optional?: boolean;
+  /** orderToTop: picks accumulate here until the choice completes. */
+  picked?: CardInstance[];
 }
 
 export type Phase = "prepare" | "main" | "gameover";
@@ -257,8 +270,10 @@ export type GameEvent =
   | { type: "milled"; player: PlayerId; count: number }
   | { type: "recovered"; player: PlayerId; count: number }
   | { type: "searched"; player: PlayerId; count: number }
-  /** A revealed search pick (Recharge) — public, unlike private `chose` picks. */
+  /** A revealed search pick (Recharge/Seek/…) — public, unlike private `chose` picks. */
   | { type: "tutored"; player: PlayerId; defId: string }
+  /** A card bounced to the top of its owner's deck (Disarm) — public. */
+  | { type: "bounced"; player: PlayerId; defId: string }
   | { type: "shuffledIn"; player: PlayerId; count: number }
   | { type: "wardCreated"; player: PlayerId; hp: number }
   | { type: "wardDamaged"; player: PlayerId; amount: number }

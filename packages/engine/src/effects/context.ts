@@ -111,9 +111,20 @@ export interface EffectContext {
   // ---- Divination: search / recursion / tempo ----
   drawUntil(target: number): number;
   tutorComponentsToHand(n: number): number;
-  /** Pause for the controller to search their deck for a same-symbol dual
-   *  (VV/SS/MM), reveal it to hand, then shuffle (Recharge, interactive). */
-  requestSearchSameSymbolDual(): void;
+  /** Pause for the controller to search their deck: matching cards are staged
+   *  as choices, picks are revealed to hand, then the deck shuffles. `optional`
+   *  = "up to N" (pass ends early). Recharge/Seek/Premeditate/Grand Design. */
+  requestSearchDeck(opts: { filter: "any" | "component" | "sameSymbolDual"; takeN: number; optional?: boolean; reason: string }): void;
+  /** Pause to look at the top N and put them back ON TOP in any order — the
+   *  first pick ends up topmost (Index / Premonition Charm). */
+  requestOrderTopOfDeck(n: number): void;
+  /** Omen: look at the top N (all shown), pick one M component to hand; the
+   *  rest go to the bottom. No M among them → all to the bottom, no pause. */
+  requestPickMaterialFromTop(lookN: number): void;
+  /** Mentor's Guidance: pick a hand card to discard, then search for any one card. */
+  requestDiscardThenSearch(): void;
+  /** Disarm: reveal the opponent's hand; MAY pick one component → owner's deck top. */
+  requestBounceOpponentComponent(): void;
   returnComponentsFromDiscard(n: number): number;
   returnAllComponentsFromDiscard(): number;
   shuffleOwnDiscardIntoDeck(): number;
@@ -318,12 +329,14 @@ export function makeContext(
       return millPlayer(state, opponentId, n, events);
     },
 
-    requestSearchSameSymbolDual() {
+    requestSearchDeck({ filter, takeN, optional, reason }) {
       const deck = self.resourceDeck;
       const DUALS = new Set(["CMP-VV", "CMP-SS", "CMP-MM"]);
+      const matches = (defId: string): boolean =>
+        filter === "any" ? true : filter === "component" ? isComponentDefId(defId) : DUALS.has(defId);
       const staged: typeof deck = [];
       for (let i = deck.length - 1; i >= 0; i--) {
-        if (DUALS.has(deck[i]!.defId)) staged.push(...deck.splice(i, 1));
+        if (matches(deck[i]!.defId)) staged.push(...deck.splice(i, 1));
       }
       if (staged.length === 0) {
         // Searched and found nothing — the deck still gets shuffled.
@@ -333,14 +346,84 @@ export function makeContext(
       }
       state.pendingChoice = {
         player: selfId,
-        reason: "Search: take a same-symbol dual (VV / SS / MM) to hand",
+        reason,
         mode: "takeToHand",
         candidates: staged,
-        picksRemaining: 1,
+        picksRemaining: Math.min(takeN, staged.length),
         leftover: "top",
-        shuffleAfter: true, // it's a search — the deck shuffles when the pick lands
+        shuffleAfter: true, // it's a search — the deck shuffles when the choice ends
+        optional,
       };
       events.push({ type: "choicePending", player: selfId, reason: "search" });
+    },
+    requestOrderTopOfDeck(n) {
+      const deck = self.resourceDeck;
+      const look = Math.min(n, deck.length);
+      if (look === 0) return;
+      const staged = deck.splice(deck.length - look, look); // top `look` (top = end)
+      state.pendingChoice = {
+        player: selfId,
+        reason: `Put these ${look} back on top — your FIRST pick ends up topmost`,
+        mode: "orderToTop",
+        candidates: staged,
+        picksRemaining: look,
+        leftover: "top",
+        picked: [],
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "reorder" });
+    },
+    requestPickMaterialFromTop(lookN) {
+      const deck = self.resourceDeck;
+      const look = Math.min(lookN, deck.length);
+      if (look === 0) return;
+      const staged = deck.splice(deck.length - look, look);
+      const withM = staged.filter((c) => (getComponent(c.defId)?.symbols.M ?? 0) > 0);
+      if (withM.length === 0) {
+        deck.unshift(...staged); // nothing to take — all to the bottom
+        events.push({ type: "searched", player: selfId, count: 0 });
+        return;
+      }
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Take one Material (M) component — the rest go to the bottom",
+        mode: "takeToHand",
+        candidates: staged, // all shown (you looked at them); only M's pickable
+        picksRemaining: 1,
+        leftover: "bottom",
+        eligibleIids: withM.map((c) => c.iid),
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "take" });
+    },
+    requestDiscardThenSearch() {
+      if (self.hand.length === 0) {
+        // Nothing to discard — go straight to the search.
+        this.requestSearchDeck({ filter: "any", takeN: 1, reason: "Search: take any one card from your deck" });
+        return;
+      }
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Discard a card — then search your deck for any one card",
+        mode: "discardForSearch",
+        candidates: [...self.hand],
+        picksRemaining: 1,
+        leftover: "top",
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "discard" });
+    },
+    requestBounceOpponentComponent() {
+      if (opponent.hand.length === 0) return; // nothing to look at
+      const components = opponent.hand.filter((c) => isComponentDefId(c.defId));
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Opponent's hand — you MAY put one component on top of their deck",
+        mode: "bounceToOwnersDeckTop",
+        candidates: [...opponent.hand], // the whole hand is revealed to you
+        picksRemaining: 1,
+        leftover: "top",
+        eligibleIids: components.map((c) => c.iid),
+        optional: true,
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "disarm" });
     },
     requestDiscardForDamage() {
       if (self.hand.length === 0) return; // nothing to discard, no damage

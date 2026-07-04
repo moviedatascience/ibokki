@@ -40,6 +40,23 @@ function flagRoundEnd(state: GameState, events: GameEvent[]): void {
 }
 
 /** After a pending choice resolves, return priority to the active player and flag round end if slots are spent. */
+/** Wrap up the pending choice: return/lay out leftovers, shuffle searches, resume flow. */
+function finishPendingChoice(state: GameState, events: GameEvent[]): void {
+  const pc = state.pendingChoice!;
+  const p = state.players[pc.player];
+  if (pc.mode === "takeToHand" && pc.candidates.length > 0) {
+    if (pc.leftover === "top") p.resourceDeck.push(...pc.candidates);
+    else p.resourceDeck.unshift(...pc.candidates);
+  }
+  if (pc.mode === "orderToTop") {
+    p.resourceDeck.push(...pc.candidates); // safety: unpicked stage stays on top
+    p.resourceDeck.push(...[...(pc.picked ?? [])].reverse()); // first pick ends topmost
+  }
+  if (pc.shuffleAfter) state.rngState = shuffleInPlace(p.resourceDeck, state.rngState);
+  state.pendingChoice = null;
+  resumeAfterChoice(state, events);
+}
+
 function resumeAfterChoice(state: GameState, events: GameEvent[]): void {
   state.priorityPlayer = state.activePlayer;
   if (state.phase === "main" && state.stack.length === 0) {
@@ -92,6 +109,11 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
   const p = state.players[me];
 
   if (state.pendingChoice && action.type !== "choose") {
+    // "Up to N" / "you may" choices end early on pass ("Done").
+    if (action.type === "pass" && state.pendingChoice.optional && me === state.pendingChoice.player) {
+      finishPendingChoice(state, events);
+      return { state, events };
+    }
     throw new Error("Resolve the pending choice first");
   }
 
@@ -333,34 +355,73 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
       if (me !== pc.player) throw new Error("Not your choice to make");
       const cidx = pc.candidates.findIndex((c) => c.iid === action.iid);
       if (cidx < 0) throw new Error(`Card ${action.iid} is not among the choices`);
+      if (pc.eligibleIids && !pc.eligibleIids.includes(action.iid)) {
+        throw new Error("That card cannot be chosen (shown for information only)");
+      }
       const card = pc.candidates.splice(cidx, 1)[0]!;
-      if (pc.mode === "takeToHand") {
-        p.hand.push(card); // staged card -> hand
-      } else if (pc.mode === "bankToDeckTop") {
-        const hidx = p.hand.findIndex((c) => c.iid === card.iid); // hand card -> deck top
-        if (hidx >= 0) p.hand.splice(hidx, 1);
-        p.resourceDeck.push(card);
-      } else {
-        // discardForDamage (Wild Surge): discard the pick, opponent takes 1 per symbol.
-        const hidx = p.hand.findIndex((c) => c.iid === card.iid);
-        if (hidx >= 0) p.hand.splice(hidx, 1);
-        p.discard.push(card);
-        events.push({ type: "discarded", player: me, count: 1 });
-        const base = symbolCount(card.defId) + sumOngoing(p, "damageBuff");
-        const dmg = Math.max(0, base - (pc.damageReduction ?? 0));
-        dealDamageToPlayer(state, otherPlayer(me), dmg, events);
+      switch (pc.mode) {
+        case "takeToHand":
+          p.hand.push(card); // staged card -> hand
+          break;
+        case "bankToDeckTop": {
+          const hidx = p.hand.findIndex((c) => c.iid === card.iid); // hand card -> deck top
+          if (hidx >= 0) p.hand.splice(hidx, 1);
+          p.resourceDeck.push(card);
+          break;
+        }
+        case "discardForDamage": {
+          // Wild Surge: discard the pick, opponent takes 1 per symbol.
+          const hidx = p.hand.findIndex((c) => c.iid === card.iid);
+          if (hidx >= 0) p.hand.splice(hidx, 1);
+          p.discard.push(card);
+          events.push({ type: "discarded", player: me, count: 1 });
+          const base = symbolCount(card.defId) + sumOngoing(p, "damageBuff");
+          const dmg = Math.max(0, base - (pc.damageReduction ?? 0));
+          dealDamageToPlayer(state, otherPlayer(me), dmg, events);
+          break;
+        }
+        case "discardForSearch": {
+          // Mentor's Guidance: discard the pick, then search the whole deck for any one card.
+          const hidx = p.hand.findIndex((c) => c.iid === card.iid);
+          if (hidx >= 0) p.hand.splice(hidx, 1);
+          p.discard.push(card);
+          events.push({ type: "discarded", player: me, count: 1 });
+          events.push({ type: "chose", player: me, defId: card.defId });
+          if (p.resourceDeck.length === 0) {
+            state.pendingChoice = null;
+            resumeAfterChoice(state, events);
+            return { state, events };
+          }
+          state.pendingChoice = {
+            player: me,
+            reason: "Search: take any one card from your deck",
+            mode: "takeToHand",
+            candidates: p.resourceDeck.splice(0, p.resourceDeck.length),
+            picksRemaining: 1,
+            leftover: "top",
+            shuffleAfter: true,
+          };
+          events.push({ type: "choicePending", player: me, reason: "search" });
+          return { state, events }; // the follow-up choice replaces this one
+        }
+        case "orderToTop":
+          (pc.picked ??= []).push(card); // laid back on top at completion, first pick topmost
+          break;
+        case "bounceToOwnersDeckTop": {
+          // Disarm: the pick is in the OPPONENT'S hand; it goes on top of their deck.
+          const owner = state.players[otherPlayer(pc.player)];
+          const hidx = owner.hand.findIndex((c) => c.iid === card.iid);
+          if (hidx >= 0) owner.hand.splice(hidx, 1);
+          owner.resourceDeck.push(card);
+          events.push({ type: "bounced", player: owner.id, defId: card.defId });
+          break;
+        }
       }
       events.push({ type: "chose", player: me, defId: card.defId });
       if (pc.shuffleAfter) events.push({ type: "tutored", player: me, defId: card.defId }); // searches reveal the pick
       pc.picksRemaining--;
       if (pc.picksRemaining <= 0 || pc.candidates.length === 0) {
-        if (pc.mode === "takeToHand" && pc.candidates.length > 0) {
-          if (pc.leftover === "top") p.resourceDeck.push(...pc.candidates);
-          else p.resourceDeck.unshift(...pc.candidates);
-        }
-        if (pc.shuffleAfter) state.rngState = shuffleInPlace(p.resourceDeck, state.rngState);
-        state.pendingChoice = null;
-        resumeAfterChoice(state, events); // hand priority back; round may end if slots were exhausted
+        finishPendingChoice(state, events); // hand priority back; round may end if slots were exhausted
       }
       break;
     }

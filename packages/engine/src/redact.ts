@@ -59,7 +59,7 @@ export interface StackItemView {
 export interface PendingChoiceView {
   /** True if this viewer is the one who must choose. */
   mine: boolean;
-  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage";
+  mode: "takeToHand" | "bankToDeckTop" | "discardForDamage" | "discardForSearch" | "orderToTop" | "bounceToOwnersDeckTop";
   reason: string;
   picksRemaining: number;
   /** Candidate card defIds — only populated for the chooser (private information). */

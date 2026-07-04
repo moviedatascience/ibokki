@@ -207,6 +207,125 @@ describe("Battle Trance buffs ONE spell, THIS turn (GAM-010) — live-match regr
   });
 });
 
+describe("auto-resolve conversions (2026-07 sweep)", () => {
+  function play(id: string, setup: (s: GameState) => void): { state: GameState; events: GameEvent[] } {
+    const state = blankState();
+    setup(state);
+    const events: GameEvent[] = [];
+    const card = inst(id);
+    getEffect(id)!(makeContext(state, 0, card, events), card);
+    return { state, events };
+  }
+  const choose = (s: GameState, defId: string): GameState => {
+    const c = s.pendingChoice!.candidates.find((x) => x.defId === defId)!;
+    return apply(s, { type: "choose", iid: c.iid }).state;
+  };
+
+  it("Omen (DIV-012): all four shown, only M-carrying cards pickable, rest to bottom", () => {
+    const { state } = play("DIV-012", (s) => {
+      s.players[0].resourceDeck = ["CMP-S", "CMP-V", "CMP-M", "CMP-VM", "CMP-SS"].map(inst); // top 4 = V,M,VM,SS
+    });
+    const pc = state.pendingChoice!;
+    expect(pc.candidates).toHaveLength(4); // you LOOKED at all four
+    const pickable = legalActions(state, 0).filter((a) => a.type === "choose");
+    expect(pickable).toHaveLength(2); // CMP-M and CMP-VM only
+    expect(legalActions(state, 0).some((a) => a.type === "pass")).toBe(false); // not optional
+    const next = choose(state, "CMP-VM");
+    expect(next.players[0].hand.map((c) => c.defId)).toEqual(["CMP-VM"]);
+    expect(next.players[0].resourceDeck).toHaveLength(4); // 1 untouched + 3 to the bottom
+    expect(next.pendingChoice).toBeNull();
+  });
+
+  it("Omen with no M in the top cards: no pause, all to the bottom", () => {
+    const { state } = play("DIV-012", (s) => {
+      s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-VS", "CMP-VV"].map(inst);
+    });
+    expect(state.pendingChoice).toBeNull();
+    expect(state.players[0].resourceDeck).toHaveLength(4);
+  });
+
+  it("Seek (DIV-016): components only — trainers in the deck are not offered", () => {
+    const { state } = play("DIV-016", (s) => {
+      s.players[0].resourceDeck = [inst("CMP-V"), inst("GAM-001"), inst("CMP-MM")];
+    });
+    expect(state.pendingChoice!.candidates.map((c) => c.defId).sort()).toEqual(["CMP-MM", "CMP-V"]);
+  });
+
+  it("Premeditate (DIV-033): 'up to 2' — Done ends the choice after one pick", () => {
+    const { state } = play("DIV-033", (s) => {
+      s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-M"].map(inst);
+    });
+    let s = choose(state, "CMP-M");
+    expect(s.pendingChoice, "second pick still open").toBeTruthy();
+    expect(legalActions(s, 0).some((a) => a.type === "pass")).toBe(true);
+    s = apply(s, { type: "pass" }).state; // Done — decline the second
+    expect(s.pendingChoice).toBeNull();
+    expect(s.players[0].hand.map((c) => c.defId)).toEqual(["CMP-M"]);
+    expect(s.players[0].resourceDeck).toHaveLength(2); // leftovers returned + shuffled
+  });
+
+  it("Grand Design (DIV-042): 'any card' — trainers are searchable too", () => {
+    const { state } = play("DIV-042", (s) => {
+      s.players[0].resourceDeck = [inst("CMP-V"), inst("GAM-001")];
+    });
+    expect(state.pendingChoice!.candidates.map((c) => c.defId).sort()).toEqual(["CMP-V", "GAM-001"]);
+  });
+
+  it("Index (DIV-022): the player orders the top five — first pick ends topmost", () => {
+    const { state } = play("DIV-022", (s) => {
+      s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-M", "CMP-VV", "CMP-SS", "CMP-MM"].map(inst);
+    });
+    expect(state.pendingChoice!.candidates).toHaveLength(5);
+    let s = state;
+    for (const pick of ["CMP-MM", "CMP-S", "CMP-M", "CMP-VV", "CMP-SS"]) s = choose(s, pick);
+    expect(s.pendingChoice).toBeNull();
+    const deck = s.players[0].resourceDeck.map((c) => c.defId);
+    // Bottom card untouched; picks land first-pick-topmost (top = end of array).
+    expect(deck).toEqual(["CMP-V", "CMP-SS", "CMP-VV", "CMP-M", "CMP-S", "CMP-MM"]);
+  });
+
+  it("Disarm (GAM-020): reveals the hand, only components pickable, may decline", () => {
+    const setup = (s: GameState) => {
+      s.players[1].hand = [inst("CMP-VV"), inst("GAM-001")];
+      s.players[1].resourceDeck = [inst("CMP-V")];
+    };
+    // Decline: pass leaves their hand untouched.
+    const declined = play("GAM-020", setup).state;
+    expect(declined.pendingChoice!.candidates).toHaveLength(2); // whole hand revealed
+    expect(legalActions(declined, 0).filter((a) => a.type === "choose")).toHaveLength(1); // the component
+    const after = apply(declined, { type: "pass" }).state;
+    expect(after.players[1].hand).toHaveLength(2);
+
+    // Pick: the component goes on top of ITS OWNER'S deck.
+    const picked = choose(play("GAM-020", setup).state, "CMP-VV");
+    expect(picked.players[1].hand.map((c) => c.defId)).toEqual(["GAM-001"]);
+    expect(picked.players[1].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-VV"]); // top = end
+  });
+
+  it("Mentor's Guidance (GAM-003): YOUR discard, then search for ANY one card", () => {
+    const { state } = play("GAM-003", (s) => {
+      s.players[0].hand = [inst("CMP-V"), inst("GAM-001")];
+      s.players[0].resourceDeck = [inst("CMP-M"), inst("ITM-001")];
+    });
+    expect(state.pendingChoice!.mode).toBe("discardForSearch");
+    let s = choose(state, "GAM-001"); // the PLAYER picks the discard (was random)
+    expect(s.players[0].discard.map((c) => c.defId)).toEqual(["GAM-001"]);
+    // The follow-up search offers the ENTIRE deck (was components-only).
+    expect(s.pendingChoice!.mode).toBe("takeToHand");
+    expect(s.pendingChoice!.candidates.map((c) => c.defId).sort()).toEqual(["CMP-M", "ITM-001"]);
+    s = choose(s, "ITM-001");
+    expect(s.players[0].hand.map((c) => c.defId).sort()).toEqual(["CMP-V", "ITM-001"]);
+    expect(s.pendingChoice).toBeNull();
+  });
+
+  it("Mentor's Guidance with an empty hand skips straight to the search", () => {
+    const { state } = play("GAM-003", (s) => {
+      s.players[0].resourceDeck = [inst("CMP-M")];
+    });
+    expect(state.pendingChoice!.mode).toBe("takeToHand");
+  });
+});
+
 describe("retract window", () => {
   /** P0 with a freshly cast Fireball on the stack (holds priority, streak 0). */
   function stateWithFreshCast(): GameState {

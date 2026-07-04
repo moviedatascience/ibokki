@@ -32,12 +32,12 @@ register("DIV-008", (c) => c.scryOpponentTopToBottom()); // Scry Glyph (bottom o
 register("DIV-009", (c) => c.addAttuneBonus()); // Attune — next attach counts as +1 needed symbol
 register("DIV-010", (c) => { c.draw(1); c.requestBankToDeckTop(1); }); // Mind's Eye (draw 1, choose 1 to bank on top)
 register("DIV-011", (c) => c.dealDamage(1)); // Foretell (info + psychic sting — gives Div an L1 damage axis)
-register("DIV-012", (c) => c.lookSelectMaterialToHand(4)); // Omen (look 4, take an M, rest to bottom)
+register("DIV-012", (c) => c.requestPickMaterialFromTop(4)); // Omen — interactive: see all 4, pick which M
 // DIV-013 Quicken RETIRED — redundant now that attaching is unlimited per turn.
 
 // ---- Level 2 ----
 register("DIV-015", (c) => c.returnComponentsFromDiscard(2)); // Reclaim
-register("DIV-016", (c) => c.tutorComponentsToHand(1)); // Seek
+register("DIV-016", (c) => c.requestSearchDeck({ filter: "component", takeN: 1, reason: "Search: take a component to hand" })); // Seek
 register("DIV-017", (c) => c.draw(1)); // Foreknowledge (SIMPLIFIED: info + draw)
 register("DIV-018", (c) => {
   const n = c.discardSelfHand(); // Alchemy (SIMPLIFIED: discard all, redraw same)
@@ -50,7 +50,7 @@ register("DIV-019", (c) => {
 });
 register("DIV-020", (c) => c.millOpponent(2)); // Foreclosure
 register("DIV-021", (c) => { c.draw(2); c.requestBankToDeckTop(1); }); // Quick Study (draw 2, choose 1 to bank on top)
-register("DIV-022", (c) => c.reorderTop(5)); // Index (look at top 5, reorder)
+register("DIV-022", (c) => c.requestOrderTopOfDeck(5)); // Index — interactive reorder
 register("DIV-023", (c) => { c.millOpponent(1); c.dealDamage(1); }); // Far Sight (mill-sting)
 
 // ---- Level 3 ----
@@ -69,7 +69,7 @@ register("DIV-029", (c) => {
 register("DIV-030", (c) => c.requestTakeFromTop(5, 2, "top")); // Manipulate Fate (look 5, choose 2, rest on top)
 register("DIV-031", (c) => c.draw(2)); // Perfect Information (info on opp hand/deck is a no-op headless) + draw 2
 register("DIV-032", (c) => c.millOpponent(4)); // Entropy
-register("DIV-033", (c) => c.tutorComponentsToHand(2)); // Premeditate
+register("DIV-033", (c) => c.requestSearchDeck({ filter: "component", takeN: 2, optional: true, reason: "Search: take up to 2 components to hand" })); // Premeditate
 register("DIV-034", (c) => c.drawUntil(7)); // Convergent Future
 register("DIV-037", (c) => c.recastPreparedSpell(2, true)); // Borrowed Power (any L1-2, either side)
 register("DIV-038", (c) => {
@@ -102,7 +102,7 @@ register("DIV-040", (c) => {
   c.draw(4);
 });
 register("DIV-041", (c) => c.returnAllComponentsFromDiscard()); // Eternal Return
-register("DIV-042", (c) => c.tutorComponentsToHand(3)); // Grand Design
+register("DIV-042", (c) => c.requestSearchDeck({ filter: "any", takeN: 3, optional: true, reason: "Search: take up to 3 cards to hand" })); // Grand Design
 register("DIV-043", (c) => {
   c.opponentShuffleHandIntoDeck(); // Oblivion
   c.millOpponent(8);

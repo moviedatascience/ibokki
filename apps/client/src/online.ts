@@ -28,6 +28,8 @@ export interface OnlineCallbacks {
   onPresence: (opponentConnected: boolean) => void;
   onError: (message: string) => void;
   onClose: () => void;
+  /** The server runs a newer build than this bundle — prompt a refresh. */
+  onStaleBuild: () => void;
 }
 
 const SESSION_KEY = "ibokki.online.seat";
@@ -91,6 +93,11 @@ export class OnlineClient {
         const info = { code: msg.code as string, side: msg.side as number, token: msg.token as string };
         storeSeat({ code: info.code, token: info.token });
         this.cb.onLobby(info, msg.catalog as CardCatalog);
+        // A tab that outlived a redeploy reconnects here on the OLD bundle —
+        // it keeps working, but stale UI code causes ghost bugs. Flag it.
+        if (typeof msg.build === "string" && msg.build !== "dev" && msg.build !== __IBOKKI_BUILD__) {
+          this.cb.onStaleBuild();
+        }
         return;
       }
       case "state":

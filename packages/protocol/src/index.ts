@@ -280,10 +280,11 @@ export type ClientMessage =
   | { t: "act"; indices: number[] }
   | { t: "rematch" };
 
-/** Server → client. */
+/** Server → client. `build` lets a tab that outlived a redeploy detect it is
+ *  running an outdated bundle and prompt for a refresh. */
 export type ServerMessage =
-  | { t: "created"; code: string; side: PlayerId; token: string; catalog: Record<string, CardInfo> }
-  | { t: "joined"; code: string; side: PlayerId; token: string; catalog: Record<string, CardInfo> }
+  | { t: "created"; code: string; side: PlayerId; token: string; catalog: Record<string, CardInfo>; build?: string }
+  | { t: "joined"; code: string; side: PlayerId; token: string; catalog: Record<string, CardInfo>; build?: string }
   | { t: "state"; state: MatchStatePayload; error?: string }
   | { t: "presence"; opponentConnected: boolean }
   | { t: "error"; message: string };

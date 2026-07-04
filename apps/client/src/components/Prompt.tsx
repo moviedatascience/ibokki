@@ -19,20 +19,33 @@ export function Prompt({ state, onAction, cardName }: { state: MatchState | null
         : pc.mode === "discardForDamage"
           ? "Discard a card — 1 damage per symbol on it"
           : pc.reason || "Choose a card";
+    // "Up to N" / "you may" choices offer pass = Done. (While a choice is
+    // pending the only legal actions are choose + this pass, so no ambiguity.)
+    const done = legal.find((x) => x.type === "pass");
+    // Each choose action is consumed once, so duplicate defIds map to distinct actions.
+    const used = new Set<number>();
     return (
       <div className="prompt">
         <h4>CHOOSE{pc.picksRemaining > 1 ? ` (${pc.picksRemaining} left)` : ""}</h4>
         <p>{title}</p>
         <div className="choices">
           {pc.candidates.map((def, i) => {
-            const a = legal.find((x) => x.type === "choose" && x.defId === def);
+            const a = legal.find((x) => x.type === "choose" && x.defId === def && !used.has(x.index));
+            if (a) used.add(a.index);
             return (
-              <span key={i} className="choice" onClick={() => a && onAction(a.index)}>
+              <span key={i} className={a ? "choice" : "choice ineligible"} title={a ? undefined : "Shown for information — can't be picked"} onClick={() => a && onAction(a.index)}>
                 {cardName(def)}
               </span>
             );
           })}
         </div>
+        {done && (
+          <div className="row">
+            <button className="primary" onClick={() => onAction(done.index)}>
+              Done
+            </button>
+          </div>
+        )}
       </div>
     );
   }

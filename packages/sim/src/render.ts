@@ -107,6 +107,8 @@ export function describeEvent(e: GameEvent): string | null {
       return `P${e.player} mills ${e.count}`;
     case "tutored":
       return `P${e.player} searches out ${cardName(e.defId)}`;
+    case "bounced":
+      return `P${e.player}'s ${cardName(e.defId)} is put on top of their deck`;
     case "reshuffled":
       return `P${e.player} reshuffles discard into deck (#${e.count}) — exhaustion ${e.damage}`;
     case "mulliganed":

@@ -9,6 +9,8 @@ export interface OnlineApi {
   /** Room join code (share with the opponent) once created/joined. */
   code: string | null;
   opponentConnected: boolean;
+  /** The server was redeployed since this bundle loaded — prompt a refresh. */
+  updateAvailable: boolean;
   create: (deck: DeckChoice) => void;
   join: (code: string, deck: DeckChoice) => void;
   leave: () => void;
@@ -48,6 +50,7 @@ export function useMatch(): UseMatch {
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>("idle");
   const [code, setCode] = useState<string | null>(null);
   const [opponentConnected, setOpponentConnected] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onlineRef = useRef<OnlineClient | null>(null);
   const statusRef = useRef<OnlineStatus>("idle");
@@ -114,6 +117,7 @@ export function useMatch(): UseMatch {
         setError(err ?? null);
       },
       onPresence: (connected) => setOpponentConnected(connected),
+      onStaleBuild: () => setUpdateAvailable(true),
       onError: (message) => {
         // A dead seat (server restarted / room swept) can't be rejoined — go idle.
         if (message.includes("no seat matches") || message.includes("no room with code")) {
@@ -155,6 +159,7 @@ export function useMatch(): UseMatch {
     status: onlineStatus,
     code,
     opponentConnected,
+    updateAvailable,
     create: useCallback(
       (deck: DeckChoice) => {
         goOnline();

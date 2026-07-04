@@ -69,9 +69,17 @@ export function App() {
     if (state && !state.gameOver) setSummaryDismissed(false);
   }, [state]);
 
+  const updateBanner = online.updateAvailable && (
+    <div className="updatebar">
+      A new version of Ibokki is live —{" "}
+      <a onClick={() => location.reload()}>refresh</a> when this match is done to pick it up.
+    </div>
+  );
+
   if (screen === "home") {
     return (
       <div className="app">
+        {updateBanner}
         <Home
           auth={auth}
           deckData={deckData}
@@ -115,6 +123,7 @@ export function App() {
 
   return (
     <div className="app">
+      {updateBanner}
       <TopBar state={state} />
       <div className="main">
         <div className="stage">

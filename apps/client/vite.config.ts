@@ -12,6 +12,9 @@ const ONLINE_HTTP = ONLINE_SERVER.replace(/^ws/, "http");
 export default defineConfig({
   // "/" for standalone; IBOKKI_BASE=/play/ when built into the ibokki.com site.
   base: process.env.IBOKKI_BASE ?? "/",
+  // Baked build id (git sha in Docker). The server reports its own; a mismatch
+  // means this tab survived a redeploy on an old bundle → show a refresh banner.
+  define: { __IBOKKI_BUILD__: JSON.stringify(process.env.IBOKKI_BUILD ?? "dev") },
   plugins: [react()],
   server: {
     port: 5173,

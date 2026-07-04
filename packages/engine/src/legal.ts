@@ -76,8 +76,12 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
   if (state.phase === "gameover") return [];
   // A pending look/loot/scry choice blocks everything else until it's resolved.
   if (state.pendingChoice) {
-    if (playerId !== state.pendingChoice.player) return [];
-    return state.pendingChoice.candidates.map((c) => ({ type: "choose", iid: c.iid }));
+    const pc = state.pendingChoice;
+    if (playerId !== pc.player) return [];
+    const pickable = pc.eligibleIids ? pc.candidates.filter((c) => pc.eligibleIids!.includes(c.iid)) : pc.candidates;
+    const actions: Action[] = pickable.map((c) => ({ type: "choose", iid: c.iid }));
+    if (pc.optional) actions.push({ type: "pass" }); // "up to N" / "you may": done early
+    return actions;
   }
   // Prepare phase is SIMULTANEOUS (spells go down face-down, so there is no
   // information to wait for): each player acts independently until they are

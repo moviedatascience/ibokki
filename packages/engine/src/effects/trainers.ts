@@ -30,13 +30,10 @@ register("GAM-002", (c) => {
   c.discardSelfHand(); // Forbidden Tome
   c.draw(4);
 });
-register("GAM-003", (c) => {
-  c.discardSelfRandom(1); // Mentor's Guidance (SIMPLIFIED: tutor any -> component)
-  c.tutorComponentsToHand(1);
-});
-register("GAM-004", (c) => c.requestSearchSameSymbolDual()); // Recharge — interactive: pick a VV/SS/MM, reveal, shuffle
+register("GAM-003", (c) => c.requestDiscardThenSearch()); // Mentor's Guidance — YOUR discard, then search ANY card
+register("GAM-004", (c) => c.requestSearchDeck({ filter: "sameSymbolDual", takeN: 1, reason: "Search: take a same-symbol dual (VV / SS / MM) to hand" })); // Recharge
 register("GAM-005", (c) => c.returnComponentsFromDiscard(1)); // Salvage
-register("GAM-006", (c) => c.reorderTop(4)); // Premonition Charm (look at top 4, reorder)
+register("GAM-006", (c) => c.requestOrderTopOfDeck(4)); // Premonition Charm — interactive reorder
 register("GAM-007", (c) => c.attachTopComponentElseDraw()); // Ritual Circle (attach top component, else draw)
 register("GAM-008", (c) => c.grantExtraCast()); // Overclock
 register("GAM-009", (c) => c.heal(5)); // Second Wind
@@ -56,4 +53,4 @@ register("GAM-016", (c) => c.shuffleOwnDiscardIntoDeck()); // Sealed Vault
 register("GAM-017", (c) => c.lockOpponentExtraDraw()); // Mana Sickness
 register("GAM-018", (c) => c.addReactionPunish(2)); // Spite (expiry SIMPLIFIED to end of round)
 register("GAM-019", (c) => c.millOpponent(3)); // Saboteur's Kit
-register("GAM-020", (c) => c.bounceOpponentComponentToTheirTop()); // Disarm (bounce a component to their deck top)
+register("GAM-020", (c) => c.requestBounceOpponentComponent()); // Disarm — reveals their hand; YOU pick the bounce (or decline)

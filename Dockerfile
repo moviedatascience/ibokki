@@ -11,11 +11,16 @@ COPY packages ./packages
 COPY tools ./tools
 RUN npm ci
 # Client is built for the /play mount point used by the site's nginx.
+# GIT_SHA is baked into both the bundle and the server env so stale tabs
+# (which auto-rejoin across redeploys) can detect they need a refresh.
 ARG IBOKKI_BASE=/play/
-RUN IBOKKI_BASE=$IBOKKI_BASE npm run build:client
+ARG GIT_SHA=dev
+RUN IBOKKI_BASE=$IBOKKI_BASE IBOKKI_BUILD=$GIT_SHA npm run build:client
 
 FROM node:20-bookworm-slim
+ARG GIT_SHA=dev
 ENV NODE_ENV=production
+ENV IBOKKI_BUILD=$GIT_SHA
 WORKDIR /app
 COPY --from=build /app /app
 EXPOSE 7788

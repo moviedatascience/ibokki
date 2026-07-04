@@ -655,7 +655,9 @@ describe("Divination deck sculpting", () => {
     expect(miss.state.players[0].resourceDeck[0]!.defId).toBe("CMP-V"); // bottomed
   });
 
-  it("Index (DIV-022) reorders the top 5 with the best drawn first and no card gain", () => {
+  it("Index (DIV-022) pauses for the PLAYER to order the top 5 (no card gain)", () => {
+    // Interactive since the 2026-07 sweep; the full ordering flow is covered
+    // in interactions.test.ts.
     const { state } = cast("DIV-022", (s) => {
       s.players[0].resourceDeck = [
         inst("CMP-V"),
@@ -665,10 +667,9 @@ describe("Divination deck sculpting", () => {
         inst("CMP-MM"),
       ];
     });
-    const deck = state.players[0].resourceDeck;
-    expect(deck).toHaveLength(5); // pure sculpt, no draw
-    const sym = (defId: string) => combinedSym(defId);
-    expect(sym(deck[deck.length - 1]!.defId)).toBe(2); // a dual is now on top (drawn first)
+    expect(state.pendingChoice!.mode).toBe("orderToTop");
+    expect(state.pendingChoice!.candidates).toHaveLength(5);
+    expect(state.players[0].hand).toHaveLength(0); // pure sculpt, no draw
   });
 
   it("Quick Study (DIV-021) draws 2, then requests a bank-to-top choice", () => {

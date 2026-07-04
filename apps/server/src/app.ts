@@ -51,6 +51,7 @@ import { createMailer, type Mailer } from "./mail.ts";
 import { handleApi, oidcFromEnv, userFromRequest, type ApiContext, type OidcConfig } from "./api.ts";
 
 const CATALOG = buildCardCatalog();
+const BUILD = process.env.IBOKKI_BUILD ?? "dev";
 
 /** Join codes avoid ambiguous glyphs (0/O, 1/I/L). */
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -261,7 +262,7 @@ function handleMessage(ws: WebSocket, msg: ClientMessage, db: Db, userId: number
       };
       rooms.set(room.code, room);
       seatSocket(room, 0, ws);
-      send(ws, { t: "created", code: room.code, side: 0, token: room.seats[0].token, catalog: CATALOG });
+      send(ws, { t: "created", code: room.code, side: 0, token: room.seats[0].token, catalog: CATALOG, build: BUILD });
       return;
     }
     case "join": {
@@ -272,7 +273,7 @@ function handleMessage(ws: WebSocket, msg: ClientMessage, db: Db, userId: number
       if ("error" in resolved) return pushError(ws, resolved.error);
       room.seats[1] = { token: randomUUID(), deckName: resolved.name, deck: resolved.deck, ws: null };
       seatSocket(room, 1, ws);
-      send(ws, { t: "joined", code: room.code, side: 1, token: room.seats[1].token, catalog: CATALOG });
+      send(ws, { t: "joined", code: room.code, side: 1, token: room.seats[1].token, catalog: CATALOG, build: BUILD });
       startMatch(room);
       pushBoth(room);
       // The creator has been waiting — tell them their opponent is here.
@@ -286,7 +287,7 @@ function handleMessage(ws: WebSocket, msg: ClientMessage, db: Db, userId: number
       if (idx !== 0 && idx !== 1) return pushError(ws, "no seat matches that code/token");
       const side = idx as PlayerId;
       seatSocket(room, side, ws);
-      send(ws, { t: "joined", code: room.code, side, token: msg.token, catalog: CATALOG });
+      send(ws, { t: "joined", code: room.code, side, token: msg.token, catalog: CATALOG, build: BUILD });
       if (room.state) pushState(room, side);
       const opp = room.seats[(side ^ 1) as PlayerId];
       send(ws, { t: "presence", opponentConnected: !!opp?.ws });
