@@ -293,25 +293,7 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
       if (def.type !== "Reaction") throw new Error("Only Reactions can be cast in response");
       if ((def.level ?? 1) > tier.maxSpellLevel) throw new Error("Reaction level too high");
 
-      // Fuel the Reaction from hand right now (you needn't have pre-attached components).
-      if (action.payIids && action.payIids.length > 0) {
-        if (prep.attached.length + action.payIids.length > 2) throw new Error("2-card cap reached");
-        for (const iid of action.payIids) {
-          const handIdx = p.hand.findIndex((c) => c.iid === iid);
-          if (handIdx < 0) throw new Error(`Component ${iid} not in hand`);
-          const card = p.hand[handIdx]!;
-          if (!isComponentDefId(card.defId)) throw new Error(`${card.defId} is not a component`);
-          p.hand.splice(handIdx, 1);
-          prep.attached.push(card);
-          events.push({
-            type: "attached",
-            player: p.id,
-            preparedIndex: action.preparedIndex,
-            componentDefId: card.defId,
-          });
-        }
-      }
-
+      // Like any cast, a Reaction's cost must ALREADY be attached (no hand payment).
       // Stone Stance discounts the S cost of your first Reaction; Aetheric Lock taxes it.
       const cost = reactionCost(
         def.cost,

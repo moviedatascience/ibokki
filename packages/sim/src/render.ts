@@ -49,16 +49,7 @@ export function describeAction(state: GameState, action: Action, actor?: PlayerI
     }
     case "castReaction": {
       const prep = p.prepared[action.preparedIndex];
-      const pay = action.payIids?.length
-        ? " paying " +
-          action.payIids
-            .map((iid) => {
-              const c = p.hand.find((h) => h.iid === iid);
-              return c ? cardName(c.defId) : "?";
-            })
-            .join(" + ")
-        : "";
-      return `REACT with ${prep ? cardName(prep.spell.defId) : "?"} (prepared[${action.preparedIndex}])${pay}`;
+      return `REACT with ${prep ? cardName(prep.spell.defId) : "?"} (prepared[${action.preparedIndex}])`;
     }
     case "playTrainer": {
       const card = p.hand.find((c) => c.iid === action.handIid);

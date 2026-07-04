@@ -127,7 +127,10 @@ face-down into the prepared spells area. At Level 1, a Wizard may have 4 prepare
   an available slot and the required components attached. Casting more than one spell in a
   round therefore takes multiple turns. **Reactions are separate:** you may still play a
   Reaction in a reaction window (typically on the opponent's turn) in addition to your one
-  cast per turn.
+  cast per turn. Like any spell, a Reaction can only be cast if its required components are
+  **already attached** — its cost cannot be paid from hand mid-window. "Holding components
+  in reserve" means attaching them to your face-down Reactions on your own turns so they
+  sit ready. *(Ruling 2026-07-03.)*
 - **Resolution:** Cast spells return face-up to the prepared area. Components used to
   cast a spell are discarded into the discard pile; the spell card returns, now face-up,
   to the prepared spells section.

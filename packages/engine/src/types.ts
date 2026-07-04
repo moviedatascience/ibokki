@@ -241,9 +241,9 @@ export type Action =
   | { type: "cast"; preparedIndex: number }
   // Take back a spell you just cast, while you still hold priority (before anyone responds).
   | { type: "retractCast" }
-  // payIids: component cards from hand used to fuel the Reaction at reaction time
-  // (you needn't pre-attach). Omitted/empty means the cost is already met by attached components.
-  | { type: "castReaction"; preparedIndex: number; payIids?: number[] }
+  // A Reaction's cost must already be attached (same rule as a normal cast —
+  // "holding components in reserve" means attaching them on your own turns).
+  | { type: "castReaction"; preparedIndex: number }
   | { type: "playTrainer"; handIid: number }
   // Resolve a pending look/loot/scry choice by picking the card with this iid.
   | { type: "choose"; iid: number }

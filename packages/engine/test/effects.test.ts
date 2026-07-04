@@ -552,29 +552,33 @@ describe("Reaction fueling from hand, Aegis, Stone Stance", () => {
       | Extract<Action, { type: "castReaction" }>
       | undefined;
 
-  it("a prepared Reaction can be fueled from hand during the opponent's cast", () => {
+  it("a Reaction needs its cost PRE-ATTACHED — hand components can't fuel it mid-window", () => {
+    // Live-play ruling (2026-07-03): reactions follow the same rule as casts.
     const state = blankState();
-    // P0 holds Dampen prepared but UNfueled, with a single Somatic in hand.
-    const somatic = inst("CMP-S");
+    // P0 holds Dampen prepared but UNfueled, with a Somatic in hand.
     state.players[0].prepared = [prepared("ABJ-006")];
-    state.players[0].hand = [somatic];
-    // P1 is active and casts a fueled Spark at P0.
+    state.players[0].hand = [inst("CMP-S")];
     state.players[1].prepared = [prepared("EVO-001", ["CMP-V"])];
     state.activePlayer = 1;
     state.priorityPlayer = 1;
     let s = apply(state, { type: "cast", preparedIndex: 0 }).state;
-    s = apply(s, { type: "pass" }).state; // caster keeps priority after casting; pass to open the reaction window
+    s = apply(s, { type: "pass" }).state; // open the reaction window
+    expect(findReaction(s), "unfueled Reaction must NOT be castable").toBeUndefined();
 
-    // P0 now holds priority in the reaction window and can pay Dampen from hand.
-    const react = findReaction(s);
-    expect(react, "Dampen should be castable from hand").toBeTruthy();
-    expect(react!.payIids).toEqual([somatic.iid]);
-
-    s = apply(s, react!).state;
-    expect(s.players[0].hand).toHaveLength(0); // the Somatic was spent to fuel the Reaction
+    // Pre-attached, the same Reaction works.
+    const state2 = blankState();
+    state2.players[0].prepared = [prepared("ABJ-006", ["CMP-S"])];
+    state2.players[1].prepared = [prepared("EVO-001", ["CMP-V"])];
+    state2.activePlayer = 1;
+    state2.priorityPlayer = 1;
+    let t = apply(state2, { type: "cast", preparedIndex: 0 }).state;
+    t = apply(t, { type: "pass" }).state;
+    const react = findReaction(t);
+    expect(react, "pre-fueled Dampen should be castable").toBeTruthy();
+    t = apply(t, react!).state;
     // Resolve the whole stack: Dampen reduces Spark by 1, then Spark lands for 1.
-    for (let i = 0; i < 4; i++) s = apply(s, { type: "pass" }).state;
-    expect(s.players[0].hp).toBe(29);
+    for (let i = 0; i < 4; i++) t = apply(t, { type: "pass" }).state;
+    expect(t.players[0].hp).toBe(29);
   });
 
   it("Aegis: a 1-component spell fizzles, a 2-component spell still lands", () => {
@@ -605,7 +609,7 @@ describe("Reaction fueling from hand, Aegis, Stone Stance", () => {
     expect(discountCostS({ V: 0, S: 1, M: 1 }, 1)).toEqual({ V: 0, S: 0, M: 1 }); // SM -> M
   });
 
-  it("Stone Stance lets an SS Reaction be paid with one S, and is consumed", () => {
+  it("Stone Stance lets an SS Reaction go off with one ATTACHED S, and is consumed", () => {
     const state = blankState();
     state.players[0].level = 5; // unlocks L2 Reactions (Interrupt is SS)
     state.players[0].ongoing.push({
@@ -615,9 +619,7 @@ describe("Reaction fueling from hand, Aegis, Stone Stance", () => {
       value: 1,
       expiry: "endOfRound",
     });
-    const somatic = inst("CMP-S");
-    state.players[0].prepared = [prepared("ABJ-013")]; // Interrupt, cost SS
-    state.players[0].hand = [somatic];
+    state.players[0].prepared = [prepared("ABJ-013", ["CMP-S"])]; // Interrupt (SS) with one S attached
     state.players[1].prepared = [prepared("EVO-001", ["CMP-V"])];
     state.activePlayer = 1;
     state.priorityPlayer = 1;
@@ -625,8 +627,7 @@ describe("Reaction fueling from hand, Aegis, Stone Stance", () => {
     s = apply(s, { type: "pass" }).state; // caster keeps priority after casting; pass to open the reaction window
 
     const react = findReaction(s);
-    expect(react, "Interrupt should be castable for one S under Stone Stance").toBeTruthy();
-    expect(react!.payIids).toEqual([somatic.iid]);
+    expect(react, "Interrupt should be castable with one attached S under Stone Stance").toBeTruthy();
 
     s = apply(s, react!).state;
     expect(s.players[0].ongoing.some((o) => o.kind === "reactionDiscountS")).toBe(false); // consumed

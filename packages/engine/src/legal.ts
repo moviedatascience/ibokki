@@ -29,43 +29,6 @@ function costMet(prep: PreparedSpell): boolean {
   return meetsCost(def.cost, have);
 }
 
-function symbolTotal(def: ComponentDef): number {
-  return def.symbols.V + def.symbols.S + def.symbols.M;
-}
-
-/**
- * Find a canonical set of hand components (≤ capRemaining cards) that, together with
- * `attached`, satisfies `cost`. Returns [] if already met, the iids to spend, or null
- * if it cannot be paid. Prefers spending fewer/cheaper cards so duals aren't wasted.
- */
-function findHandPayment(
-  cost: Cost,
-  attached: ComponentDef[],
-  hand: CardInstance[],
-  capRemaining: number,
-): number[] | null {
-  if (meetsCost(cost, combinedSymbols(attached))) return [];
-  if (capRemaining <= 0) return null;
-  const comps = hand
-    .filter((c) => isComponentDefId(c.defId))
-    .map((c) => ({ iid: c.iid, def: getComponent(c.defId) }))
-    .filter((c): c is { iid: number; def: ComponentDef } => c.def !== undefined);
-
-  const singles = [...comps].sort((a, b) => symbolTotal(a.def) - symbolTotal(b.def));
-  for (const s of singles) {
-    if (meetsCost(cost, combinedSymbols([...attached, s.def]))) return [s.iid];
-  }
-  if (capRemaining < 2) return null;
-  for (let i = 0; i < comps.length; i++) {
-    for (let j = i + 1; j < comps.length; j++) {
-      if (meetsCost(cost, combinedSymbols([...attached, comps[i]!.def, comps[j]!.def]))) {
-        return [comps[i]!.iid, comps[j]!.iid];
-      }
-    }
-  }
-  return null;
-}
-
 /**
  * Only the priority holder has actions. `pass` is always available, so the loop
  * can never deadlock. With an empty stack the active player acts at sorcery
@@ -173,8 +136,10 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
       actions.push({ type: "retractCast" });
     }
     // Reaction window: cast a prepared Reaction in response (no slot needed), unless the
-    // opponent has locked your Reactions (Arcane Anchor / Absolute Defense). Cost may be
-    // paid from hand now — Stone Stance discounts it, the opponent's Aetheric Lock taxes it.
+    // opponent has locked your Reactions (Arcane Anchor / Absolute Defense). Like any
+    // spell, its cost must ALREADY be attached — holding components in reserve means
+    // attaching them to your Reactions on your own turns, not paying from hand mid-window.
+    // Stone Stance discounts the cost; the opponent's Aetheric Lock taxes it.
     if (sumOngoing(state.players[otherPlayer(playerId)], "reactionsLocked") === 0) {
       const discount = sumOngoing(p, "reactionDiscountS");
       const tax = sumOngoing(state.players[otherPlayer(playerId)], "reactionTax");
@@ -185,10 +150,8 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
         if (!def || !def.cost || def.type !== "Reaction") continue;
         if ((def.level ?? 1) > tier.maxSpellLevel) continue;
         const cost = reactionCost(def.cost, discount, tax);
-        const pay = findHandPayment(cost, attachedComponents(prep), p.hand, 2 - prep.attached.length);
-        if (pay === null) continue;
-        if (pay.length === 0) actions.push({ type: "castReaction", preparedIndex: i });
-        else actions.push({ type: "castReaction", preparedIndex: i, payIids: pay });
+        if (!meetsCost(cost, combinedSymbols(attachedComponents(prep)))) continue;
+        actions.push({ type: "castReaction", preparedIndex: i });
       }
     }
   }
