@@ -43,3 +43,14 @@ export function tierForLevel(level: number): LevelTier {
   const idx = Math.min(Math.max(level, 1), MAX_LEVEL) - 1;
   return LEVEL_TABLE[idx]!;
 }
+
+/**
+ * Prepared-spell replacements allowed during a round's prepare phase: normally 1,
+ * but 2 on rounds where the level-up just RAISED your max castable spell level
+ * (L5/L10/L15) — a whole new spell tier deserves more than one showcase slot.
+ * (Ruling 2026-07-04.)
+ */
+export function replacementLimit(level: number): number {
+  if (level <= 1) return 1;
+  return tierForLevel(level).maxSpellLevel > tierForLevel(level - 1).maxSpellLevel ? 2 : 1;
+}

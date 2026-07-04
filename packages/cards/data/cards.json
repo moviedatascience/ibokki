@@ -1529,7 +1529,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Look at your opponent's hand. Deal 1 damage.",
+    "text": "Look at your opponent's hand. Deal 2 damage.",
     "comment": "Cheap information. Against a reactive Abjuration deck, knowing which counters they hold lets you sequence safely around them."
   },
   {
@@ -1559,7 +1559,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "When your opponent casts a spell, draw 1 card.",
+    "text": "When your opponent casts a spell, draw 1 card and deal 1 damage to them.",
     "comment": "You saw it coming. A Reaction that stops nothing — it simply converts the opponent's tempo into your card advantage."
   },
   {

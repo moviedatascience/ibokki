@@ -33,7 +33,7 @@ register("DIV-007", (c) => {
 register("DIV-008", (c) => c.scryOpponentTopToBottom()); // Scry Glyph (bottom opponent's top)
 register("DIV-009", (c) => c.addAttuneBonus()); // Attune — next attach counts as +1 needed symbol
 register("DIV-010", (c) => { c.draw(1); c.requestBankToDeckTop(1); }); // Mind's Eye (draw 1, choose 1 to bank on top)
-register("DIV-011", (c) => c.dealDamage(1)); // Foretell (info + psychic sting — gives Div an L1 damage axis)
+register("DIV-011", (c) => c.dealDamage(2)); // Foretell (1→2: Div's L1 damage axis — "Div's Spark, plus intel"; balance 2026-07-04)
 register("DIV-012", (c) => c.requestPickMaterialFromTop(4)); // Omen — interactive: see all 4, pick which M
 // DIV-013 Quicken RETIRED — redundant now that attaching is unlimited per turn.
 
@@ -81,7 +81,10 @@ register("DIV-038", (c) => {
 register("DIV-039", (c) => c.discardOpponentRandom(1)); // Mind Theft (SIMPLIFIED: random)
 
 // ---- Reactions ----
-register("DIV-014", (c) => c.draw(1)); // Anticipate (spell still resolves)
+register("DIV-014", (c) => {
+  c.draw(1); // Anticipate (spell still resolves; +1 sting added 2026-07-04 so Div's L1 reaction threatens)
+  c.dealDamage(1);
+});
 register("DIV-024", (c) => {
   c.returnOneTargetComponent(); // Counter-Plan
   if (!c.targetMeetsCost()) c.cancelTarget();

@@ -156,7 +156,9 @@ Wizards can mitigate or counter an opponent's cast using Reaction Spells.
 ### Level Up
 1
 - **Leveling:** Once a round, upon leveling, each Wizard can replace one prepared spell
-  with a spell from the Spell Deck. This is in addition to any additional prepared spells
+  with a spell from the Spell Deck — **two** replacements in rounds where the level-up just
+  raised your maximum castable spell level (a new spell tier deserves more than one
+  showcase slot; *Ruling 2026-07-04*). This is in addition to any additional prepared spells
   that become available through leveling. With each new level comes an increase in spell
   slots, level of spells available to cast, a larger quantity of prepared spells, or any
   combination of these.

@@ -2,7 +2,7 @@
 import { getCard, getComponent, type ComponentDef } from "@ibokki/cards";
 import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
 import { ATTACH_M_TRAPS } from "./cardFlags.ts";
-import { tierForLevel } from "./levels.ts";
+import { replacementLimit, tierForLevel } from "./levels.ts";
 import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
 import { dealDamageToPlayer, drawN, sculptValue, shuffleHandIntoDeck, sumOngoing, symbolCount } from "./state-ops.ts";
@@ -167,7 +167,9 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
     }
 
     case "replacePrepared": {
-      if (p.replacementsThisRound >= 1) throw new Error("Only one prepared-spell replacement per round");
+      if (p.replacementsThisRound >= replacementLimit(p.level)) {
+        throw new Error("No prepared-spell replacements left this round");
+      }
       const tier = tierForLevel(p.level);
       const prep = p.prepared[action.preparedIndex];
       if (!prep) throw new Error(`No prepared spell at ${action.preparedIndex}`);

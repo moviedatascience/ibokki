@@ -2,7 +2,7 @@
 import { getCard, getComponent, type ComponentDef, type Cost } from "@ibokki/cards";
 import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
 import { ATTACH_M_TRAPS } from "./cardFlags.ts";
-import { tierForLevel } from "./levels.ts";
+import { replacementLimit, tierForLevel } from "./levels.ts";
 import { sumOngoing } from "./state-ops.ts";
 import {
   isComponentDefId,
@@ -65,7 +65,7 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
       }
     }
     // When full, you may swap one prepared spell for a book spell (once per round).
-    if (p.prepared.length >= tier.prepared && p.replacementsThisRound < 1) {
+    if (p.prepared.length >= tier.prepared && p.replacementsThisRound < replacementLimit(p.level)) {
       for (let i = 0; i < p.prepared.length; i++) {
         for (const s of p.spellbook) {
           if (castable(s.defId)) prep.push({ type: "replacePrepared", preparedIndex: i, spellIid: s.iid });

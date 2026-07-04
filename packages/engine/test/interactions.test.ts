@@ -15,6 +15,7 @@ import {
   getEffect,
   legalActions,
   makeContext,
+  tierForLevel,
   type CardInstance,
   type GameEvent,
   type GameState,
@@ -388,6 +389,59 @@ describe("round leader alternates (ruling 2026-07-03)", () => {
     s = apply(s, { type: "donePreparing" }, 0).state;
     s = apply(s, { type: "donePreparing" }, 1).state;
     expect(s.activePlayer).toBe((first ^ 1) as PlayerId);
+  });
+});
+
+describe("Divination early-game buffs (2026-07-04)", () => {
+  it("Foretell (DIV-011) deals 2", () => {
+    const s = blankState();
+    const events: GameEvent[] = [];
+    const card = inst("DIV-011");
+    getEffect("DIV-011")!(makeContext(s, 0, card, events), card);
+    expect(s.players[1].hp).toBe(28);
+  });
+
+  it("Anticipate (DIV-014) draws 1 and stings for 1", () => {
+    const s = blankState();
+    s.players[0].resourceDeck = [inst("CMP-M")];
+    const events: GameEvent[] = [];
+    const card = inst("DIV-014");
+    getEffect("DIV-014")!(makeContext(s, 0, card, events), card);
+    expect(s.players[0].hand).toHaveLength(1);
+    expect(s.players[1].hp).toBe(29);
+  });
+});
+
+describe("bonus swap on tier-up rounds (ruling 2026-07-04)", () => {
+  function prepState(level: number): GameState {
+    const s = blankState();
+    s.phase = "prepare";
+    const p = s.players[0];
+    p.level = level;
+    const tier = tierForLevel(level);
+    for (let i = 0; i < tier.prepared; i++) {
+      p.prepared.push({ spell: inst("EVO-001"), faceDown: true, attached: [], cast: false, sealed: false });
+    }
+    p.spellbook = [inst("EVO-002"), inst("EVO-003"), inst("EVO-004")];
+    return s;
+  }
+
+  it("L5 (new spell tier) allows two replacements; L4/L6 allow one", () => {
+    // Two swaps at L5.
+    let s = prepState(5);
+    const swap = () => {
+      const a = legalActions(s, 0).find((x) => x.type === "replacePrepared");
+      expect(a, "a replacement should be offered").toBeTruthy();
+      s = apply(s, a!, 0).state;
+    };
+    swap();
+    swap();
+    expect(legalActions(s, 0).some((x) => x.type === "replacePrepared")).toBe(false); // limit reached
+
+    // Only one at a non-tier-up level.
+    s = prepState(6);
+    swap();
+    expect(legalActions(s, 0).some((x) => x.type === "replacePrepared")).toBe(false);
   });
 });
 
