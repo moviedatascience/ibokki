@@ -223,6 +223,17 @@ describe("Abjuration effects", () => {
     expect(state.players[0].wards.map((w) => w.hp)).toEqual([1]);
   });
 
+  it("Fortify's rider removes exactly 1 of your Burn markers (2026-07-04 anti-Evo balance)", () => {
+    const burned = cast("ABJ-001", (s) => {
+      s.players[0].burn = 3;
+    });
+    expect(burned.state.players[0].burn).toBe(2);
+    expect(burned.state.players[0].wards.map((w) => w.hp)).toEqual([1]); // ward half unchanged
+
+    const clean = cast("ABJ-001");
+    expect(clean.state.players[0].burn).toBe(0); // no underflow with no burn
+  });
+
   it("Fortify (ABJ-001) adds 2 HP to an existing ward", () => {
     const { state } = cast("ABJ-001", (s) => {
       s.players[0].wards = [{ wid: 1, hp: 3 }];

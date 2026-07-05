@@ -219,6 +219,8 @@ export interface EffectContext {
   grantExtraCast(): void;
   /** Remove all your Burn markers and gain 1 HP per marker removed (Quenching Salts). */
   removeOwnBurnGainHp(): void;
+  /** Remove up to `n` of your own Burn markers (Fortify's anti-burn rider). */
+  removeOwnBurn(n: number): void;
 
   // ---- Reactions (operate on the stack item this Reaction targets) ----
   hasTarget(): boolean;
@@ -837,6 +839,9 @@ export function makeContext(
       const n = self.burn;
       self.burn = 0;
       if (n > 0) healPlayer(state, selfId, n, events);
+    },
+    removeOwnBurn(n) {
+      self.burn = Math.max(0, self.burn - n);
     },
 
     opponentBurn() {

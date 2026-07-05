@@ -11,7 +11,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Add 2 HP to a Ward you control. If you control no Ward, create one with 1 HP instead.",
+    "text": "Add 2 HP to a Ward you control. If you control no Ward, create one with 1 HP instead. Then remove 1 Burn marker from yourself.",
     "comment": "Good early-game Ward sustain. Rewards players who already established a Ward on a prior turn."
   },
   {

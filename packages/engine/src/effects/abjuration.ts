@@ -9,7 +9,9 @@
 import { register } from "./registry.ts";
 
 // ---- Level 1 ----
-register("ABJ-001", (c) => c.buffOneOwnWardOrCreate(2, 1)); // Fortify
+// Fortify — ward sustain + the anti-burn rider (2026-07-04 balance: taxes Evo's
+// Kindle plan every round; zero effect vs burn-less schools, so Div>Abj is untouched).
+register("ABJ-001", (c) => { c.buffOneOwnWardOrCreate(2, 1); c.removeOwnBurn(1); });
 register("ABJ-002", (c) => c.createWardForSelfWith(1, { onDestroy: "draw2" })); // Arcane Shell
 register("ABJ-003", (c) => {
   c.buffAllOwnWards(1); // Ward Pulse
