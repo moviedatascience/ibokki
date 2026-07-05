@@ -1,10 +1,15 @@
 import type { MatchState } from "../api.ts";
 
-/** The mockup's header strip: round · phase · priority. */
-export function TopBar({ state }: { state: MatchState | null }) {
+/** The mockup's header strip: menu · round · phase · priority. */
+export function TopBar({ state, onMenu }: { state: MatchState | null; onMenu?: () => void }) {
   const prio = !state ? null : state.gameOver ? "over" : state.yourTurn ? "you" : "wait";
   return (
     <div className="topbar">
+      {onMenu && (
+        <button className="menubtn" onClick={onMenu} data-testid="to-menu">
+          ‹ Menu
+        </button>
+      )}
       <span className="brand">IBOKKI</span>
       {state && (
         <>

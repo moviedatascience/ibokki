@@ -41,11 +41,13 @@ export function ActionBar({ state, cards, selectionActive, onAction, onCancel, e
   const detachLabel = (a: (typeof detaches)[number]) => {
     const sym = (a.defId && cards[a.defId]?.cost) || cards[a.defId ?? ""]?.name || "component";
     const spellDef = a.preparedIndex != null ? state.view.self.prepared[a.preparedIndex]?.spellDefId : undefined;
-    const spell = spellDef ? (cards[spellDef]?.name ?? spellDef) : `slot ${a.preparedIndex}`;
+    const spell = spellDef ? (cards[spellDef]?.name ?? spellDef) : `slot ${(a.preparedIndex ?? 0) + 1}`;
     return `↩ ${sym} ← ${spell}`;
   };
   const top = state.view.stack[state.view.stack.length - 1];
   const reacting = state.reactionWindow && top?.controller === 1;
+  // The Prompt overlay shows its own Pass/Done for these moments — don't offer a second one here.
+  const promptOwnsPass = reacting || !!state.view.pendingChoice?.mine;
 
   let status = `Your turn — ${state.schools[0]} · ${state.phase}`;
   let cls = "you";
@@ -72,7 +74,7 @@ export function ActionBar({ state, cards, selectionActive, onAction, onCancel, e
       {done && <button className="primary" onClick={() => onAction(done.index)}>Done preparing ✓</button>}
       {retract && <button onClick={() => onAction(retract.index)}>↩ Retract</button>}
       {selectionActive && <button onClick={onCancel}>Cancel</button>}
-      {pass && <button className="primary" onClick={() => onAction(pass.index)}>{passLabel}</button>}
+      {pass && !promptOwnsPass && <button className="primary" onClick={() => onAction(pass.index)}>{passLabel}</button>}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Text } from "pixi.js";
-import { CardVisual, type CardFace, type Highlight } from "./cardSprite.ts";
+import { CardVisual, type CardFace, type EdgeSide, type Highlight } from "./cardSprite.ts";
 import { Tweener, easeInOutCubic, easeOutCubic, lerp } from "./tween.ts";
 import { eventToFloater, isStackEvent, spawnFloater } from "./animations.ts";
 import {
@@ -46,6 +46,10 @@ interface Desired {
   highlight: Highlight;
   dim: boolean;
   attached: string[];
+  /** Controller strip for stack cards (bottom = yours, top = opponent's). */
+  edge: EdgeSide;
+  /** Cancelled ✕ stamp. */
+  stamp: boolean;
   onTap: (() => void) | null;
   spawn: Pt | null; // enter-from position for new sprites
   spawnScale: boolean; // scale-up on enter (hand draw / cast)
@@ -75,6 +79,8 @@ export interface BoardCallbacks {
   onHover: (defId: string | null) => void;
   /** Fired when an attach selection starts/clears, so the shell can show a Cancel affordance. */
   onSelection?: (active: boolean) => void;
+  /** Tap on a card with no action available — pin it into the card-detail panel. */
+  onInspect?: (defId: string) => void;
 }
 
 /**
@@ -98,11 +104,16 @@ export class PixiBoard {
   private sprites = new Map<string, Sprite>();
   private youPlate!: Plate;
   private oppPlate!: Plate;
+  private youDeckL!: Text;
+  private oppDeckL!: Text;
+  private oppHandL!: Text;
 
   private cards: CardCatalog = {};
   private last: MatchState | null = null;
   private lastEpoch = -1;
   private selHandDef: string | null = null;
+  /** Position key of the sprite under the cursor, so hover detail can be cleared/refreshed when that sprite changes. */
+  private hoverKey: string | null = null;
   private ro: ResizeObserver | null = null;
 
   constructor(private host: HTMLElement, private cb: BoardCallbacks) {}
@@ -155,6 +166,19 @@ export class PixiBoard {
     this.oppPlate = this.makePlate({ x: 20, y: 16, w: 224, h: 74 });
     this.youPlate = this.makePlate({ x: 20, y: 470, w: 224, h: 74 });
     this.bgLayer.addChild(this.oppPlate.root, this.youPlate.root);
+
+    // Pile counters live AT the piles, not in the nameplate stat line.
+    this.oppDeckL = this.makePileLabel(OPP_DECK.x, OPP_DECK.y + CARD_H / 2 + 6);
+    this.oppHandL = this.makePileLabel(OPP_DECK.x, OPP_DECK.y + CARD_H / 2 + 24);
+    this.youDeckL = this.makePileLabel(YOU_DECK.x, YOU_DECK.y - CARD_H / 2 - 20);
+  }
+
+  private makePileLabel(x: number, y: number): Text {
+    const t = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 11.5, fontFamily: "system-ui", fontWeight: "700" } });
+    t.anchor.set(0.5, 0);
+    t.position.set(x, y);
+    this.bgLayer.addChild(t);
+    return t;
   }
 
   private makePlate(box: Box): Plate {
@@ -170,7 +194,7 @@ export class PixiBoard {
     const hp = new Text({ text: "", style: { fill: 0xffffff, fontSize: 13, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
     hp.position.set(box.w - 66, 9);
     const bar = new Graphics();
-    const stats = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 10.5, fontFamily: "system-ui" } });
+    const stats = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 11.5, fontFamily: "system-ui" } });
     stats.position.set(12, box.h - 19);
     const status = new Text({ text: "", style: { fill: 0x8fd0ff, fontSize: 11, fontFamily: "system-ui", fontWeight: "700" } });
     status.position.set(12, 30);
@@ -188,8 +212,8 @@ export class PixiBoard {
     plate.bar.clear();
     plate.bar.roundRect(12, 26, bw, 8, 4).fill(0x0c0f14).stroke({ width: 1, color: 0x333a47 });
     plate.bar.roundRect(12, 26, bw * pct, 8, 4).fill(v.hp <= 10 ? 0xff7849 : 0x5fce76);
-    const handN = v.hand?.length ?? v.handCount ?? 0; // self view carries `hand`, opponent carries `handCount`
-    plate.stats.text = `Lv ${v.level} · slots ${v.slotsUsedThisRound}/${v.slots} · prep ${v.prepared.length}/${v.preparedLimit} · deck ${v.resourceDeckCount} · hand ${handN}`;
+    // Deck/hand counts render at the piles; prepared cards are visible on the board.
+    plate.stats.text = `Lv ${v.level} · slots ${v.slotsUsedThisRound}/${v.slots}`;
     const wards = v.wards && v.wards.length ? `🛡 ${v.wards.join("/")}` : "";
     const burn = v.burn > 0 ? `  🔥 ${v.burn}` : "";
     plate.status.text = wards + burn;
@@ -228,6 +252,9 @@ export class PixiBoard {
 
     this.updatePlate(this.oppPlate, `Opponent · ${state.schools[1]}`, opp, !state.gameOver && state.activePlayer === 1);
     this.updatePlate(this.youPlate, `You · ${state.schools[0]}`, you, !state.gameOver && state.activePlayer === 0);
+    this.oppDeckL.text = `Deck ${opp.resourceDeckCount}`;
+    this.oppHandL.text = `Hand ${opp.handCount ?? 0}`;
+    this.youDeckL.text = `Deck ${you.resourceDeckCount}`;
 
     const byType = (t: string) => legal.filter((a) => a.type === t);
     const attachTargets = (def: string) => byType("attach").filter((a) => a.defId === def);
@@ -237,7 +264,7 @@ export class PixiBoard {
 
     const desired: Desired[] = [];
     const push = (d: Partial<Desired> & Pick<Desired, "key" | "layer" | "x" | "y">) =>
-      desired.push({ faceDef: null, w: CARD_W, h: CARD_H, rot: 0, z: 0, highlight: "none", dim: false, attached: [], onTap: null, spawn: null, spawnScale: false, ...d });
+      desired.push({ faceDef: null, w: CARD_W, h: CARD_H, rot: 0, z: 0, highlight: "none", dim: false, attached: [], edge: null, stamp: false, onTap: null, spawn: null, spawnScale: false, ...d });
 
     // --- opponent prepared (face-down until cast/revealed) + deck ---
     opp.prepared.forEach((p, i) => {
@@ -261,7 +288,10 @@ export class PixiBoard {
         z: i,
         faceDef: it.spellDefId,
         dim: it.cancelled,
-        highlight: canRetract ? "actionable" : isReactTarget ? "react" : "none",
+        stamp: it.cancelled,
+        edge: it.controller === 0 ? "bottom" : "top",
+        // Both retract-or-confirm and react-or-pass are "the game is waiting on this" — loud gold.
+        highlight: canRetract || isReactTarget ? "react" : "none",
         onTap: canRetract ? () => this.cb.onAction(retract!.index) : null,
         spawn: this.stackSpawn(state, it.controller, it.spellDefId),
         spawnScale: true,
@@ -349,6 +379,11 @@ export class PixiBoard {
     for (const [key, sp] of [...this.sprites]) {
       if (keys.has(key)) continue;
       this.sprites.delete(key);
+      if (this.hoverKey === key) {
+        // The hovered card is leaving the board — pointerout will never fire for it.
+        this.hoverKey = null;
+        this.cb.onHover(null);
+      }
       const v = sp.visual;
       const x0 = v.root.x;
       const y0 = v.root.y;
@@ -370,7 +405,19 @@ export class PixiBoard {
         d.layer.addChild(visual.root);
         const created: Sprite = { visual, layer: d.layer, faceDef: d.faceDef };
         // Read the LIVE face at hover time — the card at this position changes.
-        visual.onHover(() => created.faceDef && this.cb.onHover(created.faceDef), () => this.cb.onHover(null));
+        const key = d.key;
+        visual.onHover(
+          () => {
+            this.hoverKey = key;
+            if (created.faceDef) this.cb.onHover(created.faceDef);
+          },
+          () => {
+            // Guard: with over/out interleaving across cards, only clear if we still own the hover.
+            if (this.hoverKey !== key) return;
+            this.hoverKey = null;
+            this.cb.onHover(null);
+          },
+        );
         sp = created;
         this.sprites.set(d.key, sp);
         const from = d.spawn ?? { x: d.x, y: d.y };
@@ -385,18 +432,25 @@ export class PixiBoard {
       sp.visual.root.zIndex = d.z;
       sp.visual.setHighlight(d.highlight);
       sp.visual.setDim(d.dim);
-      sp.visual.setInteractive(!!d.onTap, d.onTap ?? undefined);
+      sp.visual.setEdge(d.edge);
+      sp.visual.setStamp(d.stamp);
+      // No action on this card? A tap pins it into the card-detail panel instead.
+      const owner = sp;
+      const inspect = () => {
+        if (owner.faceDef) this.cb.onInspect?.(owner.faceDef);
+      };
+      sp.visual.setInteractive(!!d.onTap, d.onTap ?? inspect);
     }
   }
 
   private applyFace(sp: Sprite, d: Desired): void {
+    // The card at a position can change under a stationary cursor — refresh the hover detail too.
+    if (this.hoverKey === d.key && sp.faceDef !== d.faceDef) this.cb.onHover(d.faceDef);
     sp.faceDef = d.faceDef; // keep the live hover face in sync with what's painted
-    if (d.faceDef) {
-      sp.visual.setFace(this.face(d.faceDef));
-      sp.visual.setAttached(d.attached);
-    } else {
-      sp.visual.setFaceDown(true);
-    }
+    if (d.faceDef) sp.visual.setFace(this.face(d.faceDef));
+    else sp.visual.setFaceDown(true);
+    // Attached chips render on face-down cards too — the opponent's attachments are public info.
+    sp.visual.setAttached(d.attached);
   }
 
   private enter(sp: Sprite, from: Pt, d: Desired): void {
@@ -479,7 +533,7 @@ export class PixiBoard {
       const f = eventToFloater(e);
       if (!f) continue;
       const plate = f.side === 0 ? this.youPlate : this.oppPlate;
-      spawnFloater(this.fxLayer, this.tweener, plate.anchor.x, plate.anchor.y, f.text, f.color, stagger[f.side]++);
+      spawnFloater(this.fxLayer, this.tweener, plate.anchor.x, plate.anchor.y, f.text, f.color, stagger[f.side]++, f.side === 0 ? -1 : 1);
       this.flashPlate(plate, f.struck);
     }
     if (stackMoved) this.flashStack();

@@ -56,7 +56,7 @@ export function stackCenter(i: number, n: number): Pt {
 /** Fanned hand: center-anchored, edges tilt out and dip down, middle rides highest. */
 export function handLayout(n: number): FanPt[] {
   const cx = WORLD_W / 2;
-  const baseY = 742;
+  const baseY = 720; // low enough to read as "your hand", high enough that the fan's dip stays inside the world
   const spacing = n <= 1 ? 0 : Math.min(96, 760 / n);
   const out: FanPt[] = [];
   for (let i = 0; i < n; i++) {

@@ -1,4 +1,5 @@
 import type { MatchState } from "../api.ts";
+import { LogLines } from "./LogLines.tsx";
 
 const END_REASON: Record<string, string> = {
   hp: "hit points reduced to 0",
@@ -83,11 +84,7 @@ export function GameOverSummary({ state, onDismiss, onRematch }: { state: MatchS
           </tbody>
         </table>
         <div className="golog">
-          {state.log.map((l, i) => (
-            <div key={i} className={l.startsWith("   ") ? "ev" : "act"}>
-              {l}
-            </div>
-          ))}
+          <LogLines lines={state.log} />
         </div>
         <div className="gorow">
           <button className="primary" onClick={onRematch}>

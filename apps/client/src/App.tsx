@@ -22,6 +22,7 @@ export function App() {
   const [deckData, setDeckData] = useState<DeckListResponse | null>(null);
   const [builderDeck, setBuilderDeck] = useState<Deck | null>(null);
   const [hoverDef, setHoverDef] = useState<string | null>(null);
+  const [pinnedDef, setPinnedDef] = useState<string | null>(null);
   const [selectionActive, setSelectionActive] = useState(false);
   const [p0, setP0] = useState<School>("Evocation");
   const [p1, setP1] = useState<School>("Abjuration");
@@ -49,6 +50,7 @@ export function App() {
   const startGame = useCallback(
     (s0: School, s1: School, m: "bot" | "agent") => {
       setSummaryDismissed(false);
+      setPinnedDef(null);
       setScreen("match");
       return newGame(s0, s1, m);
     },
@@ -60,9 +62,13 @@ export function App() {
     else void startGame(p0, p1, mode);
   }, [isOnline, online, startGame, p0, p1, mode]);
   const toMenu = useCallback(() => {
-    if (isOnline) online.leave();
+    if (isOnline) {
+      // Leaving a live PvP match forfeits the seat — make sure it's intentional.
+      if (online.status === "playing" && state && !state.gameOver && !window.confirm("Leave the match? Your seat is forfeited and the room closes.")) return;
+      online.leave();
+    }
     setScreen("home");
-  }, [isOnline, online]);
+  }, [isOnline, online, state]);
 
   // A fresh match (local new game or online rematch) re-arms the game-over summary.
   useEffect(() => {
@@ -124,24 +130,25 @@ export function App() {
   return (
     <div className="app">
       {updateBanner}
-      <TopBar state={state} />
+      <TopBar state={state} onMenu={toMenu} />
       <div className="main">
         <div className="stage">
-          <Board state={state} cards={cards} onAction={act} onHover={setHoverDef} onSelection={setSelectionActive} onReady={onReady} />
-          <Prompt state={state} onAction={act} cardName={cardName} />
-          <SpellbookTray state={state} cards={cards} onAction={act} onHover={setHoverDef} />
+          <div className="boardwrap">
+            <Board state={state} cards={cards} onAction={act} onHover={setHoverDef} onSelection={setSelectionActive} onInspect={setPinnedDef} onReady={onReady} />
+            <Prompt state={state} onAction={act} cardName={cardName} />
+            <SpellbookTray state={state} cards={cards} onAction={act} onHover={setHoverDef} onInspect={setPinnedDef} />
+            {!summaryDismissed && (
+              <GameOverSummary state={state} onDismiss={() => setSummaryDismissed(true)} onRematch={onRematch} />
+            )}
+          </div>
           <ActionBar state={state} cards={cards} selectionActive={selectionActive} onAction={act} onCancel={() => boardRef.current?.clearSelection()} error={error} />
-          {!summaryDismissed && (
-            <GameOverSummary state={state} onDismiss={() => setSummaryDismissed(true)} onRematch={onRematch} />
-          )}
-          <button className="menubtn" onClick={toMenu} data-testid="to-menu">
-            ‹ Menu
-          </button>
         </div>
         <SidePanels
           state={state}
           cards={cards}
           hoverDef={hoverDef}
+          pinnedDef={pinnedDef}
+          onUnpin={() => setPinnedDef(null)}
           p0={p0}
           p1={p1}
           mode={mode}
@@ -150,6 +157,7 @@ export function App() {
           setMode={setMode}
           onNewGame={() => startGame(p0, p1, mode)}
           online={online}
+          onLeave={toMenu}
         />
       </div>
     </div>

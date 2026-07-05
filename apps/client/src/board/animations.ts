@@ -46,14 +46,18 @@ export function isStackEvent(e: GameEvent): boolean {
   return e.type === "cast" || e.type === "reactionCast" || e.type === "spellResolved" || e.type === "spellCancelled";
 }
 
-/** Spawn one floating number in `layer`, rising and fading over ~1.2s. `stagger` offsets stacked hits. */
-export function spawnFloater(layer: Container, tweener: Tweener, x: number, y: number, text: string, color: number, stagger: number): void {
+/**
+ * Spawn one floating number in `layer`, drifting `dir` (-1 = up, +1 = down) and fading over ~1.2s.
+ * `stagger` offsets stacked hits. Opponent-side floaters drift DOWN — their plate hugs the top edge,
+ * so rising text would leave the canvas.
+ */
+export function spawnFloater(layer: Container, tweener: Tweener, x: number, y: number, text: string, color: number, stagger: number, dir: 1 | -1 = -1): void {
   const t = new Text({
     text,
     style: { fill: color, fontSize: 26, fontFamily: "system-ui", fontWeight: "800", dropShadow: { color: 0x000000, blur: 4, distance: 2, alpha: 0.8 } },
   });
   t.anchor.set(0.5);
-  t.position.set(x, y + stagger * 6);
+  t.position.set(x, y - dir * stagger * 6);
   layer.addChild(t);
   const y0 = t.y;
   tweener.add({
@@ -61,7 +65,7 @@ export function spawnFloater(layer: Container, tweener: Tweener, x: number, y: n
     delay: stagger * 110,
     ease: easeOutCubic,
     onUpdate: (p) => {
-      t.y = lerp(y0, y0 - 52, p);
+      t.y = lerp(y0, y0 + dir * 52, p);
       t.alpha = p < 0.15 ? p / 0.15 : 1 - (p - 0.15) / 0.85;
       const s = p < 0.2 ? lerp(0.7, 1.15, p / 0.2) : 1.05;
       t.scale.set(s);

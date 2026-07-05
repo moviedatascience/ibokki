@@ -17,9 +17,24 @@ const SCHOOL_COLOR: Record<string, number> = {
   Gambit: 0xcaa46a,
 };
 
-const HL_COLOR = { actionable: 0xffd36b, target: 0x8ce99a, react: 0xffd36b };
-
 export type Highlight = "none" | "actionable" | "target" | "react";
+
+/**
+ * Highlight grammar: "actionable" is a quiet cue (most cards are playable most of the time —
+ * a bright outline on all of them means nothing); it brightens on hover. "react" is the loud
+ * one, reserved for the thing the game is waiting on (reaction target, confirm/retract).
+ * "target" is the green attach-destination cue.
+ */
+const HL_STYLE: Record<Exclude<Highlight, "none">, { color: number; width: number; alpha: number }> = {
+  actionable: { color: 0xffd36b, width: 1.5, alpha: 0.38 },
+  target: { color: 0x8ce99a, width: 2.5, alpha: 0.95 },
+  react: { color: 0xffd36b, width: 3, alpha: 1 },
+};
+
+/** Controller edge strip colors match the log's You/Opponent colors. */
+const EDGE_COLOR = { bottom: 0x8ce99a, top: 0xff8b8b };
+
+export type EdgeSide = "top" | "bottom" | null;
 
 export interface CardFace {
   name: string;
@@ -35,12 +50,16 @@ export class CardVisual {
   readonly h: number;
   private body = new Graphics();
   private band = new Graphics();
+  private edgeG = new Graphics();
   private hl = new Graphics();
+  private stampG = new Graphics();
   private nameT: Text;
   private metaT: Text;
   private costT: Text;
-  private attT: Text;
+  private attC = new Container();
   private back = new Graphics();
+  private hlKind: Highlight = "none";
+  private hoverBoost = false;
 
   constructor(w: number, h: number) {
     this.w = w;
@@ -55,11 +74,19 @@ export class CardVisual {
     this.metaT = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 9.5, fontFamily: "system-ui" } });
     this.metaT.position.set(7, h - 16);
     this.costT = new Text({ text: "", style: { fill: 0xffe6a6, fontSize: 11, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
-    this.attT = new Text({ text: "", style: { fill: 0xaeb4c0, fontSize: 9.5, fontFamily: "ui-monospace, monospace" } });
-    this.attT.position.set(7, h - 30);
 
     this.drawBack();
-    this.root.addChild(this.body, this.band, this.nameT, this.metaT, this.costT, this.attT, this.back, this.hl);
+    // Cancelled ✕ stamp, revealed via setStamp.
+    this.stampG
+      .moveTo(w * 0.32, h * 0.34)
+      .lineTo(w * 0.68, h * 0.66)
+      .moveTo(w * 0.68, h * 0.34)
+      .lineTo(w * 0.32, h * 0.66)
+      .stroke({ width: 4, color: 0xff5050, alpha: 0.85 });
+    this.stampG.visible = false;
+    // attC sits above `back` so attached-component chips stay visible on face-down cards
+    // (the opponent's attachments are public information).
+    this.root.addChild(this.body, this.band, this.edgeG, this.nameT, this.metaT, this.costT, this.back, this.attC, this.stampG, this.hl);
     this.setHighlight("none");
   }
 
@@ -93,22 +120,59 @@ export class CardVisual {
 
   setFaceDown(down: boolean): void {
     this.back.visible = down;
-    this.body.visible = this.band.visible = this.nameT.visible = this.metaT.visible = this.costT.visible = this.attT.visible = !down;
+    this.body.visible = this.band.visible = this.nameT.visible = this.metaT.visible = this.costT.visible = !down;
   }
 
-  /** Show attached component symbols (e.g. ["V","SM"]) as a small line; [] clears it. */
+  /** Show attached component symbols (e.g. ["V","SM"]) as small chips; [] clears them. */
   setAttached(syms: string[]): void {
-    this.attT.text = syms.length ? "▪ " + syms.join(" ") : "";
+    for (const c of this.attC.removeChildren()) c.destroy({ children: true });
+    let x = 6;
+    for (const sym of syms) {
+      const t = new Text({ text: sym, style: { fill: 0xffe6a6, fontSize: 9, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
+      const w = Math.ceil(t.width) + 8;
+      const g = new Graphics();
+      g.roundRect(0, 0, w, 14, 4).fill(0x10151d).stroke({ width: 1, color: 0x6b5c22 });
+      t.position.set(4, 2);
+      const chip = new Container();
+      chip.addChild(g, t);
+      chip.position.set(x, this.h - 34);
+      this.attC.addChild(chip);
+      x += w + 4;
+    }
+  }
+
+  /** Controller cue for stack cards: a strip along the owner's table edge (bottom = you). */
+  setEdge(side: EdgeSide): void {
+    this.edgeG.clear();
+    if (!side) return;
+    const y = side === "bottom" ? this.h - 5 : 2;
+    this.edgeG.roundRect(5, y, this.w - 10, 3, 1.5).fill({ color: EDGE_COLOR[side], alpha: 0.9 });
+  }
+
+  /** Cancelled ✕ stamp (pairs with setDim so a countered spell reads at a glance). */
+  setStamp(on: boolean): void {
+    this.stampG.visible = on;
   }
 
   setHighlight(kind: Highlight): void {
+    this.hlKind = kind;
+    this.drawHl();
+  }
+
+  private drawHl(): void {
     this.hl.clear();
-    if (kind === "none") {
+    if (this.hlKind === "none") {
       this.hl.visible = false;
       return;
     }
+    const s = HL_STYLE[this.hlKind];
+    const boost = this.hoverBoost && this.hlKind === "actionable";
     this.hl.visible = true;
-    this.hl.roundRect(-2, -2, this.w + 4, this.h + 4, 10).stroke({ width: 2.5, color: HL_COLOR[kind], alpha: 0.95 });
+    this.hl.roundRect(-2, -2, this.w + 4, this.h + 4, 10).stroke({
+      width: boost ? 2.5 : s.width,
+      color: s.color,
+      alpha: boost ? 0.95 : s.alpha,
+    });
   }
 
   setDim(dim: boolean): void {
@@ -117,19 +181,30 @@ export class CardVisual {
 
   private tapHandler: (() => void) | null = null;
 
-  setInteractive(on: boolean, onTap?: () => void): void {
-    // Interactive even when not tappable, so hover (card detail) still fires; cursor signals tappability.
+  /**
+   * `actionable` drives the pointer cursor; `onTap` fires regardless (non-actionable cards
+   * get an inspect/pin tap). Hover always fires for the card-detail panel.
+   */
+  setInteractive(actionable: boolean, onTap?: () => void): void {
     this.root.eventMode = "static";
-    this.root.cursor = on && onTap ? "pointer" : "default";
+    this.root.cursor = actionable && onTap ? "pointer" : "default";
     if (this.tapHandler) this.root.off("pointertap", this.tapHandler);
-    this.tapHandler = on && onTap ? onTap : null;
+    this.tapHandler = onTap ?? null;
     if (this.tapHandler) this.root.on("pointertap", this.tapHandler);
   }
 
   /** Persistent hover hook for the card-detail panel; attached once at creation. */
   onHover(over: () => void, out: () => void): void {
-    this.root.on("pointerover", over);
-    this.root.on("pointerout", out);
+    this.root.on("pointerover", () => {
+      this.hoverBoost = true;
+      this.drawHl();
+      over();
+    });
+    this.root.on("pointerout", () => {
+      this.hoverBoost = false;
+      this.drawHl();
+      out();
+    });
   }
 
   destroy(): void {
