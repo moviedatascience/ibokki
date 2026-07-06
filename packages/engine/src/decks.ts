@@ -75,9 +75,9 @@ const ARCHETYPE_TRAINERS: Record<Exclude<School, "Neutral">, string[]> = {
     "GAM-011", // Aegis Charm (3HP Ward from nowhere)
     "GAM-001", // Arcane Study (draw)
   ],
-  // "Riptide" — tempo/mill: push the opponent's exhaustion clock, protect your own.
+  // "Riptide" — tempo/prophecy: inscribe delayed dooms, protect your own exhaustion clock.
   Divination: [
-    "GAM-019", // Saboteur's Kit (mill 3) x2 — exhaustion pressure
+    "GAM-019", // Saboteur's Kit (prophecy 2-in-2) x2 — planted time-bombs
     "GAM-019",
     "GAM-016", // Sealed Vault (free self-recycle — dodge your own exhaustion)
     "GAM-017", // Mana Sickness (lock their effect-draws)

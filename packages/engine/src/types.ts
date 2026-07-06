@@ -67,6 +67,22 @@ export interface OngoingEffect {
   expiry: OngoingExpiry;
 }
 
+/**
+ * A delayed doom inscribed on a player (Divination's win condition). Public to both
+ * players. `turnsLeft` counts down at the start of the doomed player's turn (the same
+ * hook where Burn ticks); at 0 it fires for `amount` damage — normal, Ward-soakable
+ * damage unless `pierce` (Oblivion: like exhaustion, ignores Wards/prevention).
+ * The payload is fixed at inscription — amps and buffs never touch it (the future is
+ * already written).
+ */
+export interface Prophecy {
+  amount: number;
+  turnsLeft: number;
+  pierce: boolean;
+  /** The spell/trainer that inscribed it (public: it was cast openly). */
+  defId: string;
+}
+
 export interface PlayerState {
   id: PlayerId;
   hp: number;
@@ -83,6 +99,8 @@ export interface PlayerState {
   wards: Ward[];
   /** Burn markers on this player (tick at the start of their turns, then one decays; persist across rounds). */
   burn: number;
+  /** Delayed dooms inscribed on this player (tick down / fire at the start of their turns). */
+  prophecies: Prophecy[];
   /** Times this player's discard has been reshuffled into their Resource Deck. Each
    * reshuffle deals escalating exhaustion damage (2 x reshuffle count) — the game's slow clock. */
   reshuffles: number;
@@ -295,6 +313,8 @@ export type GameEvent =
   | { type: "damage"; target: PlayerId; amount: number }
   | { type: "burnTick"; player: PlayerId; amount: number }
   | { type: "burnApplied"; target: PlayerId; amount: number }
+  | { type: "prophecyCreated"; target: PlayerId; amount: number; turns: number; defId: string }
+  | { type: "prophecyFired"; player: PlayerId; amount: number; defId: string }
   | { type: "healed"; player: PlayerId; amount: number }
   | { type: "discarded"; player: PlayerId; count: number }
   | { type: "reshuffled"; player: PlayerId; count: number; damage: number }

@@ -34,8 +34,19 @@ clutter; deep skill expression.
   number of times they have reshuffled this game** (2, then 4, then 6, …). Exhaustion is
   internal strain, not an attack: it **cannot be prevented, reduced, or absorbed by
   Wards** — it hits the Wizard's HP directly. The deck is a cycling engine, not a clock —
-  but each cycle strains the Wizard a little more. Milling an opponent's deck therefore
-  pressures them toward their next exhaustion tick rather than toward an instant loss.
+  but each cycle strains the Wizard a little more.
+- **Prophecy (Delayed Dooms):** Some Divination spells inscribe a **prophecy** on the
+  opponent instead of dealing damage now: a public marker with a damage payload and a
+  fuse counted in the doomed Wizard's turns. At the **start of the doomed Wizard's turn**
+  (after Burn ticks) every prophecy on them counts down one; a prophecy reaching zero
+  **fires** for its payload and is removed. The payload is **fixed at inscription** —
+  damage amps and buffs never modify it (the future is already written) — and it is
+  normal, Ward-soakable damage unless the card says otherwise (Oblivion's doom, like
+  exhaustion, cannot be prevented or absorbed). The cast itself uses the stack as usual:
+  a prophecy can be countered as it is cast, but once it resolves the doom is locked in.
+  This is Divination's win condition — counter the setup or eat the payload. (The 2026-07-05
+  identity rework: prophecies replaced opponent-milling, which won on the exhaustion axis
+  but played poorly.)
 - **Zones:** Hand, Prepared Spells, Casting Zone, Discard.
 - **Objects:** Spell Deck, Resource Deck, HP / Level / Slot tracker, Status Markers
   (Spent, Channel, Delayed, Ward).
@@ -220,6 +231,10 @@ between both risks "bricking" (drawing V cards when you need M cards).
 - **Divination (The School of Manipulation)** — Primary Component: Material (M).
   Playstyle: Tempo, Utility, Precision. Searches and recycles its Resource Deck to ensure
   it always has the right piece at the right time, prioritizing consistency over raw power.
+  Its kill is **Prophecy**: delayed dooms announced in advance that arrive on schedule —
+  the seer has already seen how you die. Delayed damage is intrinsically slower than
+  Evocation's burst (preserving Evo > Div) but arrives on a schedule the fortress must
+  hold resources against across turns (pressuring Abjuration).
 
 ---
 

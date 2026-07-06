@@ -12,6 +12,7 @@ const RED = 0xff6a6a;
 const ORANGE = 0xff9a4d;
 const GREEN = 0x7df29a;
 const BLUE = 0x8fd0ff;
+const PURPLE = 0xc9a0f0;
 
 export interface Floater {
   side: 0 | 1;
@@ -28,6 +29,10 @@ export function eventToFloater(e: GameEvent): Floater | null {
       return n(e.amount) > 0 ? { side: e.target as 0 | 1, text: `-${n(e.amount)}`, color: RED, struck: true } : null;
     case "burnTick":
       return n(e.amount) > 0 ? { side: e.player as 0 | 1, text: `🔥 ${n(e.amount)}`, color: ORANGE, struck: true } : null;
+    case "prophecyCreated":
+      return { side: e.target as 0 | 1, text: `🔮 ${n(e.amount)} in ${n(e.turns)}`, color: PURPLE, struck: false };
+    case "prophecyFired":
+      return { side: e.player as 0 | 1, text: "🔮 !", color: PURPLE, struck: true };
     case "healed":
       return n(e.amount) > 0 ? { side: e.player as 0 | 1, text: `+${n(e.amount)}`, color: GREEN, struck: false } : null;
     case "wardCreated":

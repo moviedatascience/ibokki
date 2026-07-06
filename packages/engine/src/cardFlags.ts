@@ -62,8 +62,6 @@ export function trainerHasEffect(state: GameState, me: PlayerId, defId: string):
       return p.burn > 0;
     case "GAM-016": // Sealed Vault — needs a discard pile to recycle
       return p.discard.length > 0;
-    case "GAM-019": // Saboteur's Kit — needs an opposing deck to mill
-      return opp.resourceDeck.length > 0;
     case "GAM-020": // Disarm — needs an opposing hand to look at
       return opp.hand.length > 0;
     default:

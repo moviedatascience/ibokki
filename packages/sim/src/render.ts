@@ -88,6 +88,10 @@ export function describeEvent(e: GameEvent): string | null {
       return `P${e.target} takes ${e.amount} damage`;
     case "burnTick":
       return `P${e.player} burns for ${e.amount}`;
+    case "prophecyCreated":
+      return `prophecy inscribed on P${e.target}: ${e.amount} damage in ${e.turns} turn${e.turns === 1 ? "" : "s"} (${cardName(e.defId)})`;
+    case "prophecyFired":
+      return `→ P${e.player}'s doom arrives — ${cardName(e.defId)}`;
     case "healed":
       return `P${e.player} heals ${e.amount}`;
     case "wardCreated":
@@ -187,10 +191,13 @@ export function renderDecision(state: GameState, schools?: [string, string], vie
     }
   }
 
+  const dooms = (ps: { prophecies: { amount: number; turnsLeft: number; pierce: boolean }[] }): string =>
+    ps.prophecies.length ? ` | doom [${ps.prophecies.map((p) => `${p.amount}${p.pierce ? "!" : ""}@${p.turnsLeft}t`).join(", ")}]` : "";
+
   const self = v.self;
   lines.push(
     `── YOU P${view} (${label(view)}): HP ${self.hp} | Lv ${self.level} (max L${self.maxSpellLevel}) | ` +
-      `slots ${self.slotsUsedThisRound}/${self.slots} | wards [${self.wards.join(", ")}] | burn ${self.burn} | deck ${self.resourceDeckCount}`,
+      `slots ${self.slotsUsedThisRound}/${self.slots} | wards [${self.wards.join(", ")}] | burn ${self.burn}${dooms(self)} | deck ${self.resourceDeckCount}`,
   );
   lines.push(`   Hand: ${self.hand.map(cardName).join(", ") || "(empty)"}`);
   lines.push("   Prepared:");
@@ -205,7 +212,7 @@ export function renderDecision(state: GameState, schools?: [string, string], vie
   const opp = v.opponent;
   lines.push(
     `── OPP P${opp.id} (${label(opp.id)}): HP ${opp.hp} | Lv ${opp.level} | slots ${opp.slotsUsedThisRound}/${opp.slots} | ` +
-      `wards [${opp.wards.join(", ")}] | burn ${opp.burn} | hand ${opp.handCount} | deck ${opp.resourceDeckCount}`,
+      `wards [${opp.wards.join(", ")}] | burn ${opp.burn}${dooms(opp)} | hand ${opp.handCount} | deck ${opp.resourceDeckCount}`,
   );
   const oppVisible = opp.prepared.filter((p) => p.spellDefId !== null);
   if (oppVisible.length > 0) {

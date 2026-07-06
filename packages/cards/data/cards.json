@@ -1544,8 +1544,8 @@
       "S": 0,
       "M": 1
     },
-    "text": "Look at the top 4 cards of your Resource Deck. Put one Material (M) component from among them into your hand and the rest on the bottom in any order.",
-    "comment": "A focused dig that rewards a Material-dense deck. Finds the symbol you need while burying what you don't."
+    "text": "Prophecy - at the start of your opponent's second turn from now, deal 3 damage to them.",
+    "comment": "The L1 starter doom - gives the prophecy identity a presence in rounds 1-4 before the L2+ dooms unlock (m12 finding). One more than Foretell's sting because it arrives two turns late."
   },
   {
     "id": "DIV-014",
@@ -1649,8 +1649,8 @@
       "S": 0,
       "M": 2
     },
-    "text": "Your opponent puts the top 2 cards of their Resource Deck into their discard pile.",
-    "comment": "Accelerates the opponent’s exhaustion clock — every milled card brings their next reshuffle (and its escalating damage) closer."
+    "text": "Prophecy - at the start of your opponent's second turn from now, deal 4 damage to them.",
+    "comment": "The prophecy workhorse - a 4-damage doom on a 2-turn fuse. Announced pressure the opponent must plan around."
   },
   {
     "id": "DIV-021",
@@ -1694,8 +1694,8 @@
       "S": 0,
       "M": 2
     },
-    "text": "Look at the top 3 cards of your opponent's Resource Deck. You may put one of them into their discard pile. Deal 1 damage.",
-    "comment": "Information and light mill in one. Strips an answer off the top before they ever see it."
+    "text": "Look at the top 3 cards of your Resource Deck and put them back in any order. Prophecy - at the start of your opponent's next turn, deal 2 damage to them.",
+    "comment": "Scry and doom in one - sculpts your next draws while a short-fuse prophecy lands next turn."
   },
   {
     "id": "DIV-024",
@@ -1770,7 +1770,7 @@
       "M": 3
     },
     "text": "Shuffle your discard pile into your Resource Deck, then draw 2 cards.",
-    "comment": "A free reshuffle — resets your deck WITHOUT the exhaustion damage a forced recycle costs, then draws 2. Anti-mill and anti-exhaustion tech."
+    "comment": "A free reshuffle - resets your deck WITHOUT the exhaustion damage a forced recycle costs, then draws 2. Anti-exhaustion tech."
   },
   {
     "id": "DIV-029",
@@ -1829,8 +1829,8 @@
       "S": 0,
       "M": 3
     },
-    "text": "Your opponent puts the top 4 cards of their Resource Deck into their discard pile.",
-    "comment": "The mill plan's mid-game accelerant. Four cards a cast adds up fast against a slow deck that wants the game to go long."
+    "text": "Prophecy - at the start of your opponent's third turn from now, deal 7 damage to them.",
+    "comment": "The mid-game doom - 7 damage on a 3-turn fuse; cast early and every one of their turns becomes a countdown."
   },
   {
     "id": "DIV-033",
@@ -1994,8 +1994,8 @@
       "S": 0,
       "M": 4
     },
-    "text": "Your opponent shuffles their hand into their Resource Deck, then puts the top 8 cards of their Resource Deck into their discard pile.",
-    "comment": "The mill haymaker — dumps 8 cards toward the opponent’s next exhaustion tick and scrambles their hand on the way."
+    "text": "Prophecy - at the start of your opponent's third turn from now, deal 9 damage to them. This damage cannot be prevented or absorbed by Wards.",
+    "comment": "The prophecy haymaker - 9 unwardable damage in 3 turns. Answer it at cast time or race it."
   },
   {
     "id": "DIV-044",
@@ -2312,8 +2312,8 @@
     "costText": null,
     "cost": null,
     "text": "Shuffle your discard pile into your Resource Deck.",
-    "role": "Counter — Divination (mill / exhaustion)",
-    "comment": "Anti-mill / anti-exhaustion tech — a free recycle that dodges the escalating reshuffle damage. Dead against a fast clock."
+    "role": "Counter - Divination (prophecy / exhaustion)",
+    "comment": "Anti-exhaustion tech - a free recycle that dodges the escalating reshuffle damage. Dead against a fast clock."
   },
   {
     "id": "GAM-017",
@@ -2347,9 +2347,9 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Your opponent puts the top 3 cards of their Resource Deck into their discard pile.",
-    "role": "Counter / Complement — Mill",
-    "comment": "Free mill for any deck — pushes the opponent toward their next exhaustion tick, or pressures a fragile combo deck. Modest at 3 cards and one-per-turn."
+    "text": "Prophecy - at the start of your opponent's second turn from now, deal 2 damage to them.",
+    "role": "Complement - Prophecy",
+    "comment": "A free time-bomb for any deck - 2 damage on a 2-turn fuse. Modest alone; stacked copies build a schedule of dooms."
   },
   {
     "id": "GAM-020",

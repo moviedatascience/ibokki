@@ -216,7 +216,9 @@ export class PixiBoard {
     plate.stats.text = `Lv ${v.level} · slots ${v.slotsUsedThisRound}/${v.slots}`;
     const wards = v.wards && v.wards.length ? `🛡 ${v.wards.join("/")}` : "";
     const burn = v.burn > 0 ? `  🔥 ${v.burn}` : "";
-    plate.status.text = wards + burn;
+    // Dooms show as payload@turns-left; "!" marks the unwardable one (Oblivion).
+    const dooms = v.prophecies?.length ? "  " + v.prophecies.map((p) => `🔮${p.amount}${p.pierce ? "!" : ""}@${p.turnsLeft}`).join(" ") : "";
+    plate.status.text = wards + burn + dooms;
     plate.status.position.set(box.w - 12 - plate.status.width, 26);
     plate.glow.visible = active;
   }

@@ -134,7 +134,7 @@ export class HeuristicBot implements Agent {
     const reactionTarget = view.self.preparedLimit >= 5 ? 2 : 1;
 
     let bestSpell: Action | undefined;
-    let bestSpellLvl = -1;
+    let bestSpellScore = -1;
     let bestReaction: Action | undefined;
     let bestReactionCost = Infinity;
     for (const a of prepares) {
@@ -147,9 +147,13 @@ export class HeuristicBot implements Agent {
           bestReaction = a;
         }
       } else {
-        const lvl = def.level ?? 1;
-        if (lvl > bestSpellLvl) {
-          bestSpellLvl = lvl;
+        // Level first, then board impact (damage/dooms OR wards/prevention), then book
+        // order: pure utility (draw/sculpt) fills leftover slots. Threat-only here breaks
+        // Abjuration (it stops preparing walls); order-only buries Divination's prophecy
+        // spells behind its draw engine and the bot never plays its win condition.
+        const score = (def.level ?? 1) * 100 + threatValue(def.id) + defenseValue(def.id);
+        if (score > bestSpellScore) {
+          bestSpellScore = score;
           bestSpell = a;
         }
       }
@@ -263,6 +267,18 @@ function estimateLevel(spellDefId: string | null): number {
 function symbolCost(defId: string): number {
   const cost = getCard(defId)?.cost;
   return cost ? cost.V + cost.S + cost.M : 1;
+}
+
+/** Rough defensive worth of a spell: ward HP it creates or adds, healing, prevention. */
+function defenseValue(defId: string): number {
+  const def = getCard(defId);
+  if (!def) return 0;
+  let v = 0;
+  for (const m of def.text.matchAll(/ward with (\d+) hp/gi)) v += Number(m[1]);
+  for (const m of def.text.matchAll(/add (\d+) hp/gi)) v += Number(m[1]);
+  for (const m of def.text.matchAll(/gains? (\d+) hp/gi)) v += Number(m[1]);
+  for (const m of def.text.matchAll(/prevent (\d+)/gi)) v += Number(m[1]);
+  return v;
 }
 
 /** Rough worth of an incoming spell: its biggest "deal N damage", plus a burn

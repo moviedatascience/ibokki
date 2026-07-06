@@ -81,6 +81,10 @@ export interface EffectContext {
   discardOpponentRandomComponent(n: number): number;
   discardOpponentRandom(n: number): number;
   millOpponent(n: number): number;
+  /** Inscribe a delayed doom on the opponent: deal `amount` at the start of their
+   *  `turns`-th turn from now (Prophecy — Divination's win condition). The payload
+   *  is fixed at inscription; `pierce` makes it exhaustion-style unpreventable (Oblivion). */
+  prophesy(amount: number, turns: number, pierce?: boolean): void;
 
   // ---- Divination: deck sculpting (look at top N / select / reorder / loot) ----
   /** Pause for the controller to pick `takeN` of the top `lookN` cards into hand; rest go to `leftover` (interactive). */
@@ -348,6 +352,10 @@ export function makeContext(
     },
     millOpponent(n) {
       return millPlayer(state, opponentId, n, events);
+    },
+    prophesy(amount, turns, pierce) {
+      opponent.prophecies.push({ amount, turnsLeft: turns, pierce: !!pierce, defId: card.defId });
+      events.push({ type: "prophecyCreated", target: opponentId, amount, turns, defId: card.defId });
     },
 
     requestSearchDeck({ filter, takeN, optional, reason }) {

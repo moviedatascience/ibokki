@@ -1,11 +1,14 @@
 /**
- * Divination (Material) — tempo, card advantage, recursion, mill, and DECK SCULPTING.
+ * Divination (Material) — tempo, card advantage, recursion, PROPHECY, and DECK SCULPTING.
  *
  * The school's identity is "look at the top N / select / reorder" — every card with
  * a real decision now PAUSES for the player via pendingChoice (take/order/search/
  * reveal modes); only decision-free conditionals (Augury, Component Pouch — a rule
  * decides, not the player) resolve automatically. "Look at your opponent's hand"
  * halves use the `reveal` mode (information shown, nothing moves).
+ * The WIN CONDITION is Prophecy (2026-07-05 rework, replacing mill): delayed dooms
+ * that fire at the start of the opponent's Nth turn — counter the setup or eat the
+ * payload. Normal ward-soakable damage except Oblivion (pierces, like exhaustion).
  * Recast-from-discard (Borrowed Spell/Power, Convergence) is a documented SPEC
  * ADAPTATION — cast spells return to `prepared`, never to discard, so these recast
  * an already-cast prepared spell instead.
@@ -34,7 +37,10 @@ register("DIV-008", (c) => c.scryOpponentTopToBottom()); // Scry Glyph (bottom o
 register("DIV-009", (c) => c.addAttuneBonus()); // Attune — next attach counts as +1 needed symbol
 register("DIV-010", (c) => { c.draw(1); c.requestBankToDeckTop(1); }); // Mind's Eye (draw 1, choose 1 to bank on top)
 register("DIV-011", (c) => { c.dealDamage(2); c.requestRevealOpponentHand(); }); // Foretell — the "intel" half is real now
-register("DIV-012", (c) => c.requestPickMaterialFromTop(4)); // Omen — interactive: see all 4, pick which M
+// Omen — the L1 starter doom (m12 finding: L2+ dooms left rounds 1-4 empty). 3-in-2, not
+// 2-in-2: Foretell (same cost) is 2 NOW plus intel, so the delayed doom needs +1 to be a
+// real prepare-phase choice rather than strictly dominated.
+register("DIV-012", (c) => c.prophesy(3, 2));
 // DIV-013 Quicken RETIRED — redundant now that attaching is unlimited per turn.
 
 // ---- Level 2 ----
@@ -47,10 +53,10 @@ register("DIV-019", (c) => {
   else c.destroyOneOpponentOngoing();
   c.draw(1);
 });
-register("DIV-020", (c) => c.millOpponent(2)); // Foreclosure
+register("DIV-020", (c) => c.prophesy(4, 2)); // Foreclosure — the debt comes due in 2 turns
 register("DIV-021", (c) => { c.draw(2); c.requestBankToDeckTop(1); }); // Quick Study (draw 2, choose 1 to bank on top)
 register("DIV-022", (c) => c.requestOrderTopOfDeck(5)); // Index — interactive reorder
-register("DIV-023", (c) => { c.dealDamage(1); c.requestMillOpponentTop(3); }); // Far Sight: see opp top 3, MAY mill one (+sting)
+register("DIV-023", (c) => { c.prophesy(2, 1); c.requestOrderTopOfDeck(3); }); // Far Sight — self-scry 3 + short-fuse doom
 
 // ---- Level 3 ----
 // Recast cards: the doc says "a spell in your discard," but cast spells return to
@@ -66,7 +72,7 @@ register("DIV-028", (c) => {
 register("DIV-029", (c) => c.requestTutorAnyThenDraw(2));
 register("DIV-030", (c) => c.requestTakeFromTop(5, 2, "top")); // Manipulate Fate (look 5, choose 2, rest on top)
 register("DIV-031", (c) => { c.draw(2); c.requestRevealOpponentHand(3); }); // Perfect Information — hand + their top 3, draw 2
-register("DIV-032", (c) => c.millOpponent(4)); // Entropy
+register("DIV-032", (c) => c.prophesy(7, 3)); // Entropy — inevitable decay on a 3-turn fuse
 register("DIV-033", (c) => c.requestSearchDeck({ filter: "component", takeN: 2, optional: true, reason: "Search: take up to 2 components to hand" })); // Premeditate
 register("DIV-034", (c) => c.drawUntil(7)); // Convergent Future
 register("DIV-037", (c) => c.recastPreparedSpell(2, true)); // Borrowed Power (any L1-2, either side)
@@ -104,10 +110,7 @@ register("DIV-040", (c) => {
 });
 register("DIV-041", (c) => c.returnAllComponentsFromDiscard()); // Eternal Return
 register("DIV-042", (c) => c.requestSearchDeck({ filter: "any", takeN: 3, optional: true, reason: "Search: take up to 3 cards to hand" })); // Grand Design
-register("DIV-043", (c) => {
-  c.opponentShuffleHandIntoDeck(); // Oblivion
-  c.millOpponent(8);
-});
+register("DIV-043", (c) => c.prophesy(9, 3, true)); // Oblivion — the death you cannot ward (pierces)
 register("DIV-044", (c) => c.reshuffleEverythingAndDraw(5)); // Time Spiral
 register("DIV-045", (c) => {
   c.recastPreparedSpell(4, true); // Convergence — recur the biggest spell and take an extra cast

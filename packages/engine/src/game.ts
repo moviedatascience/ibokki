@@ -35,6 +35,7 @@ export function createGame(config: GameConfig): GameState {
       discard: [],
       wards: [],
       burn: 0,
+      prophecies: [],
       reshuffles: 0,
       ongoing: [],
       reactionsCastThisRound: 0,

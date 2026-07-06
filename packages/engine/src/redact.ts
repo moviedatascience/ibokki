@@ -24,6 +24,8 @@ interface SideCommon {
   wards: number[];
   /** Burn markers on this player. */
   burn: number;
+  /** Delayed dooms on this player — public (payload, fuse, source). */
+  prophecies: { amount: number; turnsLeft: number; pierce: boolean; defId: string }[];
   /** Times this player's discard has recycled into their deck (exhaustion clock). Public. */
   reshuffles: number;
   slotsUsedThisRound: number;
@@ -153,6 +155,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
       level: me.level,
       wards: me.wards.map((w) => w.hp),
       burn: me.burn,
+      prophecies: me.prophecies.map((p) => ({ ...p })),
       reshuffles: me.reshuffles,
       slotsUsedThisRound: me.slotsUsedThisRound,
       slots: myTier.slots,
@@ -174,6 +177,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
       level: opp.level,
       wards: opp.wards.map((w) => w.hp),
       burn: opp.burn,
+      prophecies: opp.prophecies.map((p) => ({ ...p })),
       reshuffles: opp.reshuffles,
       slotsUsedThisRound: opp.slotsUsedThisRound,
       slots: oppTier.slots,

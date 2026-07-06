@@ -101,6 +101,30 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
     if (state.phase === "gameover") return;
   }
 
+  // Prophecies tick after Burn: every doom on the active player counts down one turn;
+  // any that reach 0 fire. The payload was fixed at inscription (no amps); it's normal,
+  // Ward-soakable damage unless the doom pierces (Oblivion — exhaustion-style direct HP).
+  if (player.prophecies.length > 0) {
+    const firing: typeof player.prophecies = [];
+    player.prophecies = player.prophecies.filter((p) => {
+      p.turnsLeft--;
+      if (p.turnsLeft > 0) return true;
+      firing.push(p);
+      return false;
+    });
+    for (const p of firing) {
+      events.push({ type: "prophecyFired", player: player.id, amount: p.amount, defId: p.defId });
+      if (p.pierce) {
+        player.hp -= p.amount; // the death you cannot ward: no wards, no reduction, no heal-conversion
+        events.push({ type: "damage", target: player.id, amount: p.amount });
+        if (player.hp <= 0) endGame(state, otherPlayer(player.id), "hp", events);
+      } else {
+        dealDamageToPlayer(state, player.id, p.amount, events);
+      }
+      if (state.phase === "gameover") return;
+    }
+  }
+
   // Recurring self-damage (e.g. Channel Pyromancy).
   const selfDmg = player.ongoing
     .filter((o) => o.kind === "selfDamageEachTurn")

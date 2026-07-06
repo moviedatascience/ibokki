@@ -40,6 +40,7 @@ function blankPlayer(id: PlayerId): PlayerState {
     discard: [],
     wards: [],
     burn: 0,
+    prophecies: [],
     reshuffles: 0,
     ongoing: [],
     reactionsCastThisRound: 0,
@@ -107,7 +108,7 @@ describe("no-op trainer plays are not offered (playtest m10 finding)", () => {
     expect(trainerOffered("GAM-005", (s) => { s.players[0].discard = [inst("GAM-001")]; })).toBe(false); // Salvage, no component
     expect(trainerOffered("GAM-005", (s) => { s.players[0].discard = [inst("CMP-M")]; })).toBe(true);
 
-    expect(trainerOffered("GAM-019", () => {})).toBe(false); // Saboteur's Kit, opp deck empty
+    expect(trainerOffered("GAM-019", () => {})).toBe(true); // Saboteur's Kit — a prophecy always lands
     expect(trainerOffered("GAM-020", () => {})).toBe(false); // Disarm, opp hand empty
     expect(trainerOffered("GAM-016", () => {})).toBe(false); // Sealed Vault, empty discard
   });
@@ -309,27 +310,11 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     return apply(s, { type: "choose", iid: c.iid }).state;
   };
 
-  it("Omen (DIV-012): all four shown, only M-carrying cards pickable, rest to bottom", () => {
-    const { state } = play("DIV-012", (s) => {
-      s.players[0].resourceDeck = ["CMP-S", "CMP-V", "CMP-M", "CMP-VM", "CMP-SS"].map(inst); // top 4 = V,M,VM,SS
-    });
-    const pc = state.pendingChoice!;
-    expect(pc.candidates).toHaveLength(4); // you LOOKED at all four
-    const pickable = legalActions(state, 0).filter((a) => a.type === "choose");
-    expect(pickable).toHaveLength(2); // CMP-M and CMP-VM only
-    expect(legalActions(state, 0).some((a) => a.type === "pass")).toBe(false); // not optional
-    const next = choose(state, "CMP-VM");
-    expect(next.players[0].hand.map((c) => c.defId)).toEqual(["CMP-VM"]);
-    expect(next.players[0].resourceDeck).toHaveLength(4); // 1 untouched + 3 to the bottom
-    expect(next.pendingChoice).toBeNull();
-  });
-
-  it("Omen with no M in the top cards: no pause, all to the bottom", () => {
-    const { state } = play("DIV-012", (s) => {
-      s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-VS", "CMP-VV"].map(inst);
-    });
+  it("Omen (DIV-012): inscribes the L1 starter doom — 3 damage on a 2-turn fuse, no pause", () => {
+    const { state } = play("DIV-012", () => {});
+    expect(state.players[1].prophecies).toEqual([{ amount: 3, turnsLeft: 2, pierce: false, defId: "DIV-012" }]);
     expect(state.pendingChoice).toBeNull();
-    expect(state.players[0].resourceDeck).toHaveLength(4);
+    expect(state.players[1].hp).toBe(30); // nothing until the fuse runs out
   });
 
   it("Seek (DIV-016): components only — trainers in the deck are not offered", () => {
@@ -390,37 +375,20 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(picked.players[1].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-VV"]); // top = end
   });
 
-  it("Far Sight (DIV-023): sting lands, caster sees opp top 3, may mill ONE or decline", () => {
-    const setup = (s: GameState) => {
-      // top = end of array: top 3 are CMP-S, CMP-M, CMP-VV (VV topmost)
-      s.players[1].resourceDeck = ["CMP-V", "CMP-S", "CMP-M", "CMP-VV"].map(inst);
-    };
-    const { state } = play("DIV-023", setup);
-    expect(state.players[1].hp).toBe(29); // the 1 damage is immediate
-    const pc = state.pendingChoice!;
-    expect(pc.mode).toBe("millFromTop");
-    expect(pc.candidates.map((c) => c.defId)).toEqual(["CMP-S", "CMP-M", "CMP-VV"]);
-    expect(legalActions(state, 0).some((a) => a.type === "pass")).toBe(true); // "you MAY"
-
-    // Decline: everything returns to the opponent's deck top in original order.
-    const declined = apply(state, { type: "pass" }).state;
-    expect(declined.pendingChoice).toBeNull();
-    expect(declined.players[1].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-S", "CMP-M", "CMP-VV"]);
-    expect(declined.players[1].discard).toHaveLength(0);
-
-    // Pick: the chosen card goes to THEIR discard, the rest back on top in order.
-    const milled = choose(play("DIV-023", setup).state, "CMP-M");
-    expect(milled.players[1].discard.map((c) => c.defId)).toEqual(["CMP-M"]);
-    expect(milled.players[1].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-S", "CMP-VV"]);
-    expect(milled.pendingChoice).toBeNull();
-  });
-
-  it("Far Sight with an empty opponent deck: damage only, no pause", () => {
+  it("Far Sight (DIV-023): inscribes a short-fuse doom and stages a SELF-scry of the top 3", () => {
     const { state } = play("DIV-023", (s) => {
-      s.players[1].resourceDeck = [];
+      // top = end of array: own top 3 are CMP-S, CMP-M, CMP-VV (VV topmost)
+      s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-M", "CMP-VV"].map(inst);
     });
-    expect(state.players[1].hp).toBe(29);
-    expect(state.pendingChoice).toBeNull();
+    expect(state.players[1].hp).toBe(30); // no immediate damage — the doom is delayed
+    expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 1, pierce: false, defId: "DIV-023" }]);
+    const pc = state.pendingChoice!;
+    expect(pc.mode).toBe("orderToTop");
+    expect(pc.candidates.map((c) => c.defId)).toEqual(["CMP-S", "CMP-M", "CMP-VV"]);
+    // Reorder: first pick ends topmost.
+    let s = state;
+    for (const pick of ["CMP-M", "CMP-VV", "CMP-S"]) s = choose(s, pick);
+    expect(s.players[0].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-S", "CMP-VV", "CMP-M"]);
   });
 
   it("Foretell (DIV-011): reveals the opponent's hand — nothing pickable, nothing moves", () => {
@@ -711,5 +679,70 @@ describe("retract window", () => {
     const events: GameEvent[] = [];
     pushToStack(s, 1, 0, true, s.stack[0]!.sid, events);
     expect(s.stack[0]!.retractable).toBe(false);
+  });
+});
+
+describe("prophecies (Divination's delayed dooms)", () => {
+  /** A state where P1 is the active player about to begin a turn, decks stocked. */
+  function doomedState(prophecy: { amount: number; turnsLeft: number; pierce: boolean }): GameState {
+    const s = blankState();
+    s.players[0].resourceDeck = ["CMP-M", "CMP-M", "CMP-M"].map(inst);
+    s.players[1].resourceDeck = ["CMP-V", "CMP-V", "CMP-V"].map(inst);
+    s.players[1].turnsTakenThisRound = 1; // past the first-turn no-draw special case
+    s.players[1].prophecies = [{ ...prophecy, defId: "DIV-020" }];
+    s.activePlayer = 1;
+    return s;
+  }
+
+  it("ticks down at the doomed player's turn start and fires at zero", () => {
+    const s = doomedState({ amount: 4, turnsLeft: 2, pierce: false });
+    const events: GameEvent[] = [];
+    beginTurn(s, events); // fuse 2 -> 1: nothing fires
+    expect(s.players[1].hp).toBe(30);
+    expect(s.players[1].prophecies[0]!.turnsLeft).toBe(1);
+
+    s.activePlayer = 1; // their next turn
+    const events2: GameEvent[] = [];
+    beginTurn(s, events2); // fuse 1 -> 0: fires for 4
+    expect(s.players[1].hp).toBe(26);
+    expect(s.players[1].prophecies).toHaveLength(0);
+    expect(events2.some((e) => e.type === "prophecyFired" && e.player === 1 && e.amount === 4)).toBe(true);
+  });
+
+  it("normal dooms soak into Wards; the opponent's turn never ticks them", () => {
+    const s = doomedState({ amount: 4, turnsLeft: 1, pierce: false });
+    s.players[1].wards = [{ wid: 1, hp: 3 }];
+
+    s.activePlayer = 0; // the CASTER's turn: the doom must not move
+    const events0: GameEvent[] = [];
+    beginTurn(s, events0);
+    expect(s.players[1].prophecies[0]!.turnsLeft).toBe(1);
+
+    s.activePlayer = 1;
+    const events: GameEvent[] = [];
+    beginTurn(s, events);
+    expect(s.players[1].wards).toHaveLength(0); // 3 soaked into the ward
+    expect(s.players[1].hp).toBe(29); // 1 overflowed to face
+  });
+
+  it("a piercing doom (Oblivion) ignores Wards entirely and can end the game", () => {
+    const s = doomedState({ amount: 9, turnsLeft: 1, pierce: true });
+    s.players[1].wards = [{ wid: 1, hp: 10 }];
+    s.players[1].hp = 9;
+    const events: GameEvent[] = [];
+    beginTurn(s, events);
+    expect(s.players[1].wards[0]!.hp).toBe(10); // untouched — the death you cannot ward
+    expect(s.players[1].hp).toBe(0);
+    expect(s.phase).toBe("gameover");
+    expect(s.winner).toBe(0);
+  });
+
+  it("multiple dooms tick independently and fire together when due", () => {
+    const s = doomedState({ amount: 2, turnsLeft: 1, pierce: false });
+    s.players[1].prophecies.push({ amount: 4, turnsLeft: 2, pierce: false, defId: "DIV-020" });
+    const events: GameEvent[] = [];
+    beginTurn(s, events);
+    expect(s.players[1].hp).toBe(28); // the 1-fuse doom fired
+    expect(s.players[1].prophecies).toEqual([{ amount: 4, turnsLeft: 1, pierce: false, defId: "DIV-020" }]);
   });
 });

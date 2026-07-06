@@ -28,6 +28,7 @@ function blankPlayer(id: PlayerId): PlayerState {
     discard: [],
     wards: [],
     burn: 0,
+    prophecies: [],
     reshuffles: 0,
     ongoing: [],
     reactionsCastThisRound: 0,
@@ -188,12 +189,11 @@ describe("Divination effects", () => {
     expect(miss.state.players[0].hand).toHaveLength(2); // singles only — no bonus
   });
 
-  it("Foreclosure (DIV-020) mills the opponent for 2", () => {
-    const { state } = cast("DIV-020", (s) => {
-      s.players[1].resourceDeck = [inst("CMP-V"), inst("CMP-V"), inst("CMP-V")];
-    });
-    expect(state.players[1].resourceDeck).toHaveLength(1);
-    expect(state.players[1].discard).toHaveLength(2);
+  it("Foreclosure (DIV-020) inscribes a 4-damage doom on a 2-turn fuse", () => {
+    const { state, events } = cast("DIV-020", () => {});
+    expect(state.players[1].prophecies).toEqual([{ amount: 4, turnsLeft: 2, pierce: false, defId: "DIV-020" }]);
+    expect(events.some((e) => e.type === "prophecyCreated" && e.target === 1 && e.amount === 4 && e.turns === 2)).toBe(true);
+    expect(state.players[1].hp).toBe(30); // nothing happens until the fuse runs out
   });
 
   it("Recover (DIV-006) pauses for the player to pick the discard component", () => {

@@ -31,6 +31,8 @@ export interface PlayerView {
   hp: number;
   wards: number[];
   burn: number;
+  /** Delayed dooms on this player (Prophecy): payload, fuse in their turns, ward-piercing flag. */
+  prophecies: { amount: number; turnsLeft: number; pierce: boolean; defId: string }[];
   /** Times the discard has been reshuffled into the deck (exhaustion clock). */
   reshuffles: number;
   level: number;
