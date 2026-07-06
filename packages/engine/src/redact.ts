@@ -42,6 +42,8 @@ export interface SelfView extends SideCommon {
   handIids: number[];
   /** Your spellbook (defIds) — the spells you may prepare. */
   spellbook: string[];
+  /** Instance ids parallel to `spellbook`, so agents can map prepareSpell iids to cards. */
+  spellbookIids: number[];
   prepareDone: boolean;
 }
 
@@ -78,6 +80,8 @@ export interface PendingChoiceView {
   picksRemaining: number;
   /** Candidate card defIds — only populated for the chooser (private information). */
   candidates: string[];
+  /** Instance ids parallel to `candidates`, so agents can map choose iids to cards. Chooser only. */
+  candidateIids: number[];
 }
 
 export interface PlayerView {
@@ -140,6 +144,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
           picksRemaining: state.pendingChoice.picksRemaining,
           // candidates are private — only the chooser sees what was revealed
           candidates: state.pendingChoice.player === viewer ? state.pendingChoice.candidates.map((c) => c.defId) : [],
+          candidateIids: state.pendingChoice.player === viewer ? state.pendingChoice.candidates.map((c) => c.iid) : [],
         }
       : null,
     self: {
@@ -160,6 +165,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
       hand: me.hand.map((c) => c.defId),
       handIids: me.hand.map((c) => c.iid),
       spellbook: me.spellbook.map((c) => c.defId),
+      spellbookIids: me.spellbook.map((c) => c.iid),
       prepareDone: me.prepareDone,
     },
     opponent: {

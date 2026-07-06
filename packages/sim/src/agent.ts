@@ -1,5 +1,5 @@
 /** Agent interface — anything that can choose an action from a redacted view. */
-import { getCard, getComponent, type Cost } from "@ibokki/cards";
+import { getCard, getComponent, type CardDef, type Cost } from "@ibokki/cards";
 import { combinedSymbols, emptyCost, rngInt, type Action, type PlayerView, type PreparedView } from "@ibokki/engine";
 
 export interface Agent {
@@ -25,9 +25,11 @@ export class RandomBot implements Agent {
 }
 
 /**
- * A simple greedy heuristic: cast the biggest available spell, otherwise make
- * progress by attaching a component, otherwise pass. Exercises the cast/damage
- * paths and produces meaningful HP-based outcomes for balance sampling.
+ * A greedy heuristic that pilots every part of a deck: it keeps a Reaction
+ * prepared and fueled, plays its trainers, resolves look/loot/scry choices by
+ * card value instead of blindly, fuels its biggest spell before casting, and
+ * only fires Reactions when the trade pays. The balance-matrix baseline and
+ * the rollout policy for any future search bot.
  */
 export class HeuristicBot implements Agent {
   readonly name = "heuristic";
@@ -38,9 +40,9 @@ export class HeuristicBot implements Agent {
   }
 
   chooseAction(view: PlayerView, legal: Action[]): Action {
-    // Resolve a pending look/loot/scry choice (take the first candidate).
+    // Resolve a pending look/loot/scry choice by candidate value (see chooseFromPending).
     const choices = legal.filter((a) => a.type === "choose");
-    if (choices.length > 0) return choices[0]!;
+    if (choices.length > 0) return chooseFromPending(view, choices);
 
     // After casting you keep priority over your own spell — proceed (pass) rather than
     // react to yourself or retract.
@@ -50,11 +52,24 @@ export class HeuristicBot implements Agent {
       if (pass) return pass;
     }
 
-    // Prepare phase: fill prepared slots (book is sorted strongest-first), then finish.
+    // Prepare phase: deliberately mix the slots — reserve one (two at 5+ slots) for the
+    // cheapest Reaction so there is something to pre-attach fuel to, fill the rest with
+    // the strongest castable spells.
     const prepares = legal.filter((a) => a.type === "prepareSpell");
-    if (prepares.length > 0) return prepares[0]!;
+    if (prepares.length > 0) return this.choosePrepare(view, prepares);
     const done = legal.find((a) => a.type === "donePreparing");
     if (done) return done;
+
+    // Trainers first: they are pre-filtered to have an effect (the engine's no-op guard),
+    // and damage amps / extra casts / tutors all want to land before this turn's cast.
+    const trainer = legal.find((a) => a.type === "playTrainer");
+    if (trainer) return trainer;
+
+    // Fuel before casting: an attach that progresses an uncast spell/Reaction may upgrade
+    // this turn's cast (Spark → Fireball) or arm a Reaction for the opponent's turn.
+    const attaches = legal.filter((a) => a.type === "attach");
+    const usefulAttach = this.pickUsefulAttach(view, attaches);
+    if (usefulAttach) return usefulAttach;
 
     const casts = legal.filter((a) => a.type === "cast");
     if (casts.length > 0) {
@@ -96,28 +111,8 @@ export class HeuristicBot implements Agent {
       // else: hold the Reactions, fall through to pass and let the small spell resolve.
     }
 
-    const attaches = legal.filter((a) => a.type === "attach");
+    // Leftover components: attach somewhere random rather than letting them rot.
     if (attaches.length > 0) {
-      // Reactions must be fueled BEFORE the reaction window (their cost is
-      // pre-attached, never paid from hand mid-window), so aim attaches first at
-      // unfueled prepared Reactions the component actually helps pay, then at
-      // unfueled castable spells, then fall back to a random attach.
-      const useful = (a: Action, wantReaction: boolean): boolean => {
-        if (a.type !== "attach") return false;
-        const prep = view.self.prepared[a.preparedIndex];
-        const handIdx = view.self.handIids.indexOf(a.handIid);
-        const comp = handIdx >= 0 ? getComponent(view.self.hand[handIdx]!) : undefined;
-        if (!prep || !comp) return false;
-        const def = prep.spellDefId ? getCard(prep.spellDefId) : undefined;
-        if (!def || !def.cost || prep.cast || prep.sealed) return false;
-        if ((def.type === "Reaction") !== wantReaction) return false;
-        const missing = missingCost(def.cost, prep);
-        return comp.symbols.V * missing.V + comp.symbols.S * missing.S + comp.symbols.M * missing.M > 0;
-      };
-      const reactionFuel = attaches.find((a) => useful(a, true));
-      if (reactionFuel) return reactionFuel;
-      const spellFuel = attaches.find((a) => useful(a, false));
-      if (spellFuel) return spellFuel;
       let idx: number;
       [idx, this.state] = rngInt(this.state, attaches.length);
       return attaches[idx]!;
@@ -125,6 +120,126 @@ export class HeuristicBot implements Agent {
 
     return { type: "pass" };
   }
+
+  /** Prepare a Reaction until the reserve target is met, otherwise the strongest spell. */
+  private choosePrepare(view: PlayerView, prepares: Action[]): Action {
+    const defOf = (a: Action): CardDef | undefined => {
+      if (a.type !== "prepareSpell") return undefined;
+      const i = view.self.spellbookIids.indexOf(a.spellIid);
+      return i >= 0 ? getCard(view.self.spellbook[i]!) : undefined;
+    };
+    const reactionsPrepared = view.self.prepared.filter(
+      (p) => p.spellDefId && getCard(p.spellDefId)?.type === "Reaction",
+    ).length;
+    const reactionTarget = view.self.preparedLimit >= 5 ? 2 : 1;
+
+    let bestSpell: Action | undefined;
+    let bestSpellLvl = -1;
+    let bestReaction: Action | undefined;
+    let bestReactionCost = Infinity;
+    for (const a of prepares) {
+      const def = defOf(a);
+      if (!def) continue;
+      if (def.type === "Reaction") {
+        const cost = def.cost ? def.cost.V + def.cost.S + def.cost.M : 1;
+        if (cost < bestReactionCost) {
+          bestReactionCost = cost;
+          bestReaction = a;
+        }
+      } else {
+        const lvl = def.level ?? 1;
+        if (lvl > bestSpellLvl) {
+          bestSpellLvl = lvl;
+          bestSpell = a;
+        }
+      }
+    }
+    if (reactionsPrepared < reactionTarget && bestReaction) return bestReaction;
+    return bestSpell ?? bestReaction ?? prepares[0]!;
+  }
+
+  /**
+   * An attach that progresses an uncast prepared card, or undefined. Reactions first
+   * (their cost must be pre-attached before the reaction window), then the highest-level
+   * unfueled spell.
+   */
+  private pickUsefulAttach(view: PlayerView, attaches: Action[]): Action | undefined {
+    let best: Action | undefined;
+    let bestScore = -1;
+    for (const a of attaches) {
+      if (a.type !== "attach") continue;
+      const prep = view.self.prepared[a.preparedIndex];
+      const handIdx = view.self.handIids.indexOf(a.handIid);
+      const comp = handIdx >= 0 ? getComponent(view.self.hand[handIdx]!) : undefined;
+      if (!prep || !comp || prep.cast || prep.sealed) continue;
+      const def = prep.spellDefId ? getCard(prep.spellDefId) : undefined;
+      if (!def || !def.cost) continue;
+      const missing = missingCost(def.cost, prep);
+      const helps = comp.symbols.V * missing.V + comp.symbols.S * missing.S + comp.symbols.M * missing.M;
+      if (helps <= 0) continue;
+      // Reactions outrank spells; bigger spells outrank smaller.
+      const score = (def.type === "Reaction" ? 100 : 0) + (def.level ?? 1);
+      if (score > bestScore) {
+        bestScore = score;
+        best = a;
+      }
+    }
+    return best;
+  }
+}
+
+/**
+ * Score a pending-choice candidate by what the pick DOES with it: gains (take/bank/
+ * bounce/order) want the most valuable card, self-discards want the least valuable —
+ * except discardForDamage (Wild Surge), where symbols ARE the damage.
+ */
+const DISCARD_MODES = new Set(["discardForSearch", "discardThenDraw", "discardToDeckTop"]);
+
+function chooseFromPending(view: PlayerView, choices: Action[]): Action {
+  const pc = view.pendingChoice;
+  if (!pc || pc.candidateIids.length === 0) return choices[0]!;
+  const iidToDef = new Map<number, string>();
+  pc.candidateIids.forEach((iid, i) => iidToDef.set(iid, pc.candidates[i]!));
+  const wantLow = DISCARD_MODES.has(pc.mode);
+  let best = choices[0]!;
+  let bestScore = -Infinity;
+  for (const a of choices) {
+    if (a.type !== "choose") continue;
+    const defId = iidToDef.get(a.iid);
+    if (defId === undefined) continue;
+    const v = cardValue(defId, view);
+    const score = wantLow ? -v : v;
+    if (score > bestScore) {
+      bestScore = score;
+      best = a;
+    }
+  }
+  return best;
+}
+
+/**
+ * Rough worth of a resource card: a component is its symbol count, +1 when it pays
+ * toward an unfueled prepared card right now; trainers sit between duals and tris.
+ */
+function cardValue(defId: string, view: PlayerView): number {
+  const comp = getComponent(defId);
+  if (comp) {
+    let v = comp.symbols.V + comp.symbols.S + comp.symbols.M;
+    for (const prep of view.self.prepared) {
+      if (prep.cast || prep.sealed || !prep.spellDefId) continue;
+      const cost = getCard(prep.spellDefId)?.cost;
+      if (!cost) continue;
+      const missing = missingCost(cost, prep);
+      if (comp.symbols.V * missing.V + comp.symbols.S * missing.S + comp.symbols.M * missing.M > 0) {
+        v += 1;
+        break;
+      }
+    }
+    return v;
+  }
+  const card = getCard(defId);
+  if (card?.type === "Item" || card?.type === "Gambit") return 2.5;
+  return 1;
 }
 
 /** Symbols a prepared spell still needs beyond what's already attached. */

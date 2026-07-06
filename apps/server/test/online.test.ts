@@ -183,6 +183,54 @@ describe("online server", () => {
     b.close();
   });
 
+  it("a solo bot room plays a full match to termination and rematches", { timeout: 120_000 }, async () => {
+    const rand = lcg(4242);
+    const a = new TestClient(wsUrl);
+    await a.open();
+    a.send({ t: "create", deck: { preset: "Emberworks" }, bot: true });
+    await a.waitFor(() => a.latest !== null, "bot room created + first frame");
+    expect(a.lobby!.side).toBe(0);
+    // The bot occupies the relative-opponent seat and is announced as present.
+    expect(a.latest!.bots).toEqual([1]);
+    expect(a.messages.some((m) => m.t === "presence" && m.opponentConnected)).toBe(true);
+    // Joining a bot room must fail — the seat is taken.
+    const b = new TestClient(wsUrl);
+    await b.open();
+    b.send({ t: "join", code: a.lobby!.code, school: "Abjuration" });
+    await b.waitFor(() => b.errors.length > 0, "join rejected");
+    expect(b.errors[0]).toContain("full");
+    b.close();
+
+    const until = async (pred: () => boolean, label: string, timeoutMs = 10_000) => {
+      const t0 = Date.now();
+      while (!pred()) {
+        if (Date.now() - t0 > timeoutMs) throw new Error(`timeout waiting for ${label}`);
+        await new Promise((r) => setTimeout(r, 2));
+      }
+    };
+    let actions = 0;
+    while (actions < 20_000 && !a.latest!.gameOver) {
+      await until(() => a.latest!.yourTurn || a.latest!.gameOver, "our turn or game over");
+      if (a.latest!.gameOver) break;
+      const legal = a.latest!.legal;
+      expect(legal.length, "human on turn must have legal actions").toBeGreaterThan(0);
+      const idx = Math.floor(rand() * legal.length);
+      const before = a.states.length;
+      a.send({ t: "act", indices: [idx] });
+      await until(() => a.states.length > before, "state frame after acting");
+      actions++;
+    }
+    expect(a.latest!.gameOver).toBe(true);
+    expect(a.errors).toEqual([]);
+    for (const s of a.states) assertNoLeaks(s);
+
+    // Rematch: the bot auto-accepts, so one vote restarts the room.
+    const epochBefore = a.latest!.epoch;
+    a.send({ t: "rematch" });
+    await until(() => a.latest!.epoch > epochBefore && !a.latest!.gameOver, "rematch started");
+    a.close();
+  });
+
   it("a dropped client rejoins with its token and resumes the match", async () => {
     const a = new TestClient(wsUrl);
     await a.open();

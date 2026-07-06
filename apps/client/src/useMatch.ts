@@ -12,6 +12,8 @@ export interface OnlineApi {
   /** The server was redeployed since this bundle loaded — prompt a refresh. */
   updateAvailable: boolean;
   create: (deck: DeckChoice) => void;
+  /** Solo match against the server-side bot (works in production, unlike local vs-bot). */
+  createBot: (deck: DeckChoice) => void;
   join: (code: string, deck: DeckChoice) => void;
   leave: () => void;
   rematch: () => void;
@@ -164,6 +166,13 @@ export function useMatch(): UseMatch {
       (deck: DeckChoice) => {
         goOnline();
         onlineClient().create(deck);
+      },
+      [goOnline, onlineClient],
+    ),
+    createBot: useCallback(
+      (deck: DeckChoice) => {
+        goOnline();
+        onlineClient().createBot(deck);
       },
       [goOnline, onlineClient],
     ),

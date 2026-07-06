@@ -116,6 +116,11 @@ export class OnlineClient {
     this.open({ t: "create", deck });
   }
 
+  /** Solo room: the server seats a heuristic bot opposite you (random preset). */
+  createBot(deck: DeckChoice): void {
+    this.open({ t: "create", deck, bot: true });
+  }
+
   join(code: string, deck: DeckChoice): void {
     this.open({ t: "join", code: code.toUpperCase().trim(), deck });
   }

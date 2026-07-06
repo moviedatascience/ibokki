@@ -55,9 +55,11 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 
 - Piloted play via the MCP tools (`new_match`/`act`/`match_state`/`simulate`/`card`) is the
   meaningful balance/bug channel. Logs go in `playtests/` (see prior matches there).
-- **The heuristic bot cannot pilot Reactions** (it never pre-attaches their cost since the
-  pre-attach ruling) or Divination's card advantage — `simulate` matrices involving Abj/Div
-  are artifacts. Trust piloted matches, not bot win rates.
+- The heuristic bot (2026-07-05 rework) plays trainers, deliberately prepares + pre-fuels a
+  Reaction, scores look/loot/scry choices, and fuels its biggest spell before casting — `simulate`
+  matrices are now a meaningful coarse signal for all three schools (it's also the production
+  solo-mode opponent and the rollout policy for a future search bot). Piloted matches remain the
+  gold standard for fine reads; the bot is still greedy (no lookahead, naive reaction timing).
 - Live-bug pattern so far: every production bug was a `SIMPLIFIED`/auto-resolve stand-in for
   a real player decision, or a proxy condition for intent. `grep -rn SIMPLIFIED packages/engine`
   is the suspect list when a card misbehaves.

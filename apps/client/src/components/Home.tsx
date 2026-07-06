@@ -166,6 +166,10 @@ export function Home({ auth, deckData, online, hasLocalMatch, onPlayBot, onResum
           <button style={{ width: "100%" }} disabled={joinCode.trim().length < 5} onClick={() => online.join(joinCode, decodeChoice(choice))} data-testid="online-join">
             Join room
           </button>
+          <button style={{ width: "100%" }} onClick={() => online.createBot(decodeChoice(choice))} data-testid="online-bot">
+            Play vs bot
+          </button>
+          <div className="hint">No opponent? The bot plays a random archetype deck.</div>
         </div>
 
         {hasLocalMatch && (

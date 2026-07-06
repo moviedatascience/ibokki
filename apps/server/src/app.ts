@@ -27,7 +27,9 @@ import {
   isTerminal,
   legalActions,
   presetDeck,
+  PRESET_DECKS,
   PRESET_SCHOOLS,
+  redact,
   validateDeck,
   type Action,
   type DeckDefinition,
@@ -45,7 +47,7 @@ import {
   type SchoolName,
   type ServerMessage,
 } from "@ibokki/protocol";
-import { describeEvent } from "@ibokki/sim";
+import { describeEvent, makeAgent, type Agent } from "@ibokki/sim";
 import { Db } from "./db.ts";
 import { createMailer, type Mailer } from "./mail.ts";
 import { handleApi, oidcFromEnv, userFromRequest, type ApiContext, type OidcConfig } from "./api.ts";
@@ -76,6 +78,8 @@ interface Room {
   /** Raw events since the last act batch; redacted per viewer at push time. */
   recentEvents: GameEvent[];
   rematchVotes: Set<PlayerId>;
+  /** Server-side bot piloting seat 1 (solo rooms); null for PvP. */
+  bot: Agent | null;
   /** For idle-room cleanup. */
   lastActivity: number;
 }
@@ -154,7 +158,7 @@ function pushState(room: Room, side: PlayerId, error?: string): void {
     {
       state: room.state,
       schools: deckNamesOf(room),
-      bots: [],
+      bots: room.bot ? [1] : [],
       log: room.logs[side],
       epoch: room.epoch,
       events: room.recentEvents,
@@ -163,6 +167,18 @@ function pushState(room: Room, side: PlayerId, error?: string): void {
     { relative: true },
   );
   send(seat.ws, { t: "state", state, ...(error ? { error } : {}) });
+}
+
+/** Let a solo room's bot (seat 1) act until only the human can move. */
+function autoPlayBot(room: Room): void {
+  if (!room.bot || !room.state) return;
+  let guard = 0;
+  while (!isTerminal(room.state) && ++guard < 1000) {
+    const legal = legalActions(room.state, 1);
+    if (legal.length === 0) break;
+    const action = room.bot.chooseAction(redact(room.state, 1), legal);
+    applyAction(room, 1, action);
+  }
 }
 
 function pushBoth(room: Room): void {
@@ -210,6 +226,7 @@ function handleAct(room: Room, side: PlayerId, indices: number[]): void {
     }
     applyAction(room, side, legal[idx]!);
   }
+  autoPlayBot(room);
   pushState(room, side, error ?? undefined);
   pushState(room, (side ^ 1) as PlayerId);
 }
@@ -217,9 +234,11 @@ function handleAct(room: Room, side: PlayerId, indices: number[]): void {
 function handleRematch(room: Room, side: PlayerId): void {
   if (!room.state || !isTerminal(room.state)) return;
   room.rematchVotes.add(side);
+  if (room.bot) room.rematchVotes.add(1); // the bot always accepts
   room.lastActivity = Date.now();
   if (room.rematchVotes.size === 2) {
     startMatch(room);
+    autoPlayBot(room);
     pushBoth(room);
   } else {
     // Let the other player know a rematch is on offer via their log.
@@ -250,19 +269,34 @@ function handleMessage(ws: WebSocket, msg: ClientMessage, db: Db, userId: number
     case "create": {
       const resolved = resolveDeck(db, msg, userId);
       if ("error" in resolved) return pushError(ws, resolved.error);
+      // Solo room: seat 1 is a server-side bot playing a preset (random archetype by default).
+      let botSeat: Seat | null = null;
+      let bot: Agent | null = null;
+      if (msg.bot) {
+        const preset = presetDeck(msg.botDeck?.preset ?? "") ?? PRESET_DECKS[randomInt(PRESET_DECKS.length)]!;
+        botSeat = { token: randomUUID(), deckName: preset.name, deck: preset, ws: null };
+        bot = makeAgent("heuristic", newSeed());
+      }
       const room: Room = {
         code: newCode(),
-        seats: [{ token: randomUUID(), deckName: resolved.name, deck: resolved.deck, ws: null }, null],
+        seats: [{ token: randomUUID(), deckName: resolved.name, deck: resolved.deck, ws: null }, botSeat],
         state: null,
         logs: [[], []],
         epoch: 0,
         recentEvents: [],
         rematchVotes: new Set(),
+        bot,
         lastActivity: Date.now(),
       };
       rooms.set(room.code, room);
       seatSocket(room, 0, ws);
       send(ws, { t: "created", code: room.code, side: 0, token: room.seats[0].token, catalog: CATALOG, build: BUILD });
+      if (room.bot) {
+        startMatch(room);
+        autoPlayBot(room); // bot lays its prepare-phase spells before the first frame
+        send(ws, { t: "presence", opponentConnected: true });
+        pushState(room, 0);
+      }
       return;
     }
     case "join": {

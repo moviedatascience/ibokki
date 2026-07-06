@@ -272,9 +272,10 @@ export interface DeckChoice {
   deckId?: number;
 }
 
-/** Client → server. */
+/** Client → server. `bot: true` fills seat 1 with a server-side bot (solo play);
+ *  `botDeck` picks its deck (preset only), defaulting to a random archetype. */
 export type ClientMessage =
-  | { t: "create"; school?: SchoolName; deck?: DeckChoice }
+  | { t: "create"; school?: SchoolName; deck?: DeckChoice; bot?: boolean; botDeck?: DeckChoice }
   | { t: "join"; code: string; school?: SchoolName; deck?: DeckChoice }
   | { t: "rejoin"; code: string; token: string }
   | { t: "act"; indices: number[] }
