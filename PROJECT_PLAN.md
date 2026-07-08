@@ -277,6 +277,30 @@ resourceDeck }, …] })` accepts any card-id lists, so this is additive, not an 
 Open design calls for the user: target Resource Deck size (fixed legal size vs. flexible), and whether
 the ramp/trainer guidelines are hard rules or soft warnings.
 
+### 10b. Onboarding — Visual Novel tutorial (added 2026-07-08)
+
+New players hit three walls at once: the V/S/M component economy, the LIFO stack with Reactions, and
+"why would I ever mix schools?" The plan: a **story-driven Visual Novel** that teaches the mechanics
+and deckbuilding through a worldbuilding plot, instead of a dry tooltip tour.
+
+- **Shape:** chaptered VN (portraits, backgrounds, dialogue, light choices) interleaved with
+  **scripted micro-duels on the real board**. The engine makes this cheap: it's deterministic and
+  headless, so each lesson is just `createGame` with an authored deck + fixed seed + a scripted
+  "puppet" opponent, with `legalActions` filtered down to the moves the lesson wants to allow.
+  No second rules implementation to maintain.
+- **Curriculum, one concept per chapter:** (1) components + casting a spell, (2) the stack, priority
+  and Reactions, (3) the prepare phase / spellbook model + leveling ramp, (4) the
+  Evocation/Abjuration/Divination triangle (fight each school, feel its gameplan), (5) capstone:
+  build a legal deck in the deckbuilder and take it into a boss duel.
+- **Fiction doubles as design canon:** the VN is where the world (the schools' identities, who the
+  wizards are, why they duel) gets written down — feeds card flavor, art direction, and the site.
+- **Art:** new asset classes (character portraits, scene backgrounds, chapter cards) — extend
+  `art/MANIFEST.md` and follow `art/STYLE_BIBLE.md` registers; generated via the existing `/art`
+  ComfyUI pipeline.
+- **Open decisions:** in-client route (e.g. `/play/learn`, reusing the Pixi board + React shell)
+  vs. a separate app; hand-rolled React dialogue system vs. a narrative scripting library
+  (ink / Yarn Spinner) for the script; plot scope and chapter count.
+
 ---
 
 ## 11. Desktop & Steam (deferred, boundary kept clean now)
@@ -331,6 +355,9 @@ the ramp/trainer guidelines are hard rules or soft warnings.
 - **M6 — Client polish.** Pixi board, animations, React shell, deckbuilder, targeting UX.
 - **M7 — Meta + accounts.** Auth, collection, matchmaking queue, match history, ladder.
 - **M8 — Desktop/Steam.** Tauri/Electron wrap, Steamworks, packaging, store page.
+- **M9 — VN onboarding.** Visual-novel tutorial campaign (§10b): scripted engine duels + narrative
+  chapters teaching components, the stack, prepare, the school triangle, and deckbuilding.
+  *(Depends on M6 board + deckbuilder; parallelizable with M7/M8; art via the §art pipeline.)*
 - **Ongoing — Live ops.** Balance patches driven by sim reports; new cards/schools.
 
 ---

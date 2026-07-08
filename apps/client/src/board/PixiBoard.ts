@@ -72,6 +72,9 @@ interface Plate {
   hpMark: PixiSprite | Text; // heart glyph (Text "♥" fallback)
   stats: Text;
   status: Container; // ward / burn / prophecy markers + counts
+  /** Last rendered hp / status signature — updatePlate runs on EVERY sync, so skip unchanged rebuilds. */
+  lastHp: number;
+  statusKey: string;
   box: Box;
   anchor: Pt; // floater anchor (center of plate, world coords)
 }
@@ -217,46 +220,58 @@ export class PixiBoard {
     const status = new Container();
     status.position.set(12, 25);
     root.addChild(glow, bg, name, hpMark, hp, bar, stats, status);
-    return { root, glow, bar, name, hp, hpMark, stats, status, box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
+    return { root, glow, bar, name, hp, hpMark, stats, status, lastHp: NaN, statusKey: "\0", box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
   }
 
   private updatePlate(plate: Plate, label: string, v: PlayerView, active: boolean): void {
     const box = plate.box;
     plate.name.text = label;
-    plate.hp.text = String(v.hp);
-    const hpColor = v.hp <= 10 ? 0xff8b8b : 0xffffff;
-    plate.hp.style.fill = hpColor;
-    if (plate.hpMark instanceof PixiSprite) plate.hpMark.tint = hpColor;
-    else plate.hpMark.style.fill = hpColor;
-    const bw = box.w - 24;
-    const pct = Math.max(0, Math.min(1, v.hp / HP_MAX));
-    plate.bar.clear();
-    plate.bar.roundRect(12, 26, bw, 8, 4).fill(0x0c0f14).stroke({ width: 1, color: 0x333a47 });
-    plate.bar.roundRect(12, 26, bw * pct, 8, 4).fill(v.hp <= 10 ? 0xff7849 : 0x5fce76);
+    // Pixi Text/fill setters no-op on unchanged values, but the Graphics bar re-triangulates
+    // on every clear+draw — gate the hp block so it only runs when hp actually moved.
+    if (v.hp !== plate.lastHp) {
+      plate.lastHp = v.hp;
+      plate.hp.text = String(v.hp);
+      const hpColor = v.hp <= 10 ? 0xff8b8b : 0xffffff;
+      plate.hp.style.fill = hpColor;
+      if (plate.hpMark instanceof PixiSprite) plate.hpMark.tint = hpColor;
+      else plate.hpMark.style.fill = hpColor;
+      const bw = box.w - 24;
+      const pct = Math.max(0, Math.min(1, v.hp / HP_MAX));
+      plate.bar.clear();
+      plate.bar.roundRect(12, 26, bw, 8, 4).fill(0x0c0f14).stroke({ width: 1, color: 0x333a47 });
+      plate.bar.roundRect(12, 26, bw * pct, 8, 4).fill(v.hp <= 10 ? 0xff7849 : 0x5fce76);
+    }
     // Deck/hand counts render at the piles; prepared cards are visible on the board.
     plate.stats.text = `Lv ${v.level} · slots ${v.slotsUsedThisRound}/${v.slots}`;
     // Status markers: woodcut glyph + count segments, right-aligned over the HP bar.
-    const st = plate.status;
-    for (const c of st.removeChildren()) c.destroy({ children: true });
-    let x = 0;
-    const seg = (name: IconName, tint: number, label2: string) => {
-      const mark = icon(name, 12, tint);
-      if (mark) {
-        mark.position.set(x, 0.5);
-        st.addChild(mark);
-        x += 14;
-      }
-      const t = new Text({ text: mark ? label2 : `${name} ${label2}`, style: { fill: tint, fontSize: 11, fontFamily: "system-ui", fontWeight: "700" } });
-      t.position.set(x, 0);
-      st.addChild(t);
-      x += t.width + 8;
-    };
-    if (v.wards && v.wards.length) seg("ward", 0x8fd0ff, v.wards.join("/"));
-    if (v.burn > 0) seg("burn", 0xffa04d, String(v.burn));
+    // Each rebuild rasterizes new Text objects, so skip it while the markers are unchanged.
+    const wardsLabel = v.wards && v.wards.length ? v.wards.join("/") : "";
     // Dooms show as payload@turns-left; "!" marks the unwardable one (Oblivion).
-    for (const p of v.prophecies ?? []) seg("prophecy", 0xc9a0f0, `${p.amount}${p.pierce ? "!" : ""}@${p.turnsLeft}`);
-    if (x > 0) x -= 8;
-    st.position.set(box.w - 12 - x, 25);
+    const doomLabels = (v.prophecies ?? []).map((p) => `${p.amount}${p.pierce ? "!" : ""}@${p.turnsLeft}`);
+    const statusKey = `${wardsLabel}|${v.burn}|${doomLabels.join(" ")}`;
+    if (statusKey !== plate.statusKey) {
+      plate.statusKey = statusKey;
+      const st = plate.status;
+      for (const c of st.removeChildren()) c.destroy({ children: true });
+      let x = 0;
+      const seg = (name: IconName, tint: number, label2: string) => {
+        const mark = icon(name, 12, tint);
+        if (mark) {
+          mark.position.set(x, 0.5);
+          st.addChild(mark);
+          x += 14;
+        }
+        const t = new Text({ text: mark ? label2 : `${name} ${label2}`, style: { fill: tint, fontSize: 11, fontFamily: "system-ui", fontWeight: "700" } });
+        t.position.set(x, 0);
+        st.addChild(t);
+        x += t.width + 8;
+      };
+      if (wardsLabel) seg("ward", 0x8fd0ff, wardsLabel);
+      if (v.burn > 0) seg("burn", 0xffa04d, String(v.burn));
+      for (const label2 of doomLabels) seg("prophecy", 0xc9a0f0, label2);
+      if (x > 0) x -= 8;
+      st.position.set(box.w - 12 - x, 25);
+    }
     plate.glow.visible = active;
   }
 

@@ -51,7 +51,9 @@ const startDriver = (page: Page) =>
   });
 
 test("two tabs play a full online match to game over", async ({ browser }) => {
-  test.setTimeout(240_000);
+  // Random-length matches on CI's 2-core runners were finishing at ~3m of the old 4m budget
+  // (run #25 timed out twice) — keep real headroom over the observed worst case.
+  test.setTimeout(360_000);
   const ctxA = await browser.newContext();
   const ctxB = await browser.newContext();
   const a = await ctxA.newPage();
@@ -79,7 +81,10 @@ test("two tabs play a full online match to game over", async ({ browser }) => {
   await startDriver(a);
   await startDriver(b);
   let over = false;
-  for (let guard = 0; guard < 800 && !over; guard++) {
+  // Wall-clock deadline, not an iteration count: it must exhaust BEFORE test.setTimeout fires
+  // so a hung match fails on the labeled assertion below instead of a generic timeout mid-loop.
+  const deadline = Date.now() + 300_000;
+  for (let guard = 0; Date.now() < deadline && !over; guard++) {
     await a.waitForTimeout(250);
     const [xa, xb] = [await hookState(a), await hookState(b)];
     over = !!xa?.gameOver && !!xb?.gameOver;

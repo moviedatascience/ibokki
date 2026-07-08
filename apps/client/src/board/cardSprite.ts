@@ -61,6 +61,11 @@ export class CardVisual {
   private back = new Container();
   private hlKind: Highlight = "none";
   private hoverBoost = false;
+  /** Last-applied signatures — applyFace() hits every sprite on every sync, so unchanged
+   *  faces/chips/edges must be no-ops instead of Graphics + rasterized-Text rebuilds. */
+  private faceKey: string | null = null;
+  private attachedKey: string | null = null;
+  private edgeKey: EdgeSide = null;
 
   constructor(w: number, h: number) {
     this.w = w;
@@ -128,11 +133,15 @@ export class CardVisual {
   }
 
   setFace(f: CardFace): void {
-    this.drawBody(SCHOOL_COLOR[f.school] ?? SCHOOL_COLOR.Neutral!);
-    this.nameT.text = f.name;
-    const lvl = f.level ? `L${f.level}` : f.type === "Item" || f.type === "Gambit" ? "Trainer" : "";
-    this.metaT.text = [f.type, lvl].filter(Boolean).join(" · ");
-    this.drawCost(f.cost ?? "");
+    const key = `${f.school}|${f.name}|${f.type}|${f.level ?? ""}|${f.cost ?? ""}`;
+    if (key !== this.faceKey) {
+      this.faceKey = key;
+      this.drawBody(SCHOOL_COLOR[f.school] ?? SCHOOL_COLOR.Neutral!);
+      this.nameT.text = f.name;
+      const lvl = f.level ? `L${f.level}` : f.type === "Item" || f.type === "Gambit" ? "Trainer" : "";
+      this.metaT.text = [f.type, lvl].filter(Boolean).join(" · ");
+      this.drawCost(f.cost ?? "");
+    }
     this.setFaceDown(false);
   }
 
@@ -168,6 +177,9 @@ export class CardVisual {
 
   /** Show attached component symbols (e.g. ["V","SM"]) as small pip chips; [] clears them. */
   setAttached(syms: string[]): void {
+    const key = syms.join(",");
+    if (key === this.attachedKey) return;
+    this.attachedKey = key;
     for (const c of this.attC.removeChildren()) c.destroy({ children: true });
     let x = 6;
     for (const sym of syms) {
@@ -201,6 +213,8 @@ export class CardVisual {
 
   /** Controller cue for stack cards: a strip along the owner's table edge (bottom = you). */
   setEdge(side: EdgeSide): void {
+    if (side === this.edgeKey) return;
+    this.edgeKey = side;
     this.edgeG.clear();
     if (!side) return;
     const y = side === "bottom" ? this.h - 5 : 2;
@@ -213,6 +227,7 @@ export class CardVisual {
   }
 
   setHighlight(kind: Highlight): void {
+    if (kind === this.hlKind) return;
     this.hlKind = kind;
     this.drawHl();
   }
