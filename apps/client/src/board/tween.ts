@@ -40,6 +40,21 @@ export class Tweener {
     this.items.push({ ...spec, elapsed: 0 });
   }
 
+  /**
+   * Complete all tweens with `tag` right now: apply their final frame and fire onComplete.
+   * Needed where add()'s silent same-tag replacement would drop an onComplete that MUST run
+   * (e.g. the exit fade that destroys a leaving card — see PixiBoard.reconcile).
+   */
+  finish(tag: string): void {
+    const done = this.items.filter((it) => it.tag === tag);
+    if (!done.length) return;
+    this.items = this.items.filter((it) => it.tag !== tag);
+    for (const it of done) {
+      it.onUpdate((it.ease ?? easeOutCubic)(1));
+      it.onComplete?.();
+    }
+  }
+
   /** Advance all tweens by `dtMs`. Call once per frame from the ticker. */
   update(dtMs: number): void {
     if (!this.items.length) return;

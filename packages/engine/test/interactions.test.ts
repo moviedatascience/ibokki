@@ -310,9 +310,9 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     return apply(s, { type: "choose", iid: c.iid }).state;
   };
 
-  it("Omen (DIV-012): inscribes the L1 starter doom — 3 damage on a 2-turn fuse, no pause", () => {
+  it("Omen (DIV-012): inscribes the L1 starter doom — 2 damage on a 2-turn fuse, no pause", () => {
     const { state } = play("DIV-012", () => {});
-    expect(state.players[1].prophecies).toEqual([{ amount: 3, turnsLeft: 2, pierce: false, defId: "DIV-012" }]);
+    expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 2, pierce: false, defId: "DIV-012" }]);
     expect(state.pendingChoice).toBeNull();
     expect(state.players[1].hp).toBe(30); // nothing until the fuse runs out
   });
@@ -567,6 +567,46 @@ describe("Volatile Bolt attach-trap (EVO-015)", () => {
     let t = apply(s, { type: "cast", preparedIndex: 0 }).state;
     t = apply(t, { type: "pass" }).state; // reaction window for P0
     expect(legalActions(t, 0).some((a) => a.type === "castReaction")).toBe(false);
+  });
+});
+
+describe("reactions answer opponent casts only (ruling 2026-07-08, playtest m1 finding)", () => {
+  /** P1 casts Spark while BOTH sides hold a fueled Backdraft; P1 keeps priority post-cast. */
+  function windowState(): GameState {
+    const s = blankState();
+    s.players[1].prepared = [
+      { spell: inst("EVO-001"), faceDown: false, attached: [inst("CMP-V")], cast: false, sealed: false },
+      { spell: inst("EVO-013"), faceDown: true, attached: [inst("CMP-V")], cast: false, sealed: false },
+    ];
+    s.players[0].prepared = [{ spell: inst("EVO-013"), faceDown: true, attached: [inst("CMP-V")], cast: false, sealed: false }];
+    s.activePlayer = 1;
+    s.priorityPlayer = 1;
+    return apply(s, { type: "cast", preparedIndex: 0 }).state; // P1's Spark tops the stack
+  }
+
+  it("the caster is neither offered nor allowed a reaction to their own spell", () => {
+    const s = windowState();
+    expect(legalActions(s, 1).some((a) => a.type === "castReaction")).toBe(false);
+    expect(() => apply(s, { type: "castReaction", preparedIndex: 1 })).toThrow(/opponent/);
+  });
+
+  it("the defender reacts normally, and the caster may answer THAT reaction", () => {
+    let s = windowState();
+    s = apply(s, { type: "pass" }).state; // P1 commits — P0's window
+    expect(legalActions(s, 0).some((a) => a.type === "castReaction")).toBe(true);
+    s = apply(s, { type: "castReaction", preparedIndex: 0 }).state; // P0's Backdraft now tops
+    // P1's window: the top item is P0's, so P1 may react to it despite owning the original cast.
+    expect(legalActions(s, 1).some((a) => a.type === "castReaction")).toBe(true);
+  });
+
+  it("you cannot chain a second of your own reactions onto your first", () => {
+    let s = windowState();
+    s.players[0].prepared.push({ spell: inst("EVO-013"), faceDown: true, attached: [inst("CMP-V")], cast: false, sealed: false });
+    s = apply(s, { type: "pass" }).state; // P0's window
+    s = apply(s, { type: "castReaction", preparedIndex: 0 }).state; // first Backdraft on top
+    s = apply(s, { type: "pass" }).state; // P1 passes — priority back to P0, own reaction on top
+    expect(legalActions(s, 0).some((a) => a.type === "castReaction")).toBe(false);
+    expect(() => apply(s, { type: "castReaction", preparedIndex: 1 })).toThrow(/opponent/);
   });
 });
 

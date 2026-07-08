@@ -39,6 +39,8 @@ export function Board({ state, cards, onAction, onHover, onSelection, onInspect,
         return;
       }
       boardRef.current = board;
+      // Debug handle for headless verification scripts (same spirit as window.__ibokki).
+      (window as unknown as Record<string, unknown>).__ibokkiBoard = board;
       cbs.current.onReady(board);
     });
     return () => {

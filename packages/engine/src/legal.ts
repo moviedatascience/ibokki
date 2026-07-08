@@ -143,7 +143,10 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
     // spell, its cost must ALREADY be attached — holding components in reserve means
     // attaching them to your Reactions on your own turns, not paying from hand mid-window.
     // Stone Stance discounts the cost; the opponent's Aetheric Lock taxes it.
-    if (sumOngoing(state.players[otherPlayer(playerId)], "reactionsLocked") === 0) {
+    // Reactions answer the OPPONENT'S cast on top of the stack only (ruling 2026-07-08) —
+    // never your own spell, and never your own reaction: a second reaction of yours waits
+    // for the first to resolve, when the opponent's spell surfaces again.
+    if (top.controller !== playerId && sumOngoing(state.players[otherPlayer(playerId)], "reactionsLocked") === 0) {
       const discount = sumOngoing(p, "reactionDiscountS");
       const tax = sumOngoing(state.players[otherPlayer(playerId)], "reactionTax");
       for (let i = 0; i < p.prepared.length; i++) {

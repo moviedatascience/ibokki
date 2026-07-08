@@ -29,8 +29,9 @@ describe("MCP match loop", () => {
     const text = renderState(m);
     expect(text).toContain("PREPARE phase");
     expect(text).toContain("Legal actions");
-    expect(text).toMatch(/0: done preparing/);
-    expect(text).toMatch(/\d+: prepare /); // at least one spell can be prepared
+    // Listings carry stable [slug] ids alongside the index (2026-07-08 CLI ergonomics fix).
+    expect(text).toMatch(/0 \[done\]: done preparing/);
+    expect(text).toMatch(/\d+ \[prep-[a-z0-9-]+\]: prepare /); // at least one spell can be prepared
   });
 
   it("resolves decks: default, preset name, custom JSON, and rejects bad specs", () => {

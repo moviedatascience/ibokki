@@ -5,6 +5,7 @@
  *
  *   npm run playtest -- new mygame Evocation Abjuration 42
  *   npm run playtest -- show mygame
+ *   npm run playtest -- act mygame cast-evo-002 "the slug form never suffers stale-index misplays"
  *   npm run playtest -- act mygame 3 "attaching Verbal to threaten Fireball early"
  *   npm run playtest -- auto mygame        # skip forced passes to the next real decision
  *   npm run playtest -- note mygame "they're durdling on wards; I should race"
@@ -13,7 +14,7 @@
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { apply, createGame, deckFor, isTerminal, legalActions, type GameState } from "@ibokki/engine";
-import { describeAction, describeEvent, renderDecision, stateLine } from "./render.ts";
+import { describeAction, describeEvent, renderDecision, slugFor, stateLine } from "./render.ts";
 
 type PlayableSchool = "Evocation" | "Abjuration" | "Divination";
 
@@ -73,8 +74,8 @@ function cmdShow(name: string): void {
 }
 
 function cmdAct(rest: string[]): void {
-  const [name, idxStr, ...noteParts] = rest;
-  if (!name || idxStr === undefined) throw new Error("usage: act <name> <index> [note...]");
+  const [name, ref, ...noteParts] = rest;
+  if (!name || ref === undefined) throw new Error("usage: act <name> <index-or-slug> [note...]");
   const sess = loadSession(name);
   if (isTerminal(sess.state)) {
     console.log("Match is already over.\n\n" + renderDecision(sess.state, sess.schools));
@@ -82,15 +83,28 @@ function cmdAct(rest: string[]): void {
   }
   const actor = sess.state.priorityPlayer;
   const legal = legalActions(sess.state, actor);
-  const index = Number(idxStr);
-  if (!Number.isInteger(index) || index < 0 || index >= legal.length) {
-    console.log(`Invalid index ${idxStr}. Valid 0..${legal.length - 1}.\n\n` + renderDecision(sess.state, sess.schools));
-    return;
+
+  // Resolve by slug (preferred — stable across listings) or by positional index.
+  // A stale slug fails loudly here instead of silently applying the wrong action.
+  let action;
+  if (/^\d+$/.test(ref)) {
+    const index = Number(ref);
+    if (index < 0 || index >= legal.length) {
+      console.log(`Invalid index ${ref}. Valid 0..${legal.length - 1}.\n\n` + renderDecision(sess.state, sess.schools));
+      return;
+    }
+    action = legal[index]!;
+  } else {
+    const want = ref.toLowerCase();
+    action = legal.find((a) => slugFor(sess.state, a, actor) === want);
+    if (!action) {
+      console.log(`No legal action matches slug "${ref}" — the position may have moved on.\n\n` + renderDecision(sess.state, sess.schools));
+      return;
+    }
   }
   const note = noteParts.join(" ").trim();
   if (note) appendLog(name, `\n> **P${actor} (${sess.schools[actor]}) thinks:** ${note}`);
 
-  const action = legal[index]!;
   const label = describeAction(sess.state, action); // label before state changes
   const { state: next, events } = apply(sess.state, action);
   appendLog(name, `- **P${actor}:** ${label}`);
@@ -102,7 +116,8 @@ function cmdAct(rest: string[]): void {
   sess.state = next;
   saveSession(name, sess);
   if (isTerminal(next)) appendLog(name, `\n${resultLine(next)}`);
-  console.log(renderDecision(next, sess.schools));
+  // Echo what was actually taken — the transcript-level guard against misplays.
+  console.log(`→ P${actor} acted: ${label}\n\n` + renderDecision(next, sess.schools));
 }
 
 function cmdNote(rest: string[]): void {

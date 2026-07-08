@@ -37,10 +37,12 @@ register("DIV-008", (c) => c.scryOpponentTopToBottom()); // Scry Glyph (bottom o
 register("DIV-009", (c) => c.addAttuneBonus()); // Attune — next attach counts as +1 needed symbol
 register("DIV-010", (c) => { c.draw(1); c.requestBankToDeckTop(1); }); // Mind's Eye (draw 1, choose 1 to bank on top)
 register("DIV-011", (c) => { c.dealDamage(2); c.requestRevealOpponentHand(); }); // Foretell — the "intel" half is real now
-// Omen — the L1 starter doom (m12 finding: L2+ dooms left rounds 1-4 empty). 3-in-2, not
-// 2-in-2: Foretell (same cost) is 2 NOW plus intel, so the delayed doom needs +1 to be a
-// real prepare-phase choice rather than strictly dominated.
-register("DIV-012", (c) => c.prophesy(3, 2));
+// Omen — the L1 starter doom (m12 finding: L2+ dooms left rounds 1-4 empty). Back to the
+// original 2-in-2 spec (m3 finding): at 3 the guaranteed every-round clock outpaced
+// Abjuration's entire wall economy — Div>Abj went from knife-edge to a structural bleed.
+// vs Foretell (2 NOW plus intel, same cost): the doom's value is that it is announced,
+// re-preparable pressure the opponent must schedule around, not the raw number.
+register("DIV-012", (c) => c.prophesy(2, 2));
 // DIV-013 Quicken RETIRED — redundant now that attaching is unlimited per turn.
 
 // ---- Level 2 ----

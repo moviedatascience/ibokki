@@ -331,6 +331,9 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
 
     case "castReaction": {
       if (state.stack.length === 0) throw new Error("A Reaction needs something to respond to");
+      // Only the opponent's cast on top opens your reaction window (ruling 2026-07-08) —
+      // "when your opponent casts" was previously not enforced, allowing self-reacts.
+      if (state.stack[state.stack.length - 1]!.controller === me) throw new Error("You can only react to your opponent's cast");
       if (sumOngoing(state.players[otherPlayer(me)], "reactionsLocked") > 0) throw new Error("Your Reactions are locked");
       const tier = tierForLevel(p.level);
       const prep = p.prepared[action.preparedIndex];

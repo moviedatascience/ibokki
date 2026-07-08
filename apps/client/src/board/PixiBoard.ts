@@ -455,6 +455,10 @@ export class PixiBoard {
     for (const d of desired) {
       let sp = this.sprites.get(d.key);
       if (!sp) {
+        // A previous card may still be fading out under this key. enter()'s same-tag tween
+        // would silently cancel that exit fade WITHOUT its onComplete — leaking the old
+        // visual into the layer forever — so complete the exit (and its destroy) now.
+        this.tweener.finish(d.key + ":move");
         const visual = new CardVisual(d.w, d.h);
         d.layer.addChild(visual.root);
         const created: Sprite = { visual, layer: d.layer, faceDef: d.faceDef };

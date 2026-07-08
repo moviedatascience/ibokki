@@ -1544,8 +1544,8 @@
       "S": 0,
       "M": 1
     },
-    "text": "Prophecy - at the start of your opponent's second turn from now, deal 3 damage to them.",
-    "comment": "The L1 starter doom - gives the prophecy identity a presence in rounds 1-4 before the L2+ dooms unlock (m12 finding). One more than Foretell's sting because it arrives two turns late."
+    "text": "Prophecy - at the start of your opponent's second turn from now, deal 2 damage to them.",
+    "comment": "The L1 starter doom - gives the prophecy identity a presence in rounds 1-4 before the L2+ dooms unlock (m12 finding). Restored to 2-in-2 (m3 finding): at 3 the guaranteed clock outpaced Abjuration's entire wall economy."
   },
   {
     "id": "DIV-014",

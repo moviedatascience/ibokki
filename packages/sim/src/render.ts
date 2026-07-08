@@ -70,6 +70,45 @@ export function describeAction(state: GameState, action: Action, actor?: PlayerI
   }
 }
 
+/**
+ * Stable, human-typable id for a legal action. Unlike the list INDEX, a slug never
+ * shifts when the action list changes between listings, so acting by slug either hits
+ * the intended action or fails loudly — the m1/m2 piloted playtests lost ~8 moves to
+ * stale indices. Two actions share a slug only when they are interchangeable (e.g.
+ * attaching either of two identical hand components to the same prepared slot);
+ * prepared spells are spellbook-singletons, so cast/prep/react slugs are unique.
+ */
+export function slugFor(state: GameState, action: Action, actor?: PlayerId): string {
+  const p = state.players[actor ?? state.priorityPlayer];
+  const low = (defId: string | undefined): string => (defId ?? "?").toLowerCase();
+  switch (action.type) {
+    case "prepareSpell":
+      return `prep-${low(p.spellbook.find((c) => c.iid === action.spellIid)?.defId)}`;
+    case "replacePrepared":
+      return `swap-${low(p.prepared[action.preparedIndex]?.spell.defId)}-${low(p.spellbook.find((c) => c.iid === action.spellIid)?.defId)}`;
+    case "donePreparing":
+      return "done";
+    case "mulligan":
+      return "mulligan";
+    case "pass":
+      return "pass";
+    case "attach":
+      return `att-${low(p.hand.find((c) => c.iid === action.handIid)?.defId)}-${action.preparedIndex}`;
+    case "detach":
+      return `det-${low(p.prepared[action.preparedIndex]?.attached.find((c) => c.iid === action.componentIid)?.defId)}-${action.preparedIndex}`;
+    case "cast":
+      return `cast-${low(p.prepared[action.preparedIndex]?.spell.defId)}`;
+    case "castReaction":
+      return `react-${low(p.prepared[action.preparedIndex]?.spell.defId)}`;
+    case "retractCast":
+      return "retract";
+    case "playTrainer":
+      return `play-${low(p.hand.find((c) => c.iid === action.handIid)?.defId)}`;
+    case "choose":
+      return `pick-${low(state.pendingChoice?.candidates.find((x) => x.iid === action.iid)?.defId)}`;
+  }
+}
+
 export function describeEvent(e: GameEvent): string | null {
   switch (e.type) {
     case "cast":
@@ -150,8 +189,8 @@ export function renderDecision(state: GameState, schools?: [string, string], vie
   const listLegal = (): void => {
     if (!yourTurn) return;
     const legal = legalActions(state, view);
-    lines.push("Legal actions:");
-    legal.forEach((a, i) => lines.push(`  ${i}: ${describeAction(state, a)}`));
+    lines.push("Legal actions (act by index or by [slug] — slugs don't shift between listings):");
+    legal.forEach((a, i) => lines.push(`  ${i} [${slugFor(state, a, view)}]: ${describeAction(state, a, view)}`));
   };
 
   // Prepare phase.

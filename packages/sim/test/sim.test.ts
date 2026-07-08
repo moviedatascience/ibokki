@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { deckFor, type Action, type PlayerView } from "@ibokki/engine";
+import { apply, createGame, deckFor, legalActions, type Action, type PlayerView } from "@ibokki/engine";
 import { HeuristicBot, makeAgent, runMatch, runMatchup } from "../src/index.ts";
+import { describeAction, slugFor } from "../src/render.ts";
 
 describe("runMatch", () => {
   it("produces a terminal result", () => {
@@ -23,6 +24,28 @@ describe("runMatch", () => {
     const a = runMatch({ ...cfg(), decks: [...cfg().decks], agents: [...cfg().agents] });
     const b = runMatch({ ...cfg(), decks: [...cfg().decks], agents: [...cfg().agents] });
     expect(a.hash).toBe(b.hash);
+  });
+});
+
+describe("action slugs (stable playtest-CLI addressing)", () => {
+  it("every legal action gets a slug, and equal slugs are interchangeable actions", () => {
+    // Walk a few random-ish states and check the invariants on each decision point.
+    let s = createGame({ seed: 7, players: [deckFor("Evocation"), deckFor("Divination")] });
+    for (let step = 0; step < 60 && s.phase !== "gameover"; step++) {
+      const actor = s.priorityPlayer;
+      const legal = legalActions(s, actor);
+      const byslug = new Map<string, string>(); // slug -> label
+      for (const a of legal) {
+        const slug = slugFor(s, a, actor);
+        expect(slug).toMatch(/^[a-z0-9?-]+$/); // lowercase, typable, no spaces
+        const label = describeAction(s, a, actor);
+        // Same slug must mean the same effect: identical human label.
+        const prior = byslug.get(slug);
+        if (prior !== undefined) expect(label).toBe(prior);
+        else byslug.set(slug, label);
+      }
+      s = apply(s, legal[step % legal.length]!, actor).state;
+    }
   });
 });
 
