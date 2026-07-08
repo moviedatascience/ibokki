@@ -66,6 +66,28 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 - Verify UIs headlessly: Playwright scripts save PNGs, then Read the PNG (renders visually).
   Client debug hook: `window.__ibokki = {state, act, online}`.
 
+## Art pipeline
+
+- `/art <asset|defId|next>` skill: generate options via the local ComfyUI Krea2 MCP
+  (`mcp__comfyui__generate_image`), stage in `art/review/` (gitignored), present a gallery
+  artifact, user picks, winner lands in `apps/client/public/art/` keyed by defId.
+- `art/STYLE_BIBLE.md` = the art-direction law (2026-07-07): old-school D&D/early-MtG
+  homage, Plate vs Cover registers by card tier, muted-earth palette + one school accent,
+  immutable prompt blocks (§13) + standing negative prompt, QA kill-list (§15). Follow it
+  for ANY visual work, not just card art.
+- `art/MANIFEST.md` = prioritized asset list + integration points (audited 2026-07-06:
+  the client ships zero image files; drop-in points are commented in `cardSprite.ts`,
+  `.sbart`, `PixiBoard.buildStatic()`). `art/chosen.json` = accepted prompts/seeds — the
+  style anchors. The user is the art director: never generate batches or file winners
+  without being asked.
+- ComfyUI must be running; originals save to
+  `E:\ai\ComfyUI_windows_portable\ComfyUI_windows_portable\ComfyUI\output\`.
+- Approved woodcut glyphs live in `art/glyphs/` (SVG source of truth) and are WIRED into
+  the client: `.claude/skills/art/ship-glyphs.ps1` copies them (white-filled for Pixi
+  tinting) to `apps/client/public/art/`; Pixi consumers go through
+  `apps/client/src/board/icons.ts`, DOM through `components/Pips.tsx`. Re-run the ship
+  script after any glyph edit. All consumers fall back to text/procedural if assets fail.
+
 ## Deploy
 
 Live at ibokki.com/play, mounted inside the separate Django site repo (ibokkiSite) via

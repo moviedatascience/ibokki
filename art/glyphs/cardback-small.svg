@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92 128">
+  <!-- Card back, simplified 92x128 board variant: field, one rule, the three sigils
+       stacked. Ornament drops away; the Invocation remains. -->
+  <defs>
+    <symbol id="cbs-eye" viewBox="0 0 100 100">
+      <path fill-rule="evenodd" d="M 4.0 48.6 C 19.0 33.4, 41.0 27.2, 58.0 29.4 C 74.0 31.5, 88.0 38.8, 96.2 48.2 C 82.6 66.4, 56.6 72.6, 38.0 68.4 C 23.6 65.2, 11.4 58.4, 4.0 48.6 Z M 17.6 48.8 C 29.4 39.6, 47.0 36.4, 59.6 38.6 C 69.8 40.4, 78.2 44.0, 84.4 48.4 C 72.4 60.8, 51.8 64.4, 39.4 61.2 C 30.0 58.8, 22.8 54.4, 17.6 48.8 Z"/>
+      <path fill-rule="evenodd" d="M 51.0 33.0 C 60.4 33.4, 67.2 40.4, 66.8 49.0 C 66.4 57.6, 58.8 64.0, 49.8 63.6 C 40.8 63.2, 34.0 56.2, 34.4 47.6 C 34.8 39.2, 41.8 32.6, 51.0 33.0 Z M 44.6 40.0 C 41.8 40.2, 40.0 42.4, 40.2 45.0 C 40.4 47.6, 42.8 49.4, 45.4 49.2 C 48.0 49.0, 49.8 46.8, 49.6 44.2 C 49.4 41.6, 47.4 39.8, 44.6 40.0 Z"/>
+    </symbol>
+    <symbol id="cbs-bow" viewBox="0 0 100 100">
+      <path d="M 55.0 5.0 C 27.0 16.0, 11.0 32.0, 11.4 50.6 C 11.8 69.2, 28.2 85.2, 56.0 95.4 L 50.0 81.0 C 33.4 72.6, 26.0 62.4, 25.8 50.2 C 25.6 38.0, 32.8 27.4, 48.6 19.0 Z"/>
+      <path d="M 58.2 9.0 L 64.4 8.8 L 65.4 91.0 L 59.2 91.2 Z"/>
+    </symbol>
+    <symbol id="cbs-key" viewBox="0 0 100 100">
+      <path fill-rule="evenodd" d="M 8.0 36.6 L 31.0 28.8 L 31.4 71.4 L 8.4 63.2 Z M 14.2 41.6 L 25.0 37.4 L 25.3 62.4 L 14.5 58.4 Z"/>
+      <path d="M 30.6 44.8 L 91.0 45.4 C 94.2 47.8, 94.0 51.4, 90.6 54.2 L 30.4 53.6 Z"/>
+      <path d="M 72.8 53.7 L 73.2 70.4 L 81.4 70.6 L 81.0 53.8 Z"/>
+      <path d="M 84.6 53.9 L 84.9 64.8 L 91.8 65.0 L 91.5 54.0 Z"/>
+    </symbol>
+  </defs>
+
+  <rect width="92" height="128" rx="6" fill="#2f2721"/>
+  <rect x="3.5" y="3.5" width="85" height="121" rx="4" fill="none" stroke="#c99a3f" stroke-width="1.6"/>
+
+  <use href="#cbs-eye" x="30" y="14" width="32" height="32" fill="#c99a3f"/>
+  <use href="#cbs-bow" x="30" y="48" width="32" height="32" fill="#c99a3f"/>
+  <use href="#cbs-key" x="30" y="82" width="32" height="32" fill="#c99a3f"/>
+</svg>

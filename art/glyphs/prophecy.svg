@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+  <!-- Prophecy marker: hourglass nearly run out — the doom arrives on schedule. -->
+  <path d="M 23.0 7.6 L 77.0 8.0 L 77.0 15.2 L 23.0 14.8 Z" />
+  <path d="M 23.0 84.8 L 77.0 85.2 L 77.0 92.4 L 23.0 92.0 Z" />
+  <path fill-rule="evenodd" d="
+    M 27.6 16.0 L 72.4 16.4 L 51.6 50.0 L 48.4 50.0 Z
+    M 36.0 22.0 L 64.0 22.3 L 50.6 43.6 L 49.4 43.6 Z" />
+  <path d="M 48.4 50.6 L 51.6 50.6 L 71.4 84.2 L 28.6 83.8 Z" />
+</svg>

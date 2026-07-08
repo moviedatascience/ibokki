@@ -1,4 +1,5 @@
-import { Container, Graphics, Text } from "pixi.js";
+import { Container, Graphics, Sprite, Text } from "pixi.js";
+import { PIP_TINT, cardbackTexture, icon } from "./icons.ts";
 
 /**
  * A neutral placeholder card: rounded-rect body, a school-tinted title band, name / type+level /
@@ -52,12 +53,12 @@ export class CardVisual {
   private band = new Graphics();
   private edgeG = new Graphics();
   private hl = new Graphics();
-  private stampG = new Graphics();
+  private stampC = new Container();
   private nameT: Text;
   private metaT: Text;
-  private costT: Text;
+  private costC = new Container();
   private attC = new Container();
-  private back = new Graphics();
+  private back = new Container();
   private hlKind: Highlight = "none";
   private hoverBoost = false;
 
@@ -73,20 +74,28 @@ export class CardVisual {
     this.nameT.position.set(7, 6);
     this.metaT = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 9.5, fontFamily: "system-ui" } });
     this.metaT.position.set(7, h - 16);
-    this.costT = new Text({ text: "", style: { fill: 0xffe6a6, fontSize: 11, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
 
     this.drawBack();
-    // Cancelled ✕ stamp, revealed via setStamp.
-    this.stampG
-      .moveTo(w * 0.32, h * 0.34)
-      .lineTo(w * 0.68, h * 0.66)
-      .moveTo(w * 0.68, h * 0.34)
-      .lineTo(w * 0.32, h * 0.66)
-      .stroke({ width: 4, color: 0xff5050, alpha: 0.85 });
-    this.stampG.visible = false;
+    // Cancelled stamp (woodcut X glyph, procedural fallback), revealed via setStamp.
+    const stampSize = Math.min(w, h) * 0.5;
+    const stamp = icon("cancelled", stampSize, 0xff5050);
+    if (stamp) {
+      stamp.alpha = 0.9;
+      stamp.position.set((w - stampSize) / 2, (h - stampSize) / 2);
+      this.stampC.addChild(stamp);
+    } else {
+      const g = new Graphics();
+      g.moveTo(w * 0.32, h * 0.34)
+        .lineTo(w * 0.68, h * 0.66)
+        .moveTo(w * 0.68, h * 0.34)
+        .lineTo(w * 0.32, h * 0.66)
+        .stroke({ width: 4, color: 0xff5050, alpha: 0.85 });
+      this.stampC.addChild(g);
+    }
+    this.stampC.visible = false;
     // attC sits above `back` so attached-component chips stay visible on face-down cards
     // (the opponent's attachments are public information).
-    this.root.addChild(this.body, this.band, this.edgeG, this.nameT, this.metaT, this.costT, this.back, this.attC, this.stampG, this.hl);
+    this.root.addChild(this.body, this.band, this.edgeG, this.nameT, this.metaT, this.costC, this.back, this.attC, this.stampC, this.hl);
     this.setHighlight("none");
   }
 
@@ -101,11 +110,21 @@ export class CardVisual {
 
   private drawBack(): void {
     const { w, h } = this;
-    this.back.clear();
-    this.back.roundRect(0, 0, w, h, 9).fill(0x141a24).stroke({ width: 1, color: 0x2b313c });
-    for (let d = -h; d < w; d += 12) this.back.moveTo(Math.max(0, d), Math.max(0, -d)).lineTo(Math.min(w, d + h), Math.min(h, w - d));
-    this.back.stroke({ width: 1, color: 0x222b39, alpha: 0.8 });
-    this.back.circle(w / 2, h / 2, 12).stroke({ width: 1.5, color: 0x39435a });
+    // The Invocation card back (art/cardback-small.svg); procedural hatch fallback.
+    const tex = cardbackTexture();
+    if (tex) {
+      const sp = new Sprite(tex);
+      sp.width = w;
+      sp.height = h;
+      this.back.addChild(sp);
+      return;
+    }
+    const g = new Graphics();
+    g.roundRect(0, 0, w, h, 9).fill(0x141a24).stroke({ width: 1, color: 0x2b313c });
+    for (let d = -h; d < w; d += 12) g.moveTo(Math.max(0, d), Math.max(0, -d)).lineTo(Math.min(w, d + h), Math.min(h, w - d));
+    g.stroke({ width: 1, color: 0x222b39, alpha: 0.8 });
+    g.circle(w / 2, h / 2, 12).stroke({ width: 1.5, color: 0x39435a });
+    this.back.addChild(g);
   }
 
   setFace(f: CardFace): void {
@@ -113,28 +132,67 @@ export class CardVisual {
     this.nameT.text = f.name;
     const lvl = f.level ? `L${f.level}` : f.type === "Item" || f.type === "Gambit" ? "Trainer" : "";
     this.metaT.text = [f.type, lvl].filter(Boolean).join(" · ");
-    this.costT.text = f.cost ?? "";
-    this.costT.position.set(this.w - this.costT.width - 6, this.h - 17);
+    this.drawCost(f.cost ?? "");
     this.setFaceDown(false);
+  }
+
+  /** Cost as woodcut V/S/M pips, right-aligned in the bottom corner; letter fallback. */
+  private drawCost(cost: string): void {
+    for (const c of this.costC.removeChildren()) c.destroy({ children: true });
+    if (!cost) return;
+    const size = 11;
+    const gap = 2;
+    let ok = true;
+    const sprites = [...cost].map((sym) => {
+      const sp = icon(sym.toLowerCase() as "v" | "s" | "m", size, PIP_TINT[sym]);
+      if (!sp) ok = false;
+      return sp;
+    });
+    if (ok) {
+      sprites.forEach((sp, i) => {
+        sp!.position.set(i * (size + gap), 0);
+        this.costC.addChild(sp!);
+      });
+      this.costC.position.set(this.w - (cost.length * (size + gap) - gap) - 6, this.h - 17);
+    } else {
+      const t = new Text({ text: cost, style: { fill: 0xffe6a6, fontSize: 11, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
+      this.costC.addChild(t);
+      this.costC.position.set(this.w - t.width - 6, this.h - 17);
+    }
   }
 
   setFaceDown(down: boolean): void {
     this.back.visible = down;
-    this.body.visible = this.band.visible = this.nameT.visible = this.metaT.visible = this.costT.visible = !down;
+    this.body.visible = this.band.visible = this.nameT.visible = this.metaT.visible = this.costC.visible = !down;
   }
 
-  /** Show attached component symbols (e.g. ["V","SM"]) as small chips; [] clears them. */
+  /** Show attached component symbols (e.g. ["V","SM"]) as small pip chips; [] clears them. */
   setAttached(syms: string[]): void {
     for (const c of this.attC.removeChildren()) c.destroy({ children: true });
     let x = 6;
     for (const sym of syms) {
-      const t = new Text({ text: sym, style: { fill: 0xffe6a6, fontSize: 9, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
-      const w = Math.ceil(t.width) + 8;
-      const g = new Graphics();
-      g.roundRect(0, 0, w, 14, 4).fill(0x10151d).stroke({ width: 1, color: 0x6b5c22 });
-      t.position.set(4, 2);
       const chip = new Container();
-      chip.addChild(g, t);
+      const pipSize = 9;
+      const gap = 1.5;
+      const pips = [...sym].map((ch) => icon(ch.toLowerCase() as "v" | "s" | "m", pipSize, PIP_TINT[ch]));
+      let w: number;
+      if (pips.every((p) => p !== null)) {
+        w = 8 + sym.length * pipSize + (sym.length - 1) * gap;
+        const g = new Graphics();
+        g.roundRect(0, 0, w, 14, 4).fill(0x10151d).stroke({ width: 1, color: 0x6b5c22 });
+        chip.addChild(g);
+        pips.forEach((p, i) => {
+          p!.position.set(4 + i * (pipSize + gap), 2.5);
+          chip.addChild(p!);
+        });
+      } else {
+        const t = new Text({ text: sym, style: { fill: 0xffe6a6, fontSize: 9, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
+        w = Math.ceil(t.width) + 8;
+        const g = new Graphics();
+        g.roundRect(0, 0, w, 14, 4).fill(0x10151d).stroke({ width: 1, color: 0x6b5c22 });
+        t.position.set(4, 2);
+        chip.addChild(g, t);
+      }
       chip.position.set(x, this.h - 34);
       this.attC.addChild(chip);
       x += w + 4;
@@ -151,7 +209,7 @@ export class CardVisual {
 
   /** Cancelled ✕ stamp (pairs with setDim so a countered spell reads at a glance). */
   setStamp(on: boolean): void {
-    this.stampG.visible = on;
+    this.stampC.visible = on;
   }
 
   setHighlight(kind: Highlight): void {

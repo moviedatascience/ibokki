@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+  <!-- Material pip v2: a cut gem — table, girdle, pavilion — with punched facet lines. -->
+  <path fill-rule="evenodd" d="
+    M 30.6 25.4 L 69.8 25.8 L 88.2 44.2 L 50.2 84.6 L 11.8 43.8 Z
+    M 16.4 42.4 L 83.6 42.8 L 81.2 45.6 L 18.6 45.2 Z
+    M 47.8 47.4 L 49.9 78.0 L 52.4 47.5 Z
+    M 33.2 27.4 L 21.4 40.2 L 24.6 40.3 L 35.9 27.5 Z
+    M 66.9 27.7 L 78.4 40.5 L 75.2 40.5 L 64.2 27.6 Z" />
+</svg>

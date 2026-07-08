@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import type { CardCatalog, MatchState } from "../api.ts";
+import { Icon, Pips } from "./Pips.tsx";
 
 /** Cards shown per book page (2 rows x 6 columns; see .sbpage in styles.css). */
 const PAGE_SIZE = 12;
@@ -57,7 +58,7 @@ export function SpellbookTray({ state, cards, onAction, onHover, onInspect }: { 
         </span>
         {/* The sheet covers your nameplate, so surface the vitals that inform prep choices here. */}
         <span className="sbyou">
-          ♥ {state.view.self.hp} · Lv {state.view.self.level} · deck {state.view.self.resourceDeckCount}
+          <Icon name="hp" color="var(--bad)" title="HP" /> {state.view.self.hp} · Lv {state.view.self.level} · deck {state.view.self.resourceDeckCount}
         </span>
         <span className="sbpageno">{lvlSpan && `${lvlSpan} · `}page {cur + 1}/{pageCount}</span>
       </div>
@@ -82,7 +83,7 @@ export function SpellbookTray({ state, cards, onAction, onHover, onInspect }: { 
               >
                 <div className="sbband">
                   <span className="sbname">{info?.name ?? def}</span>
-                  <span className="sbcost">{info?.cost ?? ""}</span>
+                  <span className="sbcost"><Pips cost={info?.cost} /></span>
                 </div>
                 <div className="sbart" />
                 <div className="sbtypeline">
@@ -135,7 +136,7 @@ export function SpellbookTray({ state, cards, onAction, onHover, onInspect }: { 
               <span className="sbprepno">{i + 1}</span>
               <span className="sbprepname">{info?.name ?? def}</span>
               <span className="sbprepmeta">
-                {info?.level ? `L${info.level}` : ""} {info?.cost ?? ""}
+                {info?.level ? `L${info.level}` : ""} <Pips cost={info?.cost} />
               </span>
             </div>
           );

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="#ffffff">
+  <!-- Ward variant A: heater shield with a keystone punched in the chief. -->
+  <path fill-rule="evenodd" d="
+    M 50.0 7.6
+    C 62.0 13.6, 74.0 15.8, 86.0 15.8
+    L 84.2 46.0
+    C 82.2 68.0, 68.0 82.4, 50.0 92.4
+    C 32.0 82.4, 17.8 68.0, 15.8 46.0
+    L 14.0 15.8
+    C 26.0 15.8, 38.0 13.6, 50.0 7.6
+    Z
+    M 42.0 28.0 L 58.0 28.2 L 62.2 44.4 L 37.8 44.0 Z" />
+</svg>

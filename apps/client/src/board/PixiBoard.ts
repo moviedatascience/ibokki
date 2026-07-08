@@ -1,7 +1,8 @@
-import { Application, Container, Graphics, Text } from "pixi.js";
+import { Application, Container, Graphics, Sprite as PixiSprite, Text } from "pixi.js";
 import { CardVisual, type CardFace, type EdgeSide, type Highlight } from "./cardSprite.ts";
 import { Tweener, easeInOutCubic, easeOutCubic, lerp } from "./tween.ts";
 import { eventToFloater, isStackEvent, spawnFloater } from "./animations.ts";
+import { icon, loadIcons, type IconName } from "./icons.ts";
 import {
   CARD_H,
   CARD_W,
@@ -68,8 +69,9 @@ interface Plate {
   bar: Graphics;
   name: Text;
   hp: Text;
+  hpMark: PixiSprite | Text; // heart glyph (Text "♥" fallback)
   stats: Text;
-  status: Text; // ward / burn
+  status: Container; // ward / burn / prophecy markers + counts
   box: Box;
   anchor: Pt; // floater anchor (center of plate, world coords)
 }
@@ -111,6 +113,8 @@ export class PixiBoard {
   private cards: CardCatalog = {};
   private last: MatchState | null = null;
   private lastEpoch = -1;
+  /** mount() awaits asset loads; sync() calls that arrive earlier are buffered and replayed. */
+  private mounted = false;
   private selHandDef: string | null = null;
   /** Position key of the sprite under the cursor, so hover detail can be cleared/refreshed when that sprite changes. */
   private hoverKey: string | null = null;
@@ -130,6 +134,14 @@ export class PixiBoard {
     this.app = app;
     this.host.appendChild(app.canvas);
 
+    // Woodcut glyph textures (markers, pips, card back). A failed load degrades
+    // every consumer to its text/procedural fallback — never a blank board.
+    try {
+      await loadIcons();
+    } catch (e) {
+      console.warn("icon assets failed to load — using text fallbacks", e);
+    }
+
     this.stackLayer.sortableChildren = true;
     this.handLayer.sortableChildren = true;
     this.world.addChild(this.bgLayer, this.slotG, this.oppLayer, this.stackLayer, this.youLayer, this.pileLayer, this.handLayer, this.fxLayer);
@@ -144,6 +156,10 @@ export class PixiBoard {
     });
     this.ro.observe(this.host);
     this.relayout();
+    this.mounted = true;
+    // A match can start (and finish its opening sync burst) while we were loading
+    // textures — paint the buffered state now instead of waiting for the next change.
+    if (this.last) this.draw();
   }
 
   private relayout(): void {
@@ -191,22 +207,27 @@ export class PixiBoard {
     bg.roundRect(0, 0, box.w, box.h, 10).fill(0x161b22).stroke({ width: 1, color: 0x2b313c });
     const name = new Text({ text: "", style: { fill: 0xe6e7ea, fontSize: 13, fontFamily: "system-ui", fontWeight: "700" } });
     name.position.set(12, 9);
+    const hpMark: PixiSprite | Text = icon("hp", 13, 0xffffff) ?? new Text({ text: "♥", style: { fill: 0xffffff, fontSize: 13, fontFamily: "system-ui" } });
+    hpMark.position.set(box.w - 66, 10);
     const hp = new Text({ text: "", style: { fill: 0xffffff, fontSize: 13, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
-    hp.position.set(box.w - 66, 9);
+    hp.position.set(box.w - 48, 9);
     const bar = new Graphics();
     const stats = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 11.5, fontFamily: "system-ui" } });
     stats.position.set(12, box.h - 19);
-    const status = new Text({ text: "", style: { fill: 0x8fd0ff, fontSize: 11, fontFamily: "system-ui", fontWeight: "700" } });
-    status.position.set(12, 30);
-    root.addChild(glow, bg, name, hp, bar, stats, status);
-    return { root, glow, bar, name, hp, stats, status, box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
+    const status = new Container();
+    status.position.set(12, 25);
+    root.addChild(glow, bg, name, hpMark, hp, bar, stats, status);
+    return { root, glow, bar, name, hp, hpMark, stats, status, box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
   }
 
   private updatePlate(plate: Plate, label: string, v: PlayerView, active: boolean): void {
     const box = plate.box;
     plate.name.text = label;
-    plate.hp.text = `♥ ${v.hp}`;
-    plate.hp.style.fill = v.hp <= 10 ? 0xff8b8b : 0xffffff;
+    plate.hp.text = String(v.hp);
+    const hpColor = v.hp <= 10 ? 0xff8b8b : 0xffffff;
+    plate.hp.style.fill = hpColor;
+    if (plate.hpMark instanceof PixiSprite) plate.hpMark.tint = hpColor;
+    else plate.hpMark.style.fill = hpColor;
     const bw = box.w - 24;
     const pct = Math.max(0, Math.min(1, v.hp / HP_MAX));
     plate.bar.clear();
@@ -214,12 +235,28 @@ export class PixiBoard {
     plate.bar.roundRect(12, 26, bw * pct, 8, 4).fill(v.hp <= 10 ? 0xff7849 : 0x5fce76);
     // Deck/hand counts render at the piles; prepared cards are visible on the board.
     plate.stats.text = `Lv ${v.level} · slots ${v.slotsUsedThisRound}/${v.slots}`;
-    const wards = v.wards && v.wards.length ? `🛡 ${v.wards.join("/")}` : "";
-    const burn = v.burn > 0 ? `  🔥 ${v.burn}` : "";
+    // Status markers: woodcut glyph + count segments, right-aligned over the HP bar.
+    const st = plate.status;
+    for (const c of st.removeChildren()) c.destroy({ children: true });
+    let x = 0;
+    const seg = (name: IconName, tint: number, label2: string) => {
+      const mark = icon(name, 12, tint);
+      if (mark) {
+        mark.position.set(x, 0.5);
+        st.addChild(mark);
+        x += 14;
+      }
+      const t = new Text({ text: mark ? label2 : `${name} ${label2}`, style: { fill: tint, fontSize: 11, fontFamily: "system-ui", fontWeight: "700" } });
+      t.position.set(x, 0);
+      st.addChild(t);
+      x += t.width + 8;
+    };
+    if (v.wards && v.wards.length) seg("ward", 0x8fd0ff, v.wards.join("/"));
+    if (v.burn > 0) seg("burn", 0xffa04d, String(v.burn));
     // Dooms show as payload@turns-left; "!" marks the unwardable one (Oblivion).
-    const dooms = v.prophecies?.length ? "  " + v.prophecies.map((p) => `🔮${p.amount}${p.pierce ? "!" : ""}@${p.turnsLeft}`).join(" ") : "";
-    plate.status.text = wards + burn + dooms;
-    plate.status.position.set(box.w - 12 - plate.status.width, 26);
+    for (const p of v.prophecies ?? []) seg("prophecy", 0xc9a0f0, `${p.amount}${p.pierce ? "!" : ""}@${p.turnsLeft}`);
+    if (x > 0) x -= 8;
+    st.position.set(box.w - 12 - x, 25);
     plate.glow.visible = active;
   }
 
@@ -233,7 +270,7 @@ export class PixiBoard {
   sync(state: MatchState, cards: CardCatalog): void {
     this.cards = cards;
     this.last = state;
-    if (this.lastEpoch !== -1 && state.epoch !== this.lastEpoch) {
+    if (this.mounted && this.lastEpoch !== -1 && state.epoch !== this.lastEpoch) {
       if (this.selHandDef) {
         this.selHandDef = null;
         this.cb.onSelection?.(false);
@@ -241,7 +278,7 @@ export class PixiBoard {
       this.runEvents(state);
     }
     this.lastEpoch = state.epoch;
-    this.draw();
+    if (this.mounted) this.draw();
   }
 
   /** Recompute desired card views from the last state (+ local selection) and reconcile. */
@@ -535,7 +572,7 @@ export class PixiBoard {
       const f = eventToFloater(e);
       if (!f) continue;
       const plate = f.side === 0 ? this.youPlate : this.oppPlate;
-      spawnFloater(this.fxLayer, this.tweener, plate.anchor.x, plate.anchor.y, f.text, f.color, stagger[f.side]++, f.side === 0 ? -1 : 1);
+      spawnFloater(this.fxLayer, this.tweener, plate.anchor.x, plate.anchor.y, f.text, f.color, stagger[f.side]++, f.side === 0 ? -1 : 1, f.icon);
       this.flashPlate(plate, f.struck);
     }
     if (stackMoved) this.flashStack();
