@@ -157,7 +157,7 @@ export function addBurn(state: GameState, targetId: PlayerId, amount: number, ev
 
 // ---- Wards -------------------------------------------------------------------
 
-export type WardFlags = Partial<Pick<Ward, "onDestroy" | "reflectOnPrevent" | "protected" | "level1Immunity" | "firstOppCastDraw">>;
+export type WardFlags = Partial<Pick<Ward, "onDestroy" | "onDestroyExpires" | "reflectOnPrevent" | "protected" | "level1Immunity" | "firstOppCastDraw">>;
 
 export function createWard(
   state: GameState,

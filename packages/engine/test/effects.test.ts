@@ -5,6 +5,7 @@ import {
   getEffect,
   legalActions,
   makeContext,
+  redact,
   type Action,
   type CardInstance,
   type GameEvent,
@@ -282,13 +283,51 @@ describe("Abjuration effects", () => {
     expect(withWard.state.players[1].hp).toBe(23);
   });
 
-  it("Runic Seal (ABJ-010) seals an opponent prepared spell", () => {
+  it("Runic Seal (ABJ-010) stages a target choice; the caster picks the slot to seal", () => {
+    // Two uncast opponent spells + one already-cast one (not a legal target).
     const { state } = cast("ABJ-010", (s) => {
       s.players[1].prepared = [
-        { spell: inst("EVO-017"), faceDown: true, attached: [], cast: false, sealed: false },
+        { spell: inst("EVO-001"), faceDown: true, attached: [], cast: false, sealed: false },
+        { spell: inst("EVO-017"), faceDown: true, attached: [], cast: true, sealed: false },
+        { spell: inst("EVO-003"), faceDown: true, attached: [], cast: false, sealed: false },
       ];
     });
-    expect(state.players[1].prepared[0]!.sealed).toBe(true);
+    const pc = state.pendingChoice!;
+    expect(pc).toBeTruthy();
+    expect(pc.mode).toBe("sealPrepared");
+    expect(pc.player).toBe(0); // the CASTER chooses
+    // Only the two uncast spells are candidates, and face-down ones hide behind a
+    // positional descriptor (sealing a slot must never reveal its identity).
+    expect(pc.candidates.map((c) => c.defId).sort()).toEqual(["FACEDOWN-0", "FACEDOWN-2"]);
+    // Redaction: the caster sees only positional descriptors; the victim learns nothing
+    // about which slot will be picked (sealing must never reveal a face-down identity).
+    expect(redact(state, 0).pendingChoice!.candidates.slice().sort()).toEqual(["FACEDOWN-0", "FACEDOWN-2"]);
+    expect(redact(state, 1).pendingChoice!.candidates).toEqual([]);
+    // Pick the second slot; only THAT prepared spell is sealed.
+    const target = state.players[1].prepared[2]!;
+    const after = apply(state, { type: "choose", iid: target.spell.iid }).state;
+    expect(after.players[1].prepared[2]!.sealed).toBe(true);
+    expect(after.players[1].prepared[0]!.sealed).toBe(false);
+    expect(after.pendingChoice).toBeNull();
+  });
+
+  it("Runic Seal (ABJ-010) is a no-op with nothing sealable (all cast/sealed)", () => {
+    const { state } = cast("ABJ-010", (s) => {
+      s.players[1].prepared = [
+        { spell: inst("EVO-001"), faceDown: true, attached: [], cast: true, sealed: false },
+        { spell: inst("EVO-017"), faceDown: true, attached: [], cast: false, sealed: true },
+      ];
+    });
+    expect(state.pendingChoice).toBeNull();
+  });
+
+  it("Runic Seal shows a face-UP spell by its real defId (nothing hidden to hide)", () => {
+    const { state } = cast("ABJ-010", (s) => {
+      s.players[1].prepared = [
+        { spell: inst("EVO-017"), faceDown: false, attached: [], cast: false, sealed: false },
+      ];
+    });
+    expect(state.pendingChoice!.candidates[0]!.defId).toBe("EVO-017");
   });
 });
 
@@ -759,6 +798,25 @@ describe("Triggers, replacements, and immunity flags", () => {
     expect(state.players[0].wards).toHaveLength(0);
     expect(state.players[0].hand).toHaveLength(2); // drew 2 on destroy
     expect(state.players[0].hp).toBe(29); // 1 overflow past the 1-HP ward
+  });
+
+  it("Arcane Shell (ABJ-002) draw rider is round-scoped: it lapses at round end (live-bug m4)", () => {
+    const state = blankState();
+    state.players[0].resourceDeck = [inst("CMP-V"), inst("CMP-S"), inst("CMP-M")];
+    getEffect("ABJ-002")!(makeContext(state, 0, inst("ABJ-002"), []), inst("ABJ-002"));
+    const ward = state.players[0].wards[0]!;
+    expect(ward.onDestroy).toBe("draw2");
+    expect(ward.onDestroyExpires).toBe(true);
+    // Round ends: the "destroyed THIS ROUND" rider lapses, but the ward itself persists.
+    endRoundAndLevelUp(state, []);
+    expect(state.players[0].wards).toHaveLength(1);
+    expect(state.players[0].wards[0]!.onDestroy).toBeUndefined();
+    expect(state.players[0].wards[0]!.onDestroyExpires).toBeUndefined();
+    // Destroying it in a LATER round no longer pays the draw (the bug was a cross-round payout).
+    const handBefore = state.players[0].hand.length;
+    getEffect("EVO-001")!(makeContext(state, 1, inst("EVO-001"), []), inst("EVO-001")); // Spark 2 kills the 1-HP ward
+    expect(state.players[0].wards).toHaveLength(0);
+    expect(state.players[0].hand.length).toBe(handBefore); // no draw
   });
 
   it("Reflective Ward chips the attacker when it absorbs", () => {

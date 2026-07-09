@@ -210,7 +210,11 @@ export interface EffectContext {
   destroyAllWardsEverywhere(): number;
   addDamageReductionThisRound(amount: number): void;
   damagePreventedThisRound(): number;
-  sealOneOpponentPrepared(): boolean;
+  /** Stage a "seal target prepared spell" choice: the caster picks which opponent
+   *  prepared spell (uncast, unsealed) gains the Seal. Face-down candidates appear
+   *  as FACEDOWN-<slot> — targeting a slot never reveals its identity. No-op when
+   *  nothing is sealable. (Was SIMPLIFIED auto-first-slot until 2026-07-08, m4.) */
+  requestSealOpponentPrepared(): void;
 
   // ---- misc queries ----
   selfHp(): number;
@@ -821,13 +825,24 @@ export function makeContext(
     damagePreventedThisRound() {
       return self.damagePreventedThisRound;
     },
-    sealOneOpponentPrepared() {
-      const prep = opponent.prepared.find((p) => !p.cast && !p.sealed);
-      if (prep) {
-        prep.sealed = true;
-        return true;
-      }
-      return false;
+    requestSealOpponentPrepared() {
+      const targets = opponent.prepared
+        .map((p, slot) => ({ p, slot }))
+        .filter(({ p }) => !p.cast && !p.sealed);
+      if (targets.length === 0) return;
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Seal target prepared spell — it cannot be cast this round",
+        mode: "sealPrepared",
+        // Targeting is by SLOT: face-down spells stay hidden behind a positional descriptor.
+        candidates: targets.map(({ p, slot }) => ({
+          iid: p.spell.iid,
+          defId: p.faceDown ? `FACEDOWN-${slot}` : p.spell.defId,
+        })),
+        picksRemaining: 1,
+        leftover: "top",
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "seal" });
     },
 
     selfHp() {

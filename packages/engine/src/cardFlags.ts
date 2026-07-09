@@ -30,6 +30,8 @@ export const ATTACH_M_TRAPS: Readonly<Record<string, number>> = {
   "EVO-015": 2, // Volatile Bolt — fires when the OPPONENT attaches an M component
 };
 
+import { getCard } from "@ibokki/cards";
+import { tierForLevel } from "./levels.ts";
 import { isComponentDefId, otherPlayer, type GameState, type PlayerId } from "./types.ts";
 
 /**
@@ -37,8 +39,9 @@ import { isComponentDefId, otherPlayer, type GameState, type PlayerId } from "./
  * (Bulwark Shard with no ward, Quenching Salts with no burn, …). legalActions
  * doesn't offer such plays and apply refuses them — a feel-bad-whiff guard for
  * human players (playtest m10 finding). Trainers whose value merely MIGHT whiff
- * (Overclock with no second cast lined up) stay playable: that's a gamble, not
- * a no-op.
+ * stay playable: that's a gamble, not a no-op. Overclock USED to be that gamble,
+ * but since it costs 2 HP (2026-07-08 reprice) a cast-less Overclock is
+ * deterministic self-harm, so it now requires a live extra-cast target.
  */
 export function trainerHasEffect(state: GameState, me: PlayerId, defId: string): boolean {
   const p = state.players[me];
@@ -64,6 +67,19 @@ export function trainerHasEffect(state: GameState, me: PlayerId, defId: string):
       return p.discard.length > 0;
     case "GAM-020": // Disarm — needs an opposing hand to look at
       return opp.hand.length > 0;
+    case "GAM-008": {
+      // Overclock — costs 2 HP now: require a free slot and SOME castable non-Reaction
+      // prepared spell (fueled or not — fuel may be attached later this turn), and
+      // never offer a lethal self-hit.
+      if (p.hp <= 2) return false;
+      const tier = tierForLevel(p.level);
+      if (p.slotsUsedThisRound >= tier.slots) return false;
+      return p.prepared.some((prep) => {
+        if (prep.cast || prep.sealed) return false;
+        const def = getCard(prep.spell.defId);
+        return !!def && !!def.cost && def.type !== "Reaction" && (def.level ?? 1) <= tier.maxSpellLevel;
+      });
+    }
     default:
       return true;
   }

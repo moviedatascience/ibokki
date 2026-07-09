@@ -2215,7 +2215,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "This turn, you may cast 1 additional spell, provided you have a free spell slot and its components are already attached.",
+    "text": "Take 2 damage. This turn, you may cast 1 additional spell, provided you have a free spell slot and its components are already attached.",
     "role": "Complement — Combo / aggro",
     "comment": "Extra cast is the biggest tempo swing here — gated by needing a second spell pre-assembled and a free slot. The highest-variance trainer; playtest before printing many."
   },

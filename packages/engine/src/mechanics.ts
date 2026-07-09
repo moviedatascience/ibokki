@@ -170,6 +170,14 @@ export function endRoundAndLevelUp(state: GameState, events: GameEvent[]): void 
     player.ongoing = player.ongoing.filter((o) => o.expiry !== "endOfRound");
     player.reactionsCastThisRound = 0;
     player.damagePreventedThisRound = 0;
+    // Round-scoped ward riders lapse (Arcane Shell's "destroyed this round" draw — live-bug m4:
+    // the rider previously survived across rounds and paid out on any later destruction).
+    for (const ward of player.wards) {
+      if (ward.onDestroyExpires) {
+        delete ward.onDestroy;
+        delete ward.onDestroyExpires;
+      }
+    }
     for (const prep of player.prepared) {
       prep.cast = false; // re-castable next round
       prep.sealed = false; // seals last only for the round

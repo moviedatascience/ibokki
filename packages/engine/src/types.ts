@@ -29,6 +29,8 @@ export interface Ward {
   hp: number;
   /** Fires when this ward is destroyed: refill cards / spawn a replacement / heal. */
   onDestroy?: "draw2" | "replace2" | "heal5";
+  /** The rider lapses at round end (Arcane Shell: "destroyed THIS ROUND" — live-bug m4). */
+  onDestroyExpires?: boolean;
   /** When this ward absorbs damage, deal this much to the opponent (Reflective Ward). */
   reflectOnPrevent?: number;
   /** Cannot be targeted or destroyed by opponent *effects* (still absorbs combat damage) (Fortress/Ward Eternal). */
@@ -209,7 +211,10 @@ export interface PendingChoice {
    *  "discardToDeckTop": candidates are components in YOUR discard; the pick goes
    *   on top of your Resource Deck (Mnemonic Charm).
    *  "discardToHand": candidates are components in YOUR discard; picks return to
-   *   your hand (Recover / Salvage / Reclaim). */
+   *   your hand (Recover / Salvage / Reclaim).
+   *  "sealPrepared": candidates are the OPPONENT'S uncast, unsealed prepared spells;
+   *   face-down ones are shown as FACEDOWN-<slot> descriptors (sealing targets a
+   *   slot, it does NOT reveal); the pick is sealed for the round (Runic/Penumbral Seal). */
   mode:
     | "takeToHand"
     | "bankToDeckTop"
@@ -222,7 +227,8 @@ export interface PendingChoice {
     | "discardThenDraw"
     | "discardFromOpponentHand"
     | "discardToDeckTop"
-    | "discardToHand";
+    | "discardToHand"
+    | "sealPrepared";
   candidates: CardInstance[];
   picksRemaining: number;
   /** Where unchosen staged cards go when a takeToHand choice finishes. */

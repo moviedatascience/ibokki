@@ -36,7 +36,13 @@ register("GAM-004", (c) => c.requestSearchDeck({ filter: "sameSymbolDual", takeN
 register("GAM-005", (c) => c.requestReturnDiscardComponentsToHand(1)); // Salvage — YOU pick the component
 register("GAM-006", (c) => c.requestOrderTopOfDeck(4)); // Premonition Charm — interactive reorder
 register("GAM-007", (c) => c.attachTopComponentElseDraw()); // Ritual Circle (attach top component, else draw)
-register("GAM-008", (c) => c.grantExtraCast()); // Overclock
+register("GAM-008", (c) => {
+  // Overclock — repriced 2026-07-08 (m5 finding): the free double-cast could exhaust
+  // your slots early and truncate the round, stealing the opponent's remaining slot
+  // (~3 HP + a card of tempo). The strain now costs 2 HP up front.
+  c.takeSelfDamage(2);
+  c.grantExtraCast();
+});
 register("GAM-009", (c) => c.heal(5)); // Second Wind
 register("GAM-010", (c) => {
   c.takeSelfDamage(2); // Battle Trance — ONE spell, THIS turn (was wrongly round-long)

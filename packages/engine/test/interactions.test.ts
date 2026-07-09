@@ -118,7 +118,26 @@ describe("no-op trainer plays are not offered (playtest m10 finding)", () => {
     const shard = inst("ITM-008");
     s.players[0].hand.push(shard);
     expect(() => apply(s, { type: "playTrainer", handIid: shard.iid })).toThrow(/no effect/);
-    expect(trainerOffered("GAM-008", () => {})).toBe(true); // Overclock is a plan, not a no-op
+  });
+
+  it("Overclock needs a live extra-cast target now that it costs HP (2026-07-08 reprice)", () => {
+    const preparedCastable = (s: GameState) => {
+      s.players[0].prepared = [
+        { spell: inst("EVO-001"), faceDown: true, attached: [], cast: false, sealed: false },
+      ];
+    };
+    // No prepared spell to double-cast -> a cast-less Overclock is pure self-harm, not offered.
+    expect(trainerOffered("GAM-008", () => {})).toBe(false);
+    // A castable non-Reaction prepared spell (fuel may still be attached later) makes it a plan.
+    expect(trainerOffered("GAM-008", preparedCastable)).toBe(true);
+    // Never offer a lethal self-hit: at 2 HP the 2-damage strain cannot be paid.
+    expect(trainerOffered("GAM-008", (s) => { preparedCastable(s); s.players[0].hp = 2; })).toBe(false);
+    // An already-cast prepared spell is not a target.
+    expect(trainerOffered("GAM-008", (s) => {
+      s.players[0].prepared = [
+        { spell: inst("EVO-001"), faceDown: true, attached: [], cast: true, sealed: false },
+      ];
+    })).toBe(false);
   });
 });
 
@@ -144,6 +163,7 @@ describe("Overclock (GAM-008) — one extra cast this turn (playtest m9 regressi
     let s = armed();
     s = apply(s, { type: "playTrainer", handIid: s.players[0].hand[0]!.iid }).state;
     expect(s.players[0].extraCastsThisTurn).toBe(1);
+    expect(s.players[0].hp).toBe(28); // the strain costs 2 HP up front (2026-07-08 reprice)
     s = castResolve(s, 0);
     // The old grantExtraCast refunded a slot and left the turn gate shut: no cast here.
     expect(legalActions(s, 0).some((a) => a.type === "cast")).toBe(true);
@@ -162,6 +182,40 @@ describe("Overclock (GAM-008) — one extra cast this turn (playtest m9 regressi
     expect(s.players[0].extraCastsThisTurn).toBe(1); // grant back
     expect(s.players[0].spellCastThisTurn).toBe(true); // first cast still counts
     expect(legalActions(s, 0).some((a) => a.type === "cast")).toBe(true); // may recast
+  });
+});
+
+describe("Runic Seal (ABJ-010) interactive target through the full stack (m4 fix)", () => {
+  it("resolving the seal pauses for the CASTER, whose pick locks the chosen slot", () => {
+    const s = blankState();
+    // P0 has Runic Seal (cost SS) prepared and fueled.
+    s.players[0].prepared = [
+      { spell: inst("ABJ-010"), faceDown: true, attached: [inst("CMP-S"), inst("CMP-S")], cast: false, sealed: false },
+    ];
+    // P1 has two uncast prepared spells — the seal targets face down, by slot.
+    s.players[1].prepared = [
+      { spell: inst("EVO-001"), faceDown: true, attached: [], cast: false, sealed: false },
+      { spell: inst("EVO-017"), faceDown: true, attached: [], cast: false, sealed: false },
+    ];
+    // Cast the seal and let it resolve (caster passes, opponent passes).
+    let st = apply(s, { type: "cast", preparedIndex: 0 }).state;
+    st = apply(st, { type: "pass" }).state;
+    st = apply(st, { type: "pass" }).state;
+    // The resolved seal handed priority to the caster to choose a target.
+    const pc = st.pendingChoice!;
+    expect(pc).toBeTruthy();
+    expect(pc.mode).toBe("sealPrepared");
+    expect(pc.player).toBe(0);
+    expect(st.priorityPlayer).toBe(0);
+    expect(pc.candidates.map((c) => c.defId)).toEqual(["FACEDOWN-0", "FACEDOWN-1"]);
+    // Only the chosen legal actions are the two picks.
+    expect(legalActions(st, 0).filter((a) => a.type === "choose")).toHaveLength(2);
+    // Pick slot 1: it becomes uncastable; slot 0 stays free.
+    const target = st.players[1].prepared[1]!;
+    st = apply(st, { type: "choose", iid: target.spell.iid }).state;
+    expect(st.players[1].prepared[1]!.sealed).toBe(true);
+    expect(st.players[1].prepared[0]!.sealed).toBe(false);
+    expect(st.pendingChoice).toBeNull();
   });
 });
 

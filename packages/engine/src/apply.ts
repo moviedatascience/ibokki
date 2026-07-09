@@ -491,6 +491,15 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
           p.hand.push(card);
           break;
         }
+        case "sealPrepared": {
+          // Runic/Penumbral Seal: the pick is an OPPONENT'S prepared spell, addressed
+          // by its instance id (face-down candidates carry FACEDOWN-<slot> descriptors
+          // so the pick never reveals the identity). Seal it for the round.
+          const owner = state.players[otherPlayer(pc.player)];
+          const prep = owner.prepared.find((pr) => pr.spell.iid === card.iid);
+          if (prep) prep.sealed = true;
+          break;
+        }
       }
       events.push({ type: "chose", player: me, defId: card.defId });
       if (pc.shuffleAfter) events.push({ type: "tutored", player: me, defId: card.defId }); // searches reveal the pick

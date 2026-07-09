@@ -12,7 +12,7 @@ import { register } from "./registry.ts";
 // Fortify — ward sustain + the anti-burn rider (2026-07-04 balance: taxes Evo's
 // Kindle plan every round; zero effect vs burn-less schools, so Div>Abj is untouched).
 register("ABJ-001", (c) => { c.buffOneOwnWardOrCreate(2, 1); c.removeOwnBurn(1); });
-register("ABJ-002", (c) => c.createWardForSelfWith(1, { onDestroy: "draw2" })); // Arcane Shell
+register("ABJ-002", (c) => c.createWardForSelfWith(1, { onDestroy: "draw2", onDestroyExpires: true })); // Arcane Shell — rider is round-scoped per text
 register("ABJ-003", (c) => {
   c.buffAllOwnWards(1); // Ward Pulse
   if (c.selfHasWard()) c.dealDamage(1); // ward-thorn: Abjuration's slow clock scales with keeping wards alive
@@ -20,7 +20,7 @@ register("ABJ-003", (c) => {
 register("ABJ-004", (c) => c.addUntargetableBySingle()); // Aegis
 register("ABJ-005", (c) => c.addReactionDiscountS(1)); // Stone Stance
 register("ABJ-010", (c) => {
-  c.sealOneOpponentPrepared(); // Runic Seal
+  c.requestSealOpponentPrepared(); // Runic Seal — "target": the caster picks the slot
 });
 
 // ---- Level 2 ----
@@ -40,7 +40,7 @@ register("ABJ-025", (c) => c.buffAllOwnWards(2)); // Sanctum (forced "wards firs
 register("ABJ-027", (c) => c.createWardForSelfWith(5, { onDestroy: "replace2" })); // Ritual Ward
 register("ABJ-029", (c) => c.createWardForSelfWith(4, { protected: true })); // Fortress
 register("ABJ-030", (c) => {
-  c.sealOneOpponentPrepared(); // Penumbral Seal (exile ~ seal)
+  c.requestSealOpponentPrepared(); // Penumbral Seal (exile ~ seal; "Choose" — caster picks)
 });
 register("ABJ-031", (c) => {
   const hp = c.destroyOwnLargestWard(); // Ward Collapse
