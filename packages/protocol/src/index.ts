@@ -282,10 +282,12 @@ export type ClientMessage =
   | { t: "rematch" };
 
 /** Server → client. `build` lets a tab that outlived a redeploy detect it is
- *  running an outdated bundle and prompt for a refresh. */
+ *  running an outdated bundle and prompt for a refresh. `notice` is an out-of-band
+ *  informational message (e.g. the server is shutting down for a redeploy). */
 export type ServerMessage =
   | { t: "created"; code: string; side: PlayerId; token: string; catalog: Record<string, CardInfo>; build?: string }
   | { t: "joined"; code: string; side: PlayerId; token: string; catalog: Record<string, CardInfo>; build?: string }
   | { t: "state"; state: MatchStatePayload; error?: string }
   | { t: "presence"; opponentConnected: boolean }
+  | { t: "notice"; message: string }
   | { t: "error"; message: string };

@@ -75,12 +75,14 @@ export function App() {
     if (state && !state.gameOver) setSummaryDismissed(false);
   }, [state]);
 
-  const updateBanner = online.updateAvailable && (
+  const updateBanner = online.updateAvailable ? (
     <div className="updatebar">
       A new version of Ibokki is live —{" "}
       <a onClick={() => location.reload()}>refresh</a> when this match is done to pick it up.
     </div>
-  );
+  ) : online.notice ? (
+    <div className="updatebar">{online.notice}</div>
+  ) : null;
 
   if (screen === "home") {
     return (

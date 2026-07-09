@@ -5,6 +5,7 @@ const END_REASON: Record<string, string> = {
   hp: "hit points reduced to 0",
   deckout: "Resource Deck ran out",
   "turn-limit": "turn limit reached",
+  forfeit: "opponent forfeited",
 };
 
 interface SideStats {

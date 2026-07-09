@@ -11,6 +11,8 @@ export interface OnlineApi {
   opponentConnected: boolean;
   /** The server was redeployed since this bundle loaded — prompt a refresh. */
   updateAvailable: boolean;
+  /** A transient server notice (e.g. shutting down for a redeploy), or null. */
+  notice: string | null;
   create: (deck: DeckChoice) => void;
   /** Solo match against the server-side bot (works in production, unlike local vs-bot). */
   createBot: (deck: DeckChoice) => void;
@@ -53,6 +55,7 @@ export function useMatch(): UseMatch {
   const [code, setCode] = useState<string | null>(null);
   const [opponentConnected, setOpponentConnected] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onlineRef = useRef<OnlineClient | null>(null);
   const statusRef = useRef<OnlineStatus>("idle");
@@ -120,6 +123,7 @@ export function useMatch(): UseMatch {
       },
       onPresence: (connected) => setOpponentConnected(connected),
       onStaleBuild: () => setUpdateAvailable(true),
+      onNotice: (message) => setNotice(message),
       onError: (message) => {
         // A dead seat (server restarted / room swept) can't be rejoined — go idle.
         if (message.includes("no seat matches") || message.includes("no room with code")) {
@@ -153,6 +157,7 @@ export function useMatch(): UseMatch {
     clearPoll();
     setState(null);
     setError(null);
+    setNotice(null);
     setOpponentConnected(false);
     setOnlineStatus("connecting");
   }, []);
@@ -162,6 +167,7 @@ export function useMatch(): UseMatch {
     code,
     opponentConnected,
     updateAvailable,
+    notice,
     create: useCallback(
       (deck: DeckChoice) => {
         goOnline();

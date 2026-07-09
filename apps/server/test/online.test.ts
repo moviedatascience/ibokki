@@ -10,11 +10,22 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { AddressInfo } from "node:net";
 import WebSocket from "ws";
-import { createOnlineServer } from "../src/app.ts";
+import { createOnlineServer, type ServerOptions } from "../src/app.ts";
 import type { MatchStatePayload, ServerMessage } from "@ibokki/protocol";
 
-const { http: server } = createOnlineServer({ dbFile: ":memory:" });
+// The random-drive tests act as fast as the event loop allows (hundreds of msg/s),
+// far faster than any real client, so the shared server runs its message rate limit
+// effectively off; the dedicated rate-limit test below uses a low limit instead.
+const { http: server } = createOnlineServer({ dbFile: ":memory:", msgBurst: 1e9, msgRefillPerSec: 1e9 });
 let wsUrl = "";
+
+/** Spin up an isolated server (its own rooms map) so timer-based tests can use short
+ *  grace/inactivity windows without touching the shared server above. */
+async function startServer(opts: ServerOptions): Promise<{ url: string; shutdown: () => Promise<void> }> {
+  const { http, shutdown } = createOnlineServer({ dbFile: ":memory:", ...opts });
+  await new Promise<void>((res) => http.listen(0, res));
+  return { url: `ws://127.0.0.1:${(http.address() as AddressInfo).port}/ws`, shutdown };
+}
 
 beforeAll(async () => {
   await new Promise<void>((res) => server.listen(0, res));
@@ -274,5 +285,151 @@ describe("online server", () => {
     a.close();
     b2.close();
     evil.close();
+  });
+
+  it("rejects a second create/join on an already-seated connection", async () => {
+    const a = new TestClient(wsUrl);
+    await a.open();
+    a.send({ t: "create", school: "Evocation" });
+    await a.waitFor(() => a.lobby !== null, "room created");
+    // A second create on the same socket must be refused (else one connection could
+    // spray orphan rooms).
+    a.send({ t: "create", school: "Evocation" });
+    await a.waitFor(() => a.errors.some((e) => e.includes("already in a room")), "second create rejected");
+    a.close();
+  });
+
+  it("rate-limits a message flood on one connection", async () => {
+    const s = await startServer({ msgBurst: 20, msgRefillPerSec: 5 });
+    const a = new TestClient(s.url);
+    await a.open();
+    // Far exceed the burst in one tick with cheap unseated messages.
+    for (let i = 0; i < 200; i++) a.send({ t: "rejoin", code: "ZZZZZ", token: "x" });
+    await a.waitFor(() => a.errors.some((e) => e.includes("slow down")), "rate-limit warning", 5000);
+    a.close();
+    await s.shutdown();
+  });
+});
+
+describe("online server — match-layer safety", () => {
+  it("a dropped seat forfeits after the grace period, awarding the opponent", async () => {
+    const s = await startServer({ disconnectGraceMs: 250, inactivityMs: 60_000 });
+    const a = new TestClient(s.url);
+    await a.open();
+    a.send({ t: "create", school: "Evocation" });
+    await a.waitFor(() => a.lobby !== null, "room created");
+    const b = new TestClient(s.url);
+    await b.open();
+    b.send({ t: "join", code: a.lobby!.code, school: "Abjuration" });
+    await b.waitFor(() => b.latest !== null, "first frame");
+    await a.waitFor(() => a.latest !== null, "creator frame");
+    expect(a.latest!.gameOver).toBe(false);
+
+    // Drop B; after the grace window A wins by forfeit (viewer-relative winner 0 = A).
+    b.close();
+    await a.waitFor(() => a.latest!.gameOver, "forfeit game over", 5000);
+    expect(a.latest!.endReason).toBe("forfeit");
+    expect(a.latest!.winner).toBe(0);
+    a.close();
+    await s.shutdown();
+  });
+
+  it("a rejoin inside the grace window cancels the forfeit", async () => {
+    const s = await startServer({ disconnectGraceMs: 400, inactivityMs: 60_000 });
+    const a = new TestClient(s.url);
+    await a.open();
+    a.send({ t: "create", school: "Evocation" });
+    await a.waitFor(() => a.lobby !== null, "room created");
+    const b = new TestClient(s.url);
+    await b.open();
+    b.send({ t: "join", code: a.lobby!.code, school: "Abjuration" });
+    await b.waitFor(() => b.latest !== null, "first frame");
+    const lobby = b.lobby!;
+
+    b.close();
+    // Rejoin promptly — well inside the 400ms grace.
+    const b2 = new TestClient(s.url);
+    await b2.open();
+    b2.send({ t: "rejoin", code: lobby.code, token: lobby.token });
+    await b2.waitFor(() => b2.latest !== null, "snapshot after rejoin");
+    // Wait past the original grace deadline; the match must NOT have forfeited.
+    await new Promise((r) => setTimeout(r, 600));
+    expect(a.latest!.gameOver).toBe(false);
+    expect(b2.latest!.gameOver).toBe(false);
+    a.close();
+    b2.close();
+    await s.shutdown();
+  });
+
+  it("both players idle in the prepare phase → the match is abandoned as a draw", async () => {
+    const s = await startServer({ inactivityMs: 300, disconnectGraceMs: 60_000 });
+    const a = new TestClient(s.url);
+    await a.open();
+    a.send({ t: "create", school: "Evocation" });
+    await a.waitFor(() => a.lobby !== null, "room created");
+    const b = new TestClient(s.url);
+    await b.open();
+    b.send({ t: "join", code: a.lobby!.code, school: "Abjuration" });
+    await b.waitFor(() => b.latest !== null, "first frame");
+    await a.waitFor(() => a.latest !== null, "creator frame");
+
+    // Both are on the clock (simultaneous prepare) and both idle → a draw, not a one-sided
+    // loss for whichever seat happens to be index 0.
+    await a.waitFor(() => a.latest!.gameOver, "abandon game over", 5000);
+    expect(a.latest!.endReason).toBe("forfeit");
+    expect(a.latest!.winner).toBeNull();
+    await b.waitFor(() => b.latest!.gameOver, "b sees game over", 5000);
+    expect(b.latest!.winner).toBeNull();
+    a.close();
+    b.close();
+    await s.shutdown();
+  });
+
+  it("a lone idle player forfeits to a present opponent (bot room)", async () => {
+    const s = await startServer({ inactivityMs: 300 });
+    const a = new TestClient(s.url);
+    await a.open();
+    a.send({ t: "create", deck: { preset: "Emberworks" }, bot: true });
+    await a.waitFor(() => a.latest !== null, "bot room first frame");
+
+    // Only the human is on the clock (the bot is excluded), so an idle human forfeits.
+    await a.waitFor(() => a.latest!.gameOver, "inactivity forfeit", 5000);
+    expect(a.latest!.endReason).toBe("forfeit");
+    expect(a.latest!.winner).toBe(1); // relative: 1 = the bot opponent
+    a.close();
+    await s.shutdown();
+  });
+
+  it("reaps a never-joined room when its creator drops (no capacity leak)", async () => {
+    const s = await startServer({ disconnectGraceMs: 200 });
+    const a = new TestClient(s.url);
+    await a.open();
+    a.send({ t: "create", school: "Evocation" });
+    await a.waitFor(() => a.lobby !== null, "room created");
+    const code = a.lobby!.code;
+
+    // Creator drops before anyone joins; the empty room must be reaped after the grace
+    // window (not left squatting until the 1h idle sweep).
+    a.close();
+    await new Promise((r) => setTimeout(r, 500));
+    const b = new TestClient(s.url);
+    await b.open();
+    b.send({ t: "join", code, school: "Abjuration" });
+    await b.waitFor(() => b.errors.length > 0, "join rejected");
+    expect(b.errors[0]).toContain("no room");
+    b.close();
+    await s.shutdown();
+  });
+
+  it("graceful shutdown notifies clients and closes their sockets", async () => {
+    const s = await startServer({});
+    const a = new TestClient(s.url);
+    await a.open();
+    a.send({ t: "create", school: "Evocation" });
+    await a.waitFor(() => a.lobby !== null, "room created");
+    const closedP = new Promise<void>((res) => a.ws.once("close", () => res()));
+    await s.shutdown();
+    expect(a.messages.some((m) => m.t === "notice")).toBe(true);
+    await closedP; // shutdown closes our socket; resolves well within the test timeout
   });
 });

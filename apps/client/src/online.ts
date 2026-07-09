@@ -30,6 +30,8 @@ export interface OnlineCallbacks {
   onClose: () => void;
   /** The server runs a newer build than this bundle — prompt a refresh. */
   onStaleBuild: () => void;
+  /** An out-of-band server notice (e.g. the server is shutting down for a redeploy). */
+  onNotice: (message: string) => void;
 }
 
 const SESSION_KEY = "ibokki.online.seat";
@@ -105,6 +107,9 @@ export class OnlineClient {
         return;
       case "presence":
         this.cb.onPresence(Boolean(msg.opponentConnected));
+        return;
+      case "notice":
+        this.cb.onNotice(String(msg.message));
         return;
       case "error":
         this.cb.onError(String(msg.message));

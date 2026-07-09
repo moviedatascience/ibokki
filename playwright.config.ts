@@ -34,6 +34,10 @@ export default defineConfig({
       url: "http://localhost:7788/health",
       reuseExistingServer: !CI,
       timeout: 120_000,
+      // The in-page driver acts at machine speed (~100 msg/s/tab); the per-connection
+      // rate limit (unit-tested elsewhere) would throttle that synthetic load, so turn
+      // it effectively off here — this test isn't exercising the limiter.
+      env: { IBOKKI_MSG_BURST: "1000000000", IBOKKI_MSG_REFILL_PER_SEC: "1000000000" },
     },
     {
       command: "npm run client",

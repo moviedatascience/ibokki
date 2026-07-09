@@ -252,8 +252,11 @@ export interface PendingChoice {
 export type Phase = "prepare" | "main" | "gameover";
 
 /** "deckout" no longer occurs (an empty deck reshuffles with exhaustion damage) but stays
- * in the union so persisted playtest sessions/replays from older engines still typecheck. */
-export type EndReason = "hp" | "deckout" | "turn-limit";
+ * in the union so persisted playtest sessions/replays from older engines still typecheck.
+ * "forfeit" is a match-layer outcome (a player conceded, disconnected, or timed out) — it is
+ * never produced by `apply`, only by the out-of-band `concede()` helper, so it does not appear
+ * in a deterministic {seed, actions} replay. */
+export type EndReason = "hp" | "deckout" | "turn-limit" | "forfeit";
 
 export interface GameState {
   seed: number;

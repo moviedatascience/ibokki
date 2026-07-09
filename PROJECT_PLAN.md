@@ -243,6 +243,26 @@ the UI: it validates the rules and the card implementations far faster than clic
   hardcoded matchup, no accounts, ephemeral rooms — so two browser tabs can play a full real
   network match. Add accounts/matchmaking/ladder *after* that slice proves the loop.
 
+### 9a. Robustness / launch-hardening — ✅ shipped 2026-07-08
+
+The live online server now survives abuse and abandonment instead of hanging or leaking:
+
+- **Disconnect → forfeit:** a dropped seat gets a rejoin grace window (`IBOKKI_DISCONNECT_GRACE_MS`,
+  default 45s); if it doesn't return, the present player wins by forfeit. A rejoin cancels it.
+- **Inactivity → forfeit/draw:** a connected-but-idle player forfeits after `IBOKKI_INACTIVITY_MS`
+  (default 5min, reset on any action); a *simultaneous-prepare* mutual stall resolves as a draw, not
+  an arbitrary one-sided loss. Closes the connected-staller softlock the idle-sweep couldn't reach.
+- **Forfeit as a match-layer outcome:** modeled by an engine `concede()` / `abandon()` helper + a new
+  `"forfeit"` `EndReason`, so it never pollutes the deterministic action log (replays unaffected) and
+  the existing game-over UI renders it for free.
+- **Graceful shutdown** (`SIGTERM`/`SIGINT`): notify clients, stop timers, drain sockets, close DB —
+  deploys no longer sever in-flight matches abruptly. Plus process-level crash guards.
+- **WS DoS hardening:** `maxPayload` cap, per-connection message rate limit, reject-second-create/join
+  (kills per-connection room-spam), instant reap of never-joined rooms, global room cap, sanitized
+  error strings, and an opt-in Origin allowlist (`IBOKKI_ALLOWED_ORIGINS`, CSWSH guard).
+- **Still open (larger):** in-memory rooms are still lost on redeploy/crash (needs room persistence),
+  no horizontal scaling (single event loop + single-writer SQLite), no error monitoring/alerting.
+
 ---
 
 ## 10. Meta systems (after the PvP slice works)
@@ -253,16 +273,20 @@ the UI: it validates the rules and the card implementations far faster than clic
 - **Ladder/MMR**, match history, leaderboards.
 - **Live-ops content tooling:** the card importer + sim reports become your balance-patch pipeline.
 
-### 10a. Deck construction (flagged 2026-06-30 — currently a placeholder)
+### 10a. Deck construction — ✅ DONE (shipped; this section is retained as history)
 
-Today both decks come from a single hardcoded recipe in `packages/engine/src/decks.ts`
-(`resourceDeckFor` / `spellbookFor`): the Resource Deck is a fixed ~41-card list weighted only by the
-school's primary symbol, with the **same 3 neutral trainers for every school**. It is shuffled (random
-draw order) but its *contents* are not chosen by the player. The spellbook is "all spells of one
-school," which is design-faithful (you bring one of each and choose at Prepare time).
+**Status (2026-07-08): implemented end-to-end.** `packages/engine/src/deckrules.ts` is a real deck
+format (`DeckDefinition`) + `validateDeck()` (spellbook singleton 15..SPELLBOOK_MAX with ≥4 L1 spells;
+Resource Deck exactly 40; trainers ≤13 & ≤2 copies; same-symbol duals ≤8; tri ≤2 — the open "size /
+hard-vs-soft" calls below were resolved as *fixed size* + *hard rules*). Three authored archetype
+presets ship in `decks.ts` (`PRESET_DECKS`: Emberworks/Bastion/Riptide, self-validated at load), the
+online server persists user decks (SQLite CRUD) and re-validates at match start, and `DeckBuilder.tsx`
+is a working builder wired to the validator. Remaining crumbs: no `--deck` flag on the balance-sim
+entrypoint, and no authored Evo/Div *splash* preset. Original plan text follows for context.
 
-Importantly, **the engine already supports arbitrary decks** — `createGame({ players: [{ spellbook,
-resourceDeck }, …] })` accepts any card-id lists, so this is additive, not an engine change. The work:
+Historically both decks came from a single hardcoded recipe. **The engine already supports arbitrary
+decks** — `createGame({ players: [{ spellbook, resourceDeck }, …] })` accepts any card-id lists, so this
+was additive, not an engine change. The work was:
 
 1. **Deck format + validator.** A JSON deck definition; validate size, the "ramp dial" (same-symbol
    dual ratio that sets how often L3/L4 costs are reachable), the doc's "trainers ≤ ~⅓" guideline, and
