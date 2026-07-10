@@ -15,6 +15,7 @@ const ORANGE = 0xff9a4d;
 const GREEN = 0x7df29a;
 const BLUE = 0x8fd0ff;
 const PURPLE = 0xc9a0f0;
+const GOLD = 0xffd36b;
 
 export interface Floater {
   side: 0 | 1;
@@ -45,6 +46,9 @@ export function eventToFloater(e: GameEvent): Floater | null {
       return n(e.amount) > 0 ? { side: e.player as 0 | 1, text: `-${n(e.amount)}`, color: BLUE, icon: "ward", struck: false } : null;
     case "wardDestroyed":
       return { side: e.player as 0 | 1, text: "✕", color: BLUE, icon: "ward", struck: false };
+    case "leveledUp":
+      // The 1–21 ramp is the game's spine — give the level-up a visible beat.
+      return { side: e.player as 0 | 1, text: `Lv ${n(e.level)}`, color: GOLD, struck: false };
     default:
       return null;
   }

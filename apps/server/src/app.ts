@@ -46,6 +46,7 @@ import {
   eventForViewer,
   type ClientMessage,
   type DeckChoice,
+  type ForfeitInfo,
   type SchoolName,
   type ServerMessage,
 } from "@ibokki/protocol";
@@ -134,6 +135,8 @@ interface Room {
   /** Per-seat disconnect-grace timers; the inactivity clock for the on-turn player. */
   graceTimers: [Timer | null, Timer | null];
   inactivityTimer: Timer | null;
+  /** Who forfeited and why, when the current game ended by forfeit; reset on rematch. */
+  forfeitInfo: ForfeitInfo | null;
 }
 
 function newCode(rooms: Map<string, Room>): string {
@@ -195,6 +198,7 @@ function startMatch(room: Room): void {
   room.state = createGame({ seed, players: [room.seats[0].deck, room.seats[1]!.deck] });
   room.recentEvents = [];
   room.rematchVotes.clear();
+  room.forfeitInfo = null;
   const intro = `Match start: ${d0} vs ${d1} — room ${room.code}, seed ${seed}`;
   room.logs = [[intro], [intro]];
   room.epoch++;
@@ -212,6 +216,7 @@ function pushState(room: Room, side: PlayerId, error?: string): void {
       log: room.logs[side],
       epoch: room.epoch,
       events: room.recentEvents,
+      forfeit: room.forfeitInfo,
     },
     side,
     { relative: true },
@@ -369,8 +374,11 @@ function armInactivity(room: Room): void {
       // Recompute at fire time: exactly one dawdler forfeits; a simultaneous-prepare
       // mutual stall (both idle, neither singled out) is a draw, not an arbitrary loss.
       const idle = onClockHumans(room);
-      if (idle.length === 1) forfeit(room, idle[0]!, "was idle too long");
-      else if (idle.length >= 2) endMatch(room, abandon(room.state!, null), () => "— match abandoned (both idle)");
+      if (idle.length === 1) forfeit(room, idle[0]!, "idle");
+      else if (idle.length >= 2) {
+        room.forfeitInfo = { by: null, cause: "idle" };
+        endMatch(room, abandon(room.state!, null), () => "— match abandoned (both idle)");
+      }
     } catch (err) {
       console.error("inactivity timer error:", err);
     }
@@ -447,8 +455,10 @@ function endMatch(room: Room, result: { state: GameState; events: GameEvent[] },
 }
 
 /** End the match against `loser` (the other player wins by forfeit). */
-function forfeit(room: Room, loser: PlayerId, why: string): void {
+function forfeit(room: Room, loser: PlayerId, cause: ForfeitInfo["cause"]): void {
   if (!room.state || isTerminal(room.state)) return;
+  const why = cause === "idle" ? "was idle too long" : cause;
+  room.forfeitInfo = { by: loser, cause };
   endMatch(room, concede(room.state, loser), (v) => (v === loser ? `You: forfeited — ${why}` : `Opp: forfeited — ${why}`));
 }
 
@@ -494,6 +504,7 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
         hub,
         graceTimers: [null, null],
         inactivityTimer: null,
+        forfeitInfo: null,
       };
       rooms.set(room.code, room);
       seatSocket(room, 0, ws);

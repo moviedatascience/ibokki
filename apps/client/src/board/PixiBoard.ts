@@ -51,6 +51,8 @@ interface Desired {
   edge: EdgeSide;
   /** Cancelled ✕ stamp. */
   stamp: boolean;
+  /** Sealed banner (prepared spell locked by Runic Seal & co). */
+  sealed: boolean;
   onTap: (() => void) | null;
   spawn: Pt | null; // enter-from position for new sprites
   spawnScale: boolean; // scale-up on enter (hand draw / cast)
@@ -306,9 +308,10 @@ export class PixiBoard {
 
     this.updatePlate(this.oppPlate, `Opponent · ${state.schools[1]}`, opp, !state.gameOver && state.activePlayer === 1);
     this.updatePlate(this.youPlate, `You · ${state.schools[0]}`, you, !state.gameOver && state.activePlayer === 0);
-    this.oppDeckL.text = `Deck ${opp.resourceDeckCount}`;
+    // "↻N" = exhaustion clock: the discard has recycled N times (each reshuffle dealt 2×N damage).
+    this.oppDeckL.text = `Deck ${opp.resourceDeckCount}${opp.reshuffles ? ` · ↻${opp.reshuffles}` : ""}`;
     this.oppHandL.text = `Hand ${opp.handCount ?? 0}`;
-    this.youDeckL.text = `Deck ${you.resourceDeckCount}`;
+    this.youDeckL.text = `Deck ${you.resourceDeckCount}${you.reshuffles ? ` · ↻${you.reshuffles}` : ""}`;
 
     const byType = (t: string) => legal.filter((a) => a.type === t);
     const attachTargets = (def: string) => byType("attach").filter((a) => a.defId === def);
@@ -318,12 +321,12 @@ export class PixiBoard {
 
     const desired: Desired[] = [];
     const push = (d: Partial<Desired> & Pick<Desired, "key" | "layer" | "x" | "y">) =>
-      desired.push({ faceDef: null, w: CARD_W, h: CARD_H, rot: 0, z: 0, highlight: "none", dim: false, attached: [], edge: null, stamp: false, onTap: null, spawn: null, spawnScale: false, ...d });
+      desired.push({ faceDef: null, w: CARD_W, h: CARD_H, rot: 0, z: 0, highlight: "none", dim: false, attached: [], edge: null, stamp: false, sealed: false, onTap: null, spawn: null, spawnScale: false, ...d });
 
     // --- opponent prepared (face-down until cast/revealed) + deck ---
     opp.prepared.forEach((p, i) => {
       const c = preparedCenter("opp", i);
-      push({ key: `p1:${i}`, layer: this.oppLayer, x: c.x, y: c.y, faceDef: p.spellDefId ?? null, dim: p.cast, attached: this.symsOf(p.attached) });
+      push({ key: `p1:${i}`, layer: this.oppLayer, x: c.x, y: c.y, faceDef: p.spellDefId ?? null, dim: p.cast, sealed: p.sealed, attached: this.symsOf(p.attached) });
     });
     push({ key: "deck1", layer: this.oppLayer, x: OPP_DECK.x, y: OPP_DECK.y, faceDef: null });
 
@@ -374,6 +377,7 @@ export class PixiBoard {
         y: c.y,
         faceDef: p.spellDefId ?? null,
         dim: p.cast && !cast,
+        sealed: p.sealed,
         highlight,
         onTap,
         attached: this.symsOf(p.attached),
@@ -492,6 +496,7 @@ export class PixiBoard {
       sp.visual.setDim(d.dim);
       sp.visual.setEdge(d.edge);
       sp.visual.setStamp(d.stamp);
+      sp.visual.setSealed(d.sealed);
       // No action on this card? A tap pins it into the card-detail panel instead.
       const owner = sp;
       const inspect = () => {

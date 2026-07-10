@@ -170,6 +170,17 @@ export function actionLabelFor(viewer: PlayerId, state: GameState, action: Actio
 // The full per-viewer frame
 // ---------------------------------------------------------------------------
 
+/**
+ * Attribution for an out-of-band "forfeit" ending: who gave the match up and why.
+ * `by` is null for a mutual abandonment (both players idle → draw). Without this the
+ * client can only render a viewer-agnostic "opponent forfeited", which is wrong for
+ * the player who forfeited and for draws.
+ */
+export interface ForfeitInfo {
+  by: PlayerId | null;
+  cause: "disconnected" | "idle" | "conceded";
+}
+
 /** What a server must hold about one match to build client frames from. */
 export interface MatchSnapshot {
   state: GameState;
@@ -182,6 +193,8 @@ export interface MatchSnapshot {
   epoch: number;
   /** Raw engine events since the last action (redacted per viewer here). */
   events: GameEvent[];
+  /** Set when the match ended by forfeit (endReason === "forfeit"). */
+  forfeit?: ForfeitInfo | null;
 }
 
 export interface MatchStatePayload {
@@ -197,6 +210,8 @@ export interface MatchStatePayload {
   gameOver: boolean;
   winner: PlayerId | null;
   endReason: GameState["endReason"];
+  /** Who forfeited and why, when endReason === "forfeit" (`by` remapped like every PlayerId). */
+  forfeit?: ForfeitInfo | null;
   bots: PlayerId[];
   view: PlayerView;
   legal: LegalActionPayload[];
@@ -245,6 +260,7 @@ export function buildMatchState(snap: MatchSnapshot, side: PlayerId, opts: Build
     gameOver: over,
     winner: st.winner === null ? null : rel(st.winner),
     endReason: st.endReason,
+    forfeit: snap.forfeit ? { by: snap.forfeit.by === null ? null : rel(snap.forfeit.by), cause: snap.forfeit.cause } : null,
     bots: snap.bots.map(rel),
     view,
     legal: yourTurn ? legalForClient(st, side) : [],

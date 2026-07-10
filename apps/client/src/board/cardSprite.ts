@@ -54,6 +54,7 @@ export class CardVisual {
   private edgeG = new Graphics();
   private hl = new Graphics();
   private stampC = new Container();
+  private sealC = new Container();
   private nameT: Text;
   private metaT: Text;
   private costC = new Container();
@@ -98,9 +99,11 @@ export class CardVisual {
       this.stampC.addChild(g);
     }
     this.stampC.visible = false;
+    this.sealC.visible = false;
     // attC sits above `back` so attached-component chips stay visible on face-down cards
-    // (the opponent's attachments are public information).
-    this.root.addChild(this.body, this.band, this.edgeG, this.nameT, this.metaT, this.costC, this.back, this.attC, this.stampC, this.hl);
+    // (the opponent's attachments are public information). sealC likewise — a Runic Seal
+    // on a face-down spell is public.
+    this.root.addChild(this.body, this.band, this.edgeG, this.nameT, this.metaT, this.costC, this.back, this.attC, this.sealC, this.stampC, this.hl);
     this.setHighlight("none");
   }
 
@@ -224,6 +227,28 @@ export class CardVisual {
   /** Cancelled ✕ stamp (pairs with setDim so a countered spell reads at a glance). */
   setStamp(on: boolean): void {
     this.stampC.visible = on;
+  }
+
+  private sealBuilt = false;
+
+  /** Sealed banner: the spell can't be cast until the seal lifts (Runic Seal & co). */
+  setSealed(on: boolean): void {
+    if (on && !this.sealBuilt) {
+      this.sealBuilt = true;
+      const { w, h } = this;
+      const g = new Graphics();
+      g.rect(0, h / 2 - 9, w, 18).fill({ color: 0x1c1426, alpha: 0.92 });
+      g.moveTo(0, h / 2 - 9).lineTo(w, h / 2 - 9).moveTo(0, h / 2 + 9).lineTo(w, h / 2 + 9)
+        .stroke({ width: 1, color: 0xa070e0, alpha: 0.9 });
+      const t = new Text({
+        text: "SEALED",
+        style: { fill: 0xc9a0f0, fontSize: 9, fontFamily: "system-ui", fontWeight: "800", letterSpacing: 2 },
+      });
+      t.anchor.set(0.5);
+      t.position.set(w / 2, h / 2);
+      this.sealC.addChild(g, t);
+    }
+    this.sealC.visible = on;
   }
 
   setHighlight(kind: Highlight): void {

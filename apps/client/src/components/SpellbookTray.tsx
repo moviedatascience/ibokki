@@ -138,6 +138,7 @@ export function SpellbookTray({ state, cards, onAction, onHover, onInspect }: { 
               <span className="sbprepmeta">
                 {info?.level ? `L${info.level}` : ""} <Pips cost={info?.cost} />
               </span>
+              {prepared[i]?.sealed && <span className="sbsealed">sealed</span>}
             </div>
           );
         })}

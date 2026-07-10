@@ -15,6 +15,8 @@ interface Props {
   auth: UseAuth;
   deckData: DeckListResponse | null;
   online: OnlineApi;
+  /** Connection/room errors (bad code, server down, connection lost) — Home is where they land. */
+  error: string | null;
   /** True when the local vs-bot play server is reachable (dev). Hidden in production. */
   hasLocalMatch: boolean;
   onPlayBot: (p0: School, p1: School) => void;
@@ -126,12 +128,15 @@ function AuthPanel({ auth }: { auth: UseAuth }) {
   );
 }
 
-export function Home({ auth, deckData, online, hasLocalMatch, onPlayBot, onResume, onEditDeck, onDeleteDeck }: Props) {
+export function Home({ auth, deckData, online, error, hasLocalMatch, onPlayBot, onResume, onEditDeck, onDeleteDeck }: Props) {
   const allDecks: Deck[] = [...(deckData?.presets ?? []), ...(deckData?.decks ?? [])];
   const [choice, setChoice] = useState("p:Emberworks");
   const [joinCode, setJoinCode] = useState("");
   const [p0, setP0] = useState<School>("Evocation");
   const [p1, setP1] = useState<School>("Abjuration");
+  // Disable the play buttons while the WS handshakes — double-clicks otherwise open
+  // two rooms, and a dead server otherwise looks like an unresponsive button.
+  const connecting = online.status === "connecting";
 
   return (
     <div className="home">
@@ -156,19 +161,21 @@ export function Home({ auth, deckData, online, hasLocalMatch, onPlayBot, onResum
               ))}
             </select>
           </label>
-          <button className="primary" style={{ width: "100%" }} onClick={() => online.create(decodeChoice(choice))} data-testid="online-create">
+          <button className="primary" style={{ width: "100%" }} disabled={connecting} onClick={() => online.create(decodeChoice(choice))} data-testid="online-create">
             Create room
           </button>
           <label className="field">
             Room code
             <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="e.g. QK7XP" maxLength={5} data-testid="online-code-input" />
           </label>
-          <button style={{ width: "100%" }} disabled={joinCode.trim().length < 5} onClick={() => online.join(joinCode, decodeChoice(choice))} data-testid="online-join">
+          <button style={{ width: "100%" }} disabled={connecting || joinCode.trim().length < 5} onClick={() => online.join(joinCode, decodeChoice(choice))} data-testid="online-join">
             Join room
           </button>
-          <button style={{ width: "100%" }} onClick={() => online.createBot(decodeChoice(choice))} data-testid="online-bot">
+          <button style={{ width: "100%" }} disabled={connecting} onClick={() => online.createBot(decodeChoice(choice))} data-testid="online-bot">
             Play vs bot
           </button>
+          {connecting && <div className="hint">Connecting…</div>}
+          {error && <div className="formerror" data-testid="online-error">{error}</div>}
           <div className="hint">No opponent? The bot plays a random archetype deck.</div>
         </div>
 
@@ -223,7 +230,16 @@ export function Home({ auth, deckData, online, hasLocalMatch, onPlayBot, onResum
                 <span>{d.name}</span>
                 <span className="deckactions">
                   <button onClick={() => onEditDeck(d)}>Edit</button>
-                  <button onClick={() => onDeleteDeck(d.id!)}>Delete</button>
+                  <button
+                    onClick={() => {
+                      if (!window.confirm(`Delete "${d.name}"? This can't be undone.`)) return;
+                      // Don't leave the play dropdown pointing at a deck that no longer exists.
+                      if (choice === `d:${d.id}`) setChoice("p:Emberworks");
+                      onDeleteDeck(d.id!);
+                    }}
+                  >
+                    Delete
+                  </button>
                 </span>
               </li>
             ))}

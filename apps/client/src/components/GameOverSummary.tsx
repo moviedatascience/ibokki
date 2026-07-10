@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { MatchState } from "../api.ts";
 import { LogLines } from "./LogLines.tsx";
 
@@ -5,8 +6,25 @@ const END_REASON: Record<string, string> = {
   hp: "hit points reduced to 0",
   deckout: "Resource Deck ran out",
   "turn-limit": "turn limit reached",
-  forfeit: "opponent forfeited",
 };
+
+const FORFEIT_CAUSE: Record<string, string> = {
+  disconnected: "disconnected",
+  idle: "was idle too long",
+  conceded: "conceded",
+};
+
+/** Forfeits need per-viewer wording — "opponent forfeited" is wrong when YOU idled out, and for draws. */
+function forfeitReason(state: MatchState): string {
+  const f = state.forfeit;
+  if (f) {
+    const cause = FORFEIT_CAUSE[f.cause] ?? f.cause;
+    if (f.by === null) return "match abandoned — both players idle";
+    return f.by === 0 ? `you forfeited (${cause})` : `opponent forfeited (${cause})`;
+  }
+  // Older frame without attribution: infer the side from the winner.
+  return state.winner === 0 ? "opponent forfeited" : state.winner === 1 ? "you forfeited" : "match abandoned";
+}
 
 interface SideStats {
   cast: number;
@@ -42,10 +60,19 @@ function tally(log: string[]): [SideStats, SideStats] {
 
 /** Full-board overlay once the game ends: result, per-player stats, and the match log. */
 export function GameOverSummary({ state, onDismiss, onRematch }: { state: MatchState | null; onDismiss: () => void; onRematch: () => void }) {
+  const logRef = useRef<HTMLDivElement | null>(null);
+  const over = !!state?.gameOver;
+  const logLen = state?.log.length ?? 0;
+  // Keep the newest lines (rematch offers, the final blow) in view — the rail log
+  // auto-scrolls, so this one reading oldest-first was an inconsistency.
+  useEffect(() => {
+    if (over && logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
+  }, [over, logLen]);
   if (!state || !state.gameOver) return null;
 
   const verdict = state.winner === null ? "Draw" : state.winner === 0 ? "You win! 🎉" : "Opponent wins";
-  const reason = state.endReason ? (END_REASON[state.endReason] ?? state.endReason) : "";
+  const reason =
+    state.endReason === "forfeit" ? forfeitReason(state) : state.endReason ? (END_REASON[state.endReason] ?? state.endReason) : "";
   const [you, opp] = tally(state.log);
   const rows: [string, number | string, number | string][] = [
     ["Final HP", state.view.self.hp, state.view.opponent.hp],
@@ -61,7 +88,7 @@ export function GameOverSummary({ state, onDismiss, onRematch }: { state: MatchS
   return (
     <div className="gameover">
       <div className="gopanel">
-        <h2 className={state.winner === 0 ? "win" : state.winner === 1 ? "loss" : ""}>{verdict}</h2>
+        <h2 className={state.winner === 0 ? "win" : state.winner === 1 ? "loss" : "draw"}>{verdict}</h2>
         <p className="goreason">
           {reason && `Game over — ${reason}. `}
           {state.round} round{state.round === 1 ? "" : "s"}, {state.turnCount} turns.
@@ -84,7 +111,7 @@ export function GameOverSummary({ state, onDismiss, onRematch }: { state: MatchS
             ))}
           </tbody>
         </table>
-        <div className="golog">
+        <div className="golog" ref={logRef}>
           <LogLines lines={state.log} />
         </div>
         <div className="gorow">

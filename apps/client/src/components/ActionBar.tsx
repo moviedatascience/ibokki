@@ -1,4 +1,5 @@
 import type { CardCatalog, MatchState } from "../api.ts";
+import type { OnlineStatus } from "../useMatch.ts";
 
 interface Props {
   state: MatchState | null;
@@ -7,11 +8,23 @@ interface Props {
   onAction: (index: number) => void;
   onCancel: () => void;
   error: string | null;
+  onlineStatus?: OnlineStatus;
 }
 
 /** Floating status + contextual buttons over the bottom of the table (mirrors the old board's status bar). */
-export function ActionBar({ state, cards, selectionActive, onAction, onCancel, error }: Props) {
-  if (!state) return <div className="actionbar"><span className="status wait">Connecting…</span></div>;
+export function ActionBar({ state, cards, selectionActive, onAction, onCancel, error, onlineStatus }: Props) {
+  // Errors can arrive in any phase — connection loss and rate limits land while
+  // WAITING on the opponent — so every branch must render the error slot.
+  const err = error ? <span className="err">{error}</span> : null;
+
+  if (!state) {
+    return (
+      <div className="actionbar">
+        <span className="status wait">{onlineStatus === "waiting" ? "Waiting for an opponent to join…" : "Connecting…"}</span>
+        {err}
+      </div>
+    );
+  }
 
   if (state.gameOver) {
     const msg = state.winner === null ? "Draw" : state.winner === 0 ? "YOU WIN 🎉" : "Opponent wins";
@@ -19,6 +32,7 @@ export function ActionBar({ state, cards, selectionActive, onAction, onCancel, e
       <div className="actionbar">
         <span className="status over">Game over — {msg}</span>
         {state.endReason && <span className="hint">({state.endReason})</span>}
+        {err}
       </div>
     );
   }
@@ -27,6 +41,7 @@ export function ActionBar({ state, cards, selectionActive, onAction, onCancel, e
     return (
       <div className="actionbar">
         <span className="status wait">Waiting for {state.bots.includes(1) ? "the bot" : "the opponent"}…</span>
+        {err}
       </div>
     );
   }
@@ -64,7 +79,7 @@ export function ActionBar({ state, cards, selectionActive, onAction, onCancel, e
   return (
     <div className="actionbar">
       <span className={`status ${cls}`}>{status}</span>
-      {error && <span className="err">{error}</span>}
+      {err}
       {mulligan && <button onClick={() => onAction(mulligan.index)}>Mulligan</button>}
       {detaches.map((a) => (
         <button key={a.index} className="detach" title="Return this component to your hand" onClick={() => onAction(a.index)}>

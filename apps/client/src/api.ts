@@ -99,6 +99,8 @@ export interface MatchState {
   gameOver: boolean;
   winner: Side | null;
   endReason: string | null;
+  /** Set when endReason === "forfeit": who gave up (relative, 0 = you; null = mutual abandonment) and why. */
+  forfeit?: { by: Side | null; cause: "disconnected" | "idle" | "conceded" } | null;
   bots: number[];
   view: RedactedView;
   legal: LegalAction[];

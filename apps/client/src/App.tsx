@@ -64,11 +64,24 @@ export function App() {
   const toMenu = useCallback(() => {
     if (isOnline) {
       // Leaving a live PvP match forfeits the seat — make sure it's intentional.
-      if (online.status === "playing" && state && !state.gameOver && !window.confirm("Leave the match? Your seat is forfeited and the room closes.")) return;
+      if (online.status === "playing" && state && !state.gameOver && !window.confirm("Leave the match? If you don't rejoin within a minute, you forfeit.")) return;
       online.leave();
     }
     setScreen("home");
   }, [isOnline, online, state]);
+
+  // Closing the tab / navigating away mid-PvP forfeits via the disconnect grace —
+  // ask the browser to confirm it. Solo bot matches aren't guarded (no one is harmed).
+  const guardUnload = online.status === "playing" && !!state && !state.gameOver && state.bots.length === 0;
+  useEffect(() => {
+    if (!guardUnload) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [guardUnload]);
 
   // A fresh match (local new game or online rematch) re-arms the game-over summary.
   useEffect(() => {
@@ -92,8 +105,15 @@ export function App() {
           auth={auth}
           deckData={deckData}
           online={online}
+          error={error}
           hasLocalMatch={state !== null}
-          onPlayBot={(s0, s1) => void startGame(s0, s1, "bot")}
+          onPlayBot={(s0, s1) => {
+            // Remember the matchup so a local Rematch replays it (not the side-panel defaults).
+            setP0(s0);
+            setP1(s1);
+            setMode("bot");
+            void startGame(s0, s1, "bot");
+          }}
           onResume={() => setScreen("match")}
           onEditDeck={(deck) => {
             // Presets open as unsaved copies; null = a blank deck.
@@ -115,6 +135,7 @@ export function App() {
   if (screen === "builder" && builderDeck && deckData) {
     return (
       <div className="app">
+        {updateBanner}
         <DeckBuilder
           cards={cards}
           rules={deckData.rules}
@@ -143,7 +164,7 @@ export function App() {
               <GameOverSummary state={state} onDismiss={() => setSummaryDismissed(true)} onRematch={onRematch} />
             )}
           </div>
-          <ActionBar state={state} cards={cards} selectionActive={selectionActive} onAction={act} onCancel={() => boardRef.current?.clearSelection()} error={error} />
+          <ActionBar state={state} cards={cards} selectionActive={selectionActive} onAction={act} onCancel={() => boardRef.current?.clearSelection()} error={error} onlineStatus={online.status} />
         </div>
         <SidePanels
           state={state}

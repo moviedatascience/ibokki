@@ -31,8 +31,12 @@ export interface UseMatch {
   online: OnlineApi;
 }
 
-const REJOIN_RETRY_MS = 2000;
-const REJOIN_MAX_TRIES = 5;
+// Keep retrying at least as long as the server's disconnect grace (45s default) —
+// giving up earlier strands a seat the server would still happily hand back.
+const REJOIN_RETRY_MS = 3000;
+const REJOIN_MAX_TRIES = 16;
+
+const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /**
  * Owns the match data lifecycle in both transports.
@@ -59,8 +63,10 @@ export function useMatch(): UseMatch {
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onlineRef = useRef<OnlineClient | null>(null);
   const statusRef = useRef<OnlineStatus>("idle");
+  const stateRef = useRef<MatchState | null>(null);
   const retryRef = useRef<{ timer: ReturnType<typeof setTimeout> | null; tries: number }>({ timer: null, tries: 0 });
   statusRef.current = onlineStatus;
+  stateRef.current = state;
 
   const clearPoll = () => {
     if (pollRef.current) clearTimeout(pollRef.current);
@@ -100,7 +106,12 @@ export function useMatch(): UseMatch {
         setError(null);
         schedulePoll(s);
       })
-      .catch((e) => setError(String(e)));
+      .catch((e) => {
+        // In production only the online server exists, so this probe 404s on every
+        // load/leave — that just means "no local play server", not a user-facing error.
+        // Only surface the failure when a local match was actually in progress.
+        if (stateRef.current) setError(errMsg(e));
+      });
   }, [schedulePoll]);
 
   // ---- online (WebSocket) transport ----
@@ -134,13 +145,21 @@ export function useMatch(): UseMatch {
         setError(message);
       },
       onClose: () => {
-        // Unexpected drop: retry the stored seat a few times, then give up.
+        if (statusRef.current === "idle") return;
         const seat = storedSeat();
-        if (statusRef.current === "idle" || !seat) return;
+        if (!seat) {
+          // A fresh create/join died before a seat was issued (server down, room
+          // rejected). Without this reset the status machine sits on "connecting"
+          // forever and the Home screen never re-enables its buttons.
+          setOnlineStatus("idle");
+          setError((prev) => prev ?? "could not reach the game server");
+          return;
+        }
+        // Unexpected drop with a live seat: retry for at least the server's rejoin grace.
         setOpponentConnected(false);
         if (retryRef.current.tries >= REJOIN_MAX_TRIES) {
           setOnlineStatus("idle");
-          setError("connection lost");
+          setError("connection lost — refresh to try rejoining the match");
           clearRejoinRetry();
           return;
         }
@@ -197,6 +216,7 @@ export function useMatch(): UseMatch {
       setCode(null);
       setOpponentConnected(false);
       setState(null);
+      setError(null); // a stale in-match error must not follow the user to the Home screen
       api.cards().then(setCards).catch(() => {});
       refreshInner();
     }, [refreshInner]),
@@ -219,7 +239,7 @@ export function useMatch(): UseMatch {
         setError(s.error ?? null);
         schedulePoll(s);
       } catch (e) {
-        setError(String(e));
+        setError(errMsg(e));
         pollRef.current = setTimeout(() => refreshInner(), 1000);
       } finally {
         setBusy(false);
@@ -239,7 +259,7 @@ export function useMatch(): UseMatch {
         setError(null);
         schedulePoll(s);
       } catch (e) {
-        setError(String(e));
+        setError(errMsg(e));
       } finally {
         setBusy(false);
       }

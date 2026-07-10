@@ -330,6 +330,8 @@ describe("online server — match-layer safety", () => {
     await a.waitFor(() => a.latest!.gameOver, "forfeit game over", 5000);
     expect(a.latest!.endReason).toBe("forfeit");
     expect(a.latest!.winner).toBe(0);
+    // Attribution rides the frame, viewer-relative: B (A's opponent = 1) dropped.
+    expect(a.latest!.forfeit).toEqual({ by: 1, cause: "disconnected" });
     a.close();
     await s.shutdown();
   });
@@ -378,8 +380,10 @@ describe("online server — match-layer safety", () => {
     await a.waitFor(() => a.latest!.gameOver, "abandon game over", 5000);
     expect(a.latest!.endReason).toBe("forfeit");
     expect(a.latest!.winner).toBeNull();
+    expect(a.latest!.forfeit).toEqual({ by: null, cause: "idle" }); // mutual — no one is "the" forfeiter
     await b.waitFor(() => b.latest!.gameOver, "b sees game over", 5000);
     expect(b.latest!.winner).toBeNull();
+    expect(b.latest!.forfeit).toEqual({ by: null, cause: "idle" });
     a.close();
     b.close();
     await s.shutdown();
@@ -396,6 +400,7 @@ describe("online server — match-layer safety", () => {
     await a.waitFor(() => a.latest!.gameOver, "inactivity forfeit", 5000);
     expect(a.latest!.endReason).toBe("forfeit");
     expect(a.latest!.winner).toBe(1); // relative: 1 = the bot opponent
+    expect(a.latest!.forfeit).toEqual({ by: 0, cause: "idle" }); // relative: 0 = the idle human themselves
     a.close();
     await s.shutdown();
   });
