@@ -223,5 +223,35 @@
     "steps": 0,
     "cast": [],
     "note": "Direction reference for the Eye/Bow/Key card back — final back is authored vector (bible §10)."
+  },
+  {
+    "asset": "seal marker — wax seal glyph (APPROVED)",
+    "defId": null,
+    "prompt": null,
+    "negative_prompt": null,
+    "seed": null,
+    "width": 100,
+    "height": 100,
+    "file": "art/glyphs/seal.svg",
+    "date": "2026-07-09",
+    "model": "hand-authored SVG (not generated)",
+    "steps": null,
+    "cast": [],
+    "note": "Sealed-spell state marker (Runic Seal & co). Wax blob + engraved rim + punched diamond still-point + one drip; chosen over sealed-scroll (mush at pip size) and binding-chains (reads as infinity at pip size). First imprint draft read as a letter T and was replaced by the diamond. Wired: board SEALED banner (cardSprite.setSealed) + spellbook sealed tag. Rejected variants in art/review/wave2/."
+  },
+  {
+    "asset": "ritual circle round 1 — ALL REJECTED; board-center direction changed",
+    "defId": null,
+    "prompt": null,
+    "negative_prompt": null,
+    "seed": null,
+    "width": 400,
+    "height": 400,
+    "file": "art/review/wave2/circle-{a,b,c}.svg (rejected)",
+    "date": "2026-07-09",
+    "model": "hand-authored SVG (not generated)",
+    "steps": null,
+    "cast": [],
+    "note": "ART DIRECTION (2026-07-09): the middle of the board is an ARENA SPACE where the two wizards face off — it will NOT have a ritual circle in it. Supersedes MANIFEST #1's circle half and the bible §11 'separate transparent circle asset' packaging; the regulation-circle motif stays canon in card art/lore (Grandmother Cinder, card back), just not as board furniture. Venue/table art should compose the center as a dueling arena for the two wizard figures."
   }
 ]

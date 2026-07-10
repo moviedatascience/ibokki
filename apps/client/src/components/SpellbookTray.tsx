@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import type { CardCatalog, MatchState } from "../api.ts";
+import { cardArtUrl, hasCardArt } from "../cardArtManifest.ts";
 import { Icon, Pips, SchoolCrest } from "./Pips.tsx";
 
 /** Cards shown per book page (2 rows x 6 columns; see .sbpage in styles.css). */
@@ -85,7 +86,8 @@ export function SpellbookTray({ state, cards, onAction, onHover, onInspect }: { 
                   <span className="sbname">{info?.name ?? def}</span>
                   <span className="sbcost"><Pips cost={info?.cost} /></span>
                 </div>
-                <div className="sbart" />
+                {/* Illustration lands over the gradient placeholder once art ships for this card. */}
+                <div className="sbart" style={hasCardArt(def) ? { backgroundImage: `url(${cardArtUrl(def)})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
                 <div className="sbtypeline">
                   <SchoolCrest school={info?.school} size={11} /> {[info?.type, info?.level ? `L${info.level}` : ""].filter(Boolean).join(" · ")}
                 </div>
@@ -138,7 +140,11 @@ export function SpellbookTray({ state, cards, onAction, onHover, onInspect }: { 
               <span className="sbprepmeta">
                 {info?.level ? `L${info.level}` : ""} <Pips cost={info?.cost} />
               </span>
-              {prepared[i]?.sealed && <span className="sbsealed">sealed</span>}
+              {prepared[i]?.sealed && (
+                <span className="sbsealed">
+                  <Icon name="seal" color="#c9a0f0" size={10} /> sealed
+                </span>
+              )}
             </div>
           );
         })}

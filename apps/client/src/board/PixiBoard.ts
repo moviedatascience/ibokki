@@ -150,6 +150,14 @@ export class PixiBoard {
       console.warn("icon assets failed to load — using text fallbacks", e);
     }
 
+    // Pixi rasterizes Text with whatever fonts are loaded at draw time — wait for the
+    // card face (Alegreya). Bounded so a hung font fetch can't stall the board.
+    try {
+      await Promise.race([document.fonts.load('700 12px "Alegreya"'), new Promise((r) => setTimeout(r, 1500))]);
+    } catch {
+      /* font unavailable — Text falls back to the serif stack */
+    }
+
     this.stackLayer.sortableChildren = true;
     this.handLayer.sortableChildren = true;
     this.world.addChild(this.bgLayer, this.slotG, this.oppLayer, this.stackLayer, this.youLayer, this.pileLayer, this.handLayer, this.fxLayer);
@@ -528,7 +536,7 @@ export class PixiBoard {
     // The card at a position can change under a stationary cursor — refresh the hover detail too.
     if (this.hoverKey === d.key && sp.faceDef !== d.faceDef) this.cb.onHover(d.faceDef);
     sp.faceDef = d.faceDef; // keep the live hover face in sync with what's painted
-    if (d.faceDef) sp.visual.setFace(this.face(d.faceDef));
+    if (d.faceDef) sp.visual.setFace(this.face(d.faceDef), d.faceDef);
     else sp.visual.setFaceDown(true);
     // Attached chips render on face-down cards too — the opponent's attachments are public info.
     sp.visual.setAttached(d.attached);

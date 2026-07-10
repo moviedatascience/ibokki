@@ -1,5 +1,6 @@
 import { Container, Graphics, Sprite, Text } from "pixi.js";
 import { PIP_TINT, cardbackTexture, icon } from "./icons.ts";
+import { cardArtTexture, coverCrop } from "./cardArt.ts";
 
 /**
  * A neutral placeholder card: rounded-rect body, a school-tinted title band, name / type+level /
@@ -50,6 +51,7 @@ export class CardVisual {
   readonly w: number;
   readonly h: number;
   private body = new Graphics();
+  private artC = new Container(); // per-card illustration window (empty until art ships)
   private band = new Graphics();
   private edgeG = new Graphics();
   private hl = new Graphics();
@@ -75,7 +77,9 @@ export class CardVisual {
 
     this.nameT = new Text({
       text: "",
-      style: { fill: 0xf0f1f4, fontSize: 12, fontFamily: "system-ui", fontWeight: "700", wordWrap: true, wordWrapWidth: w - 12 },
+      // Card names are card identity, not UI chrome — Alegreya per the style bible;
+      // PixiBoard.mount() awaits the font so first rasterization uses it.
+      style: { fill: 0xf0f1f4, fontSize: 12, fontFamily: "Alegreya, Georgia, serif", fontWeight: "700", wordWrap: true, wordWrapWidth: w - 12 },
     });
     this.nameT.position.set(7, 6);
     this.metaT = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 9.5, fontFamily: "system-ui" } });
@@ -103,7 +107,7 @@ export class CardVisual {
     // attC sits above `back` so attached-component chips stay visible on face-down cards
     // (the opponent's attachments are public information). sealC likewise — a Runic Seal
     // on a face-down spell is public.
-    this.root.addChild(this.body, this.band, this.edgeG, this.nameT, this.metaT, this.costC, this.back, this.attC, this.sealC, this.stampC, this.hl);
+    this.root.addChild(this.body, this.artC, this.band, this.edgeG, this.nameT, this.metaT, this.costC, this.back, this.attC, this.sealC, this.stampC, this.hl);
     this.setHighlight("none");
   }
 
@@ -135,17 +139,37 @@ export class CardVisual {
     this.back.addChild(g);
   }
 
-  setFace(f: CardFace): void {
-    const key = `${f.school}|${f.name}|${f.type}|${f.level ?? ""}|${f.cost ?? ""}`;
+  setFace(f: CardFace, defId?: string | null): void {
+    const key = `${defId ?? ""}|${f.school}|${f.name}|${f.type}|${f.level ?? ""}|${f.cost ?? ""}`;
     if (key !== this.faceKey) {
       this.faceKey = key;
       this.drawBody(SCHOOL_COLOR[f.school] ?? SCHOOL_COLOR.Neutral!);
+      this.applyArt(defId ?? null, key);
       this.nameT.text = f.name;
       const lvl = f.level ? `L${f.level}` : f.type === "Item" || f.type === "Gambit" ? "Trainer" : "";
       this.metaT.text = [f.type, lvl].filter(Boolean).join(" · ");
       this.drawCost(f.cost ?? "");
     }
     this.setFaceDown(false);
+  }
+
+  /** Illustration window between the title band and the meta line ("swap the body fill
+   *  for a Sprite, keep the layout"). No-op until the manifest lists art for this card;
+   *  the texture loads lazily and repaints when it lands (if this face is still shown). */
+  private applyArt(defId: string | null, key: string): void {
+    for (const c of this.artC.removeChildren()) c.destroy();
+    if (!defId) return;
+    const t = cardArtTexture(defId, () => {
+      if (this.faceKey === key) this.applyArt(defId, key);
+    });
+    if (!t) return;
+    const y = 20; // below the title band
+    const artH = this.h - y - 18; // above the meta line
+    const sp = new Sprite(coverCrop(t, this.w - 2, artH));
+    sp.width = this.w - 2;
+    sp.height = artH;
+    sp.position.set(1, y);
+    this.artC.addChild(sp);
   }
 
   /** Cost as woodcut V/S/M pips, right-aligned in the bottom corner; letter fallback. */
@@ -175,7 +199,7 @@ export class CardVisual {
 
   setFaceDown(down: boolean): void {
     this.back.visible = down;
-    this.body.visible = this.band.visible = this.nameT.visible = this.metaT.visible = this.costC.visible = !down;
+    this.body.visible = this.artC.visible = this.band.visible = this.nameT.visible = this.metaT.visible = this.costC.visible = !down;
   }
 
   /** Show attached component symbols (e.g. ["V","SM"]) as small pip chips; [] clears them. */
@@ -229,23 +253,32 @@ export class CardVisual {
     this.stampC.visible = on;
   }
 
-  /** Sealed banner: the spell can't be cast until the seal lifts (Runic Seal & co). */
+  /** Sealed banner: the spell can't be cast until the seal lifts (Runic Seal & co).
+   *  Wax-seal glyph + label (approved 2026-07-09); text-only when assets failed. */
   setSealed(on: boolean): void {
     // Built lazily on first seal; the container is the single source of truth for
     // "already built" (a stray flag could desync from the actual children).
     if (on && this.sealC.children.length === 0) {
       const { w, h } = this;
       const g = new Graphics();
-      g.rect(0, h / 2 - 9, w, 18).fill({ color: 0x1c1426, alpha: 0.92 });
-      g.moveTo(0, h / 2 - 9).lineTo(w, h / 2 - 9).moveTo(0, h / 2 + 9).lineTo(w, h / 2 + 9)
+      g.rect(0, h / 2 - 10, w, 20).fill({ color: 0x1c1426, alpha: 0.92 });
+      g.moveTo(0, h / 2 - 10).lineTo(w, h / 2 - 10).moveTo(0, h / 2 + 10).lineTo(w, h / 2 + 10)
         .stroke({ width: 1, color: 0xa070e0, alpha: 0.9 });
       const t = new Text({
         text: "SEALED",
         style: { fill: 0xc9a0f0, fontSize: 9, fontFamily: "system-ui", fontWeight: "800", letterSpacing: 2 },
       });
       t.anchor.set(0.5);
-      t.position.set(w / 2, h / 2);
-      this.sealC.addChild(g, t);
+      const mark = icon("seal", 15, 0xc9a0f0);
+      if (mark) {
+        const total = 15 + 4 + t.width;
+        mark.position.set(w / 2 - total / 2, h / 2 - 7.5);
+        t.position.set(w / 2 - total / 2 + 15 + 4 + t.width / 2, h / 2);
+        this.sealC.addChild(g, mark, t);
+      } else {
+        t.position.set(w / 2, h / 2);
+        this.sealC.addChild(g, t);
+      }
     }
     this.sealC.visible = on;
   }

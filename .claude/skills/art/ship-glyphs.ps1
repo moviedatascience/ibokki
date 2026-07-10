@@ -12,7 +12,7 @@ $destArt = Join-Path $PSScriptRoot "..\..\..\apps\client\public\art"
 $destIcons = Join-Path $destArt "icons"
 New-Item -ItemType Directory -Force $destIcons | Out-Null
 
-$tintable = "eye", "bow", "key", "v", "s", "m", "burn", "ward", "prophecy", "hp", "cancelled", "item", "gambit"
+$tintable = "eye", "bow", "key", "v", "s", "m", "burn", "ward", "prophecy", "hp", "cancelled", "item", "gambit", "seal"
 foreach ($n in $tintable) {
     $t = [System.IO.File]::ReadAllText((Join-Path $src "$n.svg"), [System.Text.Encoding]::UTF8)
     $t = $t.Replace('fill="currentColor"', 'fill="#ffffff"')

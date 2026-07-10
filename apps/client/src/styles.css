@@ -18,6 +18,10 @@
   --v: #f0b352;
   --s: #5bc8c0;
   --m: #b98cf0;
+  /* Typography (style bible §10): display face for brand/verdicts, Alegreya for card
+     names + rules text, system stack for UI utility. Loaded self-hosted in main.tsx. */
+  --font-display: "IM Fell English SC", "IM Fell English", Georgia, serif;
+  --font-card: "Alegreya", Georgia, serif;
 }
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
@@ -47,7 +51,7 @@ body {
   background: var(--panel-2); border-bottom: 1px solid var(--line);
   letter-spacing: .06em; font-size: 12.5px;
 }
-.topbar .brand { font-weight: 800; letter-spacing: .12em; color: #d7c4ff; font-size: 15px; }
+.topbar .brand { font-family: var(--font-display); font-weight: 400; letter-spacing: .14em; color: #d7c4ff; font-size: 17px; }
 .topbar .seg { color: var(--mute); text-transform: uppercase; }
 .topbar .seg b { color: var(--ink); font-weight: 700; }
 .topbar .grow { flex: 1; }
@@ -72,9 +76,9 @@ body {
 .panel h3 { margin: 0 0 8px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--mute); }
 .detail h3 { display: flex; justify-content: space-between; align-items: center; }
 .detail .unpin { padding: 0 6px; font-size: 10px; line-height: 1.6; }
-.detail .dname { font-weight: 700; color: #d7c4ff; }
+.detail .dname { font-family: var(--font-card); font-weight: 700; font-size: 15px; color: #d7c4ff; }
 .detail .dmeta { color: var(--mute); font-size: 12px; margin: 2px 0 4px; }
-.detail .dtext { font-size: 12.5px; color: #c7ccd6; }
+.detail .dtext { font-family: var(--font-card); font-size: 13.5px; color: #c7ccd6; }
 .log { max-height: 240px; overflow: auto; margin: 0;
   font: 11.5px/1.4 ui-monospace, Menlo, monospace; color: #aeb6c4; }
 
@@ -97,7 +101,7 @@ label.field input[data-testid="online-code-input"] { width: 96px; text-transform
 /* ---- home screen ---- */
 .home { display: flex; gap: 16px; justify-content: center; align-items: flex-start; padding: 40px 24px; flex-wrap: wrap; }
 .homecol { display: flex; flex-direction: column; gap: 12px; width: 300px; }
-.logo { margin: 0; font-size: 34px; letter-spacing: 3px; }
+.logo { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 40px; letter-spacing: 3px; color: #d7c4ff; }
 .formerror { color: #ff8080; font-size: 12.5px; margin: 6px 0; }
 .authlinks { display: flex; gap: 12px; font-size: 12px; margin-top: 6px; }
 .ssobtn { display: block; text-align: center; background: #2c3f63; border: 1px solid #4670b0; border-radius: 7px; padding: 8px 12px; color: var(--ink); text-decoration: none; margin-bottom: 8px; }
@@ -134,7 +138,7 @@ label.field input[data-testid="online-code-input"] { width: 96px; text-transform
 .pickcard.s-evocation { border-color: #7a4030; }
 .pickcard.s-abjuration { border-color: #33557a; }
 .pickcard.s-divination { border-color: #5a3f7a; }
-.pickname { font-size: 12.5px; }
+.pickname { font-family: var(--font-card); font-size: 13px; }
 .pickname em { color: var(--mute); font-style: normal; font-size: 10.5px; }
 .pickmeta { font-size: 10.5px; color: var(--mute); }
 .stepper { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
@@ -173,7 +177,7 @@ button:disabled { opacity: .4; cursor: default; }
   padding: 18px 22px;
   background: #12171f; border: 1px solid var(--line); border-radius: 14px;
 }
-.gopanel h2 { margin: 0 0 2px; font-size: 22px; }
+.gopanel h2 { margin: 0 0 2px; font-family: var(--font-display); font-weight: 400; font-size: 26px; }
 .gopanel h2.win { color: var(--good); }
 .gopanel h2.loss { color: var(--bad); }
 .gopanel h2.draw { color: var(--warn); }
@@ -220,7 +224,7 @@ button:disabled { opacity: .4; cursor: default; }
   font-size: 11px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;
 }
 .spellbook .sbpageno { text-transform: none; letter-spacing: normal; }
-.spellbook .sbyou { color: var(--ink); text-transform: none; letter-spacing: normal; font-weight: 700; }
+.spellbook .sbyou { color: var(--ink); text-transform: none; letter-spacing: normal; font-weight: 700; font-variant-numeric: tabular-nums; }
 .spellbook .sbbook { display: flex; align-items: stretch; gap: 8px; }
 .spellbook .sbturn {
   flex: 0 0 auto; width: 30px; border-radius: 8px; font-size: 14px;
@@ -247,7 +251,7 @@ button:disabled { opacity: .4; cursor: default; }
   display: flex; justify-content: space-between; align-items: baseline; gap: 6px;
   padding: 5px 8px; background: color-mix(in srgb, var(--school) 30%, transparent);
 }
-.sbcard .sbname { font-size: 12px; font-weight: 700; line-height: 1.15; }
+.sbcard .sbname { font-family: var(--font-card); font-size: 13px; font-weight: 700; line-height: 1.1; }
 .sbcard .sbcost { font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700; color: #ffe6a6; white-space: nowrap; }
 .sbcard .sbart {
   aspect-ratio: 2 / 1; border-bottom: 1px solid var(--line);
@@ -256,7 +260,7 @@ button:disabled { opacity: .4; cursor: default; }
     linear-gradient(165deg, color-mix(in srgb, var(--school) 22%, #131923) 0%, #10151d 100%);
 }
 .sbcard .sbtypeline { padding: 4px 8px 2px; font-size: 10px; color: var(--mute); }
-.sbcard .sbtext { padding: 2px 8px 7px; font-size: 10.5px; line-height: 1.35; color: #c9cdd6; overflow-y: auto; }
+.sbcard .sbtext { padding: 2px 8px 7px; font-family: var(--font-card); font-size: 11.5px; line-height: 1.3; color: #c9cdd6; overflow-y: auto; }
 /* Swap buttons appear on hover only — every playable card carrying a button row is too noisy. */
 .sbcard .sbslots { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; padding: 0 8px 7px; visibility: hidden; }
 .sbcard:hover .sbslots { visibility: visible; }
@@ -278,7 +282,7 @@ button:disabled { opacity: .4; cursor: default; }
 }
 .sbprepslot.empty { justify-content: center; border: 1px dashed var(--line); color: var(--mute); font-size: 10px; }
 .sbprepslot .sbprepno { color: var(--mute); font-size: 10px; }
-.sbprepslot .sbprepname { font-weight: 700; }
+.sbprepslot .sbprepname { font-family: var(--font-card); font-weight: 700; font-size: 12px; }
 .sbprepslot .sbprepmeta { color: var(--mute); font-size: 10px; }
 .sbprepslot .sbsealed {
   color: #c9a0f0; border: 1px solid #5a3f7a; border-radius: 4px; padding: 0 4px;

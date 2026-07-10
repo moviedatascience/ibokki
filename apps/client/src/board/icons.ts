@@ -10,10 +10,10 @@ import { BASE } from "../api.ts";
 
 export type IconName =
   | "v" | "s" | "m"
-  | "burn" | "ward" | "prophecy" | "hp" | "cancelled"
+  | "burn" | "ward" | "prophecy" | "hp" | "cancelled" | "seal"
   | "eye" | "bow" | "key" | "item" | "gambit";
 
-const ICONS: IconName[] = ["v", "s", "m", "burn", "ward", "prophecy", "hp", "cancelled", "eye", "bow", "key", "item", "gambit"];
+const ICONS: IconName[] = ["v", "s", "m", "burn", "ward", "prophecy", "hp", "cancelled", "seal", "eye", "bow", "key", "item", "gambit"];
 
 /** Component pip tints — the V/S/M tokens (adopted client-wide; see style bible §4). */
 export const PIP_TINT: Record<string, number> = { V: 0xf0b352, S: 0x5bc8c0, M: 0xb98cf0 };
