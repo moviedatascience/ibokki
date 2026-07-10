@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import type { MatchState } from "../api.ts";
+import { schoolOf } from "../schools.ts";
 import { LogLines } from "./LogLines.tsx";
+import { SchoolCrest } from "./Pips.tsx";
 
 const END_REASON: Record<string, string> = {
   hp: "hit points reduced to 0",
@@ -64,13 +66,14 @@ export function GameOverSummary({ state, onDismiss, onRematch }: { state: MatchS
   const over = !!state?.gameOver;
   const logLen = state?.log.length ?? 0;
   // Keep the newest lines (rematch offers, the final blow) in view — the rail log
-  // auto-scrolls, so this one reading oldest-first was an inconsistency.
+  // auto-scrolls, so this one reading oldest-first was an inconsistency. The log grows
+  // every turn all match, so gate the dep on `over` to avoid a per-frame no-op effect.
   useEffect(() => {
     if (over && logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
-  }, [over, logLen]);
+  }, [over, over ? logLen : 0]);
   if (!state || !state.gameOver) return null;
 
-  const verdict = state.winner === null ? "Draw" : state.winner === 0 ? "You win! 🎉" : "Opponent wins";
+  const verdict = state.winner === null ? "Draw" : state.winner === 0 ? "You win!" : "Opponent wins";
   const reason =
     state.endReason === "forfeit" ? forfeitReason(state) : state.endReason ? (END_REASON[state.endReason] ?? state.endReason) : "";
   const [you, opp] = tally(state.log);
@@ -97,8 +100,12 @@ export function GameOverSummary({ state, onDismiss, onRematch }: { state: MatchS
           <thead>
             <tr>
               <th></th>
-              <th>You · {state.schools[0]}</th>
-              <th>Opponent · {state.schools[1]}</th>
+              <th>
+                <SchoolCrest school={schoolOf(state.schools[0])} size={12} /> You · {state.schools[0]}
+              </th>
+              <th>
+                <SchoolCrest school={schoolOf(state.schools[1])} size={12} /> Opponent · {state.schools[1]}
+              </th>
             </tr>
           </thead>
           <tbody>

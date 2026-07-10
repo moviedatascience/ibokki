@@ -3,6 +3,7 @@ import { CardVisual, type CardFace, type EdgeSide, type Highlight } from "./card
 import { Tweener, easeInOutCubic, easeOutCubic, lerp } from "./tween.ts";
 import { eventToFloater, isStackEvent, spawnFloater } from "./animations.ts";
 import { icon, loadIcons, type IconName } from "./icons.ts";
+import { SCHOOL_CREST, SCHOOL_TINT, schoolOf } from "../schools.ts";
 import {
   CARD_H,
   CARD_W,
@@ -69,6 +70,7 @@ interface Plate {
   root: Container;
   glow: Graphics;
   bar: Graphics;
+  crest: Container; // school crest glyph (Eye/Bow/Key), left of the name
   name: Text;
   hp: Text;
   hpMark: PixiSprite | Text; // heart glyph (Text "♥" fallback)
@@ -77,6 +79,7 @@ interface Plate {
   /** Last rendered hp / status signature — updatePlate runs on EVERY sync, so skip unchanged rebuilds. */
   lastHp: number;
   statusKey: string;
+  crestKey: string | null;
   box: Box;
   anchor: Pt; // floater anchor (center of plate, world coords)
 }
@@ -210,6 +213,8 @@ export class PixiBoard {
     glow.visible = false;
     const bg = new Graphics();
     bg.roundRect(0, 0, box.w, box.h, 10).fill(0x161b22).stroke({ width: 1, color: 0x2b313c });
+    const crest = new Container();
+    crest.position.set(12, 8);
     const name = new Text({ text: "", style: { fill: 0xe6e7ea, fontSize: 13, fontFamily: "system-ui", fontWeight: "700" } });
     name.position.set(12, 9);
     const hpMark: PixiSprite | Text = icon("hp", 13, 0xffffff) ?? new Text({ text: "♥", style: { fill: 0xffffff, fontSize: 13, fontFamily: "system-ui" } });
@@ -221,13 +226,26 @@ export class PixiBoard {
     stats.position.set(12, box.h - 19);
     const status = new Container();
     status.position.set(12, 25);
-    root.addChild(glow, bg, name, hpMark, hp, bar, stats, status);
-    return { root, glow, bar, name, hp, hpMark, stats, status, lastHp: NaN, statusKey: "\0", box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
+    root.addChild(glow, bg, crest, name, hpMark, hp, bar, stats, status);
+    return { root, glow, bar, crest, name, hp, hpMark, stats, status, lastHp: NaN, statusKey: "\0", crestKey: "\0", box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
   }
 
-  private updatePlate(plate: Plate, label: string, v: PlayerView, active: boolean): void {
+  private updatePlate(plate: Plate, label: string, seatLabel: string, v: PlayerView, active: boolean): void {
     const box = plate.box;
     plate.name.text = label;
+    // School crest (Eye/Bow/Key), left of the name — resolved from the seat label (a school
+    // name locally, a deck name online; custom online decks resolve to none → no crest).
+    if (seatLabel !== plate.crestKey) {
+      plate.crestKey = seatLabel;
+      for (const ch of plate.crest.removeChildren()) ch.destroy();
+      const school = schoolOf(seatLabel);
+      const crestName = school ? SCHOOL_CREST[school] : null;
+      if (crestName) {
+        const sp = icon(crestName, 14, SCHOOL_TINT[school!] ?? 0xffffff);
+        if (sp) plate.crest.addChild(sp);
+      }
+      plate.name.position.x = plate.crest.children.length ? 32 : 12;
+    }
     // Pixi Text/fill setters no-op on unchanged values, but the Graphics bar re-triangulates
     // on every clear+draw — gate the hp block so it only runs when hp actually moved.
     if (v.hp !== plate.lastHp) {
@@ -306,8 +324,8 @@ export class PixiBoard {
     const opp = state.view.opponent;
     const legal = state.yourTurn ? state.legal : [];
 
-    this.updatePlate(this.oppPlate, `Opponent · ${state.schools[1]}`, opp, !state.gameOver && state.activePlayer === 1);
-    this.updatePlate(this.youPlate, `You · ${state.schools[0]}`, you, !state.gameOver && state.activePlayer === 0);
+    this.updatePlate(this.oppPlate, `Opponent · ${state.schools[1]}`, state.schools[1], opp, !state.gameOver && state.activePlayer === 1);
+    this.updatePlate(this.youPlate, `You · ${state.schools[0]}`, state.schools[0], you, !state.gameOver && state.activePlayer === 0);
     // "↻N" = exhaustion clock: the discard has recycled N times (each reshuffle dealt 2×N damage).
     this.oppDeckL.text = `Deck ${opp.resourceDeckCount}${opp.reshuffles ? ` · ↻${opp.reshuffles}` : ""}`;
     this.oppHandL.text = `Hand ${opp.handCount ?? 0}`;

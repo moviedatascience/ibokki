@@ -26,6 +26,9 @@ export interface UseMatch {
   state: MatchState | null;
   busy: boolean;
   error: string | null;
+  /** Leave a local (vs-bot) match: stop polling and clear any error, so a later poll
+   *  failure can't re-surface an error on the Home screen. (Online uses `online.leave`.) */
+  leaveLocalMatch: () => void;
   act: (index: number) => Promise<void>;
   newGame: (p0: School, p1: School, mode: "bot" | "agent") => Promise<void>;
   online: OnlineApi;
@@ -286,10 +289,18 @@ export function useMatch(): UseMatch {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Stop the local poll (a background poll after leaving could fail and re-set `error`,
+  // which Home now renders) and clear the error. State is kept so "Resume current match"
+  // still works. No-op-safe for online (its poll isn't running anyway).
+  const leaveLocalMatch = useCallback(() => {
+    clearPoll();
+    setError(null);
+  }, []);
+
   // Test/debug hook: lets headless drivers read the frame and act by index.
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__ibokki = { state, act, online };
   });
 
-  return { cards, state, busy, error, act, newGame, online };
+  return { cards, state, busy, error, leaveLocalMatch, act, newGame, online };
 }

@@ -6,6 +6,7 @@
  */
 import { useMemo, useState } from "react";
 import { api, ApiError, type CardCatalog, type Deck, type DeckError, type DeckRules } from "../api.ts";
+import { Pips, SchoolCrest, TypeIcon } from "./Pips.tsx";
 
 interface Props {
   cards: CardCatalog;
@@ -132,7 +133,7 @@ export function DeckBuilder({ cards, rules, initial, onSaved, onClose }: Props) 
           <div className="tabs">
             {SCHOOL_TABS.map((t) => (
               <button key={t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>
-                {t}
+                <SchoolCrest school={t} size={12} /> {t}
               </button>
             ))}
           </div>
@@ -147,7 +148,8 @@ export function DeckBuilder({ cards, rules, initial, onSaved, onClose }: Props) 
               >
                 <span className="pickname">{c.name}</span>
                 <span className="pickmeta">
-                  L{c.level} · {c.cost ?? "—"} · {c.type}
+                  {c.level ? `L${c.level} · ` : ""}
+                  {c.cost ? <Pips cost={c.cost} /> : "—"} · {c.type}
                 </span>
               </button>
             ))}
@@ -174,7 +176,7 @@ export function DeckBuilder({ cards, rules, initial, onSaved, onClose }: Props) 
           {trainers.map(([id, c]) => (
             <div className="stepper" key={id}>
               <span className="pickname" title={c.text}>
-                {c.name} <em>{c.type}</em>
+                <TypeIcon type={c.type} /> {c.name}
               </span>
               <span className="stepbtns">
                 <button onClick={() => bump(id, -1)}>−</button>

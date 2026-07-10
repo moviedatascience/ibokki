@@ -8,6 +8,8 @@ import { BASE, type Deck, type DeckListResponse, type School } from "../api.ts";
 import type { DeckChoice } from "../online.ts";
 import type { UseAuth } from "../useAuth.ts";
 import type { OnlineApi } from "../useMatch.ts";
+import { schoolOf } from "../schools.ts";
+import { SchoolCrest } from "./Pips.tsx";
 
 const SCHOOLS: School[] = ["Evocation", "Abjuration", "Divination"];
 
@@ -216,7 +218,7 @@ export function Home({ auth, deckData, online, error, hasLocalMatch, onPlayBot, 
             {(deckData?.presets ?? []).map((d) => (
               <li key={d.name}>
                 <span>
-                  {d.name} <em>preset</em>
+                  <SchoolCrest school={schoolOf(d.name)} size={12} /> {d.name} <em>preset</em>
                 </span>
                 <span className="deckactions">
                   <button onClick={() => onEditDeck(d)} title="Open a copy in the deckbuilder" data-testid={`deck-copy-${d.name}`}>

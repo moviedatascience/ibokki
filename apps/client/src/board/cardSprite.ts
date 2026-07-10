@@ -229,12 +229,11 @@ export class CardVisual {
     this.stampC.visible = on;
   }
 
-  private sealBuilt = false;
-
   /** Sealed banner: the spell can't be cast until the seal lifts (Runic Seal & co). */
   setSealed(on: boolean): void {
-    if (on && !this.sealBuilt) {
-      this.sealBuilt = true;
+    // Built lazily on first seal; the container is the single source of truth for
+    // "already built" (a stray flag could desync from the actual children).
+    if (on && this.sealC.children.length === 0) {
       const { w, h } = this;
       const g = new Graphics();
       g.rect(0, h / 2 - 9, w, 18).fill({ color: 0x1c1426, alpha: 0.92 });

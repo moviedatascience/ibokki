@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { CardCatalog, MatchState, School } from "../api.ts";
 import type { OnlineApi } from "../useMatch.ts";
 import { LogLines } from "./LogLines.tsx";
+import { Pips, SchoolCrest, TypeIcon } from "./Pips.tsx";
 
 const SCHOOLS: School[] = ["Evocation", "Abjuration", "Divination"];
 
@@ -117,14 +118,24 @@ export function SidePanels({ state, cards, hoverDef, pinnedDef, onUnpin, p0, p1,
           Card detail
           {isPinned && (
             <button className="unpin" title="Unpin" onClick={onUnpin}>
-              📌 ✕
+              Unpin ✕
             </button>
           )}
         </h3>
         {c ? (
           <>
-            <div className="dname">{c.name}</div>
-            <div className="dmeta">{[c.cost ? `cost ${c.cost}` : null, c.level ? `L${c.level}` : null, c.type].filter(Boolean).join(" · ")}</div>
+            <div className="dname">
+              <SchoolCrest school={c.school} /> {c.name}
+            </div>
+            <div className="dmeta">
+              {c.cost && (
+                <>
+                  <Pips cost={c.cost} /> ·{" "}
+                </>
+              )}
+              {[c.level ? `L${c.level}` : null, c.type].filter(Boolean).join(" · ")}
+              {(c.type === "Item" || c.type === "Gambit") && <> <TypeIcon type={c.type} /></>}
+            </div>
             <div className="dtext">{c.text}</div>
           </>
         ) : (

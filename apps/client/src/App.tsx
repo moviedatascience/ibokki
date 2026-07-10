@@ -17,7 +17,7 @@ type Screen = "home" | "match" | "builder";
 
 export function App() {
   const auth = useAuth();
-  const { cards, state, error, act, newGame, online } = useMatch();
+  const { cards, state, error, leaveLocalMatch, act, newGame, online } = useMatch();
   const [screen, setScreen] = useState<Screen>("home");
   const [deckData, setDeckData] = useState<DeckListResponse | null>(null);
   const [builderDeck, setBuilderDeck] = useState<Deck | null>(null);
@@ -49,6 +49,11 @@ export function App() {
   const cardName = useCallback((defId: string) => cards[defId]?.name ?? defId, [cards]);
   const startGame = useCallback(
     (s0: School, s1: School, m: "bot" | "agent") => {
+      // Remember the matchup so a later local Rematch replays THIS game, not the
+      // side-panel defaults. Centralized here so no entry point can forget it.
+      setP0(s0);
+      setP1(s1);
+      setMode(m);
       setSummaryDismissed(false);
       setPinnedDef(null);
       setScreen("match");
@@ -65,10 +70,16 @@ export function App() {
     if (isOnline) {
       // Leaving a live PvP match forfeits the seat — make sure it's intentional.
       if (online.status === "playing" && state && !state.gameOver && !window.confirm("Leave the match? If you don't rejoin within a minute, you forfeit.")) return;
-      online.leave();
+      online.leave(); // also clears `error`
+    } else {
+      // A dropped online match can land here with status "idle" + a stale error still set
+      // (rejoin exhausted, "no seat matches" after a redeploy); local-match errors likewise.
+      // Home now renders `error`, so stop the local poll and clear it, or it follows the
+      // user out of the match (and a later poll failure would re-set it on Home).
+      leaveLocalMatch();
     }
     setScreen("home");
-  }, [isOnline, online, state]);
+  }, [isOnline, online, state, leaveLocalMatch]);
 
   // Closing the tab / navigating away mid-PvP forfeits via the disconnect grace —
   // ask the browser to confirm it. Solo bot matches aren't guarded (no one is harmed).
@@ -107,13 +118,7 @@ export function App() {
           online={online}
           error={error}
           hasLocalMatch={state !== null}
-          onPlayBot={(s0, s1) => {
-            // Remember the matchup so a local Rematch replays it (not the side-panel defaults).
-            setP0(s0);
-            setP1(s1);
-            setMode("bot");
-            void startGame(s0, s1, "bot");
-          }}
+          onPlayBot={(s0, s1) => void startGame(s0, s1, "bot")}
           onResume={() => setScreen("match")}
           onEditDeck={(deck) => {
             // Presets open as unsaved copies; null = a blank deck.

@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import type { CardCatalog, MatchState } from "../api.ts";
-import { Icon, Pips } from "./Pips.tsx";
+import { Icon, Pips, SchoolCrest } from "./Pips.tsx";
 
 /** Cards shown per book page (2 rows x 6 columns; see .sbpage in styles.css). */
 const PAGE_SIZE = 12;
@@ -87,7 +87,7 @@ export function SpellbookTray({ state, cards, onAction, onHover, onInspect }: { 
                 </div>
                 <div className="sbart" />
                 <div className="sbtypeline">
-                  {[info?.type, info?.level ? `L${info.level}` : ""].filter(Boolean).join(" · ")}
+                  <SchoolCrest school={info?.school} size={11} /> {[info?.type, info?.level ? `L${info.level}` : ""].filter(Boolean).join(" · ")}
                 </div>
                 <div className="sbtext">{info?.text ?? ""}</div>
                 {!prep && repl.length > 0 && (
