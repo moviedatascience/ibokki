@@ -22,6 +22,8 @@ export function Board({ state, cards, onAction, onHover, onSelection, onInspect,
   const boardRef = useRef<PixiBoard | null>(null);
   const cbs = useRef({ onAction, onHover, onSelection, onInspect, onReady });
   cbs.current = { onAction, onHover, onSelection, onInspect, onReady };
+  const latest = useRef({ state, cards });
+  latest.current = { state, cards };
 
   useEffect(() => {
     const host = hostRef.current;
@@ -41,6 +43,10 @@ export function Board({ state, cards, onAction, onHover, onSelection, onInspect,
       boardRef.current = board;
       // Debug handle for headless verification scripts (same spirit as window.__ibokki).
       (window as unknown as Record<string, unknown>).__ibokkiBoard = board;
+      // State that arrived while mount() was loading assets hit the [state, cards]
+      // effect against a null boardRef and was dropped — replay it, or a board with
+      // no follow-up push (e.g. local play on your turn) stays blank forever.
+      if (latest.current.state) board.sync(latest.current.state, latest.current.cards);
       cbs.current.onReady(board);
     });
     return () => {

@@ -1,4 +1,5 @@
-import { Application, Container, Graphics, Sprite as PixiSprite, Text } from "pixi.js";
+import { Application, Assets, Container, Graphics, Sprite as PixiSprite, Text, type Texture } from "pixi.js";
+import { BASE } from "../api.ts";
 import { CardVisual, type CardFace, type EdgeSide, type Highlight } from "./cardSprite.ts";
 import { Tweener, easeInOutCubic, easeOutCubic, lerp } from "./tween.ts";
 import { eventToFloater, isStackEvent, spawnFloater } from "./animations.ts";
@@ -103,6 +104,8 @@ export class PixiBoard {
   private app: Application | null = null;
   private world = new Container();
   private bgLayer = new Container();
+  /** Venue background sprite (null = load failed, procedural rings shown instead). */
+  private venue: PixiSprite | null = null;
   private slotG = new Graphics();
   private oppLayer = new Container();
   private stackLayer = new Container();
@@ -141,6 +144,35 @@ export class PixiBoard {
     });
     this.app = app;
     this.host.appendChild(app.canvas);
+
+    // Venue background (filed venue master, art/board). By far the largest asset,
+    // so it must not gate board paint: it fades in whenever it lands. A failed
+    // load falls back to the procedural placeholder rings — never a blank board.
+    Assets.load(`${BASE}art/board/table.png`).then(
+      (t) => {
+        if (!this.app) return; // board destroyed while loading
+        const v = new PixiSprite(t as Texture);
+        v.anchor.set(0.5);
+        // World center, cover-scaled past the world bounds by relayout() — the
+        // venue's 16:9 master bleeds under the letterbox bars at any aspect.
+        // Center is composed as the open arena (no ritual circle per the bible).
+        v.position.set(WORLD_W / 2, WORLD_H / 2);
+        v.alpha = 0;
+        this.venue = v;
+        this.bgLayer.addChildAt(v, 0);
+        this.relayout();
+        this.tweener.add({ duration: 260, onUpdate: (p) => (v.alpha = p) });
+      },
+      () => {
+        if (!this.app) return;
+        const ring = new Graphics();
+        ring.circle(CIRCLE.cx, CIRCLE.cy, CIRCLE.r).stroke({ width: 2, color: 0x3a4250, alpha: 0.9 });
+        ring.circle(CIRCLE.cx, CIRCLE.cy, CIRCLE.r - 14).stroke({ width: 1, color: 0x2a303c, alpha: 0.8 });
+        ring.circle(CIRCLE.cx, CIRCLE.cy, CIRCLE.r * 0.62).stroke({ width: 1, color: 0x2a303c, alpha: 0.6 });
+        ring.circle(CIRCLE.cx, CIRCLE.cy, 4).fill(0x3a4250);
+        this.bgLayer.addChildAt(ring, 0);
+      },
+    );
 
     // Woodcut glyph textures (markers, pips, card back). A failed load degrades
     // every consumer to its text/procedural fallback — never a blank board.
@@ -182,18 +214,19 @@ export class PixiBoard {
     if (!this.app) return;
     const { width, height } = this.app.screen;
     const s = Math.min(width / WORLD_W, height / WORLD_H);
+    if (!(s > 0)) return;
     this.world.scale.set(s);
     this.world.position.set((width - WORLD_W * s) / 2, (height - WORLD_H * s) / 2);
+    if (this.venue) {
+      // Cover the SCREEN rect (expressed in world units), not just the world:
+      // the venue bleeds under the letterbox bars at non-16:10 aspects.
+      const t = this.venue.texture;
+      const k = Math.max(width / s / t.width, height / s / t.height);
+      this.venue.scale.set(k);
+    }
   }
 
   private buildStatic(): void {
-    // Arcane circle (the ritual table) — placeholder rings only.
-    const ring = new Graphics();
-    ring.circle(CIRCLE.cx, CIRCLE.cy, CIRCLE.r).stroke({ width: 2, color: 0x3a4250, alpha: 0.9 });
-    ring.circle(CIRCLE.cx, CIRCLE.cy, CIRCLE.r - 14).stroke({ width: 1, color: 0x2a303c, alpha: 0.8 });
-    ring.circle(CIRCLE.cx, CIRCLE.cy, CIRCLE.r * 0.62).stroke({ width: 1, color: 0x2a303c, alpha: 0.6 });
-    ring.circle(CIRCLE.cx, CIRCLE.cy, 4).fill(0x3a4250);
-    this.bgLayer.addChild(ring);
 
     this.oppPlate = this.makePlate({ x: 20, y: 16, w: 224, h: 74 });
     this.youPlate = this.makePlate({ x: 20, y: 470, w: 224, h: 74 });
