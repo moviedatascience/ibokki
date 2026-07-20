@@ -10,6 +10,8 @@ interface Props {
   state: MatchState | null;
   cards: CardCatalog;
   hoverDef: string | null;
+  /** Hovered ongoing-effect chip description (takes precedence — the pointer is on the chip). */
+  statusHover: string | null;
   /** Card pinned into the detail panel by clicking it (hover previews take precedence). */
   pinnedDef: string | null;
   onUnpin: () => void;
@@ -54,7 +56,7 @@ function OnlinePanel({ online, onLeave }: { online: OnlineApi; onLeave: () => vo
 }
 
 /** Right rail: match controls, hovered-card detail, and the match log. */
-export function SidePanels({ state, cards, hoverDef, pinnedDef, onUnpin, p0, p1, mode, setP0, setP1, setMode, onNewGame, online, onLeave }: Props) {
+export function SidePanels({ state, cards, hoverDef, statusHover, pinnedDef, onUnpin, p0, p1, mode, setP0, setP1, setMode, onNewGame, online, onLeave }: Props) {
   const shownDef = hoverDef ?? pinnedDef;
   const c = shownDef ? cards[shownDef] : null;
   const isPinned = !hoverDef && !!pinnedDef && !!c;
@@ -122,7 +124,12 @@ export function SidePanels({ state, cards, hoverDef, pinnedDef, onUnpin, p0, p1,
             </button>
           )}
         </h3>
-        {c ? (
+        {statusHover ? (
+          <>
+            <div className="dname">Ongoing effect</div>
+            <div className="dtext" data-testid="ongoing-detail">{statusHover}</div>
+          </>
+        ) : c ? (
           <>
             <div className="dname">
               <SchoolCrest school={c.school} /> {c.name}

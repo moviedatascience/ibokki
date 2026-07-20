@@ -147,6 +147,19 @@ describe("redaction (hidden information)", () => {
       expect(prep.spellDefId).not.toBeNull();
     }
   });
+
+  it("exposes both players' ongoing effects to both viewers (public markers)", () => {
+    const g = prepareAll(newGame(11));
+    g.players[0].ongoing.push({ id: 900, owner: 0, kind: "damageBuff", value: 2, expiry: "endOfRound" });
+    g.players[1].ongoing.push({ id: 901, owner: 1, kind: "reactionsLocked", value: 1, expiry: "startOfOwnNextTurn" });
+    for (const viewer of [0, 1] as const) {
+      const view = redact(g, viewer);
+      const p0 = viewer === 0 ? view.self.ongoing : view.opponent.ongoing;
+      const p1 = viewer === 0 ? view.opponent.ongoing : view.self.ongoing;
+      expect(p0).toEqual([{ kind: "damageBuff", value: 2, expiry: "endOfRound" }]);
+      expect(p1).toEqual([{ kind: "reactionsLocked", value: 1, expiry: "startOfOwnNextTurn" }]);
+    }
+  });
 });
 
 describe("random self-play", () => {

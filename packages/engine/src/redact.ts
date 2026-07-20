@@ -5,7 +5,13 @@
  * Attached components are public (face-up) for both players.
  */
 import { tierForLevel } from "./levels.ts";
-import { otherPlayer, type GameState, type PlayerId, type PreparedSpell } from "./types.ts";
+import { otherPlayer, type GameState, type OngoingExpiry, type OngoingKind, type PlayerId, type PreparedSpell } from "./types.ts";
+
+export interface OngoingView {
+  kind: OngoingKind;
+  value: number;
+  expiry: OngoingExpiry;
+}
 
 export interface PreparedView {
   /** The spell's defId, or null when hidden (opponent's face-down spell). */
@@ -28,6 +34,8 @@ interface SideCommon {
   prophecies: { amount: number; turnsLeft: number; pierce: boolean; defId: string }[];
   /** Times this player's discard has recycled into their deck (exhaustion clock). Public. */
   reshuffles: number;
+  /** Active lasting effects this player owns — public, like the table markers they represent. */
+  ongoing: OngoingView[];
   slotsUsedThisRound: number;
   slots: number;
   maxSpellLevel: number;
@@ -158,6 +166,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
       burn: me.burn,
       prophecies: me.prophecies.map((p) => ({ ...p })),
       reshuffles: me.reshuffles,
+      ongoing: me.ongoing.map((o) => ({ kind: o.kind, value: o.value, expiry: o.expiry })),
       slotsUsedThisRound: me.slotsUsedThisRound,
       slots: myTier.slots,
       maxSpellLevel: myTier.maxSpellLevel,
@@ -180,6 +189,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
       burn: opp.burn,
       prophecies: opp.prophecies.map((p) => ({ ...p })),
       reshuffles: opp.reshuffles,
+      ongoing: opp.ongoing.map((o) => ({ kind: o.kind, value: o.value, expiry: o.expiry })),
       slotsUsedThisRound: opp.slotsUsedThisRound,
       slots: oppTier.slots,
       maxSpellLevel: oppTier.maxSpellLevel,

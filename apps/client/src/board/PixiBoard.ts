@@ -4,6 +4,7 @@ import { CardVisual, type CardFace, type EdgeSide, type Highlight } from "./card
 import { Tweener, easeInOutCubic, easeOutCubic, lerp } from "./tween.ts";
 import { eventToFloater, isStackEvent, spawnFloater } from "./animations.ts";
 import { icon, loadIcons, type IconName } from "./icons.ts";
+import { ongoingDesc, ongoingLabel } from "../ongoing.ts";
 import { SCHOOL_CREST, SCHOOL_TINT, schoolOf } from "../schools.ts";
 import {
   CARD_H,
@@ -77,9 +78,13 @@ interface Plate {
   hpMark: PixiSprite | Text; // heart glyph (Text "♥" fallback)
   stats: Text;
   status: Container; // ward / burn / prophecy markers + counts
+  ongoingRow: Container; // ongoing-effect chips (bottom-right; stats text owns bottom-left)
   /** Last rendered hp / status signature — updatePlate runs on EVERY sync, so skip unchanged rebuilds. */
   lastHp: number;
   statusKey: string;
+  ongoingKey: string;
+  /** True while the pointer is over one of this plate's ongoing chips (clears the detail on rebuild). */
+  ongoingHoverLive: boolean;
   crestKey: string | null;
   box: Box;
   anchor: Pt; // floater anchor (center of plate, world coords)
@@ -88,6 +93,8 @@ interface Plate {
 export interface BoardCallbacks {
   onAction: (index: number) => void;
   onHover: (defId: string | null) => void;
+  /** Hovering an ongoing-effect chip — a full description for the detail rail (null on leave). */
+  onStatusHover?: (text: string | null) => void;
   /** Fired when an attach selection starts/clears, so the shell can show a Cancel affordance. */
   onSelection?: (active: boolean) => void;
   /** Tap on a card with no action available — pin it into the card-detail panel. */
@@ -267,11 +274,12 @@ export class PixiBoard {
     stats.position.set(12, box.h - 19);
     const status = new Container();
     status.position.set(12, 25);
-    root.addChild(glow, bg, crest, name, hpMark, hp, bar, stats, status);
-    return { root, glow, bar, crest, name, hp, hpMark, stats, status, lastHp: NaN, statusKey: "\0", crestKey: "\0", box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
+    const ongoingRow = new Container();
+    root.addChild(glow, bg, crest, name, hpMark, hp, bar, stats, status, ongoingRow);
+    return { root, glow, bar, crest, name, hp, hpMark, stats, status, ongoingRow, lastHp: NaN, statusKey: "\0", ongoingKey: "\0", ongoingHoverLive: false, crestKey: "\0", box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
   }
 
-  private updatePlate(plate: Plate, label: string, seatLabel: string, v: PlayerView, active: boolean): void {
+  private updatePlate(plate: Plate, label: string, seatLabel: string, v: PlayerView, active: boolean, mine: boolean): void {
     const box = plate.box;
     plate.name.text = label;
     // School crest (Eye/Bow/Key), left of the name — resolved from the seat label (a school
@@ -333,6 +341,42 @@ export class PixiBoard {
       if (x > 0) x -= 8;
       st.position.set(box.w - 12 - x, 25);
     }
+    // Ongoing-effect chips: a second status row, bottom-right (stats text owns
+    // bottom-left). Hovering a chip surfaces its full description in the detail rail.
+    const ongoing = v.ongoing ?? [];
+    const ongoingKey = ongoing.map((o) => `${o.kind}:${o.value}:${o.expiry}`).join("|");
+    if (ongoingKey !== plate.ongoingKey) {
+      plate.ongoingKey = ongoingKey;
+      if (plate.ongoingHoverLive) {
+        plate.ongoingHoverLive = false;
+        this.cb.onStatusHover?.(null); // the hovered chip is being destroyed — pointerout won't fire
+      }
+      const row = plate.ongoingRow;
+      for (const ch of row.removeChildren()) ch.destroy({ children: true });
+      let x = 0;
+      for (const o of ongoing) {
+        const t = new Text({ text: ongoingLabel(o), style: { fill: 0xd8c9a3, fontSize: 10.5, fontFamily: "system-ui", fontWeight: "700" } });
+        t.position.set(x, 0);
+        const desc = ongoingDesc(o, mine);
+        t.eventMode = "static";
+        t.cursor = "help";
+        t.on("pointerover", () => {
+          plate.ongoingHoverLive = true;
+          this.cb.onStatusHover?.(desc);
+        });
+        t.on("pointerout", () => {
+          plate.ongoingHoverLive = false;
+          this.cb.onStatusHover?.(null);
+        });
+        row.addChild(t);
+        x += t.width + 8;
+      }
+      if (x > 0) x -= 8;
+      // Shrink rather than collide with the stats text when several effects stack up.
+      const avail = box.w - 24 - plate.stats.width - 10;
+      row.scale.set(x > avail ? Math.max(0.6, avail / x) : 1);
+      row.position.set(box.w - 12 - x * row.scale.x, box.h - 19);
+    }
     plate.glow.visible = active;
   }
 
@@ -365,8 +409,8 @@ export class PixiBoard {
     const opp = state.view.opponent;
     const legal = state.yourTurn ? state.legal : [];
 
-    this.updatePlate(this.oppPlate, `Opponent · ${state.schools[1]}`, state.schools[1], opp, !state.gameOver && state.activePlayer === 1);
-    this.updatePlate(this.youPlate, `You · ${state.schools[0]}`, state.schools[0], you, !state.gameOver && state.activePlayer === 0);
+    this.updatePlate(this.oppPlate, `Opponent · ${state.schools[1]}`, state.schools[1], opp, !state.gameOver && state.activePlayer === 1, false);
+    this.updatePlate(this.youPlate, `You · ${state.schools[0]}`, state.schools[0], you, !state.gameOver && state.activePlayer === 0, true);
     // "↻N" = exhaustion clock: the discard has recycled N times (each reshuffle dealt 2×N damage).
     this.oppDeckL.text = `Deck ${opp.resourceDeckCount}${opp.reshuffles ? ` · ↻${opp.reshuffles}` : ""}`;
     this.oppHandL.text = `Hand ${opp.handCount ?? 0}`;

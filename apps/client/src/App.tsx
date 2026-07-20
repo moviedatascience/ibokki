@@ -22,6 +22,7 @@ export function App() {
   const [deckData, setDeckData] = useState<DeckListResponse | null>(null);
   const [builderDeck, setBuilderDeck] = useState<Deck | null>(null);
   const [hoverDef, setHoverDef] = useState<string | null>(null);
+  const [statusHover, setStatusHover] = useState<string | null>(null);
   const [pinnedDef, setPinnedDef] = useState<string | null>(null);
   const [selectionActive, setSelectionActive] = useState(false);
   const [p0, setP0] = useState<School>("Evocation");
@@ -162,7 +163,7 @@ export function App() {
       <div className="main">
         <div className="stage">
           <div className="boardwrap">
-            <Board state={state} cards={cards} onAction={act} onHover={setHoverDef} onSelection={setSelectionActive} onInspect={setPinnedDef} onReady={onReady} />
+            <Board state={state} cards={cards} onAction={act} onHover={setHoverDef} onStatusHover={setStatusHover} onSelection={setSelectionActive} onInspect={setPinnedDef} onReady={onReady} />
             <Prompt state={state} onAction={act} cardName={cardName} />
             <SpellbookTray state={state} cards={cards} onAction={act} onHover={setHoverDef} onInspect={setPinnedDef} />
             {!summaryDismissed && (
@@ -175,6 +176,7 @@ export function App() {
           state={state}
           cards={cards}
           hoverDef={hoverDef}
+          statusHover={statusHover}
           pinnedDef={pinnedDef}
           onUnpin={() => setPinnedDef(null)}
           p0={p0}

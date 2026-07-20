@@ -35,6 +35,8 @@ export interface PlayerView {
   prophecies: { amount: number; turnsLeft: number; pierce: boolean; defId: string }[];
   /** Times the discard has been reshuffled into the deck (exhaustion clock). */
   reshuffles: number;
+  /** Active lasting effects this player owns (public table markers). */
+  ongoing: { kind: string; value: number; expiry: "endOfRound" | "startOfOwnNextTurn" }[];
   level: number;
   maxSpellLevel: number;
   slots: number;

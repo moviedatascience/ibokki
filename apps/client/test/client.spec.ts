@@ -23,6 +23,7 @@ interface State {
     self: {
       hand?: string[];
       prepared: { spellDefId?: string; attached: string[] }[];
+      ongoing?: { kind: string; value: number; expiry: string }[];
     };
   };
 }
@@ -33,8 +34,8 @@ async function apiState(rq: APIRequestContext): Promise<State> {
 async function apiAct(rq: APIRequestContext, index: number): Promise<State> {
   return (await rq.post(`${API}/api/act?side=0`, { data: { index } })).json();
 }
-async function apiNew(rq: APIRequestContext, bots: number[], seed = 42): Promise<State> {
-  return (await rq.post(`${API}/api/new`, { data: { p0: "Evocation", p1: "Abjuration", seed, bots } })).json();
+async function apiNew(rq: APIRequestContext, bots: number[], seed = 42, p1 = "Abjuration"): Promise<State> {
+  return (await rq.post(`${API}/api/new`, { data: { p0: "Evocation", p1, seed, bots } })).json();
 }
 
 /** Land on the board: the app opens on the home screen; resume the server's current match. */
@@ -151,5 +152,49 @@ test.describe("post-game summary", () => {
     await panel.getByRole("button", { name: "View final board" }).click();
     await expect(page.locator(".gameover")).toHaveCount(0);
     await expect(page.locator(".actionbar")).toContainText("Game over");
+  });
+});
+
+test.describe("ongoing effects", () => {
+  test("casting Catalyst shows an ongoing chip whose hover detail reaches the rail", async ({ page, request }) => {
+    // Evocation mirror: the Evo bot's reactions don't cancel, so Catalyst always resolves.
+    await apiNew(request, [1], 7, "Evocation");
+
+    // Prepare ONLY Catalyst (slot 0 — every attach then targets it), end prepare.
+    await driveUntil(
+      request,
+      (x) => x.phase !== "prepare",
+      (x) =>
+        x.view.self.prepared.length === 0
+          ? x.legal.find((a) => a.type === "prepareSpell" && a.defId === "EVO-005")
+          : x.legal.find((a) => a.type === "donePreparing"),
+    );
+
+    // Main phase: fuel Catalyst (1 V), cast it, pass priority until it resolves.
+    const s = await driveUntil(
+      request,
+      (x) => (x.view.self.ongoing ?? []).length > 0 || x.gameOver,
+      (x) =>
+        x.legal.find((a) => a.type === "cast" && a.preparedIndex === 0) ??
+        (x.view.self.prepared[0]!.attached.length === 0
+          ? x.legal.find((a) => a.type === "attach" && (a.defId ?? "").includes("V"))
+          : undefined) ??
+        x.legal.find((a) => a.type === "pass"),
+    );
+    expect(s.gameOver).toBe(false);
+    expect((s.view.self.ongoing ?? []).map((o) => o.kind)).toContain("damageBuff");
+
+    // Board: the chip sits bottom-right of the "You" plate (world 20,470 224x74).
+    await openBoard(page);
+    // React 18 dev double-mount can leave a dying second canvas briefly — take the newest.
+    const canvas = page.locator("canvas").last();
+    await canvas.waitFor({ timeout: 15_000 });
+    await page.waitForTimeout(900); // asset load + first paint
+    const box = (await canvas.boundingBox())!;
+    const k = Math.min(box.width / 1280, box.height / 800);
+    const ox = box.x + (box.width - 1280 * k) / 2;
+    const oy = box.y + (box.height - 800 * k) / 2;
+    await page.mouse.move(ox + 226 * k, oy + 531 * k);
+    await expect(page.getByTestId("ongoing-detail")).toContainText("Your damaging spells deal +1");
   });
 });
