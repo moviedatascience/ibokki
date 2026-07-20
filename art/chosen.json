@@ -71,7 +71,9 @@
     "date": "2026-07-07",
     "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp)",
     "steps": 0,
-    "cast": ["Grandmother Cinder"],
+    "cast": [
+      "Grandmother Cinder"
+    ],
     "note": "CANON cast reference. Cast rule: reference art is always a full scene, never an isolated figure (art-director feedback)."
   },
   {
@@ -86,7 +88,9 @@
     "date": "2026-07-07",
     "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp)",
     "steps": 0,
-    "cast": ["Berenice the Adamant"],
+    "cast": [
+      "Berenice the Adamant"
+    ],
     "note": "CANON cast reference. Solo standing portrait (seed 530981142, art/cast/berenice-abjuration__seed530981142.png) kept for 128x128 avatar cropping."
   },
   {
@@ -101,7 +105,9 @@
     "date": "2026-07-07",
     "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp)",
     "steps": 0,
-    "cast": ["Vess of the Undertow"],
+    "cast": [
+      "Vess of the Undertow"
+    ],
     "note": "CANON cast reference. Divination figure subjects crop-prone: the 'wide view, entire figure small at center, head fully visible' phrasing fixed it — reuse."
   },
   {
@@ -253,5 +259,35 @@
     "steps": null,
     "cast": [],
     "note": "ART DIRECTION (2026-07-09): the middle of the board is an ARENA SPACE where the two wizards face off — it will NOT have a ritual circle in it. Supersedes MANIFEST #1's circle half and the bible §11 'separate transparent circle asset' packaging; the regulation-circle motif stays canon in card art/lore (Grandmother Cinder, card back), just not as board furniture. Venue/table art should compose the center as a dueling arena for the two wizard figures."
+  },
+  {
+    "asset": "board background round 1 — top-down Candlelit Study table: ALL REJECTED; board perspective direction changed",
+    "defId": null,
+    "prompt": null,
+    "negative_prompt": null,
+    "seed": null,
+    "width": 1280,
+    "height": 800,
+    "file": "art/review/board-venue-study/ (rejected)",
+    "date": "2026-07-10",
+    "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp)",
+    "steps": 0,
+    "cast": [],
+    "note": "ART DIRECTION (2026-07-10): the board is NOT top-down. Use a Tekken/fighting-game side-view perspective — each wizard seen in profile facing the other — and settle how the wizards fit on the board before finalizing venue art. Seeds 1822400937/1179795183/1730110714/1698050844 rejected as a framing call, not on style. Side-view framing concepts staged in art/review/board-venue-tekken/. Krea2 lesson from the concept round: two differently-described facing figures break scale (one renders giant, drifts photoreal) — twice failed; compose duel pairs as 'both small robed figures' or generate figures separately."
+  },
+  {
+    "asset": "board background (Venue 1) — ruined library dueling stage",
+    "defId": null,
+    "prompt": "1bokki, the empty dueling stage of a ruined library seen straight on from the side, a great ragged hole blasted through the stone vault as if by a fireball, its edges charred black with ember-red seams, the swollen amber sun glaring through the breach, a worn black-oak lectern station at each far edge with guttering candles, bare scorched boards between them, arch after arch of labyrinthine book-stacks receding into blind darkness, fallen masonry and heaps of rotten books settled at the flanks, everything austere, oppressive and centuries dead, no people. full-bleed edge to edge, no text, no borders, no frame",
+    "negative_prompt": null,
+    "seed": 32580425,
+    "width": 1536,
+    "height": 864,
+    "file": "apps/client/public/art/board/table.png",
+    "date": "2026-07-11",
+    "model": "Krea 2 Turbo + ibokki_style_v1.safetensors LoRA @ 0.8 (ComfyUI, comfyui-mcp workflow; LoRA trained 2026-07-11 with ai-toolkit on Krea 2 Raw bf16, trigger '1bokki', rank 32, 2000 steps @ 512/768, dataset E:\\ai\\ibokki-lora\\dataset — 36 user cover scans + 14 PD museum works)",
+    "steps": 8,
+    "cast": [],
+    "note": "Chosen from the LoRA acid test (variant v3: subject-only prompt, LoRA 0.8) after 26 prompt-only rounds failed to shed the painted-gloss look. ART DIRECTION (2026-07-11): venue style is now carried by the custom house-style LoRA (early-D&D / Book of the New Sun / Dying Earth paperback register — director-sanctioned §14 probe promoted to the venue register), not by prompt style blocks; negative prompts are inert in this workflow (no negative node, cfg=1). This is the working base for wizard-figure compositing; 2× upscale to a 2560×1440 master remains an offline TODO. Alternates (v1 subject@1.0, v2 tenebrist@1.0) in art/review/board-venue-lora-v1/."
   }
 ]

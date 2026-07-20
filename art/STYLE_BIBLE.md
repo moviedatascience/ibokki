@@ -391,6 +391,26 @@ venues are sellable cosmetics.
   feedback FX (stack flash, highlight outlines, ring bursts, the cancel stamp) are
   exempt, but styled in the ink language — stamp and engraving shapes, authored vector,
   tinted by UI tokens, and never baked into artwork files.
+- **DIRECTION (2026-07-10): the board is not authored top-down.** Venue art takes the
+  Tekken side-view framing from the start — the two wizards seen in profile facing each
+  other across the stage — and the venue background is composed for that camera: open
+  floor between the duelists, quiet dark zones where cards and UI sit. A first top-down
+  "table felt" round was rejected on this basis (seeds in `art/review/board-venue-study/`);
+  side-view framing concepts live in `art/review/board-venue-tekken/`. Concepts may bake
+  the figures in; shipping venue backgrounds may not (migration rules above).
+  **Aspect (2026-07-10): venue masters are 16:9** (generate near 1536×864 native, 2×
+  upscale offline), superseding the 2560×1600 16:10 spec above.
+  **DIRECTION (2026-07-11): venue style is carried by the house LoRA, not prompt blocks.**
+  After 26 prompt-only rounds could not shed the base workflow's painted-gloss look, a
+  custom style LoRA (`ibokki_style_v1.safetensors`, trigger `1bokki`, strength 0.8–1.0 on
+  the Krea 2 Turbo workflow) was trained on the director's early-D&D / Book of the New
+  Sun / Dying Earth cover scans plus a Piranesi/Martin/de Nomé public-domain minority —
+  a §14 probe promoted to the venue register by the director. Venue prompts are now
+  `1bokki, <subject>` with no style-block header (avoid the phrase "theater stage" — it
+  spawns curtains). Note the §13 standing negative prompt is INERT in the comfyui-mcp
+  workflow (no negative node, cfg=1) — QA relies on positive phrasing and the kill-list.
+  First filed venue: `apps/client/public/art/board/table.png` (seed 32580425). Card art
+  registers (Plate/Cover) are untouched by this ruling until anchors are re-proven per §14.
 - Until the arena rework, the confrontation reads through nameplate portraits facing
   each other and venue staging. The arena itself is a future engineering design doc, not
   this document.

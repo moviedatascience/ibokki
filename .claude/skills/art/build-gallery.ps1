@@ -13,13 +13,15 @@ param(
     [Parameter(Mandatory = $true)][string]$Output,
     [string]$Title = "Art options",
     [int]$MaxWidth = 640,
-    [int]$JpegQuality = 85
+    [int]$JpegQuality = 85,
+    [int]$Columns = 0   # 0 = responsive auto-fill grid; N = fixed N-column layout (1 = full-width for detail review)
 )
 
 Add-Type -AssemblyName System.Drawing
 
-$files = Get-ChildItem -Path $InputDir -Filter *.png -File | Sort-Object Name
-if (-not $files) { Write-Error "No PNGs in $InputDir"; exit 1 }
+$files = Get-ChildItem -Path $InputDir -File |
+    Where-Object { $_.Extension -in '.png', '.jpg', '.jpeg' } | Sort-Object Name
+if (-not $files) { Write-Error "No images in $InputDir"; exit 1 }
 
 $jpegCodec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() |
     Where-Object { $_.MimeType -eq 'image/jpeg' }
@@ -110,6 +112,11 @@ $style = @'
   .chip { background: var(--chip-bg); border: 1px solid var(--line); border-radius: 999px; padding: .1rem .55rem; font-variant-numeric: tabular-nums; }
 </style>
 '@
+
+if ($Columns -ge 1) {
+    $style = $style -replace 'repeat\(auto-fill, minmax\(320px, 1fr\)\)', "repeat($Columns, 1fr)"
+    if ($Columns -eq 1) { $style = $style -replace 'max-width: 1400px', 'max-width: 1600px' }
+}
 
 $html = '<title>' + $Title + '</title>' + $style + '<main><p class="eyebrow">Ibokki art review</p><h1>' + $Title + '</h1><div class="grid">' + ($cards -join "`n") + '</div></main>'
 $outDir = Split-Path -Parent ([System.IO.Path]::GetFullPath($Output))

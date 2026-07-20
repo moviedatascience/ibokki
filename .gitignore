@@ -18,6 +18,11 @@ Thumbs.db
 .vscode/
 .idea/
 
+# art working files (Krita drops autosaves next to the file being edited,
+# including under apps/client/public — keep them out of the repo and the image)
+*.kra
+*.kra-autosave
+
 # sim output
 sim-reports/
 
