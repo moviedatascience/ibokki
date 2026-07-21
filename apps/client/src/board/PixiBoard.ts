@@ -80,6 +80,7 @@ interface Plate {
   stats: Text;
   status: Container; // ward / burn / prophecy markers + counts
   ongoingRow: Container; // ongoing-effect chips (bottom-right; stats text owns bottom-left)
+  clockL: Text; // turn-clock countdown, below the plate (online PvP only)
   /** Last rendered hp / status signature — updatePlate runs on EVERY sync, so skip unchanged rebuilds. */
   lastHp: number;
   statusKey: string;
@@ -136,6 +137,8 @@ export class PixiBoard {
   private cards: CardCatalog = {};
   private last: MatchState | null = null;
   private lastEpoch = -1;
+  /** Turn-clock snapshot from the latest frame: remaining ms per seat at `at` (perf-clock). */
+  private clockSync: { self: number | null; opp: number | null; at: number } | null = null;
   /** mount() awaits asset loads; sync() calls that arrive earlier are buffered and replayed. */
   private mounted = false;
   private selHandDef: string | null = null;
@@ -209,6 +212,7 @@ export class PixiBoard {
 
     this.buildStatic();
     app.ticker.add((t) => this.tweener.update(t.deltaMS));
+    app.ticker.add(() => this.updateClocks());
 
     this.ro = new ResizeObserver(() => {
       app.resize();
@@ -282,8 +286,10 @@ export class PixiBoard {
     const status = new Container();
     status.position.set(12, 25);
     const ongoingRow = new Container();
-    root.addChild(glow, bg, crest, name, hpMark, hp, bar, stats, status, ongoingRow);
-    return { root, glow, bar, crest, name, hp, hpMark, stats, status, ongoingRow, lastHp: NaN, statusKey: "\0", ongoingKey: "\0", ongoingHoverLive: false, crestKey: "\0", box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
+    const clockL = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 12, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
+    clockL.position.set(12, box.h + 5);
+    root.addChild(glow, bg, crest, name, hpMark, hp, bar, stats, status, ongoingRow, clockL);
+    return { root, glow, bar, crest, name, hp, hpMark, stats, status, ongoingRow, clockL, lastHp: NaN, statusKey: "\0", ongoingKey: "\0", ongoingHoverLive: false, crestKey: "\0", box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
   }
 
   private updatePlate(plate: Plate, label: string, seatLabel: string, v: PlayerView, active: boolean, mine: boolean): void {
@@ -394,9 +400,36 @@ export class PixiBoard {
       : { name: defId, school: "Neutral", type: "?", level: null, cost: null };
   }
 
+  /** Tick the countdown labels between server frames (server deadlines are truth; this only displays). */
+  private updateClocks(): void {
+    const cs = this.clockSync;
+    const elapsed = cs ? performance.now() - cs.at : 0;
+    const apply = (plate: Plate | undefined, remainAtSync: number | null) => {
+      if (!plate) return;
+      if (remainAtSync === null) {
+        plate.clockL.text = "";
+        return;
+      }
+      const left = Math.max(0, remainAtSync - elapsed);
+      const s = Math.ceil(left / 1000);
+      plate.clockL.text = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+      plate.clockL.style.fill = left <= 10_000 ? 0xff7849 : left <= 20_000 ? 0xffd36b : 0x9aa0ad;
+    };
+    apply(this.youPlate, cs?.self ?? null);
+    apply(this.oppPlate, cs?.opp ?? null);
+  }
+
   sync(state: MatchState, cards: CardCatalog): void {
     this.cards = cards;
     this.last = state;
+    // Convert absolute server deadlines to remaining-ms so client/server clock skew cancels.
+    this.clockSync = state.clock
+      ? {
+          self: state.clock.self === null ? null : state.clock.self - state.clock.now,
+          opp: state.clock.opp === null ? null : state.clock.opp - state.clock.now,
+          at: performance.now(),
+        }
+      : null;
     if (this.mounted && this.lastEpoch !== -1 && state.epoch !== this.lastEpoch) {
       if (this.selHandDef) {
         this.selHandDef = null;

@@ -205,6 +205,11 @@ button:disabled { opacity: .4; cursor: default; }
 
 .actionbar .hint.warn { color: var(--warn); align-self: center; }
 
+/* Turn-clock countdown in the spellbook header (the sheet hides your nameplate's clock). */
+.sbclock { font-variant-numeric: tabular-nums; }
+.sbclock.warn { color: var(--warn); }
+.sbclock.low { color: var(--bad); font-weight: 700; }
+
 /* ---- reaction / choice prompt, floats over the right of the table ---- */
 .prompt {
   position: absolute; right: 20px; top: 50%; transform: translateY(-50%);

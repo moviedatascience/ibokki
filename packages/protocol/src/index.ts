@@ -195,6 +195,9 @@ export interface MatchSnapshot {
   events: GameEvent[];
   /** Set when the match ended by forfeit (endReason === "forfeit"). */
   forfeit?: ForfeitInfo | null;
+  /** Turn-clock deadlines (absolute server ms; null = that seat has no running clock).
+   *  `now` is the server clock at build time so clients can correct for skew. */
+  clock?: { deadlines: [number | null, number | null]; now: number };
 }
 
 export interface MatchStatePayload {
@@ -218,6 +221,8 @@ export interface MatchStatePayload {
   log: string[];
   epoch: number;
   events: ViewerEvent[];
+  /** Viewer-relative turn-clock deadlines (absolute server ms) + the server's now. */
+  clock?: { self: number | null; opp: number | null; now: number };
 }
 
 export interface BuildOptions {
@@ -267,6 +272,7 @@ export function buildMatchState(snap: MatchSnapshot, side: PlayerId, opts: Build
     log: over || opts.fullLog ? snap.log : snap.log.slice(-100),
     epoch: snap.epoch,
     events: snap.events.map((e) => eventForViewer(e, side, relative)),
+    ...(snap.clock ? { clock: { self: snap.clock.deadlines[side], opp: snap.clock.deadlines[other], now: snap.clock.now } } : {}),
   };
 }
 

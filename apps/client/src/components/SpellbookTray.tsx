@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { CardCatalog, MatchState } from "../api.ts";
 import { cardArtUrl, hasCardArt } from "../cardArtManifest.ts";
 import { Icon, Pips, SchoolCrest } from "./Pips.tsx";
@@ -12,6 +12,26 @@ const SCHOOL_VAR: Record<string, string> = {
   Abjuration: "var(--abj)",
   Divination: "var(--div)",
 };
+
+/** Ticking turn-clock countdown (online PvP; the server's deadlines are truth, this only displays). */
+function Countdown({ clock }: { clock: { self: number | null; now: number } }) {
+  // Remaining-at-receipt cancels client/server clock skew; the interval just re-renders.
+  const sync = useMemo(() => ({ remain: clock.self === null ? null : clock.self - clock.now, at: performance.now() }), [clock]);
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 500);
+    return () => clearInterval(t);
+  }, []);
+  if (sync.remain === null) return null;
+  const left = Math.max(0, sync.remain - (performance.now() - sync.at));
+  const s = Math.ceil(left / 1000);
+  return (
+    <span className={`sbclock${left <= 10_000 ? " low" : left <= 20_000 ? " warn" : ""}`}>
+      {" · "}
+      {Math.floor(s / 60)}:{String(s % 60).padStart(2, "0")}
+    </span>
+  );
+}
 
 /**
  * Prepare-phase spellbook picker (a bottom sheet). The spellbook can be large and list-like, so it
@@ -60,6 +80,7 @@ export function SpellbookTray({ state, cards, onAction, onHover, onInspect }: { 
         {/* The sheet covers your nameplate, so surface the vitals that inform prep choices here. */}
         <span className="sbyou">
           <Icon name="hp" color="var(--bad)" title="HP" /> {state.view.self.hp} · Lv {state.view.self.level} · deck {state.view.self.resourceDeckCount}
+          {state.clock && <Countdown clock={state.clock} />}
         </span>
         <span className="sbpageno">{lvlSpan && `${lvlSpan} · `}page {cur + 1}/{pageCount}</span>
       </div>

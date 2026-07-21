@@ -76,6 +76,10 @@ interface Config {
   disconnectGraceMs: number;
   /** A connected player who takes no action for this long forfeits (anti-softlock). */
   inactivityMs: number;
+  /** Main-turn clock budget (PvP only; 0 disables all turn clocks). */
+  turnMs: number;
+  /** Budget for stack/priority windows (reactions, mid-stack choices). */
+  reactionMs: number;
   /** Hard cap on concurrent rooms (memory-exhaustion backstop). */
   maxRooms: number;
   /** Per-connection message rate limit: burst capacity + steady refill/sec. */
@@ -90,6 +94,8 @@ function resolveConfig(opts: ServerOptions): Config {
   return {
     disconnectGraceMs: opts.disconnectGraceMs ?? envInt("IBOKKI_DISCONNECT_GRACE_MS") ?? 45_000,
     inactivityMs: opts.inactivityMs ?? envInt("IBOKKI_INACTIVITY_MS") ?? 300_000,
+    turnMs: opts.turnMs ?? envInt("IBOKKI_TURN_MS") ?? 75_000,
+    reactionMs: opts.reactionMs ?? envInt("IBOKKI_REACTION_MS") ?? 20_000,
     maxRooms: opts.maxRooms ?? envInt("IBOKKI_MAX_ROOMS") ?? 5_000,
     // Generous: this is a coarse flood-breaker (the real DoS guards are reject-if-seated,
     // the room cap, and maxPayload). Legit clients — even the machine-speed e2e driver
@@ -152,6 +158,42 @@ interface Room {
   matchId: number | null;
   /** Ordered actions of the current game — with the seed, the whole deterministic match. */
   actionLog: { s: PlayerId; a: Action }[];
+  /** Turn-clock state (PvP only; transient — not persisted, restarts reset banks/strikes). */
+  clock: RoomClock;
+}
+
+interface RoomClock {
+  /** Absolute ms each seat times out at; null = no running clock for that seat. */
+  deadlines: [number | null, number | null];
+  /** Identity of the window each running clock was armed for (so a player's own
+   *  actions inside their turn never reset their budget). */
+  keys: [string | null, string | null];
+  timers: [Timer | null, Timer | null];
+  /** Carry-over thinking time earned by ending turns without timing out. */
+  bank: [number, number];
+  /** Timeout strikes; the third forfeits. */
+  timeouts: [number, number];
+  lastTurnCount: number;
+  lastActivePlayer: PlayerId | null;
+  /** turnCount of each seat's last timeout — that turn earns no bank credit. */
+  timedOutOnTurn: [number, number];
+}
+
+const BANK_PER_TURN_MS = 10_000;
+const BANK_CAP_MS = 60_000;
+const TIMEOUTS_TO_FORFEIT = 3;
+
+function newClock(): RoomClock {
+  return {
+    deadlines: [null, null],
+    keys: [null, null],
+    timers: [null, null],
+    bank: [0, 0],
+    timeouts: [0, 0],
+    lastTurnCount: -1,
+    lastActivePlayer: null,
+    timedOutOnTurn: [-1, -1],
+  };
 }
 
 function newCode(rooms: Map<string, Room>): string {
@@ -214,6 +256,8 @@ function startMatch(room: Room): void {
   room.recentEvents = [];
   room.rematchVotes.clear();
   room.forfeitInfo = null;
+  clearRoomTimers(room);
+  room.clock = newClock(); // fresh banks + strikes per game
   const intro = `Match start: ${d0} vs ${d1} — room ${room.code}, seed ${seed}`;
   room.logs = [[intro], [intro]];
   room.epoch++;
@@ -256,6 +300,7 @@ function abandonRow(room: Room): void {
 function pushState(room: Room, side: PlayerId, error?: string): void {
   const seat = room.seats[side];
   if (!seat?.ws || !room.state) return;
+  const clocksOn = room.hub.cfg.turnMs > 0 && !room.bot && !isTerminal(room.state);
   const state = buildMatchState(
     {
       state: room.state,
@@ -265,6 +310,7 @@ function pushState(room: Room, side: PlayerId, error?: string): void {
       epoch: room.epoch,
       events: room.recentEvents,
       forfeit: room.forfeitInfo,
+      ...(clocksOn ? { clock: { deadlines: room.clock.deadlines, now: Date.now() } } : {}),
     },
     side,
     { relative: true },
@@ -347,6 +393,7 @@ function handleAct(room: Room, side: PlayerId, indices: number[]): void {
     applyAction(room, side, legal[idx]!);
   }
   autoPlayBot(room);
+  armClocks(room); // deadlines must be current BEFORE the frames below carry them
   pushState(room, side, error ?? undefined);
   pushState(room, (side ^ 1) as PlayerId);
   armInactivity(room); // any action resets the idle clock for whoever is now on the clock
@@ -360,6 +407,7 @@ function handleRematch(room: Room, side: PlayerId): void {
   if (room.rematchVotes.size === 2) {
     startMatch(room);
     autoPlayBot(room);
+    armClocks(room);
     pushBoth(room);
     armInactivity(room);
   } else {
@@ -385,7 +433,107 @@ function clearRoomTimers(room: Room): void {
     const t = room.graceTimers[side];
     if (t) clearTimeout(t);
     room.graceTimers[side] = null;
+    stopClock(room, side);
   }
+}
+
+// ---- turn clocks (per-window budgets; timeout = canonical pass; 3 strikes = forfeit) ----
+
+function stopClock(room: Room, side: PlayerId): void {
+  const t = room.clock.timers[side];
+  if (t) clearTimeout(t);
+  room.clock.timers[side] = null;
+  room.clock.deadlines[side] = null;
+  room.clock.keys[side] = null;
+}
+
+/**
+ * (Re)arm per-seat clocks for whoever must act. A window is identified by a key of the
+ * state components that define it — re-pushes inside the SAME window (e.g. the player's
+ * own attaches during their turn) keep the running clock instead of resetting it.
+ * Main turns get turnMs + the seat's carry-over bank; stack/choice windows get reactionMs.
+ * Solo bot rooms run no clocks (a learning game should never be lost to a timer).
+ */
+function armClocks(room: Room): void {
+  const st = room.state;
+  const cfg = room.hub.cfg;
+  if (!st || isTerminal(st) || cfg.turnMs <= 0 || room.bot) {
+    stopClock(room, 0);
+    stopClock(room, 1);
+    return;
+  }
+  // Bank credit on turn rollover: the player whose turn just ended earns thinking time,
+  // unless that turn ended by their own timeout.
+  if (st.turnCount !== room.clock.lastTurnCount) {
+    const ended = room.clock.lastActivePlayer;
+    if (ended !== null && room.clock.timedOutOnTurn[ended] !== room.clock.lastTurnCount) {
+      room.clock.bank[ended] = Math.min(BANK_CAP_MS, room.clock.bank[ended] + BANK_PER_TURN_MS);
+    }
+    room.clock.lastTurnCount = st.turnCount;
+  }
+  room.clock.lastActivePlayer = st.activePlayer;
+  const onClock = new Set(onClockHumans(room));
+  for (const side of [0, 1] as PlayerId[]) {
+    if (!onClock.has(side)) {
+      stopClock(room, side);
+      continue;
+    }
+    const reaction = st.stack.length > 0;
+    const key = `${st.turnCount}:${st.phase}:${st.priorityPlayer}:${st.stack.length}:${st.pendingChoice ? "c" : "-"}`;
+    if (room.clock.keys[side] === key && room.clock.deadlines[side] !== null) continue; // same window — keep ticking
+    stopClock(room, side);
+    const budget = reaction ? cfg.reactionMs : cfg.turnMs + room.clock.bank[side];
+    room.clock.keys[side] = key;
+    room.clock.deadlines[side] = Date.now() + budget;
+    const t = setTimeout(() => {
+      try {
+        onClockTimeout(room, side);
+      } catch (err) {
+        console.error("turn clock error:", err);
+      }
+    }, budget);
+    t.unref();
+    room.clock.timers[side] = t;
+  }
+}
+
+/** The seat's window expired: force the canonical pass line (or forfeit on the third strike). */
+function onClockTimeout(room: Room, side: PlayerId): void {
+  room.clock.timers[side] = null;
+  const st = room.state;
+  if (!st || isTerminal(st)) return;
+  if (!onClockHumans(room).includes(side)) return; // window closed while the timer was in flight
+  room.clock.timeouts[side]++;
+  room.clock.timedOutOnTurn[side] = st.turnCount;
+  room.clock.bank[side] = 0;
+  stopClock(room, side);
+  if (room.clock.timeouts[side] >= TIMEOUTS_TO_FORFEIT) {
+    forfeit(room, side, "idle");
+    return;
+  }
+  room.recentEvents = [];
+  room.epoch++;
+  room.lastActivity = Date.now();
+  const strikes = `(${room.clock.timeouts[side]}/${TIMEOUTS_TO_FORFEIT} — the third forfeits)`;
+  for (const viewer of [0, 1] as PlayerId[]) {
+    room.logs[viewer].push(`${side === viewer ? "You" : "Opp"}: out of time ${strikes}`);
+  }
+  // Canonical pass line: resolve any forced choices with the first candidate, then
+  // pass/donePreparing. Flows through applyAction so persistence + transcripts hold.
+  for (let guard = 0; guard < 50 && room.state && !isTerminal(room.state); guard++) {
+    const legal = legalActions(room.state, side);
+    if (legal.length === 0) break;
+    const pick =
+      legal.find((a) => a.type === "pass") ??
+      legal.find((a) => a.type === "donePreparing") ??
+      legal.find((a) => a.type === "choose") ??
+      legal[0]!;
+    applyAction(room, side, pick);
+    if (pick.type === "pass" || pick.type === "donePreparing") break;
+  }
+  armClocks(room);
+  pushBoth(room);
+  armInactivity(room);
 }
 
 /**
@@ -567,6 +715,7 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
         forfeitInfo: null,
         matchId: null,
         actionLog: [],
+        clock: newClock(),
       };
       rooms.set(room.code, room);
       seatSocket(room, 0, ws);
@@ -577,6 +726,7 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
         send(ws, { t: "presence", opponentConnected: true });
         pushState(room, 0);
         armInactivity(room);
+        armClocks(room);
       }
       return;
     }
@@ -591,6 +741,7 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
       seatSocket(room, 1, ws);
       send(ws, { t: "joined", code: room.code, side: 1, token: room.seats[1].token, catalog: CATALOG, build: BUILD });
       startMatch(room);
+      armClocks(room);
       pushBoth(room);
       // The creator has been waiting — tell them their opponent is here.
       send(room.seats[0].ws, { t: "presence", opponentConnected: true });
@@ -607,6 +758,7 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
       seatSocket(room, side, ws);
       cancelGrace(room, side); // back before the grace deadline — the match survives
       send(ws, { t: "joined", code: room.code, side, token: msg.token, catalog: CATALOG, build: BUILD });
+      armClocks(room);
       if (room.state) pushState(room, side);
       const opp = room.seats[(side ^ 1) as PlayerId];
       send(ws, { t: "presence", opponentConnected: !!opp?.ws });
@@ -681,6 +833,7 @@ function rehydrateRooms(hub: Hub): void {
         forfeitInfo: null,
         matchId: row.id,
         actionLog: JSON.parse(row.actions) as { s: PlayerId; a: Action }[],
+        clock: newClock(),
       };
       const intro = `Match start: ${seats[0].deckName} vs ${seats[1].deckName} — room ${row.code}, seed ${row.seed}`;
       room.logs = [[intro], [intro]];
@@ -720,6 +873,10 @@ export interface ServerOptions {
   disconnectGraceMs?: number;
   /** Idle (ms) before a connected but inactive player forfeits. Default 5min. */
   inactivityMs?: number;
+  /** Main-turn clock budget (PvP only; 0 disables clocks). Default 75s. */
+  turnMs?: number;
+  /** Stack/priority window budget. Default 20s. */
+  reactionMs?: number;
   /** Hard cap on concurrent rooms. Default 5000. */
   maxRooms?: number;
   /** Per-connection message rate limit: burst capacity + steady refill/sec. Default 200 / 100. */
@@ -879,6 +1036,7 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
         // Start the rejoin grace clock; if they don't come back the match resolves.
         startGrace(at.room, at.side);
         armInactivity(at.room); // the dropped seat is no longer "on the clock"
+        armClocks(at.room);
       }
     });
   });

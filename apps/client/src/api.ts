@@ -109,6 +109,8 @@ export interface MatchState {
   log: string[];
   epoch: number;
   events: GameEvent[];
+  /** Turn-clock deadlines (absolute server ms) + server now, online PvP only. */
+  clock?: { self: number | null; opp: number | null; now: number };
   error?: string;
 }
 
