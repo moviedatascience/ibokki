@@ -37,7 +37,11 @@ export default defineConfig({
       // The in-page driver acts at machine speed (~100 msg/s/tab); the per-connection
       // rate limit (unit-tested elsewhere) would throttle that synthetic load, so turn
       // it effectively off here — this test isn't exercising the limiter.
-      env: { IBOKKI_MSG_BURST: "1000000000", IBOKKI_MSG_REFILL_PER_SEC: "1000000000" },
+      // IBOKKI_START_HP: full random matches at 30 HP run ~8 rounds and outpaced the
+      // full-match spec's 300s budget on CI's 2-core runners (trace-analyzed: healthy
+      // ~1.4 epochs/s, round 5 of ~8 at deadline). Low HP bounds match length by
+      // construction; the e2e exercises transport/UI, not match-length realism.
+      env: { IBOKKI_MSG_BURST: "1000000000", IBOKKI_MSG_REFILL_PER_SEC: "1000000000", IBOKKI_START_HP: "10" },
     },
     {
       command: "npm run client",

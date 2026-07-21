@@ -87,6 +87,10 @@ interface Config {
   msgRefillPerSec: number;
   /** Allowed WebSocket Origins (CSWSH guard). null ⇒ allow all (permissive default). */
   allowedOrigins: string[] | null;
+  /** Starting HP override — a TEST knob (e2e uses low HP so random matches fit CI's
+   *  slow runners). Replay determinism: rehydration re-creates games with the CURRENT
+   *  value, so never change it on a server that has live persisted matches. */
+  startingHp: number | undefined;
 }
 
 function resolveConfig(opts: ServerOptions): Config {
@@ -102,6 +106,7 @@ function resolveConfig(opts: ServerOptions): Config {
     // (~100 msg/s per tab) — must never trip it; only a pathological single-socket flood does.
     msgBurst: opts.msgBurst ?? envInt("IBOKKI_MSG_BURST") ?? 200,
     msgRefillPerSec: opts.msgRefillPerSec ?? envInt("IBOKKI_MSG_REFILL_PER_SEC") ?? 100,
+    startingHp: opts.startingHp ?? envInt("IBOKKI_START_HP"),
     allowedOrigins: origins ? origins.split(",").map((s) => s.trim()).filter(Boolean) : null,
   };
 }
@@ -252,7 +257,8 @@ function resolveDeck(
 function startMatch(room: Room): void {
   const seed = newSeed();
   const [d0, d1] = deckNamesOf(room);
-  room.state = createGame({ seed, players: [room.seats[0].deck, room.seats[1]!.deck] });
+  const hpOverride = room.hub.cfg.startingHp;
+  room.state = createGame({ seed, players: [room.seats[0].deck, room.seats[1]!.deck], ...(hpOverride ? { startingHp: hpOverride } : {}) });
   room.recentEvents = [];
   room.rematchVotes.clear();
   room.forfeitInfo = null;
@@ -819,7 +825,7 @@ function rehydrateRooms(hub: Hub): void {
           { ...seats[0], ws: null },
           { ...seats[1], ws: null },
         ],
-        state: createGame({ seed: row.seed, players: [seats[0].deck, seats[1].deck] }),
+        state: createGame({ seed: row.seed, players: [seats[0].deck, seats[1].deck], ...(hub.cfg.startingHp ? { startingHp: hub.cfg.startingHp } : {}) }),
         logs: [[], []],
         epoch: 0,
         recentEvents: [],
@@ -882,6 +888,8 @@ export interface ServerOptions {
   /** Per-connection message rate limit: burst capacity + steady refill/sec. Default 200 / 100. */
   msgBurst?: number;
   msgRefillPerSec?: number;
+  /** Starting HP for new games — test knob (see Config.startingHp). Default: engine's 30. */
+  startingHp?: number;
 }
 
 export interface OnlineServer {

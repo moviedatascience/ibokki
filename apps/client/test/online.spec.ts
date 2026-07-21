@@ -16,7 +16,7 @@ interface HookState {
   schools: [string, string];
   epoch: number;
   legal: { index: number }[];
-  view: { opponent: { hand?: string[]; handCount?: number; prepared: { spellDefId?: string | null; faceDown: boolean; cast: boolean }[] } };
+  view: { self: { hp: number }; opponent: { hand?: string[]; handCount?: number; prepared: { spellDefId?: string | null; faceDown: boolean; cast: boolean }[] } };
 }
 
 const hookState = (page: Page) =>
@@ -52,7 +52,9 @@ const startDriver = (page: Page) =>
 
 test("two tabs play a full online match to game over", async ({ browser }) => {
   // Random-length matches on CI's 2-core runners were finishing at ~3m of the old 4m budget
-  // (run #25 timed out twice) — keep real headroom over the observed worst case.
+  // (run #25 timed out twice) — keep real headroom over the observed worst case. Since then
+  // three runs died at the 300s deadline mid-round-5 (healthy pace, match just too long), so
+  // e2e matches now start at 10 HP (IBOKKI_START_HP in playwright.config.ts) to bound length.
   test.setTimeout(360_000);
   const ctxA = await browser.newContext();
   const ctxB = await browser.newContext();
@@ -76,6 +78,9 @@ test("two tabs play a full online match to game over", async ({ browser }) => {
   await expect.poll(async () => (await hookState(a))?.schools ?? null).toEqual(["Emberworks", "Emberworks"]);
   const sB = await hookState(b);
   expect(sB!.schools).toEqual(["Emberworks", "Emberworks"]);
+  // Guard the IBOKKI_START_HP=10 wiring (playwright.config.ts): if this ever reads 30,
+  // matches are full-length again and the CI deadline flake is back.
+  expect(sB!.view.self.hp, "e2e matches must start at the shortened HP").toBe(10);
 
   // Drive both tabs with in-page random players until the match terminates.
   await startDriver(a);
