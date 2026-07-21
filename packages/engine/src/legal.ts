@@ -1,6 +1,6 @@
 /** Enumerate the legal actions for the player who holds priority. */
 import { getCard, getComponent, type ComponentDef, type Cost } from "@ibokki/cards";
-import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
+import { addCost, attachedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
 import { TRAP_REACTIONS, trainerHasEffect } from "./cardFlags.ts";
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { sumOngoing } from "./state-ops.ts";
@@ -11,6 +11,7 @@ import {
   type CardInstance,
   type GameState,
   type PlayerId,
+  type PlayerState,
   type PreparedSpell,
 } from "./types.ts";
 
@@ -23,10 +24,10 @@ function attachedComponents(prep: PreparedSpell): ComponentDef[] {
   return comps;
 }
 
-function costMet(prep: PreparedSpell): boolean {
+function costMet(owner: PlayerState, prep: PreparedSpell): boolean {
   const def = getCard(prep.spell.defId);
   if (!def || !def.cost) return false;
-  const have = addCost(combinedSymbols(attachedComponents(prep)), prep.bonus ?? emptyCost());
+  const have = addCost(attachedSymbols(owner, prep), prep.bonus ?? emptyCost());
   return meetsCost(def.cost, have);
 }
 
@@ -132,7 +133,7 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
         const def = getCard(prep.spell.defId);
         if (!def || !def.cost || def.type === "Reaction") continue;
         if ((def.level ?? 1) > tier.maxSpellLevel) continue;
-        if (costMet(prep)) actions.push({ type: "cast", preparedIndex: i });
+        if (costMet(p, prep)) actions.push({ type: "cast", preparedIndex: i });
       }
     }
 
@@ -176,7 +177,7 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
         if (TRAP_REACTIONS.has(prep.spell.defId)) continue;
         if ((def.level ?? 1) > tier.maxSpellLevel) continue;
         const cost = reactionCost(def.cost, discount, tax);
-        if (!meetsCost(cost, combinedSymbols(attachedComponents(prep)))) continue;
+        if (!meetsCost(cost, attachedSymbols(p, prep))) continue;
         actions.push({ type: "castReaction", preparedIndex: i });
       }
     }

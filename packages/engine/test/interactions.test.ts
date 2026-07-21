@@ -24,6 +24,7 @@ import {
 } from "../src/index.ts";
 import { pushToStack, resolveTop } from "../src/stack.ts";
 import { beginTurn, endRoundAndLevelUp } from "../src/mechanics.ts";
+import { attachedSymbols } from "../src/cost.ts";
 
 let iid = 1;
 const inst = (defId: string): CardInstance => ({ iid: iid++, defId });
@@ -937,6 +938,47 @@ describe("trigger-window traps + riders (the remaining SIMPLIFIED family)", () =
     const r = apply(s, { type: "playTrainer", handIid: spite.iid });
     const o = r.state.players[0].ongoing.find((x) => x.kind === "reactionPunish");
     expect(o?.expiry).toBe("startOfOwnNextTurn");
+  });
+
+  it("Transmuter's Stone treats a basic component as another symbol until end of turn", () => {
+    const s = blankState();
+    const stone = inst("ITM-005");
+    const verbal = inst("CMP-V");
+    s.players[0].hand = [stone, verbal];
+    let r = apply(s, { type: "playTrainer", handIid: stone.iid });
+    // Step 1: which basic component (the pick stays in hand).
+    expect(r.state.pendingChoice?.mode).toBe("treatAsComponent");
+    r = apply(r.state, { type: "choose", iid: verbal.iid });
+    expect(r.state.players[0].hand.some((c) => c.iid === verbal.iid)).toBe(true);
+    // Step 2: the OTHER two symbols are offered; pick Somatic.
+    expect(r.state.pendingChoice?.mode).toBe("treatAsSymbol");
+    expect(r.state.pendingChoice!.candidates.map((c) => c.defId).sort()).toEqual(["CMP-M", "CMP-S"]);
+    const somatic = r.state.pendingChoice!.candidates.find((c) => c.defId === "CMP-S")!;
+    r = apply(r.state, { type: "choose", iid: somatic.iid });
+    expect(r.state.players[0].treatAs).toEqual([{ iid: verbal.iid, sym: "S" }]);
+    // The override drives real cost math: attached, the Verbal now provides S.
+    const st2 = r.state;
+    st2.players[0].prepared = [{ spell: inst("ABJ-006"), faceDown: true, attached: [], cast: false, sealed: false }];
+    const ra = apply(st2, { type: "attach", preparedIndex: 0, handIid: verbal.iid });
+    expect(attachedSymbols(ra.state.players[0], ra.state.players[0].prepared[0]!)).toEqual({ V: 0, S: 1, M: 0 });
+    // And it expires when the turn ends: the same card reverts to its printed symbol.
+    const rp = apply(ra.state, { type: "pass" });
+    expect(rp.state.players[0].treatAs).toBeUndefined();
+    expect(attachedSymbols(rp.state.players[0], rp.state.players[0].prepared[0]!)).toEqual({ V: 1, S: 0, M: 0 });
+  });
+
+  it("Apocalypse bypasses ongoing reduction and Inversion Field; wards still soak", () => {
+    const s = blankState();
+    s.players[0].level = 20; // L4 spell — clear the cast-level gate
+    s.players[0].prepared = [{ spell: inst("EVO-045"), faceDown: false, attached: [], cast: false, sealed: false }];
+    s.players[1].ongoing.push({ id: 1, owner: 1, kind: "damageReduction", value: 3, expiry: "endOfRound" });
+    s.players[1].ongoing.push({ id: 2, owner: 1, kind: "damageToHeal", value: 5, expiry: "endOfRound" });
+    s.players[1].wards = [{ wid: 1, hp: 2 }];
+    const events: GameEvent[] = [];
+    pushToStack(s, 0, 0, false, null, events);
+    resolveTop(s, events);
+    expect(s.players[1].hp).toBe(30 - 10); // 12, only the ward's 2 soaks
+    expect(s.players[1].wards).toHaveLength(0);
   });
 });
 

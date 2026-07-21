@@ -4,7 +4,7 @@
  * respond to and can cancel it, reduce its damage, or set up reflection.
  */
 import { getCard } from "@ibokki/cards";
-import { MIN_DAMAGE, REACTION_PROOF, UNSTOPPABLE } from "./cardFlags.ts";
+import { MIN_DAMAGE, REACTION_PROOF, UNPREVENTABLE, UNSTOPPABLE } from "./cardFlags.ts";
 import { dealDamageToPlayer, drawN, sumOngoing } from "./state-ops.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
 import { otherPlayer, type GameEvent, type GameState, type PlayerId, type StackItem } from "./types.ts";
@@ -37,6 +37,7 @@ export function pushToStack(
     damageReduction: 0,
     reflect: 0,
     unstoppable: UNSTOPPABLE.has(defId) || sumOngoing(player, "spellsUncounterable") > 0,
+    unpreventable: UNPREVENTABLE.has(defId),
     reactionProof: REACTION_PROOF.has(defId),
     minDamage: MIN_DAMAGE[defId] ?? 0,
     damageBonus: player.nextSpellBonus, // one-shot next-spell buff rides this cast

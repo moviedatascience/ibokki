@@ -79,16 +79,20 @@ export function dealDamageToPlayer(
   targetId: PlayerId,
   amount: number,
   events: GameEvent[],
+  opts?: { unpreventable?: boolean },
 ): void {
   if (amount <= 0) return;
   const target = state.players[targetId];
-  const reduction = sumOngoing(target, "damageReduction");
+  // Apocalypse-style "cannot be prevented": bypasses ongoing reduction and Inversion
+  // Field. Wards still soak — ward absorption is not "prevention" in this engine's
+  // vocabulary (it never increments damagePreventedThisRound).
+  const reduction = opts?.unpreventable ? 0 : sumOngoing(target, "damageReduction");
   let dealt = Math.max(0, amount - reduction);
   if (amount - dealt > 0) target.damagePreventedThisRound += amount - dealt;
   if (dealt <= 0) return;
 
   // Inversion Field: convert incoming damage into healing, up to a per-round cap.
-  const healCap = sumOngoing(target, "damageToHeal");
+  const healCap = opts?.unpreventable ? 0 : sumOngoing(target, "damageToHeal");
   if (healCap > 0) {
     const healed = Math.min(Math.max(0, healCap - target.damageHealedThisRound), dealt);
     if (healed > 0) {

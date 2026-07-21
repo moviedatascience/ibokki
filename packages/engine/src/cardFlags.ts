@@ -16,6 +16,12 @@ export const UNSTOPPABLE: ReadonlySet<string> = new Set([
   "EVO-045", // Apocalypse
 ]);
 
+/** "Cannot be prevented": this spell's damage also bypasses ongoing damage
+ *  reduction and Inversion Field (wards still soak — soak isn't "prevention"). */
+export const UNPREVENTABLE: ReadonlySet<string> = new Set([
+  "EVO-045", // Apocalypse
+]);
+
 /** This spell's damage cannot be reduced below the given floor. */
 export const MIN_DAMAGE: Readonly<Record<string, number>> = {
   "EVO-018": 1, // Lightning Bolt
@@ -49,7 +55,7 @@ export const PREVENT_TRAPS: Readonly<Record<string, number>> = {
 
 export const TRAP_REACTIONS: ReadonlySet<string> = new Set([...Object.keys(ATTACH_TRAPS), ...Object.keys(PREVENT_TRAPS)]);
 
-import { getCard } from "@ibokki/cards";
+import { getCard, getComponent } from "@ibokki/cards";
 import { tierForLevel } from "./levels.ts";
 import { isComponentDefId, otherPlayer, type GameState, type PlayerId } from "./types.ts";
 
@@ -71,6 +77,11 @@ export function trainerHasEffect(state: GameState, me: PlayerId, defId: string):
     case "GAM-004": // Recharge — nothing to search
     case "GAM-006": // Premonition Charm — nothing to reorder
       return p.resourceDeck.length > 0;
+    case "ITM-005": // Transmuter's Stone — needs a basic (single-symbol) component in hand
+      return p.hand.some((c) => {
+        const d = getComponent(c.defId);
+        return !!d && d.symbols.V + d.symbols.S + d.symbols.M === 1;
+      });
     case "ITM-006": // Mnemonic Charm — needs a component in your discard
     case "GAM-005": // Salvage — same
       return p.discard.some((c) => isComponentDefId(c.defId));

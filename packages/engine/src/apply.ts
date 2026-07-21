@@ -1,6 +1,6 @@
 /** The pure reducer: apply one action to a state, producing a new state + events. */
 import { getCard, getComponent, type ComponentDef } from "@ibokki/cards";
-import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
+import { addCost, attachedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
 import { ATTACH_TRAPS, PREVENT_TRAPS, trainerHasEffect } from "./cardFlags.ts";
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
@@ -48,7 +48,7 @@ function armedTrapFires(owner: PlayerState, prep: PreparedSpell, events: GameEve
   const def = getCard(prep.spell.defId);
   if (!def?.cost) return false;
   if ((def.level ?? 1) > tierForLevel(owner.level).maxSpellLevel) return false;
-  if (!meetsCost(def.cost, combinedSymbols(attachedComponents(prep)))) return false; // must be armed
+  if (!meetsCost(def.cost, attachedSymbols(owner, prep))) return false; // must be armed
   prep.cast = true;
   prep.faceDown = false;
   owner.discard.push(...prep.attached);
@@ -165,10 +165,10 @@ function enforceHandCap(state: GameState, id: PlayerId, events: GameEvent[]): vo
 }
 
 /** True if a prepared spell's attached components (plus any Attune bonus) satisfy its cost. */
-function costMet(prep: PreparedSpell): boolean {
+function costMet(owner: PlayerState, prep: PreparedSpell): boolean {
   const def = getCard(prep.spell.defId);
   if (!def || !def.cost) return false;
-  const have = addCost(combinedSymbols(attachedComponents(prep)), prep.bonus ?? emptyCost());
+  const have = addCost(attachedSymbols(owner, prep), prep.bonus ?? emptyCost());
   return meetsCost(def.cost, have);
 }
 
@@ -315,7 +315,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
         p.ongoing.splice(attuneIdx, 1);
         const def = getCard(prep.spell.defId);
         if (def?.cost) {
-          const have = addCost(combinedSymbols(attachedComponents(prep)), prep.bonus ?? emptyCost());
+          const have = addCost(attachedSymbols(p, prep), prep.bonus ?? emptyCost());
           const deficit = { V: def.cost.V - have.V, S: def.cost.S - have.S, M: def.cost.M - have.M };
           const pick = (["V", "S", "M"] as const).reduce((b, t) => (deficit[t] > deficit[b] ? t : b), "V" as "V" | "S" | "M");
           const bonus = prep.bonus ?? emptyCost();
@@ -352,7 +352,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
       if (!def || !def.cost) throw new Error(`${prep.spell.defId} is not a castable spell`);
       if (def.type === "Reaction") throw new Error("Reactions are cast with castReaction");
       if ((def.level ?? 1) > tier.maxSpellLevel) throw new Error("Spell level too high");
-      if (!costMet(prep)) throw new Error("Cost not met");
+      if (!costMet(p, prep)) throw new Error("Cost not met");
 
       pushToStack(state, me, action.preparedIndex, false, null, events);
       // One non-Reaction spell per turn; Overclock grants extras (still slot-bound).
@@ -412,7 +412,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
         sumOngoing(p, "reactionDiscountS"),
         sumOngoing(state.players[otherPlayer(me)], "reactionTax"),
       );
-      if (!meetsCost(cost, combinedSymbols(attachedComponents(prep)))) throw new Error("Cost not met");
+      if (!meetsCost(cost, attachedSymbols(p, prep))) throw new Error("Cost not met");
       const discIdx = p.ongoing.findIndex((o) => o.kind === "reactionDiscountS");
       if (discIdx >= 0) p.ongoing.splice(discIdx, 1); // consumed by the first Reaction played
 
@@ -561,6 +561,32 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
           if (prep) prep.sealed = true;
           break;
         }
+        case "treatAsComponent": {
+          // Transmuter's Stone step 1: the pick STAYS in hand; a symbol choice follows.
+          const comp = getComponent(card.defId);
+          const cur = (["V", "S", "M"] as const).find((t) => (comp?.symbols[t] ?? 0) > 0) ?? "V";
+          const others = (["V", "S", "M"] as const).filter((t) => t !== cur);
+          events.push({ type: "chose", player: me, defId: card.defId });
+          state.pendingChoice = {
+            player: me,
+            reason: "Treat it as which symbol?",
+            mode: "treatAsSymbol",
+            // Synthetic CMP-X descriptors (like sealPrepared's FACEDOWN-<slot> cards).
+            candidates: others.map((t) => ({ iid: state.nextIid++, defId: `CMP-${t}` })),
+            picksRemaining: 1,
+            leftover: "top",
+            carryIid: card.iid,
+            carryDefId: card.defId,
+          };
+          events.push({ type: "choicePending", player: me, reason: "transmute" });
+          return { state, events }; // the follow-up choice replaces this one
+        }
+        case "treatAsSymbol": {
+          // Step 2: per-instance override, read by every cost check until end of turn.
+          const sym = card.defId.slice(4) as "V" | "S" | "M";
+          (p.treatAs ??= []).push({ iid: pc.carryIid!, sym });
+          break;
+        }
       }
       events.push({ type: "chose", player: me, defId: card.defId });
       if (pc.shuffleAfter) events.push({ type: "tutored", player: me, defId: card.defId }); // searches reveal the pick
@@ -576,6 +602,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
       events.push({ type: "priorityPassed", player: me });
       if (state.stack.length === 0) {
         // Active player passing with an empty stack ends their turn.
+        p.treatAs = undefined; // Transmuter's Stone overrides last "until end of turn"
         enforceHandCap(state, me, events);
         state.passStreak = 0;
         const bothAtTurnLimit =

@@ -5,8 +5,6 @@
  *
  * Cards with real decisions pause for the player via pendingChoice (search/order/
  * return/bounce modes); decision-free conditionals (Component Pouch) auto-resolve.
- * Transmuter's Stone approximates its treat-as-another-symbol wording with an
- * Attune-style bonus on the next attach (SIMPLIFIED — same practical effect).
  */
 import { register } from "./registry.ts";
 
@@ -18,7 +16,7 @@ register("ITM-004", (c) => {
   c.discardSelfRandom(1); // Spare Reagents
   c.draw(1);
 });
-register("ITM-005", (c) => c.addAttuneBonus()); // Transmuter's Stone (color-fix ~ next attach counts as a needed symbol)
+register("ITM-005", (c) => c.requestTreatAsComponent()); // Transmuter's Stone — pick a basic, treat as another symbol until end of turn
 register("ITM-006", (c) => c.requestReturnDiscardComponentToTop()); // Mnemonic Charm — pick the component, to deck TOP per text
 register("ITM-007", (c) => c.addNextSpellDamage(1)); // Empowered Chalk — next spell THIS turn
 register("ITM-008", (c) => {

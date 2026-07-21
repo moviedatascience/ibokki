@@ -1,9 +1,9 @@
 /**
- * Evocation (Verbal) — aggressive burst & Burn. Non-Reaction spells.
+ * Evocation (Verbal) — aggressive burst & Burn.
  *
- * Reaction cards (EVO-013..016, 028..031, 042..044, 047) are handled once the
- * stack/Reaction system lands. A few "can't be reduced / can't be countered"
- * riders are inert until prevention & the stack exist; noted inline.
+ * Reactions resolve on the stack; trap Reactions (Searing Riposte, Volatile Bolt)
+ * fire from cardFlags, not this registry. Cast-time riders (reaction-proof,
+ * unstoppable, unpreventable, min-damage floors) live in cardFlags too.
  */
 import { register } from "./registry.ts";
 
@@ -38,11 +38,11 @@ register("EVO-010", (c) => {
   c.damageOneOpponentWard(2);
 });
 register("EVO-011", (c) => c.dealDamage(4)); // Inferno Lance
-register("EVO-012", (c) => c.dealDamage(3)); // Hex Bolt (reaction-immunity inert)
+register("EVO-012", (c) => c.dealDamage(3)); // Hex Bolt (reaction-immunity via cardFlags.REACTION_PROOF)
 
 // ---- Level 2 ----
 register("EVO-017", (c) => c.dealDamage(5)); // Fireball
-register("EVO-018", (c) => c.dealDamage(4)); // Lightning Bolt (min-1 rider inert)
+register("EVO-018", (c) => c.dealDamage(4)); // Lightning Bolt (min-1 floor via cardFlags.MIN_DAMAGE)
 register("EVO-019", (c) => {
   c.dealDamage(3); // Inferno
   c.addBurnToOpponent(2);
@@ -89,7 +89,7 @@ register("EVO-034", (c) => {
   const n = c.discardSelfHand(); // Pyroclasm
   c.dealDamage(2 * n);
 });
-register("EVO-035", (c) => c.dealDamage(5)); // Unstoppable Bolt (unstoppable rider inert)
+register("EVO-035", (c) => c.dealDamage(5)); // Unstoppable Bolt (rider via cardFlags.UNSTOPPABLE)
 register("EVO-036", (c) => {
   c.addBurnToOpponent(4); // Conflagration — each Burn marker deals +1 when it triggers this round
   c.addBurnAmplifier(1);
@@ -131,7 +131,7 @@ register("EVO-044", (c) => c.dealDamage(6)); // Cinder Storm
 register("EVO-047", (c) => c.reflectActualOntoTarget(3)); // Pyromancer's Reckoning — "that damage tripled"
 
 // ---- Level 4 ----
-register("EVO-045", (c) => c.dealDamage(12)); // Apocalypse (unpreventable rider inert)
+register("EVO-045", (c) => c.dealDamage(12)); // Apocalypse (unpreventable via cardFlags.UNPREVENTABLE — bypasses reduction + Inversion; wards still soak)
 register("EVO-046", (c) => {
   c.dealDamage(6); // Phoenix Ascendant
   c.addDamageBuffThisRound(2);

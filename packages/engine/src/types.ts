@@ -111,6 +111,9 @@ export interface PlayerState {
   /** Pending instant-speed attaches granted by Phase Shift's rider ("you may immediately
    *  attach 1 component"); usable out of turn / mid-stack, forfeited by passing. */
   freeAttach?: number;
+  /** Transmuter's Stone: per-instance symbol overrides ("treat it as a different basic
+   *  component"), read by every cost computation; cleared when this player's turn ends. */
+  treatAs?: { iid: number; sym: "V" | "S" | "M" }[];
   /** Reactions this player has cast this round (read by reaction-punish/scaling cards). */
   reactionsCastThisRound: number;
   /** Damage prevented/reduced this round (read by Reckoning). */
@@ -175,6 +178,8 @@ export interface StackItem {
   healHalfPreventedTo?: PlayerId;
   /** Cannot be cancelled / redirected / reduced by Reactions (Unstoppable Bolt, Apocalypse, Resolve, Omniscience). */
   unstoppable: boolean;
+  /** "Cannot be prevented": damage bypasses ongoing reduction + Inversion Field (Apocalypse). */
+  unpreventable?: boolean;
   /** Cannot be the target of Reactions (Hex Bolt). */
   reactionProof: boolean;
   /** This item's damage can't be reduced below this floor (Lightning Bolt). */
@@ -225,7 +230,11 @@ export interface PendingChoice {
    *   your hand (Recover / Salvage / Reclaim).
    *  "sealPrepared": candidates are the OPPONENT'S uncast, unsealed prepared spells;
    *   face-down ones are shown as FACEDOWN-<slot> descriptors (sealing targets a
-   *   slot, it does NOT reveal); the pick is sealed for the round (Runic/Penumbral Seal). */
+   *   slot, it does NOT reveal); the pick is sealed for the round (Runic/Penumbral Seal).
+   *  "treatAsComponent": candidates are the basic components in YOUR hand; pick the one
+   *   Transmuter's Stone will transmute (a symbol choice follows).
+   *  "treatAsSymbol": candidates are synthetic CMP-X descriptors for the other two basic
+   *   symbols; the pick becomes the carried component's treat-as symbol until end of turn. */
   mode:
     | "takeToHand"
     | "bankToDeckTop"
@@ -239,7 +248,9 @@ export interface PendingChoice {
     | "discardFromOpponentHand"
     | "discardToDeckTop"
     | "discardToHand"
-    | "sealPrepared";
+    | "sealPrepared"
+    | "treatAsComponent"
+    | "treatAsSymbol";
   candidates: CardInstance[];
   picksRemaining: number;
   /** Where unchosen staged cards go when a takeToHand choice finishes. */
@@ -258,6 +269,9 @@ export interface PendingChoice {
   picked?: CardInstance[];
   /** Draw this many cards for the chooser once the choice completes (Calculated Draw). */
   drawAfter?: number;
+  /** treatAsSymbol: the hand component (iid + printed defId) chosen in the first step. */
+  carryIid?: number;
+  carryDefId?: string;
 }
 
 export type Phase = "prepare" | "main" | "gameover";

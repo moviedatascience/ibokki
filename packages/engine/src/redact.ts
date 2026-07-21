@@ -86,7 +86,9 @@ export interface PendingChoiceView {
     | "discardFromOpponentHand"
     | "discardToDeckTop"
     | "discardToHand"
-    | "sealPrepared";
+    | "sealPrepared"
+    | "treatAsComponent"
+    | "treatAsSymbol";
   reason: string;
   picksRemaining: number;
   /** Candidate card defIds — only populated for the chooser (private information). */

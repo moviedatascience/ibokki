@@ -7,7 +7,7 @@
  *   register("EVO-009", (c) => { c.dealDamage(2); c.draw(1); }); // Battery
  */
 import { getCard, getComponent, type Sym } from "@ibokki/cards";
-import { combinedSymbols, meetsCost } from "../cost.ts";
+import { attachedSymbols, meetsCost } from "../cost.ts";
 import { getEffect } from "./registry.ts";
 import {
   addBurn,
@@ -132,6 +132,9 @@ export interface EffectContext {
   requestRevealOpponentHand(alsoTopN?: number): void;
   /** Alchemy: pick ANY NUMBER of hand cards to discard, then draw that many. */
   requestDiscardThenDraw(): void;
+  /** Transmuter's Stone: pick a basic (single-symbol) hand component, then the symbol
+   *  to treat it as until end of turn (two chained choices). */
+  requestTreatAsComponent(): void;
   /** Mind Theft: see the opponent's hand and CHOOSE the card they discard. */
   requestOpponentDiscardChoice(): void;
   /** Mnemonic Charm: pick a component in your discard → top of your deck. */
@@ -331,7 +334,7 @@ export function makeContext(
       const base = amount + sumOngoing(self, "damageBuff") + (item ? item.damageBonus : 0);
       let dmg = applyItemReduction(base);
       if (item && item.minDamage > 0) dmg = Math.max(dmg, Math.min(base, item.minDamage)); // Lightning Bolt
-      dealDamageToPlayer(state, opponentId, dmg, events);
+      dealDamageToPlayer(state, opponentId, dmg, events, { unpreventable: !!item?.unpreventable });
     },
     dealRawDamage(amount) {
       dealDamageToPlayer(state, opponentId, applyItemReduction(amount), events);
@@ -507,6 +510,22 @@ export function makeContext(
         picked: [],
       };
       events.push({ type: "choicePending", player: selfId, reason: "discard" });
+    },
+    requestTreatAsComponent() {
+      const basics = self.hand.filter((c) => {
+        const d = getComponent(c.defId);
+        return !!d && d.symbols.V + d.symbols.S + d.symbols.M === 1;
+      });
+      if (basics.length === 0) return; // legalActions gates this via trainerHasEffect
+      state.pendingChoice = {
+        player: selfId,
+        reason: "Transmute which basic component (until end of turn)?",
+        mode: "treatAsComponent",
+        candidates: [...basics], // aliases hand cards — nothing is staged out
+        picksRemaining: 1,
+        leftover: "top",
+      };
+      events.push({ type: "choicePending", player: selfId, reason: "transmute" });
     },
     requestOpponentDiscardChoice() {
       if (opponent.hand.length === 0) return;
@@ -976,12 +995,7 @@ export function makeContext(
       if (!t || !prep) return false;
       const cost = getCard(t.defId)?.cost;
       if (!cost) return false;
-      const comps = [];
-      for (const a of prep.attached) {
-        const comp = getComponent(a.defId);
-        if (comp) comps.push(comp);
-      }
-      return meetsCost(cost, combinedSymbols(comps));
+      return meetsCost(cost, attachedSymbols(state.players[t.controller], prep));
     },
     uncastTarget() {
       const t = findTarget();
