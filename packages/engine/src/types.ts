@@ -108,6 +108,9 @@ export interface PlayerState {
   reshuffles: number;
   /** Active ongoing effects this player owns. */
   ongoing: OngoingEffect[];
+  /** Pending instant-speed attaches granted by Phase Shift's rider ("you may immediately
+   *  attach 1 component"); usable out of turn / mid-stack, forfeited by passing. */
+  freeAttach?: number;
   /** Reactions this player has cast this round (read by reaction-punish/scaling cards). */
   reactionsCastThisRound: number;
   /** Damage prevented/reduced this round (read by Reckoning). */
@@ -168,6 +171,8 @@ export interface StackItem {
   /** Misdirection: this spell has been turned on its own caster — every opponent-facing
    *  primitive in its effect targets the controller instead when it resolves. */
   redirected?: boolean;
+  /** Absorb: when this item's damageReduction is consumed, heal this player half of it. */
+  healHalfPreventedTo?: PlayerId;
   /** Cannot be cancelled / redirected / reduced by Reactions (Unstoppable Bolt, Apocalypse, Resolve, Omniscience). */
   unstoppable: boolean;
   /** Cannot be the target of Reactions (Hex Bolt). */

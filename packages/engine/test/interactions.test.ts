@@ -844,6 +844,102 @@ describe("reflect-by-actual-damage + redirect (the retired SIMPLIFIED reaction f
   });
 });
 
+describe("trigger-window traps + riders (the remaining SIMPLIFIED family)", () => {
+  it("Searing Riposte stings when the opponent prevents your damage", () => {
+    const s = blankState();
+    s.players[0].level = 10; // Fireball is L2 — clear the cast-level gate
+    s.players[0].prepared = [
+      { spell: inst("EVO-017"), faceDown: false, attached: [inst("CMP-VV")], cast: false, sealed: false },
+      { spell: inst("EVO-014"), faceDown: true, attached: [inst("CMP-V")], cast: false, sealed: false }, // armed trap
+    ];
+    s.players[1].ongoing.push({ id: 1, owner: 1, kind: "damageReduction", value: 1, expiry: "endOfRound" });
+    let r = apply(s, { type: "cast", preparedIndex: 0 });
+    r = apply(r.state, { type: "pass" }); // P0 lets it proceed
+    r = apply(r.state, { type: "pass" }); // P1 passes → Fireball resolves reduced → trap fires
+    // 5-1 from Fireball, then the riposte's 2 is ALSO trimmed by the same ongoing reduction.
+    expect(r.state.players[1].hp).toBe(30 - 4 - 1);
+    expect(r.state.players[0].prepared[1]!.cast).toBe(true); // trap spent
+    expect(r.state.players[0].prepared[1]!.attached).toHaveLength(0);
+  });
+
+  it("Mana Drain fires on the opponent's attach and bounces the component", () => {
+    const s = blankState();
+    s.players[0].prepared = [{ spell: inst("EVO-017"), faceDown: false, attached: [], cast: false, sealed: false }];
+    const comp = inst("CMP-V");
+    s.players[0].hand = [comp];
+    s.players[1].prepared = [{ spell: inst("ABJ-009"), faceDown: true, attached: [inst("CMP-S")], cast: false, sealed: false }];
+    const r = apply(s, { type: "attach", preparedIndex: 0, handIid: comp.iid });
+    expect(r.state.players[0].prepared[0]!.attached).toHaveLength(0); // bounced off
+    expect(r.state.players[0].hand.map((c) => c.iid)).toContain(comp.iid); // back in hand
+    expect(r.state.players[1].prepared[0]!.cast).toBe(true); // Drain spent
+    expect(r.events.some((e) => e.type === "detached")).toBe(true);
+  });
+
+  it("Volatile Bolt fires on M attaches only", () => {
+    const attachWith = (compDef: string) => {
+      const s = blankState();
+      s.players[0].prepared = [{ spell: inst("EVO-017"), faceDown: false, attached: [], cast: false, sealed: false }];
+      const comp = inst(compDef);
+      s.players[0].hand = [comp];
+      s.players[1].prepared = [{ spell: inst("EVO-015"), faceDown: true, attached: [inst("CMP-V")], cast: false, sealed: false }];
+      return apply(s, { type: "attach", preparedIndex: 0, handIid: comp.iid });
+    };
+    expect(attachWith("CMP-M").state.players[0].hp).toBe(28); // stung
+    expect(attachWith("CMP-V").state.players[0].hp).toBe(30); // no M — trap stays armed
+  });
+
+  it("Absorb prevents everything and heals half of it (floored)", () => {
+    const s = blankState();
+    s.players[1].hp = 20;
+    s.players[0].prepared = [{ spell: inst("EVO-017"), faceDown: false, attached: [], cast: false, sealed: false }];
+    s.players[1].prepared = [{ spell: inst("ABJ-011"), faceDown: true, attached: [], cast: false, sealed: false }];
+    const events: GameEvent[] = [];
+    pushToStack(s, 0, 0, false, null, events);
+    pushToStack(s, 1, 0, true, s.stack[0]!.sid, events);
+    resolveTop(s, events); // Absorb
+    resolveTop(s, events); // Fireball — fully prevented
+    expect(s.players[1].hp).toBe(20 + 2); // floor(5/2)
+  });
+
+  it("Phase Shift cancels and grants an instant-speed attach; passing forfeits it", () => {
+    const s = blankState();
+    s.players[0].level = 10;
+    s.players[0].prepared = [{ spell: inst("EVO-017"), faceDown: false, attached: [inst("CMP-VV")], cast: false, sealed: false }];
+    const comp = inst("CMP-S");
+    s.players[1].level = 10;
+    s.players[1].hand = [comp];
+    s.players[1].prepared = [
+      { spell: inst("ABJ-014"), faceDown: true, attached: [inst("CMP-SS")], cast: false, sealed: false },
+      { spell: inst("ABJ-006"), faceDown: true, attached: [], cast: false, sealed: false }, // something to pre-fuel
+    ];
+    let r = apply(s, { type: "cast", preparedIndex: 0 });
+    r = apply(r.state, { type: "pass" }); // P0 lets it proceed
+    r = apply(r.state, { type: "castReaction", preparedIndex: 0 }); // P1: Phase Shift
+    r = apply(r.state, { type: "pass" }); // P0
+    r = apply(r.state, { type: "pass" }); // P1 → Phase Shift resolves: cancel + grant
+    expect(r.state.players[1].freeAttach).toBe(1);
+    r = apply(r.state, { type: "pass" }); // P0 passes over the dead Fireball → priority P1
+    const atWindow = r.state;
+    expect(legalActions(atWindow, 1).some((a) => a.type === "attach")).toBe(true);
+    // Use it: an out-of-turn, mid-stack attach that pre-fuels the other Reaction.
+    const used = apply(atWindow, { type: "attach", preparedIndex: 1, handIid: comp.iid });
+    expect(used.state.players[1].freeAttach).toBe(0);
+    expect(used.state.players[1].prepared[1]!.attached).toHaveLength(1);
+    // Or waive it: passing clears the grant.
+    const waived = apply(atWindow, { type: "pass" });
+    expect(waived.state.players[1].freeAttach).toBe(0);
+  });
+
+  it("Spite's punish lasts until the start of your next turn", () => {
+    const s = blankState();
+    const spite = inst("GAM-018");
+    s.players[0].hand = [spite];
+    const r = apply(s, { type: "playTrainer", handIid: spite.iid });
+    const o = r.state.players[0].ongoing.find((x) => x.kind === "reactionPunish");
+    expect(o?.expiry).toBe("startOfOwnNextTurn");
+  });
+});
+
 describe("prophecies (Divination's delayed dooms)", () => {
   /** A state where P1 is the active player about to begin a turn, decks stocked. */
   function doomedState(prophecy: { amount: number; turnsLeft: number; pierce: boolean }): GameState {

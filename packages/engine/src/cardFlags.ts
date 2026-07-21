@@ -22,13 +22,32 @@ export const MIN_DAMAGE: Readonly<Record<string, number>> = {
 };
 
 /**
- * Trap-style Reactions that fire AUTOMATICALLY on their printed trigger while
- * prepared face-down and fueled — they are never cast in a reaction window.
- * Value = damage dealt to the triggering opponent.
+ * Trap-style Reactions fire AUTOMATICALLY on their printed trigger while prepared
+ * face-down and fueled — they are never cast from a reaction window (legalActions
+ * filters them out of castReaction offers via TRAP_REACTIONS).
  */
-export const ATTACH_M_TRAPS: Readonly<Record<string, number>> = {
-  "EVO-015": 2, // Volatile Bolt — fires when the OPPONENT attaches an M component
+export interface AttachTrap {
+  /** Fires only when the attached component provides an M symbol (Volatile Bolt). */
+  onlyM: boolean;
+  /** Sting the attacher for N damage, or bounce the just-attached component to their hand. */
+  fire: { damage: number } | { bounce: true };
+}
+
+/** Fire when the OPPONENT attaches a component to a prepared spell. */
+export const ATTACH_TRAPS: Readonly<Record<string, AttachTrap>> = {
+  "EVO-015": { onlyM: true, fire: { damage: 2 } }, // Volatile Bolt
+  // Mana Drain — printed "you may": auto-fired for now (an interrupt window on the
+  // opponent's turn is future work; declining an armed Drain is almost never right).
+  "ABJ-009": { onlyM: false, fire: { bounce: true } },
 };
+
+/** Fire when the opponent prevents/reduces damage the trap's owner would deal
+ *  (detected as per-action deltas of damagePreventedThisRound). Value = damage. */
+export const PREVENT_TRAPS: Readonly<Record<string, number>> = {
+  "EVO-014": 2, // Searing Riposte
+};
+
+export const TRAP_REACTIONS: ReadonlySet<string> = new Set([...Object.keys(ATTACH_TRAPS), ...Object.keys(PREVENT_TRAPS)]);
 
 import { getCard } from "@ibokki/cards";
 import { tierForLevel } from "./levels.ts";

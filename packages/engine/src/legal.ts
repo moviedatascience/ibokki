@@ -1,7 +1,7 @@
 /** Enumerate the legal actions for the player who holds priority. */
 import { getCard, getComponent, type ComponentDef, type Cost } from "@ibokki/cards";
 import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
-import { ATTACH_M_TRAPS, trainerHasEffect } from "./cardFlags.ts";
+import { TRAP_REACTIONS, trainerHasEffect } from "./cardFlags.ts";
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { sumOngoing } from "./state-ops.ts";
 import {
@@ -82,8 +82,24 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
 
   const actions: Action[] = [{ type: "pass" }];
 
+  // Phase Shift's rider: an instant-speed attach, offered in ANY window you hold
+  // priority out of turn or mid-stack (forfeited by passing).
+  const pushFreeAttaches = () => {
+    if ((p.freeAttach ?? 0) <= 0) return;
+    for (const card of p.hand) {
+      if (!isComponentDefId(card.defId)) continue;
+      for (let i = 0; i < p.prepared.length; i++) {
+        if (p.prepared[i]!.attached.length >= 2) continue; // 2-card cap
+        actions.push({ type: "attach", preparedIndex: i, handIid: card.iid });
+      }
+    }
+  };
+
   if (state.stack.length === 0) {
-    if (playerId !== state.activePlayer) return actions; // only active acts at sorcery speed
+    if (playerId !== state.activePlayer) {
+      pushFreeAttaches();
+      return actions; // only active acts at sorcery speed
+    }
 
     // Mulligan: only for your OPENING hand — the very start of your first turn of the game
     // (round 1), before acting. Shuffle your hand back and draw one fewer; repeatable (each draw is
@@ -131,6 +147,7 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
       }
     }
   } else {
+    pushFreeAttaches(); // Phase Shift's rider works mid-stack too
     // Stack non-empty. You may take back your own just-cast spell only in the
     // window right after casting — once you pass (or anything responds), the
     // cast is committed, so you can't retract after seeing a Reaction.
@@ -154,9 +171,9 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
         if (prep.cast || prep.sealed) continue;
         const def = getCard(prep.spell.defId);
         if (!def || !def.cost || def.type !== "Reaction") continue;
-        // Trap reactions (Volatile Bolt) fire automatically on their trigger —
-        // they are never cast from a reaction window.
-        if (ATTACH_M_TRAPS[prep.spell.defId] !== undefined) continue;
+        // Trap reactions (Volatile Bolt, Mana Drain, Searing Riposte) fire
+        // automatically on their trigger — never cast from a reaction window.
+        if (TRAP_REACTIONS.has(prep.spell.defId)) continue;
         if ((def.level ?? 1) > tier.maxSpellLevel) continue;
         const cost = reactionCost(def.cost, discount, tax);
         if (!meetsCost(cost, combinedSymbols(attachedComponents(prep)))) continue;

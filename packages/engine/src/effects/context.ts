@@ -161,7 +161,7 @@ export interface EffectContext {
   addNextSpellDamage(amount: number): void;
   addSelfDamageEachTurn(amount: number): void;
   addReactionTax(amount: number): void;
-  addReactionPunish(amount: number): void;
+  addReactionPunish(amount: number, expiry?: OngoingExpiry): void;
   /** Amplify your Burn: +amount damage per marker each tick this round (Conflagration/Phoenix). */
   addBurnAmplifier(amount: number): void;
   /** Your opponent's Burn also ticks at the start of your turns this round (Wildfire). */
@@ -230,6 +230,10 @@ export interface EffectContext {
   cancelTarget(): void;
   reduceTargetDamage(amount: number): void;
   preventAllTargetDamage(): void;
+  /** Absorb: prevent all the target's damage AND heal yourself half of what it stops. */
+  preventAllTargetDamageHealingHalf(): void;
+  /** Phase Shift's rider: one instant-speed attach, usable out of turn (forfeited on pass). */
+  grantFreeAttach(): void;
   /** Target's controller takes `amount` after the target spell resolves (reflection). */
   reflectOntoTarget(amount: number): void;
   /** Mirror `factor`× the damage the target spell ACTUALLY deals its victim back onto its
@@ -302,7 +306,15 @@ export function makeContext(
     if (!item || item.damageReduction <= 0) return amount;
     const reduced = Math.min(item.damageReduction, amount);
     item.damageReduction -= reduced;
-    if (reduced > 0) opponent.damagePreventedThisRound += reduced;
+    if (reduced > 0) {
+      opponent.damagePreventedThisRound += reduced;
+      // Absorb's rider: half the prevented damage heals its caster (floored per hit; if
+      // ANOTHER reaction also stacked prevention on this item, its share heals too —
+      // an accepted corner: prevention on one item is one pooled shield).
+      if (item.healHalfPreventedTo != null) {
+        healPlayer(state, item.healHalfPreventedTo, Math.floor(reduced / 2), events);
+      }
+    }
     return amount - reduced;
   };
 
@@ -722,8 +734,8 @@ export function makeContext(
     addReactionTax(amount) {
       addOngoing(state, selfId, "reactionTax", amount, "endOfRound", events);
     },
-    addReactionPunish(amount) {
-      addOngoing(state, selfId, "reactionPunish", amount, "endOfRound", events);
+    addReactionPunish(amount, expiry = "endOfRound") {
+      addOngoing(state, selfId, "reactionPunish", amount, expiry, events);
     },
     addBurnAmplifier(amount) {
       addOngoing(state, selfId, "burnDoubleDamage", amount, "endOfRound", events);
@@ -882,6 +894,16 @@ export function makeContext(
     preventAllTargetDamage() {
       const t = findTarget();
       if (t && !t.unstoppable && !t.reactionProof) t.damageReduction += 999;
+    },
+    preventAllTargetDamageHealingHalf() {
+      const t = findTarget();
+      if (t && !t.unstoppable && !t.reactionProof) {
+        t.damageReduction += 999;
+        t.healHalfPreventedTo = selfId;
+      }
+    },
+    grantFreeAttach() {
+      self.freeAttach = (self.freeAttach ?? 0) + 1;
     },
     reflectOntoTarget(amount) {
       const t = findTarget();

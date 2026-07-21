@@ -115,8 +115,8 @@ register("EVO-041", (c) => c.addReactionPunish(3)); // Combustive Sigil
 // reflect multiplier — the resolver measures the ACTUAL damage the spell deals
 // its victim (post-buff, post-ward-soak) and mirrors it back onto the caster.
 register("EVO-013", (c) => c.dealDamage(2)); // Backdraft
-register("EVO-014", (c) => c.dealDamage(2)); // Searing Riposte (prevention trigger SIMPLIFIED)
-register("EVO-015", (c) => c.dealDamage(2)); // Volatile Bolt (M-attach trigger SIMPLIFIED)
+// EVO-014 Searing Riposte + EVO-015 Volatile Bolt are TRAPS (fire automatically on
+// their printed triggers) — see cardFlags.PREVENT_TRAPS / ATTACH_TRAPS, not this registry.
 register("EVO-016", (c) => c.dealDamage(4)); // Combust
 register("EVO-028", (c) => c.dealDamage(c.targetComponentCount())); // Searing Backlash
 register("EVO-029", (c) => {

@@ -58,6 +58,6 @@ register("GAM-014", (c) => c.makeMySpellsUncounterable()); // Resolve
 register("GAM-015", (c) => c.protectMyHandFromDiscard()); // Iron Will
 register("GAM-016", (c) => c.shuffleOwnDiscardIntoDeck()); // Sealed Vault
 register("GAM-017", (c) => c.lockOpponentExtraDraw()); // Mana Sickness
-register("GAM-018", (c) => c.addReactionPunish(2)); // Spite (expiry SIMPLIFIED to end of round)
+register("GAM-018", (c) => c.addReactionPunish(2, "startOfOwnNextTurn")); // Spite — "until the start of your next turn"
 register("GAM-019", (c) => c.prophesy(2, 2)); // Saboteur's Kit — a planted time-bomb
 register("GAM-020", (c) => c.requestBounceOpponentComponent()); // Disarm — reveals their hand; YOU pick the bounce (or decline)

@@ -1,7 +1,7 @@
 /** The pure reducer: apply one action to a state, producing a new state + events. */
 import { getCard, getComponent, type ComponentDef } from "@ibokki/cards";
 import { addCost, combinedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
-import { ATTACH_M_TRAPS, trainerHasEffect } from "./cardFlags.ts";
+import { ATTACH_TRAPS, PREVENT_TRAPS, trainerHasEffect } from "./cardFlags.ts";
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
@@ -13,9 +13,11 @@ import {
   otherPlayer,
   type Action,
   type ApplyResult,
+  type CardInstance,
   type GameEvent,
   type GameState,
   type PlayerId,
+  type PlayerState,
   type PreparedSpell,
 } from "./types.ts";
 
@@ -40,29 +42,73 @@ function flagRoundEnd(state: GameState, events: GameEvent[]): void {
   events.push({ type: "finalTurn", player: state.finalTurnFor });
 }
 
-/** After a pending choice resolves, return priority to the active player and flag round end if slots are spent. */
+/** An armed trap Reaction spends itself: flips face-up, marked cast, fuel discarded. */
+function armedTrapFires(owner: PlayerState, prep: PreparedSpell, events: GameEvent[]): boolean {
+  if (prep.cast || prep.sealed) return false;
+  const def = getCard(prep.spell.defId);
+  if (!def?.cost) return false;
+  if ((def.level ?? 1) > tierForLevel(owner.level).maxSpellLevel) return false;
+  if (!meetsCost(def.cost, combinedSymbols(attachedComponents(prep)))) return false; // must be armed
+  prep.cast = true;
+  prep.faceDown = false;
+  owner.discard.push(...prep.attached);
+  prep.attached = [];
+  events.push({ type: "reactionCast", player: owner.id, spellDefId: prep.spell.defId, targetSid: null });
+  return true;
+}
+
 /**
- * Trap Reactions (Volatile Bolt): while prepared face-down and fueled, they fire
- * AUTOMATICALLY when the opponent attaches an M component — no reaction window,
- * no stack. The trap flips face-up, spends itself and its components, and stings.
+ * Attach-trap Reactions (Volatile Bolt, Mana Drain): while prepared face-down and
+ * fueled, they fire AUTOMATICALLY when the opponent attaches — no reaction window,
+ * no stack. The trap spends itself, then stings or bounces the attached component.
  */
-function fireAttachTraps(state: GameState, attacher: PlayerId, events: GameEvent[]): void {
+function fireAttachTraps(state: GameState, attacher: PlayerId, card: CardInstance, targetPrep: PreparedSpell, events: GameEvent[]): void {
   const owner = state.players[otherPlayer(attacher)];
   if (sumOngoing(state.players[attacher], "reactionsLocked") > 0) return; // Arcane Anchor etc. silence traps too
+  const hasM = (getComponent(card.defId)?.symbols.M ?? 0) > 0;
   for (const prep of owner.prepared) {
-    const dmg = ATTACH_M_TRAPS[prep.spell.defId];
-    if (dmg === undefined || prep.cast || prep.sealed) continue;
-    const def = getCard(prep.spell.defId);
-    if (!def?.cost) continue;
-    if ((def.level ?? 1) > tierForLevel(owner.level).maxSpellLevel) continue;
-    if (!meetsCost(def.cost, combinedSymbols(attachedComponents(prep)))) continue; // must be armed
-    prep.cast = true;
-    prep.faceDown = false;
-    owner.discard.push(...prep.attached);
-    prep.attached = [];
-    events.push({ type: "reactionCast", player: owner.id, spellDefId: prep.spell.defId, targetSid: null });
-    dealDamageToPlayer(state, attacher, dmg + sumOngoing(owner, "damageBuff"), events);
+    const trap = ATTACH_TRAPS[prep.spell.defId];
+    if (!trap) continue;
+    if (trap.onlyM && !hasM) continue;
+    // A bounce trap needs the component still attached (an earlier trap may have taken it).
+    if ("bounce" in trap.fire && !targetPrep.attached.some((c) => c.iid === card.iid)) continue;
+    if (!armedTrapFires(owner, prep, events)) continue;
+    if ("damage" in trap.fire) {
+      dealDamageToPlayer(state, attacher, trap.fire.damage + sumOngoing(owner, "damageBuff"), events);
+    } else {
+      const aidx = targetPrep.attached.findIndex((c) => c.iid === card.iid);
+      if (aidx >= 0) {
+        targetPrep.attached.splice(aidx, 1);
+        state.players[attacher].hand.push(card);
+        events.push({ type: "detached", player: attacher, componentDefId: card.defId });
+      }
+    }
     events.push({ type: "spellResolved", controller: owner.id, spellDefId: prep.spell.defId });
+  }
+}
+
+/**
+ * Prevention-trap Reactions (Searing Riposte): fire when the opponent prevents or
+ * reduces damage the trap's owner would deal. Detected as a per-action delta of the
+ * preventer's damagePreventedThisRound (every prevention path increments it), checked
+ * once after each applied action — see the apply() wrapper.
+ */
+function firePreventTraps(state: GameState, before: [number, number], events: GameEvent[]): void {
+  if (state.phase === "gameover") return;
+  for (const preventer of [0, 1] as PlayerId[]) {
+    // <= also covers the round-end counter reset (delta would be negative).
+    if (state.players[preventer].damagePreventedThisRound <= before[preventer]) continue;
+    if (sumOngoing(state.players[preventer], "reactionsLocked") > 0) continue;
+    const owner = state.players[otherPlayer(preventer)]; // whose damage got prevented
+    for (const prep of owner.prepared) {
+      const dmg = PREVENT_TRAPS[prep.spell.defId];
+      if (dmg === undefined) continue;
+      if (!armedTrapFires(owner, prep, events)) continue;
+      dealDamageToPlayer(state, preventer, dmg + sumOngoing(owner, "damageBuff"), events);
+      events.push({ type: "spellResolved", controller: owner.id, spellDefId: prep.spell.defId });
+      // dealDamageToPlayer can end the game (TS's narrowing doesn't know that).
+      if ((state.phase as string) === "gameover") return;
+    }
   }
 }
 
@@ -134,6 +180,16 @@ function costMet(prep: PreparedSpell): boolean {
  * (callers should only submit actions from legalActions()).
  */
 export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyResult {
+  // Prevention-trap triggers (Searing Riposte) are detected as per-action deltas of
+  // damagePreventedThisRound — snapshot before, check after the whole action (including
+  // any stack resolutions it caused), so the trap fires no matter which path prevented.
+  const preventedBefore: [number, number] = [prev.players[0].damagePreventedThisRound, prev.players[1].damagePreventedThisRound];
+  const result = applyInner(prev, action, actor);
+  firePreventTraps(result.state, preventedBefore, result.events);
+  return result;
+}
+
+function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyResult {
   const state: GameState = structuredClone(prev);
   const events: GameEvent[] = [];
   if (state.phase === "gameover") return { state, events };
@@ -226,8 +282,12 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
     }
 
     case "attach": {
-      if (state.stack.length !== 0) throw new Error("Can only attach with an empty stack");
-      if (me !== state.activePlayer) throw new Error("Only the active player can attach");
+      // Phase Shift's rider grants an instant-speed attach — usable out of turn / mid-stack.
+      const outOfTurn = state.stack.length !== 0 || me !== state.activePlayer;
+      if (outOfTurn && (p.freeAttach ?? 0) <= 0) {
+        if (state.stack.length !== 0) throw new Error("Can only attach with an empty stack");
+        throw new Error("Only the active player can attach");
+      }
       const handIdx = p.hand.findIndex((c) => c.iid === action.handIid);
       if (handIdx < 0) throw new Error(`Card ${action.handIid} not in hand`);
       const card = p.hand[handIdx]!;
@@ -239,14 +299,15 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
       p.hand.splice(handIdx, 1);
       prep.attached.push(card);
       p.componentPlayedThisTurn = true; // (only gates the mulligan; attaching is unlimited per turn)
+      if (outOfTurn) p.freeAttach = (p.freeAttach ?? 0) - 1;
       events.push({
         type: "attached",
         player: p.id,
         preparedIndex: action.preparedIndex,
         componentDefId: card.defId,
       });
-      // Volatile Bolt: an armed opposing trap fires the moment this attach carries an M symbol.
-      if ((getComponent(card.defId)?.symbols.M ?? 0) > 0) fireAttachTraps(state, me, events);
+      // An armed opposing attach-trap (Volatile Bolt, Mana Drain) fires on this attach.
+      fireAttachTraps(state, me, card, prep, events);
 
       // Attune: the next component you attach counts as +1 of the symbol the spell still needs.
       const attuneIdx = p.ongoing.findIndex((o) => o.kind === "attuneBonus");
@@ -511,6 +572,7 @@ export function apply(prev: GameState, action: Action, actor?: PlayerId): ApplyR
     }
 
     case "pass": {
+      if ((p.freeAttach ?? 0) > 0) p.freeAttach = 0; // "you MAY attach" — passing forfeits the rider
       events.push({ type: "priorityPassed", player: me });
       if (state.stack.length === 0) {
         // Active player passing with an empty stack ends their turn.

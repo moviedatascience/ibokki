@@ -1,10 +1,10 @@
 /**
- * Abjuration (Somatic) — wards, prevention, ward-to-damage. Non-Reaction spells.
+ * Abjuration (Somatic) — wards, prevention, ward-to-damage.
  *
- * Ward "when destroyed / when it prevents damage" triggers, forced-targeting, and
- * the various Reaction-locking riders need the stack/trigger system and are
- * deferred (noted DEFERRED). Damage reduction (Aegis Eternal, Absolute Defense)
- * and seals are implemented. Reactions (006-009,011,013-016,021,023,026,028,037,041) deferred.
+ * Reactions are implemented: counters/prevention resolve on the stack; Mana Drain
+ * (ABJ-009) is an attach-trap that fires from cardFlags.ATTACH_TRAPS, not from
+ * this registry; Absorb heals half of what its prevention actually stops; Phase
+ * Shift's rider grants an instant-speed free attach.
  */
 import { register } from "./registry.ts";
 
@@ -70,20 +70,18 @@ register("ABJ-008", (c) => {
   c.reduceTargetDamage(1); // Grounding
   c.draw(1);
 });
-register("ABJ-009", (c) => {
-  c.returnOneTargetComponent(); // Mana Drain (attach-trigger SIMPLIFIED to remove a component)
-  if (!c.targetMeetsCost()) c.cancelTarget();
-});
-register("ABJ-011", (c) => {
-  c.preventAllTargetDamage(); // Absorb
-  c.heal(2); // half-of-prevented SIMPLIFIED
-});
+// ABJ-009 Mana Drain is an attach-TRAP (fires automatically when the opponent
+// attaches, bouncing the component) — see cardFlags.ATTACH_TRAPS, not this registry.
+register("ABJ-011", (c) => c.preventAllTargetDamageHealingHalf()); // Absorb — heals half of what it actually stops
 register("ABJ-013", (c) => {
   c.stripAllTargetComponents(); // Interrupt
   if (!c.targetMeetsCost()) c.cancelTarget();
   c.opponentDraws(1);
 });
-register("ABJ-014", (c) => c.cancelTarget()); // Phase Shift (free-attach rider DEFERRED)
+register("ABJ-014", (c) => {
+  c.cancelTarget(); // Phase Shift
+  c.grantFreeAttach(); // "you may immediately attach 1 component" — instant-speed window
+});
 register("ABJ-015", (c) => {
   if (c.targetRequiresSymbol("M")) c.cancelTarget(); // Counterbind
 });
