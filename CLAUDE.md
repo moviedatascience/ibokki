@@ -92,6 +92,8 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 
 Live at ibokki.com/play, mounted inside the separate Django site repo (ibokkiSite) via
 prebuilt image: push to main → CI (tests gate) → `ghcr.io/moviedatascience/ibokki-game` →
-`docker compose pull game && up -d game` on the Vultr box (drops in-memory rooms — redeploy
-between matches). Client is built with `IBOKKI_BASE=/play/`; nginx strips the prefix.
-Build-version handshake: GIT_SHA baked into bundle + server; mismatch shows a refresh banner.
+`docker compose pull game && up -d game` on the Vultr box. Live matches survive the
+redeploy: rooms persist to SQLite (`matches` table) and rehydrate on boot by deterministic
+replay; clients rejoin with their stored seat tokens. Client is built with
+`IBOKKI_BASE=/play/`; nginx strips the prefix. Build-version handshake: GIT_SHA baked into
+bundle + server; mismatch shows a refresh banner.

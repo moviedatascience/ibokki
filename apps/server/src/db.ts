@@ -32,6 +32,23 @@ export interface DeckRow {
   updated_at: number;
 }
 
+export interface MatchRow {
+  id: number;
+  code: string;
+  seed: number;
+  /** JSON: per-seat {token, deckName, deck:{spellbook,resourceDeck}, userId?} — enough to rebuild the room and honor rejoin tokens. */
+  seats: string;
+  /** 1 = seat 1 is a server-side bot. */
+  bot: number;
+  /** JSON: ordered {s: side, a: Action}[] — with `seed`, the whole deterministic match. */
+  actions: string;
+  /** JSON {winner, endReason, forfeit} once finished; NULL = live (rehydrated on boot). */
+  result: string | null;
+  started_at: number;
+  updated_at: number;
+  ended_at: number | null;
+}
+
 export type TokenPurpose = "verify" | "reset";
 
 const SESSION_TTL_MS = 30 * 24 * 3600_000;
@@ -88,6 +105,19 @@ export class Db {
         updated_at INTEGER NOT NULL,
         UNIQUE (user_id, name COLLATE NOCASE)
       );
+      CREATE TABLE IF NOT EXISTS matches (
+        id INTEGER PRIMARY KEY,
+        code TEXT NOT NULL,
+        seed INTEGER NOT NULL,
+        seats TEXT NOT NULL,
+        bot INTEGER NOT NULL DEFAULT 0,
+        actions TEXT NOT NULL DEFAULT '[]',
+        result TEXT,
+        started_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        ended_at INTEGER
+      );
+      CREATE INDEX IF NOT EXISTS idx_matches_live ON matches(updated_at) WHERE result IS NULL;
     `);
     // Additive migration for databases created before SSO support.
     try {
@@ -229,6 +259,37 @@ export class Db {
 
   deleteDeck(userId: number, id: number): boolean {
     return this.db.prepare("DELETE FROM decks WHERE id = ? AND user_id = ?").run(id, userId).changes > 0;
+  }
+
+  // ---- matches (persistence: live rooms survive a restart; finished rows are history) ----
+
+  createMatch(code: string, seed: number, seatsJson: string, bot: boolean): number {
+    const now = Date.now();
+    const info = this.db
+      .prepare("INSERT INTO matches (code, seed, seats, bot, started_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(code, seed, seatsJson, bot ? 1 : 0, now, now);
+    return Number(info.lastInsertRowid);
+  }
+
+  updateMatchActions(id: number, actionsJson: string): void {
+    this.db.prepare("UPDATE matches SET actions = ?, updated_at = ? WHERE id = ?").run(actionsJson, Date.now(), id);
+  }
+
+  /** Record the final result. WHERE result IS NULL makes racing callers idempotent. */
+  finishMatch(id: number, resultJson: string): void {
+    this.db.prepare("UPDATE matches SET result = ?, ended_at = ? WHERE id = ? AND result IS NULL").run(resultJson, Date.now(), id);
+  }
+
+  /** Unfinished matches to rehydrate on boot. */
+  liveMatches(): MatchRow[] {
+    return this.db.prepare("SELECT * FROM matches WHERE result IS NULL ORDER BY id").all() as MatchRow[];
+  }
+
+  /** Mark live rows idle since `cutoff` abandoned (zombie guard: never rehydrate stale rooms). */
+  abandonMatchesBefore(cutoff: number): void {
+    this.db
+      .prepare("UPDATE matches SET result = ?, ended_at = ? WHERE result IS NULL AND updated_at < ?")
+      .run(JSON.stringify({ winner: null, endReason: "abandoned", forfeit: null }), Date.now(), cutoff);
   }
 
   close(): void {

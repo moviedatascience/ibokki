@@ -260,8 +260,12 @@ The live online server now survives abuse and abandonment instead of hanging or 
 - **WS DoS hardening:** `maxPayload` cap, per-connection message rate limit, reject-second-create/join
   (kills per-connection room-spam), instant reap of never-joined rooms, global room cap, sanitized
   error strings, and an opt-in Origin allowlist (`IBOKKI_ALLOWED_ORIGINS`, CSWSH guard).
-- **Still open (larger):** in-memory rooms are still lost on redeploy/crash (needs room persistence),
-  no horizontal scaling (single event loop + single-writer SQLite), no error monitoring/alerting.
+- **Room persistence — ✅ shipped 2026-07-20:** live matches are written to SQLite (`matches`
+  table: seed + seats + rejoin tokens + the ordered action log) at the `applyAction` choke point
+  and rebuilt on boot by deterministic replay, so a redeploy/crash no longer destroys in-flight
+  games; finished rows stay behind as history (the future replay/match-history data source).
+- **Still open (larger):** no horizontal scaling (single event loop + single-writer SQLite),
+  no error monitoring/alerting.
 
 ---
 

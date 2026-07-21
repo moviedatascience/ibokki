@@ -100,10 +100,11 @@ function resolveConfig(opts: ServerOptions): Config {
   };
 }
 
-/** Per-server state (rooms + config), so multiple servers in one process stay isolated. */
+/** Per-server state (rooms + config + persistence), so multiple servers in one process stay isolated. */
 interface Hub {
   rooms: Map<string, Room>;
   cfg: Config;
+  db: Db;
 }
 
 interface Seat {
@@ -113,6 +114,16 @@ interface Seat {
   deckName: string;
   deck: Pick<DeckDefinition, "spellbook" | "resourceDeck">;
   ws: WebSocket | null;
+  /** Signed-in account at this seat, if any (persisted for match history). */
+  userId?: number;
+}
+
+/** Seat fields persisted to the matches table (everything but the live socket). */
+interface SeatRecord {
+  token: string;
+  deckName: string;
+  deck: Pick<DeckDefinition, "spellbook" | "resourceDeck">;
+  userId?: number;
 }
 
 interface Room {
@@ -137,6 +148,10 @@ interface Room {
   inactivityTimer: Timer | null;
   /** Who forfeited and why, when the current game ended by forfeit; reset on rematch. */
   forfeitInfo: ForfeitInfo | null;
+  /** Persistence row for the CURRENT game (a rematch opens a new row); null before both seats fill. */
+  matchId: number | null;
+  /** Ordered actions of the current game — with the seed, the whole deterministic match. */
+  actionLog: { s: PlayerId; a: Action }[];
 }
 
 function newCode(rooms: Map<string, Room>): string {
@@ -202,6 +217,39 @@ function startMatch(room: Room): void {
   const intro = `Match start: ${d0} vs ${d1} — room ${room.code}, seed ${seed}`;
   room.logs = [[intro], [intro]];
   room.epoch++;
+  // Persist so the match survives a redeploy/crash (rehydrated on boot). A rematch
+  // opens a fresh row; the finished one stays behind as history.
+  room.actionLog = [];
+  room.matchId = null;
+  try {
+    const seats: SeatRecord[] = room.seats.map((s) => ({ token: s!.token, deckName: s!.deckName, deck: s!.deck, userId: s!.userId }));
+    room.matchId = room.hub.db.createMatch(room.code, seed, JSON.stringify(seats), !!room.bot);
+  } catch (err) {
+    console.error(`failed to persist match for room ${room.code}:`, err); // the match still plays, it just won't survive a restart
+  }
+}
+
+/** Record the final result on the match row (no-op unless terminal; idempotent at the DB). */
+function recordResult(room: Room): void {
+  if (room.matchId === null || !room.state || !isTerminal(room.state)) return;
+  try {
+    room.hub.db.finishMatch(
+      room.matchId,
+      JSON.stringify({ winner: room.state.winner, endReason: room.state.endReason, forfeit: room.forfeitInfo }),
+    );
+  } catch (err) {
+    console.error(`failed to record result for room ${room.code}:`, err);
+  }
+}
+
+/** A room is being deleted with its game unfinished — close out the row so it never rehydrates. */
+function abandonRow(room: Room): void {
+  if (room.matchId === null || (room.state && isTerminal(room.state))) return;
+  try {
+    room.hub.db.finishMatch(room.matchId, JSON.stringify({ winner: null, endReason: "abandoned", forfeit: null }));
+  } catch (err) {
+    console.error(`failed to abandon match row for room ${room.code}:`, err);
+  }
 }
 
 /** Push the current frame to one seat (viewer-relative, redacted). */
@@ -241,8 +289,9 @@ function pushBoth(room: Room): void {
   pushState(room, 1);
 }
 
-/** Apply one action for `side`, appending per-viewer transcript lines. */
-function applyAction(room: Room, side: PlayerId, action: Action): void {
+/** Apply one action for `side`, appending per-viewer transcript lines.
+ *  `record=false` replays a persisted action during rehydration (already in actionLog). */
+function applyAction(room: Room, side: PlayerId, action: Action, record = true): void {
   const state = room.state!;
   const labels: [string, string] = [actionLabelFor(0, state, action, side), actionLabelFor(1, state, action, side)];
   const { state: next, events } = apply(state, action, side);
@@ -256,6 +305,15 @@ function applyAction(room: Room, side: PlayerId, action: Action): void {
       const line = describeEvent(eventForViewer(e, viewer, true) as GameEvent);
       if (line) room.logs[viewer].push(`   ${line}`);
     }
+  }
+  if (record && room.matchId !== null) {
+    room.actionLog.push({ s: side, a: action });
+    try {
+      room.hub.db.updateMatchActions(room.matchId, JSON.stringify(room.actionLog));
+    } catch (err) {
+      console.error(`failed to persist action for room ${room.code}:`, err);
+    }
+    if (isTerminal(next)) recordResult(room);
   }
 }
 
@@ -412,6 +470,7 @@ function startGrace(room: Room, side: PlayerId): void {
       }
       if (isTerminal(room.state)) return; // already over
       if (room.bot) {
+        abandonRow(room); // close the row out or it would rehydrate as a zombie on next boot
         clearRoomTimers(room);
         room.hub.rooms.delete(room.code);
       } else {
@@ -450,6 +509,7 @@ function endMatch(room: Room, result: { state: GameState; events: GameEvent[] },
       if (line) room.logs[viewer].push(`   ${line}`);
     }
   }
+  recordResult(room); // concede/abandon endings are out-of-band (not in the action log) — record here
   clearRoomTimers(room);
   pushBoth(room);
 }
@@ -493,7 +553,7 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
       }
       const room: Room = {
         code: newCode(rooms),
-        seats: [{ token: randomUUID(), deckName: resolved.name, deck: resolved.deck, ws: null }, botSeat],
+        seats: [{ token: randomUUID(), deckName: resolved.name, deck: resolved.deck, ws: null, userId }, botSeat],
         state: null,
         logs: [[], []],
         epoch: 0,
@@ -505,6 +565,8 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
         graceTimers: [null, null],
         inactivityTimer: null,
         forfeitInfo: null,
+        matchId: null,
+        actionLog: [],
       };
       rooms.set(room.code, room);
       seatSocket(room, 0, ws);
@@ -525,7 +587,7 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
       if (room.seats[1]) return pushError(ws, "room is full");
       const resolved = resolveDeck(db, msg, userId);
       if ("error" in resolved) return pushError(ws, resolved.error);
-      room.seats[1] = { token: randomUUID(), deckName: resolved.name, deck: resolved.deck, ws: null };
+      room.seats[1] = { token: randomUUID(), deckName: resolved.name, deck: resolved.deck, ws: null, userId };
       seatSocket(room, 1, ws);
       send(ws, { t: "joined", code: room.code, side: 1, token: room.seats[1].token, catalog: CATALOG, build: BUILD });
       startMatch(room);
@@ -548,6 +610,14 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
       if (room.state) pushState(room, side);
       const opp = room.seats[(side ^ 1) as PlayerId];
       send(ws, { t: "presence", opponentConnected: !!opp?.ws });
+      // A rehydrated room has no running timers: the opponent's socket died with the old
+      // process, so no close event ever started their grace. First returner arms it —
+      // the absent side gets the usual window to come back before forfeiting. The guard
+      // on an already-running timer keeps a mid-game rejoin from extending a live grace.
+      const oppSide = (side ^ 1) as PlayerId;
+      if (room.state && !isTerminal(room.state) && opp && !opp.ws && !(room.bot && oppSide === 1) && !room.graceTimers[oppSide]) {
+        startGrace(room, oppSide);
+      }
       armInactivity(room);
       return;
     }
@@ -571,6 +641,69 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
 // Sweep rooms idle for an hour (both tabs gone or match abandoned).
 const SWEEP_MS = 60_000;
 const IDLE_MS = 60 * 60_000;
+
+/**
+ * Boot-time recovery: rebuild every unfinished match from its persisted
+ * {seed, decks, actions} by replaying the deterministic engine. Players resume
+ * through the normal rejoin path — their sessionStorage tokens still match the
+ * restored seats. Rows idle past the room sweep window, or whose replay fails
+ * (e.g. engine rules changed between deploys), are closed out as abandoned.
+ */
+function rehydrateRooms(hub: Hub): void {
+  const abandonedResult = JSON.stringify({ winner: null, endReason: "abandoned", forfeit: null });
+  try {
+    hub.db.abandonMatchesBefore(Date.now() - IDLE_MS);
+  } catch (err) {
+    console.error("failed to sweep stale match rows:", err);
+    return; // a broken matches table must not stop the server from booting
+  }
+  for (const row of hub.db.liveMatches()) {
+    try {
+      const seats = JSON.parse(row.seats) as SeatRecord[];
+      if (!seats[0] || !seats[1]) throw new Error("row predates both seats");
+      const room: Room = {
+        code: row.code,
+        seats: [
+          { ...seats[0], ws: null },
+          { ...seats[1], ws: null },
+        ],
+        state: createGame({ seed: row.seed, players: [seats[0].deck, seats[1].deck] }),
+        logs: [[], []],
+        epoch: 0,
+        recentEvents: [],
+        rematchVotes: new Set(),
+        // A fresh agent seed only affects FUTURE bot moves; the played ones replay from the log.
+        bot: row.bot ? makeAgent("heuristic", newSeed()) : null,
+        lastActivity: Date.now(),
+        hub,
+        graceTimers: [null, null],
+        inactivityTimer: null,
+        forfeitInfo: null,
+        matchId: row.id,
+        actionLog: JSON.parse(row.actions) as { s: PlayerId; a: Action }[],
+      };
+      const intro = `Match start: ${seats[0].deckName} vs ${seats[1].deckName} — room ${row.code}, seed ${row.seed}`;
+      room.logs = [[intro], [intro]];
+      for (const { s, a } of room.actionLog) applyAction(room, s, a, false);
+      for (const log of room.logs) log.push("— match restored after a server update —");
+      room.recentEvents = []; // rejoiners get a snapshot, not the whole history as animations
+      room.epoch = room.actionLog.length + 1;
+      if (isTerminal(room.state!)) {
+        recordResult(room); // the stored tail already ended the game — history only, no room
+        continue;
+      }
+      hub.rooms.set(row.code, room);
+    } catch (err) {
+      console.error(`failed to restore match ${row.id} (room ${row.code}):`, err);
+      try {
+        hub.db.finishMatch(row.id, abandonedResult);
+      } catch {
+        /* already logged the root cause */
+      }
+    }
+  }
+  if (hub.rooms.size > 0) console.log(`restored ${hub.rooms.size} live match(es) from the database`);
+}
 
 export interface ServerOptions {
   /** SQLite file (":memory:" for tests). Default: env IBOKKI_DB or ./data/ibokki.db. */
@@ -652,8 +785,9 @@ function originAllowed(origin: string | undefined, allow: string[]): boolean {
 export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
   const db = new Db(opts.dbFile ?? process.env.IBOKKI_DB ?? "data/ibokki.db");
   const cfg = resolveConfig(opts);
-  const hub: Hub = { rooms: new Map<string, Room>(), cfg };
+  const hub: Hub = { rooms: new Map<string, Room>(), cfg, db };
   const { rooms } = hub;
+  rehydrateRooms(hub);
   const ctx: ApiContext = {
     db,
     mailer: opts.mailer ?? createMailer(),
@@ -754,6 +888,7 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
     for (const [code, room] of rooms) {
       const anyConnected = room.seats.some((s) => s?.ws && s.ws.readyState === s.ws.OPEN);
       if (!anyConnected && now - room.lastActivity > IDLE_MS) {
+        abandonRow(room);
         clearRoomTimers(room);
         rooms.delete(code);
       }
