@@ -5,13 +5,18 @@
  */
 import { useEffect, useState } from "react";
 import { BASE, type Deck, type DeckListResponse, type School } from "../api.ts";
-import type { DeckChoice } from "../online.ts";
+import { storedSeat, type DeckChoice } from "../online.ts";
 import type { UseAuth } from "../useAuth.ts";
 import type { OnlineApi } from "../useMatch.ts";
 import { schoolOf } from "../schools.ts";
 import { SchoolCrest } from "./Pips.tsx";
 
 const SCHOOLS: School[] = ["Evocation", "Abjuration", "Divination"];
+
+// ?room=CODE invite link, read once at module load. Consumed by the first Home mount —
+// module-level so React StrictMode's dev double-mount can't strip-then-miss the param.
+const INVITE_ROOM = new URLSearchParams(location.search).get("room")?.toUpperCase() ?? null;
+let inviteConsumed = false;
 
 interface Props {
   auth: UseAuth;
@@ -139,6 +144,19 @@ export function Home({ auth, deckData, online, error, hasLocalMatch, onPlayBot, 
   // Disable the play buttons while the WS handshakes — double-clicks otherwise open
   // two rooms, and a dead server otherwise looks like an unresponsive button.
   const connecting = online.status === "connecting";
+
+  // ?room=CODE invite links: prefill the join box and auto-join with the default deck.
+  // A stored seat means a match is being resumed — prefill only in that case. The join is
+  // deferred past the mount commit: StrictMode's dev double-mount otherwise closes the
+  // fresh WebSocket in its synthetic cleanup pass and strands the join.
+  useEffect(() => {
+    if (!INVITE_ROOM || inviteConsumed) return;
+    inviteConsumed = true;
+    history.replaceState(null, "", BASE);
+    setJoinCode(INVITE_ROOM);
+    if (INVITE_ROOM.length === 5 && !storedSeat()) setTimeout(() => online.join(INVITE_ROOM, decodeChoice(choice)), 50);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="home">

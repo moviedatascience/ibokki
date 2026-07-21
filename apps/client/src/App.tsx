@@ -10,6 +10,7 @@ import { ActionBar } from "./components/ActionBar.tsx";
 import { Prompt } from "./components/Prompt.tsx";
 import { SpellbookTray } from "./components/SpellbookTray.tsx";
 import { GameOverSummary } from "./components/GameOverSummary.tsx";
+import { DiscardBrowser } from "./components/DiscardBrowser.tsx";
 import { Home } from "./components/Home.tsx";
 import { DeckBuilder } from "./components/DeckBuilder.tsx";
 
@@ -25,6 +26,7 @@ export function App() {
   const [statusHover, setStatusHover] = useState<string | null>(null);
   const [pinnedDef, setPinnedDef] = useState<string | null>(null);
   const [selectionActive, setSelectionActive] = useState(false);
+  const [browseDiscard, setBrowseDiscard] = useState<0 | 1 | null>(null);
   const [p0, setP0] = useState<School>("Evocation");
   const [p1, setP1] = useState<School>("Abjuration");
   const [mode, setMode] = useState<"bot" | "agent">("bot");
@@ -57,6 +59,7 @@ export function App() {
       setMode(m);
       setSummaryDismissed(false);
       setPinnedDef(null);
+      setBrowseDiscard(null);
       setScreen("match");
       return newGame(s0, s1, m);
     },
@@ -163,9 +166,12 @@ export function App() {
       <div className="main">
         <div className="stage">
           <div className="boardwrap">
-            <Board state={state} cards={cards} onAction={act} onHover={setHoverDef} onStatusHover={setStatusHover} onSelection={setSelectionActive} onInspect={setPinnedDef} onReady={onReady} />
+            <Board state={state} cards={cards} onAction={act} onHover={setHoverDef} onStatusHover={setStatusHover} onSelection={setSelectionActive} onInspect={setPinnedDef} onBrowseDiscard={setBrowseDiscard} onReady={onReady} />
             <Prompt state={state} onAction={act} cardName={cardName} />
             <SpellbookTray state={state} cards={cards} onAction={act} onHover={setHoverDef} onInspect={setPinnedDef} />
+            {browseDiscard !== null && state && (
+              <DiscardBrowser side={browseDiscard} state={state} cards={cards} onClose={() => setBrowseDiscard(null)} onHover={setHoverDef} onInspect={setPinnedDef} />
+            )}
             {!summaryDismissed && (
               <GameOverSummary state={state} onDismiss={() => setSummaryDismissed(true)} onRematch={onRematch} />
             )}

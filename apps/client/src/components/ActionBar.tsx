@@ -73,10 +73,13 @@ export function ActionBar({ state, cards, selectionActive, onAction, onCancel, e
   }
 
   const passLabel = retract ? "Confirm ▶" : reacting ? "Pass priority" : "End turn";
+  // End-of-turn maximum hand size is 10 (engine MAX_HAND_SIZE) — excess is auto-discarded.
+  const handCount = state.view.self.hand?.length ?? 0;
 
   return (
     <div className="actionbar">
       <span className={`status ${cls}`}>{status}</span>
+      {handCount > 10 && <span className="hint warn">Hand {handCount} — cards over 10 are discarded at end of turn.</span>}
       {err}
       {mulligan && <button onClick={() => onAction(mulligan.index)}>Mulligan</button>}
       {detaches.map((a) => {

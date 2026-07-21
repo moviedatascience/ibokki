@@ -13,6 +13,7 @@ import {
   HAND_H,
   HAND_W,
   OPP_DECK,
+  OPP_DISCARD,
   YOU_DECK,
   YOU_DISCARD,
   WORLD_H,
@@ -95,6 +96,8 @@ export interface BoardCallbacks {
   onHover: (defId: string | null) => void;
   /** Hovering an ongoing-effect chip — a full description for the detail rail (null on leave). */
   onStatusHover?: (text: string | null) => void;
+  /** Tap on a discard pile — open the browser overlay (discards are public information). */
+  onBrowseDiscard?: (side: 0 | 1) => void;
   /** Fired when an attach selection starts/clears, so the shell can show a Cancel affordance. */
   onSelection?: (active: boolean) => void;
   /** Tap on a card with no action available — pin it into the card-detail panel. */
@@ -127,6 +130,8 @@ export class PixiBoard {
   private youDeckL!: Text;
   private oppDeckL!: Text;
   private oppHandL!: Text;
+  private youDiscL!: Text;
+  private oppDiscL!: Text;
 
   private cards: CardCatalog = {};
   private last: MatchState | null = null;
@@ -243,6 +248,8 @@ export class PixiBoard {
     this.oppDeckL = this.makePileLabel(OPP_DECK.x, OPP_DECK.y + CARD_H / 2 + 6);
     this.oppHandL = this.makePileLabel(OPP_DECK.x, OPP_DECK.y + CARD_H / 2 + 24);
     this.youDeckL = this.makePileLabel(YOU_DECK.x, YOU_DECK.y - CARD_H / 2 - 20);
+    this.oppDiscL = this.makePileLabel(OPP_DISCARD.x, OPP_DISCARD.y + CARD_H / 2 + 6);
+    this.youDiscL = this.makePileLabel(YOU_DISCARD.x, YOU_DISCARD.y + CARD_H / 2 + 6);
   }
 
   private makePileLabel(x: number, y: number): Text {
@@ -415,6 +422,8 @@ export class PixiBoard {
     this.oppDeckL.text = `Deck ${opp.resourceDeckCount}${opp.reshuffles ? ` · ↻${opp.reshuffles}` : ""}`;
     this.oppHandL.text = `Hand ${opp.handCount ?? 0}`;
     this.youDeckL.text = `Deck ${you.resourceDeckCount}${you.reshuffles ? ` · ↻${you.reshuffles}` : ""}`;
+    this.oppDiscL.text = `Discard ${opp.discard.length}`;
+    this.youDiscL.text = `Discard ${you.discard.length}`;
 
     const byType = (t: string) => legal.filter((a) => a.type === t);
     const attachTargets = (def: string) => byType("attach").filter((a) => a.defId === def);
@@ -432,6 +441,8 @@ export class PixiBoard {
       push({ key: `p1:${i}`, layer: this.oppLayer, x: c.x, y: c.y, faceDef: p.spellDefId ?? null, dim: p.cast, sealed: p.sealed, attached: this.symsOf(p.attached) });
     });
     push({ key: "deck1", layer: this.oppLayer, x: OPP_DECK.x, y: OPP_DECK.y, faceDef: null });
+    if (opp.discard.length)
+      push({ key: "disc1", layer: this.oppLayer, x: OPP_DISCARD.x, y: OPP_DISCARD.y, faceDef: opp.discard[opp.discard.length - 1]!, dim: true, onTap: () => this.cb.onBrowseDiscard?.(1) });
 
     // --- the stack ---
     const n = state.view.stack.length;
@@ -489,7 +500,8 @@ export class PixiBoard {
 
     // --- your piles ---
     push({ key: "deck0", layer: this.pileLayer, x: YOU_DECK.x, y: YOU_DECK.y, faceDef: null });
-    if (you.discard.length) push({ key: "disc0", layer: this.pileLayer, x: YOU_DISCARD.x, y: YOU_DISCARD.y, faceDef: you.discard[you.discard.length - 1]!, dim: true });
+    if (you.discard.length)
+      push({ key: "disc0", layer: this.pileLayer, x: YOU_DISCARD.x, y: YOU_DISCARD.y, faceDef: you.discard[you.discard.length - 1]!, dim: true, onTap: () => this.cb.onBrowseDiscard?.(0) });
 
     // --- your hand (main phase only; prepare uses the React spellbook tray) ---
     if (state.phase !== "prepare") {

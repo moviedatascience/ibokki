@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import type { CardCatalog, MatchState, School } from "../api.ts";
+import { useEffect, useRef, useState } from "react";
+import { BASE, type CardCatalog, type MatchState, type School } from "../api.ts";
 import type { OnlineApi } from "../useMatch.ts";
 import { LogLines } from "./LogLines.tsx";
 import { Pips, SchoolCrest, TypeIcon } from "./Pips.tsx";
@@ -27,6 +27,31 @@ interface Props {
   onLeave: () => void;
 }
 
+/** Copies `text` on click with a transient "Copied ✓" confirmation. */
+function CopyButton({ text, label, testid }: { text: string; label: string; testid?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      style={{ width: "100%" }}
+      data-testid={testid}
+      onClick={() => {
+        navigator.clipboard
+          ?.writeText(text)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          })
+          .catch(() => {});
+      }}
+    >
+      {copied ? "Copied ✓" : label}
+    </button>
+  );
+}
+
+/** Shareable join link for a room code (lands on Home and auto-joins via ?room=). */
+const inviteUrl = (code: string) => `${location.origin}${BASE}?room=${code}`;
+
 /** Live room status while online (create/join live on the Home screen). */
 function OnlinePanel({ online, onLeave }: { online: OnlineApi; onLeave: () => void }) {
   if (online.status === "idle") return null;
@@ -38,6 +63,7 @@ function OnlinePanel({ online, onLeave }: { online: OnlineApi; onLeave: () => vo
         <>
           <div className="dname" data-testid="online-room-code">{online.code}</div>
           <div className="hint">Share this code — waiting for an opponent to join.</div>
+          {online.code && <CopyButton text={inviteUrl(online.code)} label="Copy invite link" testid="copy-invite" />}
         </>
       )}
       {online.status === "playing" && (
@@ -46,6 +72,7 @@ function OnlinePanel({ online, onLeave }: { online: OnlineApi; onLeave: () => vo
           <div className="hint" data-testid="online-presence">
             Opponent: {online.opponentConnected ? "connected" : "disconnected"}
           </div>
+          {online.code && <CopyButton text={inviteUrl(online.code)} label="Copy invite link" testid="copy-invite" />}
         </>
       )}
       <button style={{ width: "100%" }} onClick={onLeave} data-testid="online-leave">

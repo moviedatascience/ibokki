@@ -10,6 +10,7 @@ interface BoardProps {
   onStatusHover: (text: string | null) => void;
   onSelection: (active: boolean) => void;
   onInspect: (defId: string) => void;
+  onBrowseDiscard: (side: 0 | 1) => void;
   onReady: (board: PixiBoard) => void;
 }
 
@@ -18,11 +19,11 @@ interface BoardProps {
  * scene graph directly — they just call `board.sync(state, cards)`, which diffs and tweens. Callbacks
  * are read through refs so the single long-lived board always calls the latest handlers.
  */
-export function Board({ state, cards, onAction, onHover, onStatusHover, onSelection, onInspect, onReady }: BoardProps) {
+export function Board({ state, cards, onAction, onHover, onStatusHover, onSelection, onInspect, onBrowseDiscard, onReady }: BoardProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<PixiBoard | null>(null);
-  const cbs = useRef({ onAction, onHover, onStatusHover, onSelection, onInspect, onReady });
-  cbs.current = { onAction, onHover, onStatusHover, onSelection, onInspect, onReady };
+  const cbs = useRef({ onAction, onHover, onStatusHover, onSelection, onInspect, onBrowseDiscard, onReady });
+  cbs.current = { onAction, onHover, onStatusHover, onSelection, onInspect, onBrowseDiscard, onReady };
   const latest = useRef({ state, cards });
   latest.current = { state, cards };
 
@@ -36,6 +37,7 @@ export function Board({ state, cards, onAction, onHover, onStatusHover, onSelect
       onStatusHover: (t) => cbs.current.onStatusHover(t),
       onSelection: (a) => cbs.current.onSelection(a),
       onInspect: (d) => cbs.current.onInspect(d),
+      onBrowseDiscard: (s) => cbs.current.onBrowseDiscard(s),
     });
     board.mount().then(() => {
       if (disposed) {

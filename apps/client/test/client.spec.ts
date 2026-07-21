@@ -24,6 +24,7 @@ interface State {
       hand?: string[];
       prepared: { spellDefId?: string; attached: string[] }[];
       ongoing?: { kind: string; value: number; expiry: string }[];
+      discard: string[];
     };
   };
 }
@@ -152,6 +153,31 @@ test.describe("post-game summary", () => {
     await panel.getByRole("button", { name: "View final board" }).click();
     await expect(page.locator(".gameover")).toHaveCount(0);
     await expect(page.locator(".actionbar")).toContainText("Game over");
+  });
+});
+
+test.describe("discard browser", () => {
+  test("tapping a discard pile lists its cards", async ({ page, request }) => {
+    // Bot-vs-bot match auto-plays to completion at creation — discards are populated.
+    const s = await apiNew(request, [0, 1], 7);
+    expect(s.gameOver).toBe(true);
+    const count = s.view.self.discard.length;
+    expect(count).toBeGreaterThan(0);
+
+    await openBoard(page);
+    await page.locator(".gopanel").getByRole("button", { name: "View final board" }).click();
+    const canvas = page.locator("canvas").last();
+    await canvas.waitFor({ timeout: 15_000 });
+    await page.waitForTimeout(900); // asset load + first paint
+    const box = (await canvas.boundingBox())!;
+    const k = Math.min(box.width / 1280, box.height / 800);
+    const ox = box.x + (box.width - 1280 * k) / 2;
+    const oy = box.y + (box.height - 800 * k) / 2;
+    await page.mouse.click(ox + 1208 * k, oy + 694 * k); // your discard pile (layout YOU_DISCARD)
+    await expect(page.getByTestId("discard-browser")).toBeVisible();
+    await expect(page.locator(".browsepanel h2")).toContainText(`Your discard · ${count}`);
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("discard-browser")).toHaveCount(0);
   });
 });
 

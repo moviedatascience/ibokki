@@ -110,3 +110,22 @@ test("two tabs play a full online match to game over", async ({ browser }) => {
   await ctxA.close();
   await ctxB.close();
 });
+
+test("?room=CODE invite links join the room directly", async ({ browser }) => {
+  const ctxA = await browser.newContext();
+  const ctxB = await browser.newContext();
+  const a = await ctxA.newPage();
+  const b = await ctxB.newPage();
+
+  await a.goto("/");
+  await a.getByTestId("online-create").click();
+  const code = (await a.getByTestId("online-room-code").textContent({ timeout: 10_000 }))!.trim();
+
+  // Tab B lands via the invite link and joins without touching the join form.
+  await b.goto(`/?room=${code}`);
+  await expect(a.getByTestId("online-presence")).toContainText("connected", { timeout: 10_000 });
+  await expect(b.getByTestId("online-presence")).toContainText("connected");
+
+  await ctxA.close();
+  await ctxB.close();
+});

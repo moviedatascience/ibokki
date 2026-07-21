@@ -27,6 +27,7 @@ export const CIRCLE = { cx: WORLD_W / 2, cy: 300, r: 168 };
 export const OPP_NAME = { x: 132, y: 56 };
 export const YOU_NAME = { x: 132, y: 528 };
 export const OPP_DECK = { x: WORLD_W - 72, y: 72 };
+export const OPP_DISCARD = { x: WORLD_W - 72, y: 240 };
 export const YOU_DECK = { x: WORLD_W - 72, y: 560 };
 export const YOU_DISCARD = { x: WORLD_W - 72, y: 694 };
 

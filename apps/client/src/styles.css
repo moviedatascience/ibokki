@@ -193,6 +193,18 @@ button:disabled { opacity: .4; cursor: default; }
 }
 .gorow { display: flex; gap: 8px; justify-content: flex-end; }
 
+/* ---- discard-pile browser (opened by tapping a pile; discards are public) ---- */
+.browsepanel { width: min(420px, 92%); }
+.browselist { list-style: none; margin: 8px 0 12px; padding: 0; max-height: 320px; overflow-y: auto; }
+.browselist li {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 5px 8px; border-bottom: 1px solid #1d232d; font-size: 12.5px; cursor: pointer;
+}
+.browselist li:hover { background: #171d27; }
+.browselist li em { color: var(--mute); font-style: normal; font-size: 11px; white-space: nowrap; }
+
+.actionbar .hint.warn { color: var(--warn); align-self: center; }
+
 /* ---- reaction / choice prompt, floats over the right of the table ---- */
 .prompt {
   position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
