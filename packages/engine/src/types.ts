@@ -162,6 +162,12 @@ export interface StackItem {
   damageReduction: number;
   /** Dealt back to this item's controller after it resolves (reflection). */
   reflect: number;
+  /** Multiplier on the damage this spell ACTUALLY deals its victim, mirrored back onto
+   *  its caster after resolution (Final Riposte ×2, Pyromancer's Reckoning ×3). */
+  reflectFactor?: number;
+  /** Misdirection: this spell has been turned on its own caster — every opponent-facing
+   *  primitive in its effect targets the controller instead when it resolves. */
+  redirected?: boolean;
   /** Cannot be cancelled / redirected / reduced by Reactions (Unstoppable Bolt, Apocalypse, Resolve, Omniscience). */
   unstoppable: boolean;
   /** Cannot be the target of Reactions (Hex Bolt). */
@@ -317,6 +323,7 @@ export type GameEvent =
   | { type: "reactionCast"; player: PlayerId; spellDefId: string; targetSid: number | null }
   | { type: "spellResolved"; controller: PlayerId; spellDefId: string }
   | { type: "spellCancelled"; controller: PlayerId; spellDefId: string }
+  | { type: "spellRedirected"; player: PlayerId; spellDefId: string }
   | { type: "targetImmune"; player: PlayerId; spellDefId: string }
   | { type: "priorityPassed"; player: PlayerId }
   | { type: "damage"; target: PlayerId; amount: number }

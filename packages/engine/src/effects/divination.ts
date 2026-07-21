@@ -94,7 +94,7 @@ register("DIV-024", (c) => {
   if (!c.targetMeetsCost()) c.cancelTarget();
 });
 register("DIV-025", (c) => c.draw(1)); // Read the Signs (info + draw)
-register("DIV-026", (c) => c.preventAllTargetDamage()); // Misdirection (redirect SIMPLIFIED to fizzle)
+register("DIV-026", (c) => c.redirectTarget()); // Misdirection — the spell turns on its own caster
 register("DIV-035", (c) => {
   c.cancelTarget(); // Spellbind
   c.sealTargetPrepared();

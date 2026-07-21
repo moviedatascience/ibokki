@@ -111,8 +111,11 @@ register("ABJ-028", (c) => {
   c.opponentDraws(n);
 });
 register("ABJ-037", (c) => {
-  c.cancelTarget(); // Retributive Strike
-  c.dealDamage(2 * c.targetLevel()); // doubled-damage SIMPLIFIED
+  // Retributive Strike — the spell never resolves, so "that spell's damage" is a
+  // dry-run prediction (buffs/prevention included), measured BEFORE cancelling.
+  const dmg = c.targetPredictedDamage();
+  c.cancelTarget();
+  c.dealDamage(2 * dmg);
 });
 register("ABJ-041", (c) => {
   c.cancelEntireStack(); // Archmage's Seal — wipe the stack and lock the opponent out

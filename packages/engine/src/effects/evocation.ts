@@ -111,8 +111,9 @@ register("EVO-041", (c) => c.addReactionPunish(3)); // Combustive Sigil
 
 // ---- Reactions ----
 // These respond to the spell on top of the stack; "still resolves" cards just
-// deal damage without cancelling. Damage-reflection cards that mirror "that
-// spell's damage" are approximated via the target spell's level (SIMPLIFIED).
+// deal damage without cancelling. Cards that mirror "that spell's damage" set a
+// reflect multiplier — the resolver measures the ACTUAL damage the spell deals
+// its victim (post-buff, post-ward-soak) and mirrors it back onto the caster.
 register("EVO-013", (c) => c.dealDamage(2)); // Backdraft
 register("EVO-014", (c) => c.dealDamage(2)); // Searing Riposte (prevention trigger SIMPLIFIED)
 register("EVO-015", (c) => c.dealDamage(2)); // Volatile Bolt (M-attach trigger SIMPLIFIED)
@@ -124,10 +125,10 @@ register("EVO-029", (c) => {
 });
 register("EVO-030", (c) => c.dealDamage(3)); // Flame Riposte
 register("EVO-031", (c) => c.dealDamage(3)); // Combustive Counter
-register("EVO-042", (c) => c.dealDamage(2 * c.targetLevel())); // Annihilation Strike
-register("EVO-043", (c) => c.dealDamage(2 * c.targetLevel())); // Final Riposte (SIMPLIFIED)
+register("EVO-042", (c) => c.dealDamage(2 * c.targetLevel())); // Annihilation Strike ("twice that spell's LEVEL" — printed text, not debt)
+register("EVO-043", (c) => c.reflectActualOntoTarget(2)); // Final Riposte — "that damage doubled"
 register("EVO-044", (c) => c.dealDamage(6)); // Cinder Storm
-register("EVO-047", (c) => c.dealDamage(3 * c.targetLevel())); // Pyromancer's Reckoning (SIMPLIFIED)
+register("EVO-047", (c) => c.reflectActualOntoTarget(3)); // Pyromancer's Reckoning — "that damage tripled"
 
 // ---- Level 4 ----
 register("EVO-045", (c) => c.dealDamage(12)); // Apocalypse (unpreventable rider inert)

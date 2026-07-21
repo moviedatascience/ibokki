@@ -240,17 +240,8 @@ export function sumOngoing(player: PlayerState, kind: OngoingKind): number {
 }
 
 // ---- Deck / hand manipulation ------------------------------------------------
-
-export function millPlayer(state: GameState, id: PlayerId, n: number, events: GameEvent[]): number {
-  const player = state.players[id];
-  let milled = 0;
-  for (let i = 0; i < n && player.resourceDeck.length > 0; i++) {
-    player.discard.push(player.resourceDeck.pop()!);
-    milled++;
-  }
-  if (milled > 0) events.push({ type: "milled", player: id, count: milled });
-  return milled;
-}
+// (millPlayer was deleted 2026-07-20 with the opponent-mill primitives — mill lost
+//  the identity fight to Prophecy; see Design_Doc "prophecies replaced milling".)
 
 export function discardWholeHand(state: GameState, id: PlayerId, events: GameEvent[]): number {
   const player = state.players[id];

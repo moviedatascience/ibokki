@@ -121,6 +121,8 @@ export function describeEvent(e: GameEvent): string | null {
       return `→ ${cardName(e.spellDefId)} resolves`;
     case "spellCancelled":
       return `→ ${cardName(e.spellDefId)} CANCELLED`;
+    case "spellRedirected":
+      return `→ ${cardName(e.spellDefId)} REDIRECTED back at its caster`;
     case "targetImmune":
       return `→ ${cardName(e.spellDefId)} FIZZLES (P${e.player} untargetable by 1-component spells)`;
     case "damage":

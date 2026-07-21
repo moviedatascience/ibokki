@@ -79,7 +79,8 @@ export function resolveTop(state: GameState, events: GameEvent[]): void {
 
   // Targeting immunity fizzles a non-Reaction spell that can't legally target the
   // defender: Aegis (1-component spells) or Stonewarden's ward (Level 1 spells).
-  const targetId = otherPlayer(item.controller);
+  // A redirected spell (Misdirection) targets its own caster.
+  const targetId = item.redirected ? item.controller : otherPlayer(item.controller);
   const targetP = state.players[targetId];
   const fizzled =
     !item.cancelled &&
@@ -93,14 +94,27 @@ export function resolveTop(state: GameState, events: GameEvent[]): void {
     events.push({ type: "targetImmune", player: targetId, spellDefId: item.defId });
   } else {
     const effect = getEffect(item.defId);
+    const evBase = events.length;
     if (effect && prep) {
       effect(makeContext(state, item.controller, prep.spell, events, item), prep.spell);
     } else if (!effect && !item.isReaction) {
       // Fallback for not-yet-implemented spells: deal level (minus any prevention).
-      dealDamageToPlayer(state, otherPlayer(item.controller), Math.max(0, item.level - item.damageReduction), events);
+      dealDamageToPlayer(state, targetId, Math.max(0, item.level - item.damageReduction), events);
+    }
+    // Reflect-by-actual (Final Riposte / Pyromancer's Reckoning): the Reaction resolved
+    // earlier and left a multiplier; mirror the damage this spell ACTUALLY dealt its
+    // victim (post-buff, post-ward-soak "damage" events) back onto the caster.
+    if (item.reflectFactor && item.reflectFactor > 0 && state.phase !== "gameover") {
+      const victim = otherPlayer(item.controller);
+      let dealtToVictim = 0;
+      for (let i = evBase; i < events.length; i++) {
+        const e = events[i]!;
+        if (e.type === "damage" && e.target === victim) dealtToVictim += e.amount;
+      }
+      if (dealtToVictim > 0) item.reflect += item.reflectFactor * dealtToVictim;
     }
     // Reflection (a Reaction set item.reflect): the spell's controller takes it.
-    if (item.reflect > 0) dealDamageToPlayer(state, item.controller, item.reflect, events);
+    if (item.reflect > 0 && state.phase !== "gameover") dealDamageToPlayer(state, item.controller, item.reflect, events);
     events.push({ type: "spellResolved", controller: item.controller, spellDefId: item.defId });
   }
 

@@ -23,7 +23,6 @@ import {
   drawN,
   drawThenBankWorst,
   healPlayer,
-  millPlayer,
   reorderTopByValue,
   returnFromDiscard,
   selectFromTop,
@@ -80,7 +79,6 @@ export interface EffectContext {
   requestDiscardForDamage(): void;
   discardOpponentRandomComponent(n: number): number;
   discardOpponentRandom(n: number): number;
-  millOpponent(n: number): number;
   /** Inscribe a delayed doom on the opponent: deal `amount` at the start of their
    *  `turns`-th turn from now (Prophecy — Divination's win condition). The payload
    *  is fixed at inscription; `pierce` makes it exhaustion-style unpreventable (Oblivion). */
@@ -129,9 +127,6 @@ export interface EffectContext {
   requestDiscardThenSearch(): void;
   /** Disarm: reveal the opponent's hand; MAY pick one component → owner's deck top. */
   requestBounceOpponentComponent(): void;
-  /** Far Sight: look at the opponent's top `lookN`; MAY pick one → their discard,
-   *  the rest return on top in order (interactive mill). */
-  requestMillOpponentTop(lookN: number): void;
   /** Pure information: reveal the opponent's hand (plus their top `alsoTopN` deck
    *  cards) to the caster; nothing moves, Done dismisses (Foretell / Perfect Info). */
   requestRevealOpponentHand(alsoTopN?: number): void;
@@ -237,6 +232,15 @@ export interface EffectContext {
   preventAllTargetDamage(): void;
   /** Target's controller takes `amount` after the target spell resolves (reflection). */
   reflectOntoTarget(amount: number): void;
+  /** Mirror `factor`× the damage the target spell ACTUALLY deals its victim back onto its
+   *  caster after it resolves (Final Riposte / Pyromancer's Reckoning). */
+  reflectActualOntoTarget(factor: number): void;
+  /** Turn the target spell on its own caster (Misdirection). */
+  redirectTarget(): void;
+  /** Dry-run the target spell on a cloned state: the damage it WOULD deal its victim if it
+   *  resolved right now (buffs + prevention + ward soak included). Interactive choices stop
+   *  the simulation early, undercounting — acceptable for damage-reflection math. */
+  targetPredictedDamage(): number;
   targetLevel(): number;
   targetComponentCount(): number;
   targetRequiresSymbol(sym: Sym): boolean;
@@ -277,7 +281,10 @@ export function makeContext(
   events: GameEvent[],
   item?: StackItem,
 ): EffectContext {
-  const opponentId = otherPlayer(selfId);
+  // A redirected spell (Misdirection) turns on its own caster: every opponent-facing
+  // primitive targets the controller instead, so its damage hits the caster's own
+  // wards/buffs while beneficial "you" riders still serve the caster.
+  const opponentId = item?.redirected ? selfId : otherPlayer(selfId);
   const self = state.players[selfId];
   const opponent = state.players[opponentId];
 
@@ -353,9 +360,6 @@ export function makeContext(
     discardOpponentRandom(n) {
       if (sumOngoing(opponent, "cannotBeForcedToDiscard") > 0) return 0; // Iron Will
       return discardRandom(state, opponentId, n, events);
-    },
-    millOpponent(n) {
-      return millPlayer(state, opponentId, n, events);
     },
     prophesy(amount, turns, pierce) {
       opponent.prophecies.push({ amount, turnsLeft: turns, pierce: !!pierce, defId: card.defId });
@@ -551,22 +555,6 @@ export function makeContext(
         drawAfter,
       };
       events.push({ type: "choicePending", player: selfId, reason: "search" });
-    },
-    requestMillOpponentTop(lookN) {
-      const deck = opponent.resourceDeck;
-      const look = Math.min(lookN, deck.length);
-      if (look === 0) return;
-      const staged = deck.splice(deck.length - look, look); // top `look` cards (top = end)
-      state.pendingChoice = {
-        player: selfId,
-        reason: `Opponent's top ${look} — you MAY put one into their discard`,
-        mode: "millFromTop",
-        candidates: staged,
-        picksRemaining: 1,
-        leftover: "top",
-        optional: true,
-      };
-      events.push({ type: "choicePending", player: selfId, reason: "mill" });
     },
     requestDiscardForDamage() {
       if (self.hand.length === 0) return; // nothing to discard, no damage
@@ -898,6 +886,37 @@ export function makeContext(
     reflectOntoTarget(amount) {
       const t = findTarget();
       if (t && !t.unstoppable && !t.reactionProof) t.reflect += amount;
+    },
+    reflectActualOntoTarget(factor) {
+      const t = findTarget();
+      if (t && !t.unstoppable && !t.reactionProof) t.reflectFactor = (t.reflectFactor ?? 0) + factor;
+    },
+    redirectTarget() {
+      const t = findTarget();
+      if (t && !t.unstoppable && !t.reactionProof && !t.cancelled) {
+        t.redirected = true;
+        events.push({ type: "spellRedirected", player: selfId, spellDefId: t.defId });
+      }
+    },
+    targetPredictedDamage() {
+      const t = findTarget();
+      if (!t || t.unstoppable || t.reactionProof) return 0;
+      const sim = structuredClone(state);
+      const simItem = sim.stack.find((s) => s.sid === t.sid);
+      if (!simItem) return 0;
+      const prep = sim.players[simItem.controller].prepared[simItem.preparedIndex];
+      const victim = otherPlayer(simItem.controller);
+      const buf: GameEvent[] = [];
+      try {
+        const fn = getEffect(simItem.defId);
+        if (fn && prep) fn(makeContext(sim, simItem.controller, prep.spell, buf, simItem), prep.spell);
+        else dealDamageToPlayer(sim, victim, Math.max(0, simItem.level - simItem.damageReduction), buf);
+      } catch {
+        return 0; // a sim that trips on anything exotic predicts nothing rather than guessing
+      }
+      let dmg = 0;
+      for (const e of buf) if (e.type === "damage" && e.target === victim) dmg += e.amount;
+      return dmg;
     },
     targetLevel() {
       return findTarget()?.level ?? 0;
