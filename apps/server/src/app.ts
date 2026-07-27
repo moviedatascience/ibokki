@@ -339,9 +339,13 @@ function pushState(room: Room, side: PlayerId, error?: string): void {
  * would stall every room on this process), then validated against the LIVE
  * state: room.state is replaced on every apply, so a reference check detects
  * anything that happened while the bot was thinking (human prepare actions, a
- * rematch reset) and recomputes instead of applying a stale move. Each landed
- * move is streamed to the human immediately. Fire-and-forget: callers push
- * their own frames right away and the bot's frames follow.
+ * rematch reset) and recomputes instead of applying a stale move.
+ *
+ * Callers AWAIT this before pushing frames — the wire contract is that a
+ * client's frame always reflects the bot moves its action provoked (interim
+ * frames mid-reply broke both the frame/presence ordering and clients' index
+ * freshness — the race CI caught). The await parks only this room; every other
+ * room keeps being served while the worker thinks.
  */
 async function autoPlayBot(room: Room): Promise<void> {
   if (!room.bot || !room.state || room.botBusy) return;
@@ -355,12 +359,10 @@ async function autoPlayBot(room: Room): Promise<void> {
       if (room.state !== before) continue; // world moved on while thinking — recompute
       if (action === null) break;
       applyAction(room, 1, action);
-      pushBoth(room);
     }
   } finally {
     room.botBusy = false;
   }
-  armInactivity(room); // the idle clock now watches whoever the bot left on the move
 }
 
 function pushBoth(room: Room): void {
@@ -396,8 +398,12 @@ function applyAction(room: Room, side: PlayerId, action: Action, record = true):
   }
 }
 
-/** Handle {t:"act"} — validate priority + indices, apply, broadcast. */
-function handleAct(room: Room, side: PlayerId, indices: number[]): void {
+/** Handle {t:"act"} — validate priority + indices, apply, broadcast. Awaits the
+ *  bot's full reply before the response frames: a client's frame must always
+ *  reflect the bot moves its action provoked, or the client acts on stale
+ *  indices (the exact race CI caught). Other rooms are NOT blocked by the await
+ *  — the bot computes on the worker thread. */
+async function handleAct(room: Room, side: PlayerId, indices: number[]): Promise<void> {
   if (!room.state) {
     pushError(room.seats[side]?.ws ?? null, "waiting for an opponent to join");
     return;
@@ -425,24 +431,24 @@ function handleAct(room: Room, side: PlayerId, indices: number[]): void {
     }
     applyAction(room, side, legal[idx]!);
   }
+  await autoPlayBot(room);
   armClocks(room); // deadlines must be current BEFORE the frames below carry them
   pushState(room, side, error ?? undefined);
   pushState(room, (side ^ 1) as PlayerId);
   armInactivity(room); // any action resets the idle clock for whoever is now on the clock
-  void autoPlayBot(room); // async: the bot's replies stream in as their own frames
 }
 
-function handleRematch(room: Room, side: PlayerId): void {
+async function handleRematch(room: Room, side: PlayerId): Promise<void> {
   if (!room.state || !isTerminal(room.state)) return;
   room.rematchVotes.add(side);
   if (room.bot) room.rematchVotes.add(1); // the bot always accepts
   room.lastActivity = Date.now();
   if (room.rematchVotes.size === 2) {
     startMatch(room);
+    await autoPlayBot(room); // bot lays its prepare-phase spells before the fresh frames
     armClocks(room);
     pushBoth(room);
     armInactivity(room);
-    void autoPlayBot(room);
   } else {
     // Let the other player know a rematch is on offer via their log.
     const other = (side ^ 1) as PlayerId;
@@ -714,7 +720,7 @@ function seatSocket(room: Room, side: PlayerId, ws: WebSocket): void {
   send(room.seats[(side ^ 1) as PlayerId]?.ws ?? null, { t: "presence", opponentConnected: true });
 }
 
-function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, userId: number | undefined): void {
+async function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, userId: number | undefined): Promise<void> {
   const { rooms } = hub;
   switch (msg.t) {
     case "create": {
@@ -756,11 +762,11 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
       send(ws, { t: "created", code: room.code, side: 0, token: room.seats[0].token, catalog: CATALOG, build: BUILD });
       if (room.bot) {
         startMatch(room);
+        await autoPlayBot(room); // bot lays its prepare-phase spells before the first frame
         send(ws, { t: "presence", opponentConnected: true });
         pushState(room, 0);
         armInactivity(room);
         armClocks(room);
-        void autoPlayBot(room); // bot prepares stream in as follow-up frames
       }
       return;
     }
@@ -810,13 +816,13 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
     case "act": {
       const at = seatBySocket.get(ws);
       if (!at) return pushError(ws, "not seated in a room");
-      handleAct(at.room, at.side, Array.isArray(msg.indices) ? msg.indices : []);
+      await handleAct(at.room, at.side, Array.isArray(msg.indices) ? msg.indices : []);
       return;
     }
     case "rematch": {
       const at = seatBySocket.get(ws);
       if (!at) return pushError(ws, "not seated in a room");
-      handleRematch(at.room, at.side);
+      await handleRematch(at.room, at.side);
       return;
     }
     default:
@@ -1056,7 +1062,12 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
         return pushError(ws, "malformed JSON");
       }
       try {
-        handleMessage(hub, ws, msg, db, userId);
+        // Async (bot replies are awaited inside) — rejections must land in the same
+        // sanitized path as sync throws, never as an unhandled rejection.
+        handleMessage(hub, ws, msg, db, userId).catch((err: unknown) => {
+          console.error("ws message error:", err);
+          pushError(ws, "server error");
+        });
       } catch (err) {
         // Sanitized: log the real error, never echo internals (stack-ish strings) to a client.
         console.error("ws message error:", err);

@@ -63,8 +63,12 @@ export class GreedySimBot implements Agent {
 
     // Interchangeable actions share a slug (e.g. attaching either of two identical
     // components to the same slot) — evaluate one representative of each.
+    // retractCast is excluded: it exists so a HUMAN can take back a misclick. A
+    // sim bot already evaluated the cast before making it; letting it second-guess
+    // opens a cast→retract→cast livelock (a real match once burned 6.9 CPU-hours).
     const bySlug = new Map<string, Action>();
     for (const a of legal) {
+      if (a.type === "retractCast") continue;
       const slug = slugFor(state, a, me);
       if (!bySlug.has(slug)) bySlug.set(slug, a);
     }

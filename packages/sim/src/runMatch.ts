@@ -39,7 +39,15 @@ export function runMatch(cfg: RunMatchConfig): MatchResult {
     players: cfg.decks,
   });
 
+  // Hard ply cap: the engine's TURN_CAP only counts turn STARTS, so an agent
+  // oscillating inside one turn (cast→retract, attach→detach) would otherwise
+  // hang the whole batch. Real games run a few thousand plies at most.
+  const PLY_CAP = 50_000;
+  let plies = 0;
   while (!isTerminal(state)) {
+    if (++plies > PLY_CAP) {
+      throw new Error(`runMatch exceeded ${PLY_CAP} plies (seed ${cfg.seed}) — an agent is oscillating without advancing the game`);
+    }
     const actor = state.priorityPlayer;
     const legal = legalActions(state, actor);
     if (legal.length === 0) {

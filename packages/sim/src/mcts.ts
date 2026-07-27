@@ -95,12 +95,16 @@ export class IsmctsBot implements Agent {
 
     // Root candidates come from the TRUE legal list (world legality can differ,
     // e.g. a trainer that is a no-op against some sampled hands) so the returned
-    // action is guaranteed valid in the real game.
+    // action is guaranteed valid in the real game. retractCast is excluded — a
+    // human take-back affordance that lets a bot livelock in cast→retract→cast
+    // (retracting never advances the turn counter, so no cap ever fires).
     const rootActions = new Map<string, Action>();
     for (const a of legal) {
+      if (a.type === "retractCast") continue;
       const slug = slugFor(state, a, me);
       if (!rootActions.has(slug)) rootActions.set(slug, a);
     }
+    if (rootActions.size === 0) return this.fallback.chooseAction(view, legal);
     if (rootActions.size === 1) return rootActions.values().next().value!;
 
     // Decisive-move probe: if an action wins OUTRIGHT with everyone passing,
