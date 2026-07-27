@@ -40,6 +40,8 @@ export interface MatchRow {
   seats: string;
   /** 1 = seat 1 is a server-side bot. */
   bot: number;
+  /** Solo-bot strength ("easy"/"medium"/"hard"); NULL on PvP rows and rows predating levels. */
+  bot_level: string | null;
   /** JSON: ordered {s: side, a: Action}[] — with `seed`, the whole deterministic match. */
   actions: string;
   /** JSON {winner, endReason, forfeit} once finished; NULL = live (rehydrated on boot). */
@@ -122,6 +124,12 @@ export class Db {
     // Additive migration for databases created before SSO support.
     try {
       this.db.exec("ALTER TABLE users ADD COLUMN oidc_sub TEXT");
+    } catch {
+      /* column already exists */
+    }
+    // Additive migration for databases created before solo-bot difficulty levels.
+    try {
+      this.db.exec("ALTER TABLE matches ADD COLUMN bot_level TEXT");
     } catch {
       /* column already exists */
     }
@@ -263,11 +271,11 @@ export class Db {
 
   // ---- matches (persistence: live rooms survive a restart; finished rows are history) ----
 
-  createMatch(code: string, seed: number, seatsJson: string, bot: boolean): number {
+  createMatch(code: string, seed: number, seatsJson: string, bot: boolean, botLevel: string | null = null): number {
     const now = Date.now();
     const info = this.db
-      .prepare("INSERT INTO matches (code, seed, seats, bot, started_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)")
-      .run(code, seed, seatsJson, bot ? 1 : 0, now, now);
+      .prepare("INSERT INTO matches (code, seed, seats, bot, bot_level, started_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .run(code, seed, seatsJson, bot ? 1 : 0, bot ? botLevel : null, now, now);
     return Number(info.lastInsertRowid);
   }
 

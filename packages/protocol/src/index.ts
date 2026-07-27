@@ -294,10 +294,15 @@ export interface DeckChoice {
   deckId?: number;
 }
 
+/** Solo-bot strength: easy = fast heuristic policy, medium = simulation-scored
+ *  greedy (~0.1s/move), hard = ISMCTS search (~0.5s/move). */
+export type BotLevel = "easy" | "medium" | "hard";
+
 /** Client → server. `bot: true` fills seat 1 with a server-side bot (solo play);
- *  `botDeck` picks its deck (preset only), defaulting to a random archetype. */
+ *  `botDeck` picks its deck (preset only), defaulting to a random archetype;
+ *  `botLevel` picks its strength (default "easy"). */
 export type ClientMessage =
-  | { t: "create"; school?: SchoolName; deck?: DeckChoice; bot?: boolean; botDeck?: DeckChoice }
+  | { t: "create"; school?: SchoolName; deck?: DeckChoice; bot?: boolean; botDeck?: DeckChoice; botLevel?: BotLevel }
   | { t: "join"; code: string; school?: SchoolName; deck?: DeckChoice }
   | { t: "rejoin"; code: string; token: string }
   | { t: "act"; indices: number[] }

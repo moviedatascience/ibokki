@@ -10,7 +10,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { getCard, CARDS } from "@ibokki/cards";
 import { runMatchup } from "@ibokki/sim";
-import { act, autoPlayBots, createMatch, getMatch, renderState, savePlaytest } from "./matches.ts";
+import { act, autoplay, autoPlayBots, createMatch, getMatch, renderState, savePlaytest } from "./matches.ts";
 
 const SCHOOL = z.enum(["Evocation", "Abjuration", "Divination"]);
 const CONTROLS = z.enum(["0", "1", "both"]);
@@ -21,7 +21,7 @@ const server = new McpServer({ name: "ibokki-playtest", version: "0.1.0" });
 
 server.tool(
   "new_match",
-  "Start a new Ibokki match between two schools. `controls` picks which side(s) you (Claude) play: \"0\", \"1\", or \"both\". `deck1`/`deck2` optionally override a side's deck: a preset name (Emberworks/Bastion/Riptide) or a JSON DeckDefinition {name?, spellbook, resourceDeck} validated against the construction rules. Returns the opening position and your numbered legal actions.",
+  "Start a new Ibokki match between two schools. `controls` picks which side(s) you (Claude) play: \"0\", \"1\", or \"both\". `deck1`/`deck2` optionally override a side's deck: a preset name (Emberworks/Bastion/Riptide) or a JSON DeckDefinition {name?, spellbook, resourceDeck} validated against the construction rules. `bot` picks the strength of the non-controlled side (default heuristic; greedy is much stronger, search strongest but ~1s/move). Returns the opening position and your numbered legal actions.",
   {
     school1: SCHOOL.describe("Player 0's school"),
     school2: SCHOOL.describe("Player 1's school"),
@@ -29,39 +29,68 @@ server.tool(
     seed: z.number().int().optional().describe("Deterministic seed (default random)"),
     deck1: z.string().optional().describe("Player 0's deck: preset name or JSON DeckDefinition (default: school archetype)"),
     deck2: z.string().optional().describe("Player 1's deck: preset name or JSON DeckDefinition (default: school archetype)"),
+    bot: z.enum(["heuristic", "greedy", "search"]).optional().describe("Bot strength for the side(s) you don't control (default heuristic)"),
+    verbose: z.boolean().optional().describe("Full board render instead of the compact one (all tools default to compact)"),
   },
-  async ({ school1, school2, controls, seed, deck1, deck2 }) => {
+  async ({ school1, school2, controls, seed, deck1, deck2, bot, verbose }) => {
     let match;
     try {
-      match = createMatch(school1, school2, seed ?? Math.floor(Math.random() * 2_000_000_000), controls ?? "0", deck1, deck2);
+      match = createMatch(school1, school2, seed ?? Math.floor(Math.random() * 2_000_000_000), controls ?? "0", deck1, deck2, bot);
     } catch (err) {
       return text(`Could not start match: ${err instanceof Error ? err.message : String(err)}`);
     }
     autoPlayBots(match);
     const header = `Started ${match.id}: P0=${match.labels[0]} vs P1=${match.labels[1]}; you control ${controls ?? "0"}.`;
-    return text(`${header}\n${renderState(match)}`);
+    const legend = verbose
+      ? ""
+      : "Compact legend — prep `slot:DEF(cost)[attached]flag`: c=cast, S=sealed, ??=face-down; doom `4!@2t`=4 dmg (!=pierce) in 2 turns; act by `index` or stable `slug`; `card` tool for rules text; `verbose:true` for the full board.\n";
+    return text(`${header}\n${legend}${renderState(match, verbose)}`);
   },
 );
 
 server.tool(
   "match_state",
   "Show the current position and numbered legal actions for a match.",
-  { matchId: z.string() },
-  async ({ matchId }) => {
+  { matchId: z.string(), verbose: z.boolean().optional() },
+  async ({ matchId, verbose }) => {
     const match = getMatch(matchId);
     if (!match) return text(`No match ${matchId}.`);
-    return text(renderState(match));
+    return text(renderState(match, verbose));
   },
 );
 
 server.tool(
   "act",
-  "Take the legal action at the given index (from the most recent state listing). Pass an optional `note` to record your reasoning in the playtest log. The bot side then auto-plays until it is your decision again. Returns the action log and the new position.",
-  { matchId: z.string(), index: z.number().int(), note: z.string().optional() },
-  async ({ matchId, index, note }) => {
+  "Take a legal action by `index` (from the most recent listing) or by stable `slug` (never shifts between listings — prefer it when acting on an older listing). Pass an optional `note` to record your reasoning in the playtest log. The bot side then auto-plays until it is your decision again. Returns the action log and the new position.",
+  {
+    matchId: z.string(),
+    index: z.number().int().optional(),
+    slug: z.string().optional().describe("Stable action id from the listing, e.g. cast-evo-017"),
+    note: z.string().optional(),
+    verbose: z.boolean().optional(),
+  },
+  async ({ matchId, index, slug, note, verbose }) => {
     const match = getMatch(matchId);
     if (!match) return text(`No match ${matchId}.`);
-    return text(act(match, index, note));
+    if (index === undefined && slug === undefined) return text("Pass `index` or `slug`.");
+    return text(act(match, index, note, slug, verbose));
+  },
+);
+
+server.tool(
+  "autoplay",
+  "Hand your controlled side(s) to a bot pilot until a stop condition, so you spend tokens only on decisions that matter. `until`: roundEnd (default — next round's prepare phase), myTurn (your next main turn), reactionWindow (you can actually react to something), choice (a look/loot/scry pick of yours), gameOver (play it out). Stops at game over regardless. Returns what happened plus the new position.",
+  {
+    matchId: z.string(),
+    until: z.enum(["gameOver", "roundEnd", "reactionWindow", "choice", "myTurn"]).optional().describe("default roundEnd"),
+    bot: z.enum(["heuristic", "greedy", "search"]).optional().describe("pilot strength for YOUR side (default greedy)"),
+    maxPlies: z.number().int().min(1).max(2000).optional().describe("safety cap on pilot decisions (default 400)"),
+    verbose: z.boolean().optional(),
+  },
+  async ({ matchId, until, bot, maxPlies, verbose }) => {
+    const match = getMatch(matchId);
+    if (!match) return text(`No match ${matchId}.`);
+    return text(autoplay(match, until ?? "roundEnd", bot ?? "greedy", maxPlies ?? 400, verbose));
   },
 );
 
@@ -84,7 +113,12 @@ server.tool(
     school1: SCHOOL,
     school2: SCHOOL,
     games: z.number().int().min(1).max(20000).optional().describe("default 1000"),
-    agent: z.enum(["random", "heuristic"]).optional().describe("default heuristic"),
+    agent: z
+      .enum(["random", "heuristic", "greedy", "search"])
+      .optional()
+      .describe(
+        "default heuristic; greedy = simulation-scored bot (~10s/game — keep games ≤ 200); search = ISMCTS (~1s/move, minutes/game — keep games ≤ 10, spot checks only)",
+      ),
     hp: z.number().int().optional().describe("starting HP (default 30)"),
     seed: z.number().int().optional(),
   },

@@ -16,6 +16,9 @@ export interface DeckChoice {
   deckId?: number;
 }
 
+/** Solo-bot strength (mirrors @ibokki/protocol's BotLevel). */
+export type BotLevel = "easy" | "medium" | "hard";
+
 export interface LobbyInfo {
   code: string;
   side: number;
@@ -121,9 +124,9 @@ export class OnlineClient {
     this.open({ t: "create", deck });
   }
 
-  /** Solo room: the server seats a heuristic bot opposite you (random preset). */
-  createBot(deck: DeckChoice): void {
-    this.open({ t: "create", deck, bot: true });
+  /** Solo room: the server seats a bot opposite you (random preset deck). */
+  createBot(deck: DeckChoice, botLevel: BotLevel = "easy"): void {
+    this.open({ t: "create", deck, bot: true, botLevel });
   }
 
   join(code: string, deck: DeckChoice): void {

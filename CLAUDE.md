@@ -29,7 +29,7 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 | `npm run typecheck` | root tsc (excludes apps/client — it has its own tsconfig) |
 | `npm run test` | vitest (engine/sim/mcp/server; includes `apps/*/test`) |
 | `npm run test:client` | Playwright e2e (boots play+online+vite servers) |
-| `npm run sim -- --matrix` | heuristic balance matrix |
+| `npm run sim -- --matrix` | balance matrix (`--p1 greedy` for the strong bot; `--paired` seat-swap; `--cards` per-card telemetry; `--json out.json`; `--deck1 <preset\|file.json>`) |
 | `npm run playtest -- new\|show\|act\|note\|auto\|finish\|log` | file-persisted playtest CLI |
 | `npm run mcp` | MCP playtest server (long-running; RESTART it after engine changes — it holds stale code) |
 | `npm run play` / `npm run online` / `npm run client` | local board / PvP server / Vite dev |
@@ -53,13 +53,23 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 
 ## Testing for bugs — what works
 
-- Piloted play via the MCP tools (`new_match`/`act`/`match_state`/`simulate`/`card`) is the
-  meaningful balance/bug channel. Logs go in `playtests/` (see prior matches there).
-- The heuristic bot (2026-07-05 rework) plays trainers, deliberately prepares + pre-fuels a
-  Reaction, scores look/loot/scry choices, and fuels its biggest spell before casting — `simulate`
-  matrices are now a meaningful coarse signal for all three schools (it's also the production
-  solo-mode opponent and the rollout policy for a future search bot). Piloted matches remain the
-  gold standard for fine reads; the bot is still greedy (no lookahead, naive reaction timing).
+- Piloted play via the MCP tools (`new_match`/`act`/`autoplay`/`match_state`/`simulate`/`card`)
+  is the meaningful balance/bug channel. Logs go in `playtests/` (see prior matches there).
+  Context economy (2026-07-26): boards render COMPACT by default (`verbose:true` for the old
+  full render), `act` accepts stable slugs (`slug:"cast-evo-017"`) so stale indices can't
+  misfire, and `autoplay` hands your side to a bot pilot until a stop condition
+  (`roundEnd`/`myTurn`/`reactionWindow`/`choice`/`gameOver`) so tokens go only to decisions
+  that matter. Full piloted games fit one context now; for batches, run each match in its own
+  subagent and keep only the analysis in the main conversation.
+- Bot ladder (2026-07-26): `random` (fuzz) < `heuristic` (fast policy; rollout policy +
+  solo-mode "easy") < `greedy` (GreedySimBot, `packages/sim/src/greedy.ts`: scores each
+  candidate action by simulating it on `determinize()`d worlds; ~10s/game; solo "medium")
+  < `search` (IsmctsBot, `packages/sim/src/mcts.ts`: single-tree ISMCTS, ~1s/move; solo
+  "hard", wall-clock-capped server-side). Balance numbers should come from `--p1 greedy
+  --paired --cards`; `search` is for spot checks and humans, heuristic matrices are a smoke
+  signal only. Piloted matches remain the gold standard for fine reads. `evaluateState`
+  weights (`packages/sim/src/evaluate.ts`) are the shared tuning surface. MCP `new_match`
+  takes `bot: heuristic|greedy|search` to pilot against a stronger opponent.
 - Live-bug pattern so far: every production bug was a `SIMPLIFIED`/auto-resolve stand-in for
   a real player decision, or a proxy condition for intent. `grep -rn SIMPLIFIED packages/engine`
   is the suspect list when a card misbehaves.

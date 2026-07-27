@@ -7,6 +7,7 @@ export * from "./decks.ts";
 export * from "./deckrules.ts";
 export { createGame, DEFAULT_STARTING_HP, type GameConfig, type PlayerConfig } from "./game.ts";
 export { apply } from "./apply.ts";
+export { determinize } from "./determinize.ts";
 export { legalActions } from "./legal.ts";
 export { TURN_CAP } from "./mechanics.ts";
 export {

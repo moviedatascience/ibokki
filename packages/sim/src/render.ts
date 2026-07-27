@@ -10,6 +10,7 @@ import {
   type GameEvent,
   type GameState,
   type PlayerId,
+  type PreparedView,
 } from "@ibokki/engine";
 
 export function cardName(defId: string): string {
@@ -160,6 +161,75 @@ export function describeEvent(e: GameEvent): string | null {
     default:
       return null;
   }
+}
+
+/**
+ * Compact position render for text-mode pilots (the MCP tools' default): the
+ * same information as renderDecision at ~1/5 the tokens, so a full piloted game
+ * fits in one conversation. Card identities are bare defIds (use the `card`
+ * tool for rules text); the legend below is emitted once per match by new_match.
+ *
+ * Legend: prep entries are `slot:DEF(cost)[attached]flag` with flags c=cast this
+ * round, S=sealed; `??` = opponent face-down (castability is visible in the
+ * legal list's cast-* slugs). doom `4!@2t` = 4 damage (! pierces wards) in 2
+ * turns. Legal actions are `index:slug`.
+ */
+export function renderCompact(state: GameState, viewer?: 0 | 1): string {
+  if (state.phase === "gameover") {
+    return `GAME OVER — ${state.winner === null ? "draw" : `P${state.winner} wins`} (${state.endReason}) | ` +
+      `HP P0:${state.players[0].hp} P1:${state.players[1].hp} | round ${state.round}`;
+  }
+  const view = viewer ?? state.priorityPlayer;
+  const v = redact(state, view);
+  const self = v.self;
+  const opp = v.opponent;
+  const lines: string[] = [];
+
+  const doomStr = (p: { prophecies: { amount: number; turnsLeft: number; pierce: boolean }[] }): string =>
+    p.prophecies.length ? ` doom[${p.prophecies.map((d) => `${d.amount}${d.pierce ? "!" : ""}@${d.turnsLeft}t`).join(",")}]` : "";
+  const wardStr = (wards: number[]): string => (wards.length ? ` wards[${wards.join(",")}]` : "");
+  const burnStr = (burn: number): string => (burn > 0 ? ` burn${burn}` : "");
+
+  const phase = state.phase === "prepare" ? "PREPARE" : v.stack.length > 0 ? "STACK" : "main";
+  lines.push(
+    `R${v.round} T${v.turnCount} ${phase} | ` +
+      `YOU P${view} hp${self.hp} lv${self.level} slots${self.slotsUsedThisRound}/${self.slots} deck${self.resourceDeckCount}` +
+      `${wardStr(self.wards)}${burnStr(self.burn)}${doomStr(self)} | ` +
+      `OPP hp${opp.hp} lv${opp.level} slots${opp.slotsUsedThisRound}/${opp.slots} hand${opp.handCount} deck${opp.resourceDeckCount}` +
+      `${wardStr(opp.wards)}${burnStr(opp.burn)}${doomStr(opp)}`,
+  );
+  if (v.stack.length > 0) {
+    lines.push(
+      "stack(top first): " +
+        [...v.stack].reverse().map((s) => `${s.spellDefId}(P${s.controller})${s.cancelled ? "CANCELLED" : ""}`).join(" ← "),
+    );
+  }
+  lines.push(`hand: ${self.hand.join(",") || "(empty)"}`);
+
+  const prepEntry = (p: PreparedView, i: number): string => {
+    const def = p.spellDefId ? getCard(p.spellDefId) : undefined;
+    const cost = def?.costText ? `(${def.costText})` : "";
+    const att = p.attached.length ? `[${p.attached.map((d) => d.replace("CMP-", "")).join(",")}]` : "";
+    const flag = p.cast ? "c" : p.sealed ? "S" : "";
+    return `${i}:${p.spellDefId ?? "??"}${cost}${att}${flag}`;
+  };
+  lines.push(`prep: ${self.prepared.map(prepEntry).join(" ") || "(none)"}`);
+  if (opp.prepared.length > 0) lines.push(`opp prep: ${opp.prepared.map(prepEntry).join(" ")}`);
+
+  const pc = v.pendingChoice;
+  if (pc?.mine) {
+    lines.push(`CHOICE ${pc.mode} (${pc.picksRemaining} left): ${pc.candidates.join(",") || "(nothing)"} — ${pc.reason}`);
+  }
+
+  if (state.priorityPlayer === view || (state.phase === "prepare" && legalActions(state, view).length > 0)) {
+    const legal = legalActions(state, view);
+    if (legal.length > 0) {
+      lines.push("legal: " + legal.map((a, i) => `${i}:${slugFor(state, a, view)}`).join(" "));
+    }
+  } else {
+    lines.push(`waiting on P${state.priorityPlayer}`);
+  }
+  return lines.join("\n");
 }
 
 /** One-line state digest (handy as a log breadcrumb). */

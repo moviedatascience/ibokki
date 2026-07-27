@@ -1,8 +1,9 @@
 /** Aggregate many matches into a balance report. */
-import { deckFor } from "@ibokki/engine";
+import { deckFor, type GameEvent, type PlayerConfig } from "@ibokki/engine";
 import type { School } from "@ibokki/cards";
-import { makeAgent, type AgentKind } from "./agent.ts";
+import { makeAgent, type AgentKind } from "./greedy.ts";
 import { runMatch } from "./runMatch.ts";
+import type { CardStatsCollector } from "./telemetry.ts";
 
 export type PlayableSchool = Exclude<School, "Neutral">;
 export const SCHOOLS: PlayableSchool[] = ["Evocation", "Abjuration", "Divination"];
@@ -30,6 +31,14 @@ export interface MatchupConfig {
   games: number;
   baseSeed: number;
   startingHp?: number;
+  /** Deck overrides: play this list instead of the school's archetype preset. */
+  deck1?: PlayerConfig;
+  deck2?: PlayerConfig;
+  /** Paired seat-swap: each seed is played twice with the sides swapped, halving
+   * the variance from turn-order/draw luck. `games` stays the TOTAL game count. */
+  paired?: boolean;
+  /** Optional per-card telemetry sink (see telemetry.ts). */
+  collector?: CardStatsCollector;
 }
 
 export function runMatchup(cfg: MatchupConfig): MatchupStats {
@@ -44,18 +53,28 @@ export function runMatchup(cfg: MatchupConfig): MatchupStats {
   };
   let totalRounds = 0;
   let totalTurns = 0;
+  const side1 = { deck: cfg.deck1 ?? deckFor(cfg.school1), agent: cfg.agent1 };
+  const side2 = { deck: cfg.deck2 ?? deckFor(cfg.school2), agent: cfg.agent2 };
 
   for (let i = 0; i < cfg.games; i++) {
-    const seed = cfg.baseSeed + i;
+    // Paired mode replays each seed with the seats swapped (game 2k+1 mirrors 2k).
+    const swapped = cfg.paired === true && i % 2 === 1;
+    const seed = cfg.paired ? cfg.baseSeed + Math.floor(i / 2) : cfg.baseSeed + i;
+    const [a, b] = swapped ? [side2, side1] : [side1, side2];
     const result = runMatch({
       seed,
-      decks: [deckFor(cfg.school1), deckFor(cfg.school2)],
-      agents: [makeAgent(cfg.agent1, agentSeed(seed, 0)), makeAgent(cfg.agent2, agentSeed(seed, 1))],
+      decks: [a.deck, b.deck],
+      agents: [makeAgent(a.agent, agentSeed(seed, swapped ? 1 : 0)), makeAgent(b.agent, agentSeed(seed, swapped ? 0 : 1))],
       ...(cfg.startingHp !== undefined ? { startingHp: cfg.startingHp } : {}),
+      ...(cfg.collector ? { onEvents: (ev: GameEvent[]) => cfg.collector!.onEvents(ev) } : {}),
     });
+    // Card usage and the winner are both seat-relative, so no remap is needed here.
+    cfg.collector?.endGame(result.winner);
 
-    if (result.winner === 0) stats.p1Wins++;
-    else if (result.winner === 1) stats.p2Wins++;
+    const side1Won = swapped ? result.winner === 1 : result.winner === 0;
+    const side2Won = swapped ? result.winner === 0 : result.winner === 1;
+    if (side1Won) stats.p1Wins++;
+    else if (side2Won) stats.p2Wins++;
     else stats.draws++;
 
     const reason = result.endReason ?? "none";
@@ -75,6 +94,7 @@ export function runSchoolMatrix(
   games: number,
   baseSeed: number,
   startingHp?: number,
+  paired?: boolean,
 ): Record<PlayableSchool, Record<PlayableSchool, number>> {
   const matrix = {} as Record<PlayableSchool, Record<PlayableSchool, number>>;
   for (const s1 of SCHOOLS) {
@@ -88,6 +108,7 @@ export function runSchoolMatrix(
         games,
         baseSeed,
         ...(startingHp !== undefined ? { startingHp } : {}),
+        ...(paired !== undefined ? { paired } : {}),
       });
       matrix[s1][s2] = stats.p1Wins / stats.games;
     }

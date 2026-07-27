@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from "react";
 import { BASE, type Deck, type DeckListResponse, type School } from "../api.ts";
-import { storedSeat, type DeckChoice } from "../online.ts";
+import { storedSeat, type BotLevel, type DeckChoice } from "../online.ts";
 import type { UseAuth } from "../useAuth.ts";
 import type { OnlineApi } from "../useMatch.ts";
 import { schoolOf } from "../schools.ts";
@@ -139,6 +139,7 @@ export function Home({ auth, deckData, online, error, hasLocalMatch, onPlayBot, 
   const allDecks: Deck[] = [...(deckData?.presets ?? []), ...(deckData?.decks ?? [])];
   const [choice, setChoice] = useState("p:Emberworks");
   const [joinCode, setJoinCode] = useState("");
+  const [botLevel, setBotLevel] = useState<BotLevel>("easy");
   const [p0, setP0] = useState<School>("Evocation");
   const [p1, setP1] = useState<School>("Abjuration");
   // Disable the play buttons while the WS handshakes — double-clicks otherwise open
@@ -191,9 +192,16 @@ export function Home({ auth, deckData, online, error, hasLocalMatch, onPlayBot, 
           <button style={{ width: "100%" }} disabled={connecting || joinCode.trim().length < 5} onClick={() => online.join(joinCode, decodeChoice(choice))} data-testid="online-join">
             Join room
           </button>
-          <button style={{ width: "100%" }} disabled={connecting} onClick={() => online.createBot(decodeChoice(choice))} data-testid="online-bot">
-            Play vs bot
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={{ flex: 1 }} disabled={connecting} onClick={() => online.createBot(decodeChoice(choice), botLevel)} data-testid="online-bot">
+              Play vs bot
+            </button>
+            <select value={botLevel} onChange={(e) => setBotLevel(e.target.value as BotLevel)} data-testid="online-bot-level" title="Bot strength">
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
           {connecting && <div className="hint">Connecting…</div>}
           {error && <div className="formerror" data-testid="online-error">{error}</div>}
           <div className="hint">No opponent? The bot plays a random archetype deck.</div>

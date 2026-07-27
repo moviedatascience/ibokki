@@ -1,11 +1,16 @@
 /** Agent interface — anything that can choose an action from a redacted view. */
 import { getCard, getComponent, type CardDef, type Cost } from "@ibokki/cards";
-import { combinedSymbols, emptyCost, rngInt, type Action, type PlayerView, type PreparedView } from "@ibokki/engine";
+import { combinedSymbols, emptyCost, rngInt, type Action, type GameState, type PlayerView, type PreparedView } from "@ibokki/engine";
 
 export interface Agent {
   readonly name: string;
-  /** Given what this player can see and the legal actions, pick one. */
-  chooseAction(view: PlayerView, legal: Action[]): Action;
+  /**
+   * Given what this player can see and the legal actions, pick one. `state` is
+   * the TRUE game state, offered so simulation agents can sample concrete worlds
+   * from it (engine `determinize()`); an agent must never read hidden zones from
+   * it directly — that would be a cheating bot.
+   */
+  chooseAction(view: PlayerView, legal: Action[], state?: GameState): Action;
 }
 
 /** Picks uniformly at random — the fuzz tester / rules-robustness baseline. */
@@ -293,8 +298,5 @@ function threatValue(defId: string): number {
   return v;
 }
 
-export type AgentKind = "random" | "heuristic";
-
-export function makeAgent(kind: AgentKind, seed: number): Agent {
-  return kind === "random" ? new RandomBot(seed) : new HeuristicBot(seed);
-}
+// AgentKind / makeAgent live in ./greedy.ts (which needs this module's bots as
+// its fallback and rollout policy — keeping the factory there avoids a cycle).

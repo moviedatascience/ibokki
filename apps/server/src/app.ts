@@ -50,13 +50,16 @@ import {
   type SchoolName,
   type ServerMessage,
 } from "@ibokki/protocol";
-import { describeEvent, makeAgent, type Agent } from "@ibokki/sim";
+import { describeEvent } from "@ibokki/sim";
+import { asBotLevel, type BotLevel } from "./bots.ts";
+import { BotPool } from "./botPool.ts";
 import { Db } from "./db.ts";
 import { createMailer, type Mailer } from "./mail.ts";
 import { handleApi, oidcFromEnv, userFromRequest, type ApiContext, type OidcConfig } from "./api.ts";
 
 const CATALOG = buildCardCatalog();
 const BUILD = process.env.IBOKKI_BUILD ?? "dev";
+export type { BotLevel } from "./bots.ts";
 
 /** Join codes avoid ambiguous glyphs (0/O, 1/I/L). */
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -116,6 +119,8 @@ interface Hub {
   rooms: Map<string, Room>;
   cfg: Config;
   db: Db;
+  /** Worker thread for solo-bot move computation (inline fallback inside). */
+  bots: BotPool;
 }
 
 interface Seat {
@@ -148,8 +153,12 @@ interface Room {
   /** Raw events since the last act batch; redacted per viewer at push time. */
   recentEvents: GameEvent[];
   rematchVotes: Set<PlayerId>;
-  /** Server-side bot piloting seat 1 (solo rooms); null for PvP. */
-  bot: Agent | null;
+  /** True when seat 1 is a server-side bot (solo room). */
+  bot: boolean;
+  /** Solo-bot strength (persisted so a rehydrated room keeps its opponent). */
+  botLevel: BotLevel | null;
+  /** A bot move is being computed on the worker (re-entrancy latch). */
+  botBusy?: boolean;
   /** For idle-room cleanup. */
   lastActivity: number;
   /** The server this room belongs to (rooms map + config). */
@@ -273,7 +282,7 @@ function startMatch(room: Room): void {
   room.matchId = null;
   try {
     const seats: SeatRecord[] = room.seats.map((s) => ({ token: s!.token, deckName: s!.deckName, deck: s!.deck, userId: s!.userId }));
-    room.matchId = room.hub.db.createMatch(room.code, seed, JSON.stringify(seats), !!room.bot);
+    room.matchId = room.hub.db.createMatch(room.code, seed, JSON.stringify(seats), !!room.bot, room.botLevel);
   } catch (err) {
     console.error(`failed to persist match for room ${room.code}:`, err); // the match still plays, it just won't survive a restart
   }
@@ -324,16 +333,34 @@ function pushState(room: Room, side: PlayerId, error?: string): void {
   send(seat.ws, { t: "state", state, ...(error ? { error } : {}) });
 }
 
-/** Let a solo room's bot (seat 1) act until only the human can move. */
-function autoPlayBot(room: Room): void {
-  if (!room.bot || !room.state) return;
-  let guard = 0;
-  while (!isTerminal(room.state) && ++guard < 1000) {
-    const legal = legalActions(room.state, 1);
-    if (legal.length === 0) break;
-    const action = room.bot.chooseAction(redact(room.state, 1), legal);
-    applyAction(room, 1, action);
+/**
+ * Let a solo room's bot (seat 1) act until only the human can move. Moves are
+ * computed on the bot worker thread (a hard-bot search takes ~0.5s — inline it
+ * would stall every room on this process), then validated against the LIVE
+ * state: room.state is replaced on every apply, so a reference check detects
+ * anything that happened while the bot was thinking (human prepare actions, a
+ * rematch reset) and recomputes instead of applying a stale move. Each landed
+ * move is streamed to the human immediately. Fire-and-forget: callers push
+ * their own frames right away and the bot's frames follow.
+ */
+async function autoPlayBot(room: Room): Promise<void> {
+  if (!room.bot || !room.state || room.botBusy) return;
+  room.botBusy = true;
+  try {
+    let guard = 0;
+    while (room.state && !isTerminal(room.state) && ++guard < 1000) {
+      const before: GameState = room.state;
+      if (legalActions(before, 1).length === 0) break;
+      const action = await room.hub.bots.compute(room.botLevel ?? "easy", newSeed(), before);
+      if (room.state !== before) continue; // world moved on while thinking — recompute
+      if (action === null) break;
+      applyAction(room, 1, action);
+      pushBoth(room);
+    }
+  } finally {
+    room.botBusy = false;
   }
+  armInactivity(room); // the idle clock now watches whoever the bot left on the move
 }
 
 function pushBoth(room: Room): void {
@@ -398,11 +425,11 @@ function handleAct(room: Room, side: PlayerId, indices: number[]): void {
     }
     applyAction(room, side, legal[idx]!);
   }
-  autoPlayBot(room);
   armClocks(room); // deadlines must be current BEFORE the frames below carry them
   pushState(room, side, error ?? undefined);
   pushState(room, (side ^ 1) as PlayerId);
   armInactivity(room); // any action resets the idle clock for whoever is now on the clock
+  void autoPlayBot(room); // async: the bot's replies stream in as their own frames
 }
 
 function handleRematch(room: Room, side: PlayerId): void {
@@ -412,10 +439,10 @@ function handleRematch(room: Room, side: PlayerId): void {
   room.lastActivity = Date.now();
   if (room.rematchVotes.size === 2) {
     startMatch(room);
-    autoPlayBot(room);
     armClocks(room);
     pushBoth(room);
     armInactivity(room);
+    void autoPlayBot(room);
   } else {
     // Let the other player know a rematch is on offer via their log.
     const other = (side ^ 1) as PlayerId;
@@ -699,11 +726,11 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
       if ("error" in resolved) return pushError(ws, resolved.error);
       // Solo room: seat 1 is a server-side bot playing a preset (random archetype by default).
       let botSeat: Seat | null = null;
-      let bot: Agent | null = null;
+      let botLevel: BotLevel | null = null;
       if (msg.bot) {
         const preset = presetDeck(msg.botDeck?.preset ?? "") ?? PRESET_DECKS[randomInt(PRESET_DECKS.length)]!;
         botSeat = { token: randomUUID(), deckName: preset.name, deck: preset, ws: null };
-        bot = makeAgent("heuristic", newSeed());
+        botLevel = asBotLevel(msg.botLevel);
       }
       const room: Room = {
         code: newCode(rooms),
@@ -713,7 +740,8 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
         epoch: 0,
         recentEvents: [],
         rematchVotes: new Set(),
-        bot,
+        bot: !!msg.bot,
+        botLevel,
         lastActivity: Date.now(),
         hub,
         graceTimers: [null, null],
@@ -728,11 +756,11 @@ function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db, user
       send(ws, { t: "created", code: room.code, side: 0, token: room.seats[0].token, catalog: CATALOG, build: BUILD });
       if (room.bot) {
         startMatch(room);
-        autoPlayBot(room); // bot lays its prepare-phase spells before the first frame
         send(ws, { t: "presence", opponentConnected: true });
         pushState(room, 0);
         armInactivity(room);
         armClocks(room);
+        void autoPlayBot(room); // bot prepares stream in as follow-up frames
       }
       return;
     }
@@ -830,8 +858,8 @@ function rehydrateRooms(hub: Hub): void {
         epoch: 0,
         recentEvents: [],
         rematchVotes: new Set(),
-        // A fresh agent seed only affects FUTURE bot moves; the played ones replay from the log.
-        bot: row.bot ? makeAgent("heuristic", newSeed()) : null,
+        bot: !!row.bot,
+        botLevel: row.bot ? asBotLevel(row.bot_level) : null,
         lastActivity: Date.now(),
         hub,
         graceTimers: [null, null],
@@ -852,6 +880,9 @@ function rehydrateRooms(hub: Hub): void {
         continue;
       }
       hub.rooms.set(row.code, room);
+      // A crash can now land between the human's persisted action and the bot's
+      // async reply — resume any pending bot move so the room doesn't stall.
+      if (room.bot) void autoPlayBot(room);
     } catch (err) {
       console.error(`failed to restore match ${row.id} (room ${row.code}):`, err);
       try {
@@ -950,7 +981,7 @@ function originAllowed(origin: string | undefined, allow: string[]): boolean {
 export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
   const db = new Db(opts.dbFile ?? process.env.IBOKKI_DB ?? "data/ibokki.db");
   const cfg = resolveConfig(opts);
-  const hub: Hub = { rooms: new Map<string, Room>(), cfg, db };
+  const hub: Hub = { rooms: new Map<string, Room>(), cfg, db, bots: new BotPool() };
   const { rooms } = hub;
   rehydrateRooms(hub);
   const ctx: ApiContext = {
@@ -1064,6 +1095,7 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
   http.on("close", () => {
     clearInterval(sweep);
     for (const room of rooms.values()) clearRoomTimers(room);
+    hub.bots.dispose();
     db.close();
   });
 

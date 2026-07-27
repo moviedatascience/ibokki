@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type CardCatalog, type MatchState, type School } from "./api.ts";
-import { OnlineClient, storedSeat, storeSeat, type DeckChoice } from "./online.ts";
+import { OnlineClient, storedSeat, storeSeat, type BotLevel, type DeckChoice } from "./online.ts";
 
 export type OnlineStatus = "idle" | "connecting" | "waiting" | "playing";
 
@@ -15,7 +15,7 @@ export interface OnlineApi {
   notice: string | null;
   create: (deck: DeckChoice) => void;
   /** Solo match against the server-side bot (works in production, unlike local vs-bot). */
-  createBot: (deck: DeckChoice) => void;
+  createBot: (deck: DeckChoice, botLevel?: BotLevel) => void;
   join: (code: string, deck: DeckChoice) => void;
   leave: () => void;
   rematch: () => void;
@@ -198,9 +198,9 @@ export function useMatch(): UseMatch {
       [goOnline, onlineClient],
     ),
     createBot: useCallback(
-      (deck: DeckChoice) => {
+      (deck: DeckChoice, botLevel?: BotLevel) => {
         goOnline();
-        onlineClient().createBot(deck);
+        onlineClient().createBot(deck, botLevel);
       },
       [goOnline, onlineClient],
     ),

@@ -20,7 +20,16 @@ import {
   type GameState,
   type PlayerId,
 } from "@ibokki/engine";
-import { describeAction, describeEvent, HeuristicBot, renderDecision, type Agent } from "@ibokki/sim";
+import {
+  describeAction,
+  describeEvent,
+  makeAgent,
+  renderCompact,
+  renderDecision,
+  slugFor,
+  type Agent,
+  type AgentKind,
+} from "@ibokki/sim";
 
 export type School = "Evocation" | "Abjuration" | "Divination";
 export type Controls = "0" | "1" | "both";
@@ -80,6 +89,7 @@ export function createMatch(
   controls: Controls,
   deck1?: string,
   deck2?: string,
+  botKind: Exclude<AgentKind, "random"> = "heuristic",
 ): Match {
   const d0 = resolveDeck(school1, deck1);
   const d1 = resolveDeck(school2, deck2);
@@ -91,8 +101,8 @@ export function createMatch(
     labels: [d0.label, d1.label],
     controls,
     seed,
-    bot: new HeuristicBot((seed ^ 0x5bd1e995) | 0),
-    transcript: [`# Playtest ${id}: ${d0.label} (P0) vs ${d1.label} (P1) — seed ${seed}`],
+    bot: makeAgent(botKind, (seed ^ 0x5bd1e995) | 0),
+    transcript: [`# Playtest ${id}: ${d0.label} (P0) vs ${d1.label} (P1) — seed ${seed} — bot ${botKind}`],
   };
   matches.set(id, match);
   return match;
@@ -103,12 +113,12 @@ export function getMatch(id: string): Match | undefined {
 }
 
 /** Apply an action, labelling it (against the pre-action state) and logging events. */
-function applyLogged(match: Match, action: Action): void {
+function applyLogged(match: Match, action: Action, tag = ""): void {
   const actor = match.state.priorityPlayer;
   const label = describeAction(match.state, action);
   const { state, events } = apply(match.state, action);
   match.state = state;
-  match.transcript.push(`- P${actor}: ${label}`);
+  match.transcript.push(`- P${actor}${tag}: ${label}`);
   for (const e of events) {
     const s = describeEvent(e);
     if (s) match.transcript.push(`    ${s}`);
@@ -125,33 +135,96 @@ export function autoPlayBots(match: Match): void {
   while (!isTerminal(match.state) && !claudeControls(match, match.state.priorityPlayer)) {
     const actor = match.state.priorityPlayer;
     const legal = legalActions(match.state, actor);
-    const action = match.bot.chooseAction(redact(match.state, actor), legal);
+    const action = match.bot.chooseAction(redact(match.state, actor), legal, match.state);
     applyLogged(match, action);
     if (++guard > 5000) break;
   }
 }
 
-export function renderState(match: Match): string {
-  return renderDecision(match.state, labels(match));
+export function renderState(match: Match, verbose = false): string {
+  return verbose ? renderDecision(match.state, labels(match)) : renderCompact(match.state);
 }
 
-/** Apply the legal action at `index` for the priority player, then auto-play bots. */
-export function act(match: Match, index: number, note?: string): string {
-  if (isTerminal(match.state)) return "Match is over.\n\n" + renderState(match);
+/** Apply the legal action at `index` (or matching `slug`) for the priority player, then auto-play bots. */
+export function act(match: Match, index: number | undefined, note?: string, slug?: string, verbose = false): string {
+  if (isTerminal(match.state)) return "Match is over.\n\n" + renderState(match, verbose);
   const actor = match.state.priorityPlayer;
   if (!claudeControls(match, actor)) {
     autoPlayBots(match);
-    return "It was the bot's turn — advanced.\n\n" + renderState(match);
+    return "It was the bot's turn — advanced.\n\n" + renderState(match, verbose);
   }
   const legal = legalActions(match.state, actor);
-  if (index < 0 || index >= legal.length) {
-    return `Invalid index ${index}. Valid 0..${legal.length - 1}.\n\n` + renderState(match);
+  let action: Action | undefined;
+  if (slug !== undefined) {
+    action = legal.find((a) => slugFor(match.state, a, actor) === slug);
+    if (!action) return `No legal action with slug "${slug}".\n\n` + renderState(match, verbose);
+  } else {
+    if (index === undefined || index < 0 || index >= legal.length) {
+      return `Invalid index ${index}. Valid 0..${legal.length - 1} (or act by slug).\n\n` + renderState(match, verbose);
+    }
+    action = legal[index]!;
   }
   if (note) addNote(match, note);
   const before = match.transcript.length;
-  applyLogged(match, legal[index]!);
+  applyLogged(match, action);
   autoPlayBots(match);
-  return match.transcript.slice(before).join("\n") + "\n\n" + renderState(match);
+  return match.transcript.slice(before).join("\n") + "\n\n" + renderState(match, verbose);
+}
+
+export type AutoplayUntil = "gameOver" | "roundEnd" | "reactionWindow" | "choice" | "myTurn";
+
+/**
+ * Hand Claude's controlled side(s) to a bot pilot until a stop condition, so a
+ * text pilot spends tokens only on the decisions that matter. Stop conditions
+ * are checked at Claude-side decision points; the opposing bot always plays
+ * through. Game over stops everything regardless of `until`.
+ */
+export function autoplay(match: Match, until: AutoplayUntil, botKind: Exclude<AgentKind, "random">, maxPlies: number, verbose = false): string {
+  if (isTerminal(match.state)) return "Match is over.\n\n" + renderState(match, verbose);
+  const pilot = makeAgent(botKind, (match.seed ^ (match.transcript.length * 0x9e3779b1)) | 0);
+  const startRound = match.state.round;
+  const startTurn = match.state.turnCount;
+  const before = match.transcript.length;
+  let plies = 0;
+  let stopReason = `ply cap ${maxPlies} reached`;
+  while (!isTerminal(match.state) && plies < maxPlies) {
+    if (!claudeControls(match, match.state.priorityPlayer)) {
+      autoPlayBots(match);
+      continue; // re-check: it is now Claude's decision, or the game ended
+    }
+    const actor = match.state.priorityPlayer;
+    const legal = legalActions(match.state, actor);
+    if (legal.length === 0) break; // defensive: engine guarantees pass exists
+    const s = match.state;
+    if (until === "roundEnd" && s.round > startRound) {
+      stopReason = `round ${s.round} begins`;
+      break;
+    }
+    if (until === "myTurn" && s.turnCount > startTurn && s.phase === "main" && s.stack.length === 0 && !s.pendingChoice && s.activePlayer === actor) {
+      stopReason = "your main turn";
+      break;
+    }
+    if (until === "reactionWindow" && s.stack.length > 0 && legal.some((a) => a.type === "castReaction")) {
+      stopReason = "reaction window — you can react";
+      break;
+    }
+    if (until === "choice" && s.pendingChoice?.player === actor) {
+      stopReason = "pending choice";
+      break;
+    }
+    applyLogged(match, pilot.chooseAction(redact(s, actor), legal, s), " auto");
+    plies++;
+  }
+  if (isTerminal(match.state)) stopReason = "game over";
+  const delta = match.transcript.slice(before);
+  const shown =
+    delta.length > 140 ? [...delta.slice(0, 40), `    … ${delta.length - 80} transcript lines elided (full log kept for save_playtest) …`, ...delta.slice(-40)] : delta;
+  return (
+    `Autopilot (${botKind}) took ${plies} of your decisions — stopped: ${stopReason}.\n` +
+    shown.join("\n") +
+    "\n\n" +
+    renderState(match, verbose)
+  );
 }
 
 /** Write the transcript (+ optional analysis) to playtests/<id>.md; returns the path. */

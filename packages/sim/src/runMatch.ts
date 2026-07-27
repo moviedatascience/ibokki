@@ -7,6 +7,8 @@ import {
   outcomeHash,
   redact,
   type EndReason,
+  type GameEvent,
+  type GameState,
   type PlayerConfig,
   type PlayerId,
 } from "@ibokki/engine";
@@ -26,6 +28,8 @@ export interface RunMatchConfig {
   decks: [PlayerConfig, PlayerConfig];
   agents: [Agent, Agent];
   startingHp?: number;
+  /** Tap the engine's event stream (telemetry); called after every applied action. */
+  onEvents?: (events: GameEvent[], state: GameState) => void;
 }
 
 export function runMatch(cfg: RunMatchConfig): MatchResult {
@@ -42,8 +46,10 @@ export function runMatch(cfg: RunMatchConfig): MatchResult {
       throw new Error(`No legal actions for priority player ${actor} (engine invariant violated)`);
     }
     const view = redact(state, actor);
-    const action = cfg.agents[actor].chooseAction(view, legal);
-    state = apply(state, action).state;
+    const action = cfg.agents[actor].chooseAction(view, legal, state);
+    const applied = apply(state, action, actor);
+    state = applied.state;
+    cfg.onEvents?.(applied.events, state);
   }
 
   return {

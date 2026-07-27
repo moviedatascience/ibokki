@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { presetDeck } from "@ibokki/engine";
-import { act, createMatch, renderState, resolveDeck } from "../src/matches.ts";
+import { act, autoplay, autoPlayBots, createMatch, renderState, resolveDeck } from "../src/matches.ts";
 
 describe("MCP match loop", () => {
   it("drives a vs-bot match to completion (index 0 is always 'pass')", () => {
@@ -24,14 +24,48 @@ describe("MCP match loop", () => {
     expect(m.state.phase).toBe("gameover");
   });
 
-  it("opens in the Prepare phase with numbered prepare actions", () => {
+  it("opens in the Prepare phase with numbered prepare actions (verbose render)", () => {
     const m = createMatch("Evocation", "Divination", 1, "0");
-    const text = renderState(m);
+    const text = renderState(m, true);
     expect(text).toContain("PREPARE phase");
     expect(text).toContain("Legal actions");
     // Listings carry stable [slug] ids alongside the index (2026-07-08 CLI ergonomics fix).
     expect(text).toMatch(/0 \[done\]: done preparing/);
     expect(text).toMatch(/\d+ \[prep-[a-z0-9-]+\]: prepare /); // at least one spell can be prepared
+  });
+
+  it("compact render (the default) carries the same decision surface in far fewer tokens", () => {
+    const m = createMatch("Evocation", "Divination", 1, "0");
+    const compact = renderState(m);
+    expect(compact).toContain("PREPARE");
+    expect(compact).toMatch(/legal: 0:done/); // index:slug pairs
+    expect(compact).toMatch(/\d+:prep-[a-z0-9-]+/);
+    expect(compact.length).toBeLessThan(renderState(m, true).length / 2);
+  });
+
+  it("acts by stable slug, and rejects unknown slugs loudly", () => {
+    const m = createMatch("Evocation", "Divination", 5, "0");
+    autoPlayBots(m); // the new_match tool does this — the round leader (and so first priority) may be the bot
+    const out = act(m, undefined, undefined, "done");
+    expect(out).toContain("done preparing");
+    expect(act(m, undefined, undefined, "no-such-slug")).toContain('No legal action with slug');
+  });
+
+  it("autoplay(gameOver) pilots the controlled side to termination", () => {
+    const m = createMatch("Evocation", "Abjuration", 21, "0");
+    const out = autoplay(m, "gameOver", "heuristic", 2000);
+    expect(m.state.phase).toBe("gameover");
+    expect(out).toContain("stopped: game over");
+    expect(out).toContain(" auto:"); // pilot actions are tagged in the transcript
+  });
+
+  it("autoplay(roundEnd) stops at the next round's first decision", () => {
+    const m = createMatch("Evocation", "Abjuration", 23, "0");
+    expect(m.state.round).toBe(1);
+    const out = autoplay(m, "roundEnd", "heuristic", 2000);
+    expect(m.state.round).toBe(2);
+    expect(m.state.phase).not.toBe("gameover");
+    expect(out).toContain("stopped: round 2 begins");
   });
 
   it("resolves decks: default, preset name, custom JSON, and rejects bad specs", () => {

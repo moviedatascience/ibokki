@@ -112,7 +112,7 @@ function autoPlayBots(m: Match): void {
     const side = [...m.bots].find((s) => legalActions(m.state, s).length > 0);
     if (side === undefined) break;
     const legal = legalActions(m.state, side);
-    const action = m.agents[side]!.chooseAction(redact(m.state, side), legal);
+    const action = m.agents[side]!.chooseAction(redact(m.state, side), legal, m.state);
     applyActionLogged(m, side, action);
   }
 }
