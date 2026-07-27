@@ -71,7 +71,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Until the end of the round, the first Reaction you play costs 1 fewer S component (minimum 1).",
+    "text": "Until the end of the round, spell damage dealt to you is reduced by 1.",
     "comment": "Enables early Reaction spam by discounting the first one. Strong opener for a reactive game plan."
   },
   {
@@ -731,7 +731,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 2 damage. Your opponent discards 1 random component card from their hand."
+    "text": "Deal 1 damage. Your opponent discards 1 random component card from their hand."
   },
   {
     "id": "EVO-005",

@@ -39,14 +39,24 @@ export function runMatch(cfg: RunMatchConfig): MatchResult {
     players: cfg.decks,
   });
 
-  // Hard ply cap: the engine's TURN_CAP only counts turn STARTS, so an agent
+  // Livelock guard: the engine's TURN_CAP only counts turn STARTS, so an agent
   // oscillating inside one turn (cast→retract, attach→detach) would otherwise
-  // hang the whole batch. Real games run a few thousand plies at most.
-  const PLY_CAP = 50_000;
-  let plies = 0;
+  // hang the whole batch — and a total-ply cap is useless for SLOW agents (a
+  // search bot at seconds/ply would take days to reach it). Detect the actual
+  // pathology instead: a legitimate turn is at most a few dozen plies (attach
+  // cap 2/spell, ≤7 prepared slots, bounded choices); 400 within one turn is
+  // impossible without a loop. The prepare phase parks turnCount too, but both
+  // players placing every slot stays far under the bound.
+  const TURN_PLY_CAP = 400;
+  let lastTurnCount = -1;
+  let pliesThisTurn = 0;
   while (!isTerminal(state)) {
-    if (++plies > PLY_CAP) {
-      throw new Error(`runMatch exceeded ${PLY_CAP} plies (seed ${cfg.seed}) — an agent is oscillating without advancing the game`);
+    if (state.turnCount !== lastTurnCount) {
+      lastTurnCount = state.turnCount;
+      pliesThisTurn = 0;
+    }
+    if (++pliesThisTurn > TURN_PLY_CAP) {
+      throw new Error(`${TURN_PLY_CAP}+ plies within turn ${state.turnCount} (seed ${cfg.seed}) — an agent is oscillating without advancing the game`);
     }
     const actor = state.priorityPlayer;
     const legal = legalActions(state, actor);

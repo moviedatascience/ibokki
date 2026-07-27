@@ -66,9 +66,13 @@ export class GreedySimBot implements Agent {
     // retractCast is excluded: it exists so a HUMAN can take back a misclick. A
     // sim bot already evaluated the cast before making it; letting it second-guess
     // opens a cast→retract→cast livelock (a real match once burned 6.9 CPU-hours).
+    // detach is a one-way valve — allowed only BEFORE any attach this turn, so a
+    // turn's plies are strictly bounded (detaches ≤ attached, then attaches ≤ hand)
+    // and attach↔detach livelocks are impossible (seed 5000 oscillated at turn 114).
     const bySlug = new Map<string, Action>();
     for (const a of legal) {
       if (a.type === "retractCast") continue;
+      if (a.type === "detach" && state.players[me].componentPlayedThisTurn) continue;
       const slug = slugFor(state, a, me);
       if (!bySlug.has(slug)) bySlug.set(slug, a);
     }

@@ -318,12 +318,12 @@ describe("Battle Trance buffs ONE spell, THIS turn (GAM-010) — live-match regr
     expect(s.players[0].hp).toBe(28);
     expect(s.players[0].nextSpellBonus).toBe(3);
 
-    castAndResolve(s, "EVO-004", events); // Searing Word, base 2
-    expect(s.players[1].hp).toBe(30 - (2 + 1 + 3)); // 24 — Trance consumed here
+    castAndResolve(s, "EVO-004", events); // Searing Word, base 1 (2→1 in the 2026-07-27 balance pass)
+    expect(s.players[1].hp).toBe(30 - (1 + 1 + 3)); // 25 — Trance consumed here
     expect(s.players[0].nextSpellBonus).toBe(0);
 
     castAndResolve(s, "EVO-009", events); // Battery, base 2 — the fatal 6 from the match log
-    expect(s.players[1].hp).toBe(24 - (2 + 1)); // 21 — Catalyst only, NO stale +3
+    expect(s.players[1].hp).toBe(25 - (2 + 1)); // 22 — Catalyst only, NO stale +3
   });
 
   it("an unspent bonus dies at the turn boundary", () => {

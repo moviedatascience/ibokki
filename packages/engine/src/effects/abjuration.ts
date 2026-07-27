@@ -18,7 +18,12 @@ register("ABJ-003", (c) => {
   if (c.selfHasWard()) c.dealDamage(1); // ward-thorn: Abjuration's slow clock scales with keeping wards alive
 });
 register("ABJ-004", (c) => c.addUntargetableBySingle()); // Aegis
-register("ABJ-005", (c) => c.addReactionDiscountS(1)); // Stone Stance
+// Stone Stance REWORK (2026-07-27, experiment 1): the reaction-discount version
+// was prepared 90 times and cast ZERO across the whole balance triangle — a dead
+// slot. Now a round-long -1 to incoming spell damage: a 33-50% tax on the L1
+// cantrip spam that inverted Abj>Evo, near-irrelevant against big spells.
+// (Reduction counts as prevention, so Searing Riposte still punishes it.)
+register("ABJ-005", (c) => c.addDamageReductionThisRound(1));
 register("ABJ-010", (c) => {
   c.requestSealOpponentPrepared(); // Runic Seal — "target": the caster picks the slot
 });

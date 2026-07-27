@@ -61,15 +61,17 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
   (`roundEnd`/`myTurn`/`reactionWindow`/`choice`/`gameOver`) so tokens go only to decisions
   that matter. Full piloted games fit one context now; for batches, run each match in its own
   subagent and keep only the analysis in the main conversation.
-- Bot ladder (2026-07-26): `random` (fuzz) < `heuristic` (fast policy; rollout policy +
-  solo-mode "easy") < `greedy` (GreedySimBot, `packages/sim/src/greedy.ts`: scores each
-  candidate action by simulating it on `determinize()`d worlds; ~10s/game; solo "medium")
-  < `search` (IsmctsBot, `packages/sim/src/mcts.ts`: single-tree ISMCTS, ~1s/move; solo
-  "hard", wall-clock-capped server-side). Balance numbers should come from `--p1 greedy
-  --paired --cards`; `search` is for spot checks and humans, heuristic matrices are a smoke
-  signal only. Piloted matches remain the gold standard for fine reads. `evaluateState`
-  weights (`packages/sim/src/evaluate.ts`) are the shared tuning surface. MCP `new_match`
-  takes `bot: heuristic|greedy|search` to pilot against a stronger opponent.
+- Bot ladder, MEASURED (2026-07-27 paired benchmarks): `random` (fuzz) < `search`
+  (IsmctsBot, `packages/sim/src/mcts.ts`) ≤ `heuristic` (fast policy; the rollout policy)
+  < `greedy` (GreedySimBot, `packages/sim/src/greedy.ts`: scores candidates by simulating
+  them on `determinize()`d worlds; ~10s/game). Solo ladder: easy=heuristic,
+  medium=greedy(1 world), hard=greedy(3 worlds) — search is OFF the ladder: it loses
+  races even to heuristic at 300 iterations (rollout noise overrides its greedy root
+  priors) but shows real defensive lookahead (took the first-ever Abj game off greedy-Evo);
+  promote it only when it reliably beats greedy. Balance numbers: `--p1 greedy --paired
+  --cards`. `evaluateState` weights (`packages/sim/src/evaluate.ts`) are the shared tuning
+  surface. Sim bots never retract and only detach before attaching (turn-bounded plies —
+  livelock-proof; runMatch throws past 400 plies/turn with the seed named).
 - Live-bug pattern so far: every production bug was a `SIMPLIFIED`/auto-resolve stand-in for
   a real player decision, or a proxy condition for intent. `grep -rn SIMPLIFIED packages/engine`
   is the suspect list when a card misbehaves.

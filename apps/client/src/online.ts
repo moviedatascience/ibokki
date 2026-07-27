@@ -16,7 +16,8 @@ export interface DeckChoice {
   deckId?: number;
 }
 
-/** Solo-bot strength (mirrors @ibokki/protocol's BotLevel). */
+/** Solo-bot strength (mirrors @ibokki/protocol's BotLevel): easy = policy bot,
+ *  medium/hard = simulation-scored bot at shallow vs full read depth. */
 export type BotLevel = "easy" | "medium" | "hard";
 
 export interface LobbyInfo {

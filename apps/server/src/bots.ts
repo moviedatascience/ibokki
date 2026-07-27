@@ -5,7 +5,7 @@
  * room, where replays come from the action log, not from re-running the bot).
  */
 import { legalActions, redact, type Action, type GameState } from "@ibokki/engine";
-import { GreedySimBot, HeuristicBot, IsmctsBot, type Agent } from "@ibokki/sim";
+import { GreedySimBot, HeuristicBot, type Agent } from "@ibokki/sim";
 
 export const BOT_LEVELS = ["easy", "medium", "hard"] as const;
 export type BotLevel = (typeof BOT_LEVELS)[number];
@@ -15,8 +15,13 @@ export function asBotLevel(level: unknown): BotLevel {
 }
 
 export function makeBot(level: BotLevel, seed: number): Agent {
-  if (level === "hard") return new IsmctsBot(seed, { iterations: 240, maxMillis: 700 });
-  if (level === "medium") return new GreedySimBot(seed, { determinizations: 2 });
+  // Measured ladder (2026-07-27 paired benchmarks): greedy > heuristic ≥ search
+  // in race matchups and greedy >> heuristic in defensive ones, so greedy
+  // anchors BOTH top rungs — medium reads one sampled world, hard reads three.
+  // ISMCTS stays off the ladder until its lookahead reliably beats greedy's
+  // exact one-ply (it already shows defensive promise — see mcts.ts).
+  if (level === "hard") return new GreedySimBot(seed);
+  if (level === "medium") return new GreedySimBot(seed, { determinizations: 1 });
   return new HeuristicBot(seed);
 }
 

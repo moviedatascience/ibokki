@@ -294,8 +294,8 @@ export interface DeckChoice {
   deckId?: number;
 }
 
-/** Solo-bot strength: easy = fast heuristic policy, medium = simulation-scored
- *  greedy (~0.1s/move), hard = ISMCTS search (~0.5s/move). */
+/** Solo-bot strength: easy = fast heuristic policy; medium and hard are the
+ *  simulation-scored bot at shallow vs full read depth (~0.1s/move). */
 export type BotLevel = "easy" | "medium" | "hard";
 
 /** Client → server. `bot: true` fills seat 1 with a server-side bot (solo play);

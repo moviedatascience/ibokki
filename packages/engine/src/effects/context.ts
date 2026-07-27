@@ -7,6 +7,7 @@
  *   register("EVO-009", (c) => { c.dealDamage(2); c.draw(1); }); // Battery
  */
 import { getCard, getComponent, type Sym } from "@ibokki/cards";
+import { RECAST_SPELLS } from "../cardFlags.ts";
 import { attachedSymbols, meetsCost } from "../cost.ts";
 import { getEffect } from "./registry.ts";
 import {
@@ -1045,6 +1046,9 @@ export function makeContext(
         for (const prep of state.players[pid].prepared) {
           const def = getCard(prep.spell.defId);
           if (!prep.cast || !def || def.type === "Reaction" || (def.level ?? 1) > maxLevel) continue;
+          // Copy-spells never copy copy-spells (incl. themselves) — unbounded
+          // recursion otherwise (see RECAST_SPELLS).
+          if (RECAST_SPELLS.has(prep.spell.defId)) continue;
           candidates.push({ defId: prep.spell.defId, level: def.level ?? 1 });
         }
       }

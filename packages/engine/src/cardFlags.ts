@@ -55,6 +55,16 @@ export const PREVENT_TRAPS: Readonly<Record<string, number>> = {
 
 export const TRAP_REACTIONS: ReadonlySet<string> = new Set([...Object.keys(ATTACH_TRAPS), ...Object.keys(PREVENT_TRAPS)]);
 
+/**
+ * Spells whose effect casts a copy of another spell (Borrowed Spell / Borrowed
+ * Power / Convergence). They are never THEMSELVES eligible recast targets: a
+ * copy-spell copying a copy-spell recurses without bound — DIV-045 picking
+ * itself as "the biggest cast spell" blew the call stack in a live balance run
+ * (2026-07-27), and DIV-027 self-picks the same way among L1s. The card text's
+ * intent is to recur engine spells, not the recursion engine.
+ */
+export const RECAST_SPELLS: ReadonlySet<string> = new Set(["DIV-027", "DIV-037", "DIV-045"]);
+
 import { getCard, getComponent } from "@ibokki/cards";
 import { tierForLevel } from "./levels.ts";
 import { isComponentDefId, otherPlayer, type GameState, type PlayerId } from "./types.ts";

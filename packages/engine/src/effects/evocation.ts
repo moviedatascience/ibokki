@@ -18,7 +18,10 @@ register("EVO-003", (c) => {
   c.addBurnToOpponent(1);
 });
 register("EVO-004", (c) => {
-  c.dealDamage(2); // Searing Word
+  // Searing Word (2→1: damage + fuel-denial at full cantrip rate was the top-cast
+  // spell in the 0-30 Evo>Abj sweep — it starved the S that pays for wards while
+  // matching Spark's damage; balance triangle 2026-07-27, experiment 1).
+  c.dealDamage(1);
   c.discardOpponentRandomComponent(1);
 });
 register("EVO-005", (c) => c.addDamageBuffThisRound(1)); // Catalyst
