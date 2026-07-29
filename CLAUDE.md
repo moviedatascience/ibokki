@@ -70,7 +70,12 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
   priors) but shows real defensive lookahead (took the first-ever Abj game off greedy-Evo);
   promote it only when it reliably beats greedy. Balance numbers: `--p1 greedy --paired
   --cards`. `evaluateState` weights (`packages/sim/src/evaluate.ts`) are the shared tuning
-  surface. Sim bots never retract and only detach before attaching (turn-bounded plies —
+  surface. MEASUREMENT REGIME (2026-07-29): sim CLI defaults to `--horizon 2` (greedy
+  rollout scores the opponent's reply turn — reactions/denial/charge wincons only price
+  correctly there; hard ladder bot matches). Numbers logged before 2026-07-29 evening are
+  horizon-1 — reproduce with `--horizon 1`, never compare across regimes. `--cards` prints
+  an expression audit; a flagged card means CHECK BOT VALUATION first (5-entry ledger +
+  plan: `playtests/2026-07-29-blindspot-plan.md`). Sim bots never retract and only detach before attaching (turn-bounded plies —
   livelock-proof; runMatch throws past 400 plies/turn with the seed named).
 - Live-bug pattern so far: every production bug was a `SIMPLIFIED`/auto-resolve stand-in for
   a real player decision, or a proxy condition for intent. `grep -rn SIMPLIFIED packages/engine`

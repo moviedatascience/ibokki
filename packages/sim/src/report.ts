@@ -1,7 +1,7 @@
 /** Aggregate many matches into a balance report. */
 import { deckFor, type GameEvent, type PlayerConfig } from "@ibokki/engine";
 import type { School } from "@ibokki/cards";
-import { makeAgent, type AgentKind } from "./greedy.ts";
+import { makeAgent, type AgentKind, type GreedyOptions } from "./greedy.ts";
 import { runMatch } from "./runMatch.ts";
 import type { CardStatsCollector } from "./telemetry.ts";
 
@@ -39,6 +39,8 @@ export interface MatchupConfig {
   paired?: boolean;
   /** Optional per-card telemetry sink (see telemetry.ts). */
   collector?: CardStatsCollector;
+  /** Options for any greedy agents (e.g. rolloutTurns for the horizon A/B). */
+  greedy?: GreedyOptions;
 }
 
 export function runMatchup(cfg: MatchupConfig): MatchupStats {
@@ -64,7 +66,7 @@ export function runMatchup(cfg: MatchupConfig): MatchupStats {
     const result = runMatch({
       seed,
       decks: [a.deck, b.deck],
-      agents: [makeAgent(a.agent, agentSeed(seed, swapped ? 1 : 0)), makeAgent(b.agent, agentSeed(seed, swapped ? 0 : 1))],
+      agents: [makeAgent(a.agent, agentSeed(seed, swapped ? 1 : 0), cfg.greedy), makeAgent(b.agent, agentSeed(seed, swapped ? 0 : 1), cfg.greedy)],
       ...(cfg.startingHp !== undefined ? { startingHp: cfg.startingHp } : {}),
       ...(cfg.collector ? { onEvents: (ev: GameEvent[]) => cfg.collector!.onEvents(ev) } : {}),
     });
@@ -95,6 +97,7 @@ export function runSchoolMatrix(
   baseSeed: number,
   startingHp?: number,
   paired?: boolean,
+  greedy?: GreedyOptions,
 ): Record<PlayableSchool, Record<PlayableSchool, number>> {
   const matrix = {} as Record<PlayableSchool, Record<PlayableSchool, number>>;
   for (const s1 of SCHOOLS) {
@@ -109,6 +112,7 @@ export function runSchoolMatrix(
         baseSeed,
         ...(startingHp !== undefined ? { startingHp } : {}),
         ...(paired !== undefined ? { paired } : {}),
+        ...(greedy ? { greedy } : {}),
       });
       matrix[s1][s2] = stats.p1Wins / stats.games;
     }

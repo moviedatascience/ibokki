@@ -33,8 +33,13 @@ import { slugFor } from "./render.ts";
 export interface GreedyOptions {
   /** Hidden-information worlds sampled per decision (default 3). */
   determinizations?: number;
-  /** Rollout cap in plies (priority actions) after the candidate action (default 30). */
+  /** Rollout cap in plies (priority actions) after the candidate action (default 30 per rollout turn). */
   rolloutPlies?: number;
+  /** Turn boundaries to roll past before scoring (default 1 = my turn plays
+   *  out). 2 also plays the opponent's reply turn, making delayed payoffs —
+   *  fuel denial, round-long defense — visible at ~2x cost. Blind-spot plan
+   *  3a (2026-07-29): the horizon gap is ledger entry #5. */
+  rolloutTurns?: number;
 }
 
 /** Tiny per-ply cost so equal outcomes prefer the DIRECT line (cast lethal now,
@@ -47,12 +52,14 @@ export class GreedySimBot implements Agent {
   private readonly fallback: HeuristicBot;
   private readonly worlds: number;
   private readonly maxPlies: number;
+  private readonly turns: number;
 
   constructor(seed: number, opts?: GreedyOptions) {
     this.rng = seed | 0;
     this.fallback = new HeuristicBot((seed ^ 0x85ebca6b) | 0);
     this.worlds = opts?.determinizations ?? 3;
-    this.maxPlies = opts?.rolloutPlies ?? 30;
+    this.turns = Math.max(1, opts?.rolloutTurns ?? 1);
+    this.maxPlies = opts?.rolloutPlies ?? 30 * this.turns;
   }
 
   chooseAction(view: PlayerView, legal: Action[], state?: GameState): Action {
@@ -121,7 +128,9 @@ export class GreedySimBot implements Agent {
       if (isTerminal(s)) break;
       // Quiescent at a LATER turn boundary: the candidate action's whole turn —
       // opposing reactions, stack resolution, hand cap — has played out.
-      if (s.phase === "main" && s.stack.length === 0 && !s.pendingChoice && s.turnCount > startTurn) break;
+      // (rolloutTurns > 1 rolls past additional boundaries so the opponent's
+      // reply turn is scored too — the delayed-payoff horizon.)
+      if (s.phase === "main" && s.stack.length === 0 && !s.pendingChoice && s.turnCount > startTurn + this.turns - 1) break;
       const actor = s.priorityPlayer;
       const legal = legalActions(s, actor);
       if (legal.length === 0) break; // defensive: engine guarantees pass exists
@@ -133,9 +142,9 @@ export class GreedySimBot implements Agent {
 
 export type AgentKind = "random" | "heuristic" | "greedy" | "search";
 
-export function makeAgent(kind: AgentKind, seed: number): Agent {
+export function makeAgent(kind: AgentKind, seed: number, greedyOpts?: GreedyOptions): Agent {
   if (kind === "random") return new RandomBot(seed);
-  if (kind === "greedy") return new GreedySimBot(seed);
+  if (kind === "greedy") return new GreedySimBot(seed, greedyOpts);
   if (kind === "search") return new IsmctsBot(seed);
   return new HeuristicBot(seed);
 }

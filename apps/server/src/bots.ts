@@ -20,7 +20,12 @@ export function makeBot(level: BotLevel, seed: number): Agent {
   // anchors BOTH top rungs — medium reads one sampled world, hard reads three.
   // ISMCTS stays off the ladder until its lookahead reliably beats greedy's
   // exact one-ply (it already shows defensive promise — see mcts.ts).
-  if (level === "hard") return new GreedySimBot(seed);
+  // Hard reads the opponent's REPLY turn too (rolloutTurns 2 — the horizon-2
+  // regime, 2026-07-29): the A/B showed it unlocks reactions, denial, and
+  // charge wincons the one-boundary rollout could not price (Div–Abj went
+  // 100% → 73% purely from better play on both sides). ~2-3x think time,
+  // still ~sub-second per move.
+  if (level === "hard") return new GreedySimBot(seed, { rolloutTurns: 2 });
   if (level === "medium") return new GreedySimBot(seed, { determinizations: 1 });
   return new HeuristicBot(seed);
 }

@@ -710,6 +710,24 @@ describe("Divination deck sculpting", () => {
     expect(state.pendingChoice!.candidates.map((c) => c.defId).sort()).toEqual(["CMP-MM", "CMP-S", "CMP-V"]);
   });
 
+  it("Cut the Thread (DIV-008) stages a components-only discard choice from the opponent's hand", () => {
+    const { state } = cast("DIV-008", (s) => {
+      s.players[1].hand = [inst("CMP-V"), inst("GAM-001"), inst("CMP-MM")];
+    });
+    expect(state.pendingChoice?.mode).toBe("discardFromOpponentHand");
+    expect(state.pendingChoice?.player).toBe(0);
+    expect(state.pendingChoice!.candidates.map((c) => c.defId).sort()).toEqual(["CMP-MM", "CMP-V"]); // GAM-001 hidden
+  });
+
+  it("Cut the Thread (DIV-008) is a no-op when the opponent holds no components", () => {
+    const { state, events } = cast("DIV-008", (s) => {
+      s.players[1].hand = [inst("GAM-001")];
+    });
+    expect(state.pendingChoice).toBeNull();
+    expect(state.players[1].hand).toHaveLength(1);
+    expect(events).toHaveLength(0);
+  });
+
   it("Augury (DIV-004) draws a Material top card but bottoms a non-Material one", () => {
     const hit = cast("DIV-004", (s) => {
       s.players[0].resourceDeck = [inst("CMP-V"), inst("CMP-M")]; // top = CMP-M

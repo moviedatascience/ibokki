@@ -140,7 +140,10 @@ export interface EffectContext {
    *  to treat it as until end of turn (two chained choices). */
   requestTreatAsComponent(): void;
   /** Mind Theft: see the opponent's hand and CHOOSE the card they discard. */
-  requestOpponentDiscardChoice(): void;
+  /** Mind Theft (any card) / Cut the Thread (`componentsOnly` — the chooser is
+   *  shown ONLY the components, not the whole hand): the caster picks what the
+   *  opponent discards. No-op if no eligible card, or under Iron Will. */
+  requestOpponentDiscardChoice(componentsOnly?: boolean): void;
   /** Mnemonic Charm: pick a component in your discard → top of your deck. */
   requestReturnDiscardComponentToTop(): void;
   /** Recover / Salvage / Reclaim: pick `n` components in your discard → hand.
@@ -536,14 +539,19 @@ export function makeContext(
       };
       events.push({ type: "choicePending", player: selfId, reason: "transmute" });
     },
-    requestOpponentDiscardChoice() {
-      if (opponent.hand.length === 0) return;
+    requestOpponentDiscardChoice(componentsOnly) {
+      // Resolution splices the picked iid out of the owner's hand (apply.ts), so a
+      // filtered candidate list never touches the unchosen cards.
+      const candidates = componentsOnly ? opponent.hand.filter((c) => isComponentDefId(c.defId)) : [...opponent.hand];
+      if (candidates.length === 0) return;
       if (sumOngoing(opponent, "cannotBeForcedToDiscard") > 0) return; // Iron Will
       state.pendingChoice = {
         player: selfId,
-        reason: "Opponent's hand — choose the card they discard",
+        reason: componentsOnly
+          ? "Opponent's components — choose the one they discard"
+          : "Opponent's hand — choose the card they discard",
         mode: "discardFromOpponentHand",
-        candidates: [...opponent.hand],
+        candidates,
         picksRemaining: 1,
         leftover: "top",
       };

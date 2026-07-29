@@ -13,7 +13,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { SPELLS, TRAINERS } from "@ibokki/cards";
-import { implementedIds, presetDeck, validateDeck, type PlayerConfig } from "@ibokki/engine";
+import { deckFor, implementedIds, presetDeck, tierForLevel, validateDeck, type PlayerConfig } from "@ibokki/engine";
 import type { AgentKind } from "./greedy.ts";
 import {
   runMatchup,
@@ -58,6 +58,12 @@ interface Args {
   json: string | undefined;
   deck1: string | undefined;
   deck2: string | undefined;
+  /** Greedy rollout horizon in turn boundaries. Default 2 — the balance-
+   *  measurement standard since 2026-07-29 (the horizon A/B: reactions, fuel
+   *  denial, and charge wincons only price correctly when the opponent's reply
+   *  turn is scored; Div–Abj read 100% at horizon 1 vs 73% at horizon 2).
+   *  Pass --horizon 1 to reproduce pre-regime numbers. */
+  horizon: number;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -75,6 +81,7 @@ function parseArgs(argv: string[]): Args {
     json: undefined,
     deck1: undefined,
     deck2: undefined,
+    horizon: 2,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -120,6 +127,9 @@ function parseArgs(argv: string[]): Args {
       case "--deck2":
         args.deck2 = next();
         break;
+      case "--horizon":
+        args.horizon = Number(next());
+        break;
       default:
         if (a && a.startsWith("-")) console.warn(`Unknown flag: ${a}`);
     }
@@ -137,7 +147,7 @@ function main(): void {
   if (args.matrix) {
     console.log(`School win-rate matrix — ${args.n} games/cell, agent="${args.p1}" (mirror)${args.paired ? ", paired seats" : ""}`);
     console.log("Rows = P1 school, Cols = P2 school, cell = P1 win rate\n");
-    const matrix = runSchoolMatrix(args.p1, args.n, args.seed, args.hp, args.paired);
+    const matrix = runSchoolMatrix(args.p1, args.n, args.seed, args.hp, args.paired, { rolloutTurns: args.horizon });
 
     const header = "            " + SCHOOLS.map((s) => s.slice(0, 8).padStart(9)).join(" ");
     console.log(header);
@@ -176,11 +186,12 @@ function main(): void {
     ...(d1 ? { deck1: d1.deck } : {}),
     ...(d2 ? { deck2: d2.deck } : {}),
     ...(collector ? { collector } : {}),
+    greedy: { rolloutTurns: args.horizon },
   });
 
   const label1 = d1 ? d1.label : args.s1;
   const label2 = d2 ? d2.label : args.s2;
-  console.log(`Matchup: P1 ${label1} (${args.p1}) vs P2 ${label2} (${args.p2})${args.paired ? " [paired seats]" : ""}`);
+  console.log(`Matchup: P1 ${label1} (${args.p1}) vs P2 ${label2} (${args.p2})${args.paired ? " [paired seats]" : ""} [horizon ${args.horizon}]`);
   console.log(`Games:   ${stats.games}`);
   console.log(`P1 wins: ${stats.p1Wins} (${pct(stats.p1Wins / stats.games).trim()})`);
   console.log(`P2 wins: ${stats.p2Wins} (${pct(stats.p2Wins / stats.games).trim()})`);
@@ -189,6 +200,12 @@ function main(): void {
   console.log(`Avg rounds: ${stats.avgRounds.toFixed(2)}   Avg turns: ${stats.avgTurns.toFixed(1)}`);
   if (collector && args.cards) {
     console.log("\n" + collector.table());
+    // Expression audit (blind-spot plan 1a): level ceiling from typical game
+    // length, so early-ending matchups don't flood the report with L3-4 spells
+    // that were merely never reachable.
+    const books = [(d1 ? d1.deck : deckFor(args.s1)).spellbook, (d2 ? d2.deck : deckFor(args.s2)).spellbook].flat();
+    const cap = tierForLevel(Math.max(1, Math.round(stats.avgRounds))).maxSpellLevel;
+    console.log("\n" + collector.audit(books, cap));
   }
   if (args.json) {
     writeFileSync(

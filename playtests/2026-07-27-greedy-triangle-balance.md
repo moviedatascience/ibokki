@@ -494,3 +494,65 @@ fuel tax**; the exp-1 substitution lesson in M-school form. Score 30–0 → 29�
 3. Blind-spot law count is now FOUR (Stone Stance, Reckoning, Omen/Foretell
    preps, and honest-ward-pricing) — prep-time and threat-shape valuation, not
    just cast valuation, must be checked before ANY card verdict.
+
+---
+
+## Experiments 6–7 (2026-07-29 evening): the proactive L1 verb — two falsifications, one keeper
+
+Mandate: Div's L1 should have something PROACTIVE to do. DIV-008 (Scry Glyph —
+never prepped or cast in ANY telemetry all series) was the free slot; it was
+reworked twice, each iteration measured on seeds 300/200.
+
+### Exp-6 — Hasten ("the soonest doom on your opponent ticks 1; fires at 0"). FALSIFIED
+Slotted by the prep bonus (30 preps, displacing Foresight), then **0 casts — and
+the bot is RIGHT**: since exp-2 made dooms unanswerable after resolve, one turn
+of acceleration is worth ~0.3 eval points and only matters at exact lethal-race
+margins. Inevitability is the enemy of urgency: a tempo trick cannot fix a 3×
+output deficit (Div deals ~10-12/game into a race that requires ~30 in 5 rounds).
+Engine primitive removed with the card; the log is its record.
+
+### Exp-7 — Cut the Thread ("see the components in their hand; choose one; they
+discard it"). KEEP, pending human validation
+The first lever aimed at the actual measured variable — Evocation's ~5.7 HP/round
+rate rides on V components in hand — with attach-first play as the counterplay
+texture. Implementation: `requestOpponentDiscardChoice(componentsOnly)` — the
+chooser sees only the components, so Foretell/Foreknowledge keep the intel niche.
+Result: 30 preps, **0 casts vs Evo** (edge 30–0, 5.30 rds) but **18 casts at 100%
+WR-used vs Abj** (edge ~30–0, unchanged). The vs-Evo silence is a DIAGNOSED bot
+limitation, not a card verdict: the greedy rollout ends at the next turn
+boundary, so denial's payoff (their next turn casts less) is literally outside
+the horizon — all the sim sees is −1 hand card (+0.6), which loses the cast
+auction to Foretell's 2.0 every time. Fifth entry in the blind-spot ledger, and
+the first the cheap fixes (prep table) cannot reach — a fix means a hand-fuel
+eval term (global retune risk) or a deeper rollout (2× sim cost).
+
+### Where Evo–Div stands after seven experiments
+30–0 across ALL of it (0-for-210 games; rounds 5.2–5.7): chip pressure, doom
+volume, burn cleanse, two flinch rates, cost taxes, tempo, and fuel denial all
+falsified at bot level. Conclusion: the degeneracy is systemic at greedy-bot
+level — 30 HP pools, full-rate aggro from turn 1, and a school built for length.
+Next steps are USER decisions, in preference order:
+1. **Piloted MCP match (Div vs greedy Evo)** — the bot provably cannot price
+   delayed payoffs (5 ledger entries); a human running attach-first dodges,
+   denial timing, and doom stacking may already beat the measured 100%. Validate
+   the wall is real before any systemic surgery.
+2. Systemic levers if it holds: start-HP asymmetry, doom ticks on both players'
+   turns, or L1 cast pacing.
+3. The Abj anti-doom rework (finding #1 above) remains open for Div–Abj depth.
+
+---
+
+## MEASUREMENT REGIME CHANGE (2026-07-29, late): horizon 2 is the standard
+
+The blind-spot plan's horizon A/B (full results in
+`2026-07-29-blindspot-plan.md`) showed the one-boundary greedy rollout was
+systematically blind to reactions, fuel denial, and charge wincons. `npm run
+sim` now defaults to `--horizon 2`; every number above this line is horizon-1
+and NOT directly comparable to future runs. Horizon-2 canonical triangle
+(current tree): **Evo–Abj 21–9 Abj (70%) · Div–Abj 22–8 Div (73%) · Evo–Div
+30–0 Evo (real — survives honest play; turns/game 37→60)**. Two edges sit in
+the healthy band; Evo–Div is the one remaining degenerate number and it is now
+a CREDIBLE one. Structural finding #1 above (Abj has no wincon vs dooms) is
+RETRACTED as substantially a horizon artifact — Reckoning runs 42 casts / 36%
+WR-used vs Div at horizon 2. Finding #2 (Evo–Div needs a sub-5-round wincon or
+systemic lever) STANDS, strengthened.

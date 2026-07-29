@@ -90,6 +90,7 @@ export const DEFAULT_WEIGHTS: EvalWeights = {
 const PREP_THREAT: Record<string, number> = {
   "DIV-012": 1.7, // Omen — prophesy(2,2), re-preparable clock
   "DIV-011": 1.6, // Foretell — 2 damage now + hand reveal
+  "DIV-008": 1.2, // Cut the Thread — targeted component denial (~a cantrip of enemy fuel)
 };
 
 function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {

@@ -46,7 +46,16 @@ register("DIV-006", (c) => c.requestReturnDiscardComponentsToHand(1)); // Recove
 register("DIV-007", (c) => {
   c.returnOwnAttachedComponent(); // Refocus
 });
-register("DIV-008", (c) => c.scryOpponentTopToBottom()); // Scry Glyph (bottom opponent's top)
+// Cut the Thread [DIV-008] — second rework (exp-7, 2026-07-29). History: Scry
+// Glyph (bottom their top card) was never prepped or cast all series; exp-6's
+// Hasten (tick the soonest doom) was slotted but correctly never cast — since
+// exp-2 dooms are inevitable anyway, so 1 turn of acceleration prices at ~0.3
+// and only matters at exact lethal margins. The measured Evo–Div variable is
+// Evocation's DAMAGE RATE (~5.7 HP/round on V-component fuel), so the school's
+// proactive L1 verb is targeted fuel denial: see the components in their hand,
+// cut the thread their next turn hangs by. Attached components are safe —
+// attach-first play dodges it, which is the counterplay texture.
+register("DIV-008", (c) => c.requestOpponentDiscardChoice(true));
 register("DIV-009", (c) => c.addAttuneBonus()); // Attune — next attach counts as +1 needed symbol
 register("DIV-010", (c) => { c.draw(1); c.requestBankToDeckTop(1); }); // Mind's Eye (draw 1, choose 1 to bank on top)
 register("DIV-011", (c) => { c.dealDamage(2); c.requestRevealOpponentHand(); }); // Foretell — the "intel" half is real now

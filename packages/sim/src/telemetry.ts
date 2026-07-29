@@ -99,6 +99,40 @@ export class CardStatsCollector {
     return out;
   }
 
+  /** Expression audit (blind-spot plan 1a, 2026-07-29): surface the cards the
+   *  bots are NOT expressing, so valuation gaps find us instead of hiding in a
+   *  40-row table. "Slotted but mute" = prepped in most games, almost never
+   *  cast (the Stone Stance / Reckoning / Cut-the-Thread signature). "Never
+   *  seen" = in a spellbook, castable at this matchup's level ceiling, yet
+   *  never prepped/cast/played (the Omen signature — id-order prep starvation).
+   *  A flag means CHECK VALUATION, not "the card is dead" — five ledger
+   *  entries say the bot is the suspect first. */
+  audit(spellbookDefIds: string[], maxSpellLevel: number): string {
+    const label = (id: string): string => `${getCard(id)?.name ?? id} [${id}]`;
+    const mute: string[] = [];
+    for (const [defId, a] of [...this.agg.entries()].sort(([x], [y]) => x.localeCompare(y))) {
+      const uses = a.casts + a.reactionCasts + a.trainerPlays;
+      if (a.prepares >= this.games / 2 && uses <= this.games / 10) {
+        mute.push(`${label(defId)} (${a.prepares} preps, ${uses} uses)`);
+      }
+    }
+    const seen = new Set(this.agg.keys());
+    const unseen = [...new Set(spellbookDefIds)]
+      .filter((id) => !seen.has(id) && (getCard(id)?.level ?? 1) <= maxSpellLevel)
+      .sort();
+    // Name only the L1 unseen — that's where id-order prep starvation (ledger
+    // #3, Omen) bites; higher-level absences are usually normal slot
+    // competition, so a count keeps them from drowning the signal.
+    const unseenL1 = unseen.filter((id) => (getCard(id)?.level ?? 1) <= 1).map(label);
+    const unseenRest = unseen.length - unseenL1.length;
+    return [
+      `expression audit (spells castable at this matchup's level ceiling ≤ L${maxSpellLevel}):`,
+      `  slotted but mute: ${mute.length ? mute.join(", ") : "none"}`,
+      `  L1 never seen at all: ${unseenL1.length ? unseenL1.join(", ") : "none"}${unseenRest > 0 ? ` (+${unseenRest} L2+ spells unseen)` : ""}`,
+      "  (a flag = check bot valuation BEFORE any card verdict — see playtests/2026-07-29-blindspot-plan.md)",
+    ].join("\n");
+  }
+
   /** Fixed-width table sorted by win-rate-when-used (most suspicious cards on top). */
   table(): string {
     const pct = (num: number, den: number): string => (den > 0 ? ((num / den) * 100).toFixed(0) + "%" : "—");
