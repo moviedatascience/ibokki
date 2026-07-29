@@ -72,8 +72,10 @@ export interface OngoingEffect {
 /**
  * A delayed doom inscribed on a player (Divination's win condition). Public to both
  * players. `turnsLeft` counts down at the start of the doomed player's turn (the same
- * hook where Burn ticks); at 0 it fires for `amount` damage — normal, Ward-soakable
- * damage unless `pierce` (Oblivion: like exhaustion, ignores Wards/prevention).
+ * hook where Burn ticks); at 0 it fires for `amount` damage. Exp-2 (2026-07-28): every
+ * doom is inscribed `pierce` — like exhaustion, it ignores Wards/prevention (before,
+ * only Oblivion pierced and Abj's ward wall blanked the whole clock). The engine still
+ * honors `pierce: false` (soakable) if a future card wants it.
  * The payload is fixed at inscription — amps and buffs never touch it (the future is
  * already written).
  */
@@ -116,8 +118,13 @@ export interface PlayerState {
   treatAs?: { iid: number; sym: "V" | "S" | "M" }[];
   /** Reactions this player has cast this round (read by reaction-punish/scaling cards). */
   reactionsCastThisRound: number;
-  /** Damage prevented/reduced this round (read by Reckoning). */
+  /** Damage prevented/reduced this round (read by Searing Riposte's trap delta). */
   damagePreventedThisRound: number;
+  /** Lifetime damage prevented this MATCH. Broader vocabulary than the round
+   *  counter: active reduction / Inversion / Reaction reduction AND ward soaks
+   *  (exp-1g, 2026-07-28 — weathering chip on the shield charges the card's
+   *  printed fantasy). Read by Reckoning's match window. Optional: absent = 0. */
+  damagePreventedTotal?: number;
   /** Whether a Gambit has been played this turn (Items are unlimited; Gambits ≤1/turn). */
   gambitPlayedThisTurn: boolean;
   /** Whether this player has finished their Prepare step this round. */

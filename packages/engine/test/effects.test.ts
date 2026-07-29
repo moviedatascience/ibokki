@@ -190,9 +190,9 @@ describe("Divination effects", () => {
     expect(miss.state.players[0].hand).toHaveLength(2); // singles only — no bonus
   });
 
-  it("Foreclosure (DIV-020) inscribes a 4-damage doom on a 2-turn fuse", () => {
+  it("Foreclosure (DIV-020) inscribes a 4-damage doom on a 2-turn fuse (piercing since exp-2)", () => {
     const { state, events } = cast("DIV-020", () => {});
-    expect(state.players[1].prophecies).toEqual([{ amount: 4, turnsLeft: 2, pierce: false, defId: "DIV-020" }]);
+    expect(state.players[1].prophecies).toEqual([{ amount: 4, turnsLeft: 2, pierce: true, defId: "DIV-020" }]);
     expect(events.some((e) => e.type === "prophecyCreated" && e.target === 1 && e.amount === 4 && e.turns === 2)).toBe(true);
     expect(state.players[1].hp).toBe(30); // nothing happens until the fuse runs out
   });
@@ -219,9 +219,9 @@ describe("Divination effects", () => {
 });
 
 describe("Abjuration effects", () => {
-  it("Fortify (ABJ-001) creates a 1 HP ward when you have none", () => {
+  it("Fortify (ABJ-001) creates a 2 HP ward when you have none (1→2 in exp-1b, 2026-07-27)", () => {
     const { state } = cast("ABJ-001");
-    expect(state.players[0].wards.map((w) => w.hp)).toEqual([1]);
+    expect(state.players[0].wards.map((w) => w.hp)).toEqual([2]);
   });
 
   it("Fortify's rider removes exactly 1 of your Burn markers (2026-07-04 anti-Evo balance)", () => {
@@ -229,7 +229,7 @@ describe("Abjuration effects", () => {
       s.players[0].burn = 3;
     });
     expect(burned.state.players[0].burn).toBe(2);
-    expect(burned.state.players[0].wards.map((w) => w.hp)).toEqual([1]); // ward half unchanged
+    expect(burned.state.players[0].wards.map((w) => w.hp)).toEqual([2]); // ward half unchanged
 
     const clean = cast("ABJ-001");
     expect(clean.state.players[0].burn).toBe(0); // no underflow with no burn

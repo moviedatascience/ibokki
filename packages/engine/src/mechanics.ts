@@ -102,8 +102,9 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
   }
 
   // Prophecies tick after Burn: every doom on the active player counts down one turn;
-  // any that reach 0 fire. The payload was fixed at inscription (no amps); it's normal,
-  // Ward-soakable damage unless the doom pierces (Oblivion — exhaustion-style direct HP).
+  // any that reach 0 fire. The payload was fixed at inscription (no amps). Since exp-2
+  // (2026-07-28) every doom is inscribed piercing (exhaustion-style direct HP); the
+  // soakable branch below remains for any future pierce:false card.
   if (player.prophecies.length > 0) {
     const firing: typeof player.prophecies = [];
     player.prophecies = player.prophecies.filter((p) => {

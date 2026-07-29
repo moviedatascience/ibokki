@@ -40,9 +40,10 @@ clutter; deep skill expression.
   fuse counted in the doomed Wizard's turns. At the **start of the doomed Wizard's turn**
   (after Burn ticks) every prophecy on them counts down one; a prophecy reaching zero
   **fires** for its payload and is removed. The payload is **fixed at inscription** —
-  damage amps and buffs never modify it (the future is already written) — and it is
-  normal, Ward-soakable damage unless the card says otherwise (Oblivion's doom, like
-  exhaustion, cannot be prevented or absorbed). The cast itself uses the stack as usual:
+  damage amps and buffs never modify it (the future is already written) — and it fires
+  **like exhaustion: it cannot be prevented or absorbed by Wards** (2026-07-28 balance
+  rework; before, only Oblivion pierced, and a warded-up opponent could blank the entire
+  clock — Wards answer spells, not fate). The cast itself uses the stack as usual:
   a prophecy can be countered as it is cast, but once it resolves the doom is locked in.
   This is Divination's win condition — counter the setup or eat the payload. (The 2026-07-05
   identity rework: prophecies replaced opponent-milling, which won on the exhaustion axis
@@ -233,8 +234,8 @@ between both risks "bricking" (drawing V cards when you need M cards).
   it always has the right piece at the right time, prioritizing consistency over raw power.
   Its kill is **Prophecy**: delayed dooms announced in advance that arrive on schedule —
   the seer has already seen how you die. Delayed damage is intrinsically slower than
-  Evocation's burst (preserving Evo > Div) but arrives on a schedule the fortress must
-  hold resources against across turns (pressuring Abjuration).
+  Evocation's burst (preserving Evo > Div) but arrives on a schedule no Ward can absorb —
+  the fortress must answer the cast or race the clock (pressuring Abjuration).
 
 ---
 

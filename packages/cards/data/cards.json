@@ -11,7 +11,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Add 2 HP to a Ward you control. If you control no Ward, create one with 1 HP instead. Then remove 1 Burn marker from yourself.",
+    "text": "Add 2 HP to a Ward you control. If you control no Ward, create one with 2 HP instead. Then remove 1 Burn marker from yourself.",
     "comment": "Good early-game Ward sustain. Rewards players who already established a Ward on a prior turn."
   },
   {
@@ -71,8 +71,8 @@
       "S": 1,
       "M": 0
     },
-    "text": "Until the end of the round, spell damage dealt to you is reduced by 1.",
-    "comment": "Enables early Reaction spam by discounting the first one. Strong opener for a reactive game plan."
+    "text": "Until the end of the round, spell damage dealt to you is reduced by 2.",
+    "comment": "Round-long -2 to incoming spell damage - the anti-cantrip tax. Charges Reckoning while it blunts aggro; near-irrelevant against big single hits."
   },
   {
     "id": "ABJ-006",
@@ -470,13 +470,13 @@
     "school": "Abjuration",
     "type": "Spell",
     "level": 3,
-    "costText": "SSS",
+    "costText": "SS",
     "cost": {
       "V": 0,
-      "S": 3,
+      "S": 2,
       "M": 0
     },
-    "text": "Deal damage to your opponent equal to the total amount of damage you have prevented this round.",
+    "text": "Deal damage to your opponent equal to half the total damage you have prevented this match, rounded up. Damage your Wards absorb counts as prevented.",
     "comment": "Rewards a patient defensive game — the more attacks you've weathered and mitigated, the harder this hits. Pairs naturally with Absorb and other prevention effects to set up a large burst in the same round."
   },
   {
@@ -1394,8 +1394,8 @@
       "S": 0,
       "M": 1
     },
-    "text": "Look at the top 3 cards of your Resource Deck. Put one into your hand and the rest back on top in any order.",
-    "comment": "Selection over raw draw. Smooths your next two turns and stacks the top of your deck for Premonition or Calculated Draw."
+    "text": "Look at the top 3 cards of your Resource Deck. Put one into your hand and the rest back on top in any order. Until the end of the round, spell damage dealt to you is reduced by 1.",
+    "comment": "Selection plus the foreseen-blow flinch - a round-long -1 against chip damage. The seer's early answer to cantrip aggro."
   },
   {
     "id": "DIV-003",
@@ -1409,8 +1409,8 @@
       "S": 0,
       "M": 1
     },
-    "text": "Look at the top 2 cards of your Resource Deck. Put one into your hand and the other on the bottom.",
-    "comment": "Cheap filtering. Trades a little card economy for the guarantee that you keep the piece you actually need."
+    "text": "Look at the top 2 cards of your Resource Deck. Put one into your hand and the other on the bottom. Then remove 1 Burn marker from yourself.",
+    "comment": "Cheap filtering that also shrugs off a Burn you saw coming. The rider is a pure Evocation tax - dead by design against burn-less schools."
   },
   {
     "id": "DIV-004",
@@ -1538,11 +1538,11 @@
     "school": "Divination",
     "type": "Spell",
     "level": 1,
-    "costText": "M",
+    "costText": "MM",
     "cost": {
       "V": 0,
       "S": 0,
-      "M": 1
+      "M": 2
     },
     "text": "Prophecy - at the start of your opponent's second turn from now, deal 2 damage to them.",
     "comment": "The L1 starter doom - gives the prophecy identity a presence in rounds 1-4 before the L2+ dooms unlock (m12 finding). Restored to 2-in-2 (m3 finding): at 3 the guaranteed clock outpaced Abjuration's entire wall economy."

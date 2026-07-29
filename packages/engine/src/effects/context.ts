@@ -82,7 +82,10 @@ export interface EffectContext {
   discardOpponentRandom(n: number): number;
   /** Inscribe a delayed doom on the opponent: deal `amount` at the start of their
    *  `turns`-th turn from now (Prophecy — Divination's win condition). The payload
-   *  is fixed at inscription; `pierce` makes it exhaustion-style unpreventable (Oblivion). */
+   *  is fixed at inscription. Exp-2 (2026-07-28): ALL dooms are inscribed piercing —
+   *  exhaustion-style, no wards/reduction/heal-conversion. Wards answer the caster's
+   *  tempo, not the clock; the clock is answered at cast time or raced. The `pierce`
+   *  param is retained (ignored) so per-card soakable dooms stay expressible on revert. */
   prophesy(amount: number, turns: number, pierce?: boolean): void;
 
   // ---- Divination: deck sculpting (look at top N / select / reorder / loot) ----
@@ -209,6 +212,8 @@ export interface EffectContext {
   destroyAllWardsEverywhere(): number;
   addDamageReductionThisRound(amount: number): void;
   damagePreventedThisRound(): number;
+  /** Lifetime prevention this match (Reckoning's match window). */
+  damagePreventedTotal(): number;
   /** Stage a "seal target prepared spell" choice: the caster picks which opponent
    *  prepared spell (uncast, unsealed) gains the Seal. Face-down candidates appear
    *  as FACEDOWN-<slot> — targeting a slot never reveals its identity. No-op when
@@ -312,6 +317,7 @@ export function makeContext(
     item.damageReduction -= reduced;
     if (reduced > 0) {
       opponent.damagePreventedThisRound += reduced;
+      opponent.damagePreventedTotal = (opponent.damagePreventedTotal ?? 0) + reduced;
       // Absorb's rider: half the prevented damage heals its caster (floored per hit; if
       // ANOTHER reaction also stacked prevention on this item, its share heals too —
       // an accepted corner: prevention on one item is one pooled shield).
@@ -377,8 +383,10 @@ export function makeContext(
       if (sumOngoing(opponent, "cannotBeForcedToDiscard") > 0) return 0; // Iron Will
       return discardRandom(state, opponentId, n, events);
     },
-    prophesy(amount, turns, pierce) {
-      opponent.prophecies.push({ amount, turnsLeft: turns, pierce: !!pierce, defId: card.defId });
+    prophesy(amount, turns, _pierce) {
+      // Exp-2: every doom pierces (see interface doc). Flag kept true here so
+      // redaction/eval/UI all price the doom as what it is.
+      opponent.prophecies.push({ amount, turnsLeft: turns, pierce: true, defId: card.defId });
       events.push({ type: "prophecyCreated", target: opponentId, amount, turns, defId: card.defId });
     },
 
@@ -844,6 +852,9 @@ export function makeContext(
     },
     damagePreventedThisRound() {
       return self.damagePreventedThisRound;
+    },
+    damagePreventedTotal() {
+      return self.damagePreventedTotal ?? 0;
     },
     requestSealOpponentPrepared() {
       const targets = opponent.prepared

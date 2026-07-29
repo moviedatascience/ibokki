@@ -367,7 +367,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
 
   it("Omen (DIV-012): inscribes the L1 starter doom — 2 damage on a 2-turn fuse, no pause", () => {
     const { state } = play("DIV-012", () => {});
-    expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 2, pierce: false, defId: "DIV-012" }]);
+    expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 2, pierce: true, defId: "DIV-012" }]);
     expect(state.pendingChoice).toBeNull();
     expect(state.players[1].hp).toBe(30); // nothing until the fuse runs out
   });
@@ -436,7 +436,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
       s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-M", "CMP-VV"].map(inst);
     });
     expect(state.players[1].hp).toBe(30); // no immediate damage — the doom is delayed
-    expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 1, pierce: false, defId: "DIV-023" }]);
+    expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 1, pierce: true, defId: "DIV-023" }]);
     const pc = state.pendingChoice!;
     expect(pc.mode).toBe("orderToTop");
     expect(pc.candidates.map((c) => c.defId)).toEqual(["CMP-S", "CMP-M", "CMP-VV"]);
@@ -1009,6 +1009,8 @@ describe("prophecies (Divination's delayed dooms)", () => {
     expect(events2.some((e) => e.type === "prophecyFired" && e.player === 1 && e.amount === 4)).toBe(true);
   });
 
+  // Since exp-2 no card inscribes pierce:false, but the soakable branch stays a
+  // supported engine vocabulary — this pins it for any future soakable doom.
   it("normal dooms soak into Wards; the opponent's turn never ticks them", () => {
     const s = doomedState({ amount: 4, turnsLeft: 1, pierce: false });
     s.players[1].wards = [{ wid: 1, hp: 3 }];

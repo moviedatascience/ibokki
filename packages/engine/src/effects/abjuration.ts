@@ -11,7 +11,10 @@ import { register } from "./registry.ts";
 // ---- Level 1 ----
 // Fortify — ward sustain + the anti-burn rider (2026-07-04 balance: taxes Evo's
 // Kindle plan every round; zero effect vs burn-less schools, so Div>Abj is untouched).
-register("ABJ-001", (c) => { c.buffOneOwnWardOrCreate(2, 1); c.removeOwnBurn(1); });
+// Fortify create-mode 1→2 HP (exp-1b, 2026-07-27): the 1 HP opener was the weak
+// link in Abj's exchange rate vs cantrip aggro — defender's-rate buffs can't be
+// substituted around the way attacker nerfs were (exp-1's whack-a-mole finding).
+register("ABJ-001", (c) => { c.buffOneOwnWardOrCreate(2, 2); c.removeOwnBurn(1); });
 register("ABJ-002", (c) => c.createWardForSelfWith(1, { onDestroy: "draw2", onDestroyExpires: true })); // Arcane Shell — rider is round-scoped per text
 register("ABJ-003", (c) => {
   c.buffAllOwnWards(1); // Ward Pulse
@@ -23,12 +26,18 @@ register("ABJ-004", (c) => c.addUntargetableBySingle()); // Aegis
 // slot. Now a round-long -1 to incoming spell damage: a 33-50% tax on the L1
 // cantrip spam that inverted Abj>Evo, near-irrelevant against big spells.
 // (Reduction counts as prevention, so Searing Riposte still punishes it.)
-register("ABJ-005", (c) => c.addDamageReductionThisRound(1));
+// -1 → -2 (exp-1h, 2026-07-28): with the wincon path maxed (1d/1f/1g took the
+// edge from 30–0 to 17–13), the last notch is the exchange rate itself. -2 zeroes
+// the 2-damage cantrips for a round; Evo's measured answer is pivoting to L2-3
+// spells (still taxed 33-50%). Doom decks don't care: piercing dooms skip reduction.
+register("ABJ-005", (c) => c.addDamageReductionThisRound(2));
 register("ABJ-010", (c) => {
   c.requestSealOpponentPrepared(); // Runic Seal — "target": the caster picks the slot
 });
 
 // ---- Level 2 ----
+// (exp-1c tried 4 HP here: +0.4 rounds vs Evo, deepened Div-Abj to 93% — reverted.
+// Sustain notches hit diminishing returns; the Abj bridge is a wincon-timing problem.)
 register("ABJ-012", (c) => c.createWardForSelfWith(3, { reflectOnPrevent: 1 })); // Reflective Ward
 register("ABJ-017", (c) => c.lockOpponentReactionsUntilMyNextTurn()); // Arcane Anchor
 register("ABJ-018", (c) => c.addReactionTax(1)); // Aetheric Lock
@@ -51,7 +60,21 @@ register("ABJ-031", (c) => {
   const hp = c.destroyOwnLargestWard(); // Ward Collapse
   c.dealRawDamage(hp);
 });
-register("ABJ-032", (c) => c.dealRawDamage(c.damagePreventedThisRound())); // Reckoning
+// Reckoning window: round → MATCH (exp-1d, 2026-07-27). The per-round counter
+// reset to zero before every prepare phase, so the card always LOOKED dead at
+// prep time — 0 preps across the entire balance triangle, for bots and humans
+// alike. Half the match total makes it Abjuration's earned anti-aggro wincon:
+// it charges from active reduction (Stone Stance, Absorb, Inversion) and — since
+// exp-1g — ward soaks too, so it grows with exactly the chip volume cantrip aggro
+// produces. It stays small against doom decks regardless: piercing dooms (exp-2)
+// bypass wards and reduction alike, so nothing charges.
+// (exp-1e tried L3→L2: REGRESSION, 27–3 → 29–1 and faster deaths. The greedy
+// bot cashed the charge early and often — 35 casts at 4% WR-used — cannibalizing
+// its own defense. A charge card must not be castable while the charge is small.)
+// Cost SSS→SS (exp-1f, 2026-07-28): keep the L3 gate (charge stays big) but cut
+// assembly time — at SSS it was prepped in 23/30 games yet cast in only 6; the
+// round-10 window is too short to attach three S before the game ends.
+register("ABJ-032", (c) => c.dealRawDamage(Math.ceil(c.damagePreventedTotal() / 2))); // Reckoning
 register("ABJ-033", (c) => c.dealRawDamage(3 * c.reactionsCastThisRound())); // Backlash
 register("ABJ-034", (c) => c.addReactionPunish(3)); // Exhausting Aura
 register("ABJ-035", (c) => c.dealRawDamage(c.selfHasWard() ? 7 : 5)); // Banishing Bolt

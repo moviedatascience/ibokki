@@ -34,6 +34,8 @@ interface SideCommon {
   prophecies: { amount: number; turnsLeft: number; pierce: boolean; defId: string }[];
   /** Times this player's discard has recycled into their deck (exhaustion clock). Public. */
   reshuffles: number;
+  /** Lifetime damage prevented this match (Reckoning's charge) — public, like the open plays that built it. */
+  damagePreventedTotal: number;
   /** Active lasting effects this player owns — public, like the table markers they represent. */
   ongoing: OngoingView[];
   slotsUsedThisRound: number;
@@ -168,6 +170,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
       burn: me.burn,
       prophecies: me.prophecies.map((p) => ({ ...p })),
       reshuffles: me.reshuffles,
+      damagePreventedTotal: me.damagePreventedTotal ?? 0,
       ongoing: me.ongoing.map((o) => ({ kind: o.kind, value: o.value, expiry: o.expiry })),
       slotsUsedThisRound: me.slotsUsedThisRound,
       slots: myTier.slots,
@@ -191,6 +194,7 @@ export function redact(state: GameState, viewer: PlayerId): PlayerView {
       burn: opp.burn,
       prophecies: opp.prophecies.map((p) => ({ ...p })),
       reshuffles: opp.reshuffles,
+      damagePreventedTotal: opp.damagePreventedTotal ?? 0,
       ongoing: opp.ongoing.map((o) => ({ kind: o.kind, value: o.value, expiry: o.expiry })),
       slotsUsedThisRound: opp.slotsUsedThisRound,
       slots: oppTier.slots,

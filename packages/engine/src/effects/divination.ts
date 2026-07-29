@@ -8,7 +8,8 @@
  * halves use the `reveal` mode (information shown, nothing moves).
  * The WIN CONDITION is Prophecy (2026-07-05 rework, replacing mill): delayed dooms
  * that fire at the start of the opponent's Nth turn — counter the setup or eat the
- * payload. Normal ward-soakable damage except Oblivion (pierces, like exhaustion).
+ * payload. Exp-2 (2026-07-28): ALL dooms pierce (exhaustion-style; wards/reduction
+ * never touch them) — before, only Oblivion did and Abj soaked the rest of the clock.
  * Recast-from-discard (Borrowed Spell/Power, Convergence) is a documented SPEC
  * ADAPTATION — cast spells return to `prepared`, never to discard, so these recast
  * an already-cast prepared spell instead.
@@ -18,8 +19,20 @@ import { componentSymbols } from "./context.ts";
 
 // ---- Level 1 ----
 register("DIV-001", (c) => c.draw(2)); // Insight (1→2: draw-1-for-M was strictly dominated by Foresight/Divine; balance 2026-07-03)
-register("DIV-002", (c) => c.requestTakeFromTop(3, 1, "top")); // Foresight (look 3, choose 1, rest on top)
-register("DIV-003", (c) => c.requestTakeFromTop(2, 1, "bottom")); // Divine (look 2, choose 1, other to bottom)
+// Foresight / Divine — the L1 info row grew teeth (exp-4, 2026-07-29). Vs Evo the
+// row was 0-cast across the whole balance series, and exp-3b measured WHY the fix
+// isn't damage: once the bot could express Omen/Foretell, Div's +10 chip/game moved
+// the Evo edge by ZERO games (still 30–0, round 5.2). The lever is TIME — games end
+// exactly as Foreclosure would come online — so the row defends: Foresight carries
+// the foreseen-blow flinch (round-long -1 spell damage, Stone Stance's little
+// sibling), Divine shrugs off a Burn (the Fortify precedent: a pure Evo-tax that is
+// formally dead vs burn-less schools, so the won Div–Abj edge can't deepen on it).
+// (exp-4b tried -2: +0.2 rounds vs Evo, still 30–0, while Div–Abj deepened
+// 29–1 → 30–0 as the bigger flinch blunted Abj's raw kit — the exp-1c revert
+// pattern exactly. The Evo–Div wall does not fall to rate notches; it needs a
+// wincon/defense that functions inside 5 rounds.)
+register("DIV-002", (c) => { c.addDamageReductionThisRound(1); c.requestTakeFromTop(3, 1, "top"); }); // Foresight (look 3, choose 1, rest on top)
+register("DIV-003", (c) => { c.removeOwnBurn(1); c.requestTakeFromTop(2, 1, "bottom"); }); // Divine (look 2, choose 1, other to bottom)
 register("DIV-004", (c) => c.lookSelectMaterialToHand(1)); // Augury (top card: draw if M, else bottom)
 register("DIV-005", (c) => {
   // Premonition — draw 2; if either is a multi-symbol component, draw a third.

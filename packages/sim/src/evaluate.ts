@@ -48,6 +48,10 @@ export interface EvalWeights {
   /** Imminent-reshuffle pressure: next exhaustion hit scaled by deck thinness. */
   exhaustion: number;
   ongoingValue: number;
+  /** Round-long damage reduction priced per expected remaining enemy hit (ward-like). */
+  damageReductionPerHit: number;
+  /** Reckoning's banked payload (ceil(match prevention / 2)) while it sits prepared. */
+  reckoningCharge: number;
 }
 
 export const DEFAULT_WEIGHTS: EvalWeights = {
@@ -67,6 +71,25 @@ export const DEFAULT_WEIGHTS: EvalWeights = {
   slotRemaining: 0.4,
   exhaustion: 0.5,
   ongoingValue: 0.4,
+  damageReductionPerHit: 0.8,
+  reckoningCharge: 0.8,
+};
+
+/**
+ * Cast-payoff worth the card-blind prep term cannot see (exp-3b, 2026-07-29 —
+ * the THIRD instance of the blind-spot law after Stone Stance and Reckoning).
+ * The generic prep worth is (prepBase + level·perLevel): identical for every
+ * L1 spell, so prep candidates tie and enumeration order decides. Divination's
+ * spellbook sorts DIV-001..005 first, which starved its actual L1 pressure —
+ * Omen (the designed "L1 starter doom") and Foretell had 0 preps across the
+ * ENTIRE balance series. Entries are the card's approximate cast payoff in HP
+ * (Omen: 2 dmg doom decayed ≈ 1.7; Foretell: 2 dmg + intel, ward-soakable).
+ * Deliberately Div-only: Evocation's id order already fronts its cantrips, and
+ * touching its prep behavior would destabilize every tuned edge for no gain.
+ */
+const PREP_THREAT: Record<string, number> = {
+  "DIV-012": 1.7, // Omen — prophesy(2,2), re-preparable clock
+  "DIV-011": 1.6, // Foretell — 2 damage now + hand reveal
 };
 
 function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
@@ -75,7 +98,21 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
   let score = p.hp * w.hp;
   if (p.hp < w.lowHpLine) score -= (w.lowHpLine - p.hp) * w.lowHp;
 
-  for (const ward of p.wards) score += ward.hp * w.wardHp;
+  // Ward doom discount (exp-3c, 2026-07-29): piercing dooms bypass wards
+  // entirely (exp-2), so flat ward pricing is wrong exactly when the opponent
+  // kills through the clock. Once the prep fix let Div actually spam Omen,
+  // Abj poured its whole S economy into walls — Ward Pulse 133 casts at 3%
+  // WR-used, 29–1 — while counters and Final Reckoning went unfueled. Same
+  // pending-pierce-doom signal as the reduction discount below, floored at
+  // 0.3 because wards persist past the round and still stop the soakable
+  // minority (Foretell, reflect value). Doom-less matchups: factor exactly 1.
+  const pierceDoomThreat = p.prophecies.reduce((sum, d) => sum + (d.pierce ? d.amount : 0), 0);
+  {
+    const opp = state.players[otherPlayer(id)];
+    const oppHitsLeft = Math.max(0, tierForLevel(opp.level).slots - opp.slotsUsedThisRound);
+    const soakShare = pierceDoomThreat > 0 ? Math.max(0.3, oppHitsLeft / (oppHitsLeft + pierceDoomThreat)) : 1;
+    for (const ward of p.wards) score += ward.hp * w.wardHp * soakShare;
+  }
 
   // Burn n deals n, n-1, … over coming turns: n·(n+1)/2 total, but never more than remaining HP.
   if (p.burn > 0) score -= Math.min((p.burn * (p.burn + 1)) / 2, p.hp) * w.burn;
@@ -104,7 +141,18 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
     const castable = (def.level ?? 1) <= tier.maxSpellLevel;
     const worth = (w.prepBase + level * w.prepPerLevel) * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3);
     score += worth;
+    const threat = PREP_THREAT[prep.spell.defId];
+    if (threat) score += threat * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3);
     if (def.type === "Reaction" && castable && meetsCost(def.cost, have)) score += w.armedReaction;
+    if (prep.spell.defId === "ABJ-032") {
+      // Reckoning's banked payload: cast deals ceil(match prevention / 2) raw.
+      // The generic prep term prices it like any other L3, so the greedy bot
+      // never swapped it in — 0 casts across the whole 2026-07-28 triangle
+      // despite the exp-1d match-window rework (same blind-spot class as
+      // Stone Stance before damageReductionPerHit).
+      const payload = Math.min(Math.ceil((p.damagePreventedTotal ?? 0) / 2), state.players[otherPlayer(id)].hp);
+      score += payload * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * w.reckoningCharge;
+    }
   }
 
   score += Math.max(0, tier.slots - p.slotsUsedThisRound) * w.slotRemaining;
@@ -113,7 +161,27 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
   const nextExhaustion = 2 * (p.reshuffles + 1);
   score -= nextExhaustion * Math.max(0, 1 - p.resourceDeck.length / 8) * w.exhaustion;
 
-  for (const o of p.ongoing) score += o.value * w.ongoingValue;
+  for (const o of p.ongoing) {
+    if (o.kind === "damageReduction") {
+      // Prevention against every remaining hit this round — price by the
+      // opponent's leftover hit budget (slots), like ward HP, not the flat
+      // marker term. Under the flat term the greedy bot could not express
+      // Stone Stance at all: 1 cast in 30 games while the engine said it was
+      // good (experiment 1b, 2026-07-27).
+      // Doom discount (exp-3a, 2026-07-29): piercing dooms bypass reduction
+      // entirely, so when my incoming damage is doom-shaped an opponent slot is
+      // mostly a clock tick, not a reducible hit. Scale by the share of visible
+      // threat reduction actually touches — vs doom-less schools the factor is
+      // exactly 1 (control legs replay byte-identical). Without it the bot
+      // overcast dead stances vs Div all game: 142 casts at 10% WR-used.
+      const opp = state.players[otherPlayer(id)];
+      const hitsLeft = Math.max(0, tierForLevel(opp.level).slots - opp.slotsUsedThisRound);
+      const reducibleShare = hitsLeft > 0 ? hitsLeft / (hitsLeft + pierceDoomThreat) : 0;
+      score += o.value * hitsLeft * reducibleShare * w.damageReductionPerHit;
+    } else {
+      score += o.value * w.ongoingValue;
+    }
+  }
 
   return score;
 }

@@ -84,11 +84,18 @@ export function dealDamageToPlayer(
   if (amount <= 0) return;
   const target = state.players[targetId];
   // Apocalypse-style "cannot be prevented": bypasses ongoing reduction and Inversion
-  // Field. Wards still soak — ward absorption is not "prevention" in this engine's
-  // vocabulary (it never increments damagePreventedThisRound).
+  // Field. Wards still soak — ward absorption is not "prevention" in the ROUND
+  // vocabulary (damagePreventedThisRound, read by Searing Riposte's trap delta),
+  // but since exp-1g (2026-07-28) it DOES charge the MATCH counter
+  // (damagePreventedTotal, Reckoning's window): weathering chip on your shield is
+  // the card's printed fantasy, and vs doom decks the charge stays small anyway —
+  // piercing dooms never touch wards.
   const reduction = opts?.unpreventable ? 0 : sumOngoing(target, "damageReduction");
   let dealt = Math.max(0, amount - reduction);
-  if (amount - dealt > 0) target.damagePreventedThisRound += amount - dealt;
+  if (amount - dealt > 0) {
+    target.damagePreventedThisRound += amount - dealt;
+    target.damagePreventedTotal = (target.damagePreventedTotal ?? 0) + (amount - dealt);
+  }
   if (dealt <= 0) return;
 
   // Inversion Field: convert incoming damage into healing, up to a per-round cap.
@@ -99,6 +106,7 @@ export function dealDamageToPlayer(
       target.hp += healed;
       target.damageHealedThisRound += healed;
       target.damagePreventedThisRound += healed;
+      target.damagePreventedTotal = (target.damagePreventedTotal ?? 0) + healed;
       events.push({ type: "healed", player: targetId, amount: healed });
       dealt -= healed;
     }
@@ -112,6 +120,7 @@ export function dealDamageToPlayer(
     const absorbed = Math.min(dealt, ward.hp);
     ward.hp -= absorbed;
     dealt -= absorbed;
+    if (absorbed > 0) target.damagePreventedTotal = (target.damagePreventedTotal ?? 0) + absorbed;
     events.push({ type: "wardDamaged", player: targetId, amount: absorbed });
     if (ward.reflectOnPrevent && absorbed > 0) {
       const oid = otherPlayer(targetId); // chip damage (no further ward routing) avoids reflect loops
