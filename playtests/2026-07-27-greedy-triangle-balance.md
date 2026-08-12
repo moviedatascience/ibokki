@@ -556,3 +556,133 @@ a CREDIBLE one. Structural finding #1 above (Abj has no wincon vs dooms) is
 RETRACTED as substantially a horizon artifact — Reckoning runs 42 casts / 36%
 WR-used vs Div at horizon 2. Finding #2 (Evo–Div needs a sub-5-round wincon or
 systemic lever) STANDS, strengthened.
+
+---
+
+## Verification run (2026-08-12): horizon-2 triangle replicated after two weeks idle
+
+Tests green first (230/230, 17 files). Canonical seeds, same harness, engine/sim
+tree unchanged since 7bcb2e7 (2026-07-29). All three legs reproduce the recorded
+horizon-2 numbers exactly:
+
+| Matchup | Result | Avg rounds / turns | Design intent | Status |
+|---|---|---|---|---|
+| Evo vs Abj (seed 100) | 21–9 Abj (70%) | 9.63 / 91.5 | Abj > Evo | CORRECT |
+| Div vs Abj (seed 200) | 22–8 Div (73%) | 12.83 / 128.1 | Div > Abj | CORRECT |
+| Evo vs Div (seed 300) | 30–0 Evo (100%) | 5.67 / 59.8 | Evo > Div | CORRECT (degenerate, validated real at bot level) |
+
+Telemetry spot checks hold: Reckoning is Abj's wincon on the Evo edge (24 casts,
+21 games used at 100% WR-used; Stone Stance 110 casts as the engine) and stays
+modest vs dooms (87 casts, 31% WR-used — soaks don't charge off pierce). Cut the
+Thread expresses vs Abj (108 casts, 73% WR-used) but only 7 casts vs Evo —
+ledger #5's residual shape, visible rather than silent now. Pacing continues to
+improve free of charge: Div–Abj 128 turns/game (271 at the horizon-1 baseline,
+210 post-exp-2).
+
+Expression-audit flags this run (forcing-probe customers once 1b ships — no
+hand verdicts):
+- Meteor [EVO-032] slotted-but-mute vs Abj (17 preps, 1 cast) — standing since the first triangle.
+- Echoes of the Past [DIV-028] slotted-but-mute vs Abj (20 preps, 2 casts) — NEW flag.
+- Kindle [EVO-006] L1-never-seen on both Evo legs (the known id-order prep starvation, 1a's maiden catch — still unfixed).
+- Div's L1 utility row (Augury/Recover/Refocus/Attune/Mind's Eye) unseen on every leg.
+
+The triangle state is stable, deterministic, and two weeks stale in the good
+sense. Standing agenda unchanged: piloted Evo–Div validation, then blindspot
+plan 1b (forcing probes) → 2 (auto-derived priors).
+
+---
+
+## PILOTED VALIDATION (2026-08-12, same day): the Evo–Div wall BREAKS at piloted level
+
+First piloted attempt (Claude piloting Div vs greedy Evo, seed 812):
+**Divination WINS, round 5, 2 HP remaining** — the same round the sim says Div
+dies, against the same bot that is 240-0 vs bot-piloted Div. Full transcript +
+analysis: `2026-08-12-m1-Divination-vs-Evocation.md`. Every winning line maps to
+a documented blind-spot class: first-seat Foresight (exp-4b's gap), doom timing
+as turn-start checkmate (ledger #5), Anticipate as a 5/5-rounds value engine,
+and exploiting Evo's real fuel droughts. Verdict: the 100% is a measurement
+ceiling of the greedy pilot, not a property of the cards. Exp-7's "systemic
+surgery needed" conclusion is DOWNGRADED to "piloted winrate unknown, plausibly
+30-50%". Next: 2-3 more piloted seeds before touching any systemic lever;
+re-test ISMCTS on this matchup (its lookahead is exactly what won here).
+
+### Replication (same day): 4-0 across four seeds — the systemic-lever question is CLOSED
+
+Three more piloted matches (subagent pilots, same playbook, seeds 813/907/1024;
+logs m2/m3/m4 alongside m1). **Divination won all four games, every one in
+round 5**, margins 2/4/2/6 HP vs the bots' 0-240. The win architecture was
+identical and repeatable, not seed-dependent:
+
+| Seed | Result | Div HP left | Doom share of damage | Anticipate fires | Kill |
+|---|---|---|---|---|---|
+| 812 | W R5 | 2 | 16/31 | 5/5 rounds | Foreclosure @ turn start |
+| 813 | W R5 | 4 | 14/31 | 5/5 | Foreclosure @ turn start |
+| 907 | W R5 | 2 | 14/31 | 5/5 | Foreclosure @ turn start (they held lethal, never got to cast it) |
+| 1024 | W R5 | 6 | 16/30 | 4/4 | Foreclosure, forced from R4 (lethal even through their max spike) |
+
+Findings, in strength order:
+1. **Evo-Div needs NO systemic lever.** Exp-7's conclusion is fully retracted:
+   the wall was the greedy pilot's doom-scheduling/lookahead ceiling (ledger #5's
+   shape). The matchup at strong-pilot level is a razor race decided in rounds
+   4-5 — tense, interactive, and arguably the best-FEELING matchup in the game.
+   Bot-level 30-0 stays in the matrix but is now labeled a pilot artifact.
+2. **The winning skills are exactly what greedy cannot price**: doom arrivals
+   timed to the opponent's turn START (checkmate before their action), round-long
+   defense cast first-seat, reaction uptime every round, and M-bank timing (907's
+   pivotal call: bank 4 M for a one-turn kill assembly). ISMCTS re-test on this
+   matchup is now the highest-value bot workstream — this is its promotion test.
+3. **Evo's V-fuel droughts are real** (every game had 1-2 passed turns; one game
+   saw prepped Inferno Lance/Hex Bolt never cast; one saw Catalyst cast with zero
+   slots left to use it). They bought margin in three games, the win in none.
+   Separate small finding: greedy-Evo's self-damage plays (Battle Trance -2) are
+   liabilities in doom races it can't see coming.
+4. **Card watch from the pilot's seat:** Anticipate (M) fired 19/19 available
+   rounds across the series for 1 dmg + draw — flat, undodgeable value; watch in
+   PvP. Divine is weak (burn is a one-shot delayed tick, not a DoT). Foreclosure
+   is the matchup's kill card purely on timing geometry. Foresight's exp-4 rider
+   earned its slot every game (the 2-HP wins ARE its margin).
+5. **Mechanics notes for future pilots:** dooms carry across round boundaries
+   and fire on the first turn-start of the new round; attachments sweep at round
+   end (hand persists); first seat alternates but assignment is seat-dependent
+   per game; second-seat Anticipate can't catch a first-seat opener.
+
+Standing agenda after this session: (a) ISMCTS vs greedy on Evo-Div specifically,
+(b) blindspot 1b forcing probes → 2 auto-priors, (c) client hint for the
+round-end attachment sweep (every pilot paid tuition to it), (d) PvP telemetry
+watch on Anticipate.
+
+---
+
+## ISMCTS re-test + blindspot 3c lever (2026-08-12, later): the noise fix works
+
+Agenda item (a) executed same-day. The blind-spot plan's 3c hypothesis — the
+search bot's flat 24-ply heuristic rollouts are a NOISE source that overrides
+its greedy root priors — was implemented and A/B'd: `IsmctsBot.rollout()` (and
+`forcedLineValue`) now stop at a QUIESCENT TURN BOUNDARY (`rolloutTurns`,
+default 2 — the measurement-regime horizon) instead of a fixed ply count, i.e.
+the exact stopping rule GreedySimBot scores with. Sim-only change; engine and
+greedy untouched; full suite 230/230; canonical triangle unaffected (greedy
+measures it).
+
+### The A/B (search-Div vs greedy-Evo, seed 300, n=10, fixed seats)
+
+| Rollouts | Result | Note |
+|---|---|---|
+| OLD (flat 24 plies) | **0–10** | replicates the wall — bot-Div was 0-for-240 lifetime |
+| NEW (turn-bounded, horizon 2) | **2–8** | FIRST bot-piloted Div wins vs greedy-Evo ever |
+
+Control (new rollouts): search-Abj vs greedy-Evo seed 100, n=10 → **7–3 Abj**,
+matching greedy-Abj's own 70% on this leg. Search now equals greedy on the
+defensive edge and finds ~20% of the piloted-play equity on the doom edge that
+every greedy-level experiment scored 0% on. The piloted series' skills (doom
+timing past the horizon) are exactly what the tree can represent and greedy
+cannot — the mechanism, not just the score, matches the prediction.
+
+### Promotion verdict: NOT YET, but the path is open
+The ladder criterion stands (reliably BEAT greedy, not match it). Search at 300
+iterations is parity-plus-upside at ~5-10x greedy's cost per game. Next levers,
+in order: (1) iterations sweep (300 → 600/1000 — the noise fix means budget now
+buys lookahead instead of variance), (2) head-to-head on the remaining edges
+(Div–Abj both directions), (3) if promoted, ladder integration via `maxMillis`
+(the server already has the latency cap knob). Numbers here are n=10 unpaired —
+directional, not canonical; re-run paired at n=30 before any ladder decision.

@@ -7,8 +7,13 @@
  * by action SLUG (the information-set identity of an action — stable across
  * worlds, unlike instance ids), and an edge's UCB exploration term uses its
  * availability count: how often the action was even legal when its parent was
- * visited. Leaves are scored by a truncated heuristic-policy rollout followed
- * by `evaluateState`, squashed to [-1, 1].
+ * visited. Leaves are scored by a TURN-BOUNDED heuristic-policy rollout — play
+ * both sides to the next quiescent turn boundary (`rolloutTurns` boundaries,
+ * default 2, the same horizon the greedy measurement regime uses) — followed by
+ * `evaluateState`, squashed to [-1, 1]. Blind-spot plan 3c (2026-08-12): the
+ * old flat 24-ply rollouts wandered through partial turns of heuristic misplay,
+ * and that noise overrode the greedy root priors; stopping at the boundary
+ * makes leaf values greedy-quality so the tree spends its budget on lookahead.
  *
  * Difficulty knobs: `iterations` (strength), `evalNoise` (blunder dial),
  * `exploration`, `rolloutPlies`, and `maxMillis` (server latency cap — leave
@@ -39,7 +44,12 @@ export interface MctsOptions {
   iterations?: number;
   /** UCB exploration constant (values live in [-1, 1]). Default 0.4. */
   exploration?: number;
-  /** Rollout length in plies past the expanded node. Default 24. */
+  /** Turn boundaries a rollout plays past the expanded node before scoring
+   * (quiescent stop, like GreedyOptions.rolloutTurns). Default 2 — the
+   * measurement-regime horizon: the opponent's reply turn is scored, so
+   * reactions, fuel denial, and doom timing price correctly. */
+  rolloutTurns?: number;
+  /** Hard rollout cap in plies past the expanded node. Default 30 × rolloutTurns. */
   rolloutPlies?: number;
   /** Uniform noise added to leaf values — the blunder dial for lower difficulties. Default 0. */
   evalNoise?: number;
@@ -79,6 +89,7 @@ export class IsmctsBot implements Agent {
   private readonly fallback: HeuristicBot;
   private readonly iterations: number;
   private readonly exploration: number;
+  private readonly rolloutTurns: number;
   private readonly rolloutPlies: number;
   private readonly evalNoise: number;
   private readonly maxMillis: number | undefined;
@@ -89,7 +100,8 @@ export class IsmctsBot implements Agent {
     this.fallback = new HeuristicBot((seed ^ 0xc2b2ae35) | 0);
     this.iterations = opts?.iterations ?? 300;
     this.exploration = opts?.exploration ?? 0.4;
-    this.rolloutPlies = opts?.rolloutPlies ?? 24;
+    this.rolloutTurns = Math.max(1, opts?.rolloutTurns ?? 2);
+    this.rolloutPlies = opts?.rolloutPlies ?? 30 * this.rolloutTurns;
     this.evalNoise = opts?.evalNoise ?? 0;
     this.maxMillis = opts?.maxMillis;
     this.evalScale = opts?.evalScale ?? 12;
@@ -299,9 +311,10 @@ export class IsmctsBot implements Agent {
   /**
    * Greedy-style estimate of a root action: apply it in `world`, play the
    * heuristic policy for both sides through the forced continuation (reactions,
-   * stack resolution, hand cap) to the next turn boundary, and evaluate — from
-   * P0's perspective, squashed like every other leaf. Null when the action is a
-   * hidden-info no-op quirk in this sampled world.
+   * stack resolution, hand cap) to a quiescent boundary `rolloutTurns` turns
+   * out — the SAME horizon the rollouts and the greedy measurement regime use —
+   * and evaluate from P0's perspective, squashed like every other leaf. Null
+   * when the action is a hidden-info no-op quirk in this sampled world.
    */
   private forcedLineValue(world: GameState, action: Action, me: PlayerId): number | null {
     const applied = this.tryApply(world, action, me);
@@ -310,8 +323,8 @@ export class IsmctsBot implements Agent {
     let seed: number;
     [seed, this.rng] = rngInt(this.rng, 2 ** 31);
     const policy: [HeuristicBot, HeuristicBot] = [new HeuristicBot(seed), new HeuristicBot((seed ^ 0x9e3779b9) | 0)];
-    for (let ply = 0; ply < 30 && !isTerminal(s); ply++) {
-      if (s.phase === "main" && s.stack.length === 0 && !s.pendingChoice && s.turnCount > world.turnCount) break;
+    for (let ply = 0; ply < this.rolloutPlies && !isTerminal(s); ply++) {
+      if (s.phase === "main" && s.stack.length === 0 && !s.pendingChoice && s.turnCount > world.turnCount + this.rolloutTurns - 1) break;
       const actor: PlayerId = s.priorityPlayer;
       const legal = legalActions(s, actor);
       if (legal.length === 0) break;
@@ -320,9 +333,12 @@ export class IsmctsBot implements Agent {
     return Math.tanh(evaluateState(s, 0) / this.evalScale);
   }
 
-  /** Truncated heuristic-policy playout from `s`; returns the end state + plies used.
-   *  Runs a few extra plies past the cap if needed to reach quiescence — evaluating
-   *  mid-stack misprices a position (fuel spent, damage not yet dealt). */
+  /** Turn-bounded heuristic-policy playout from `s`: play both sides until the
+   *  position is quiescent at a turn boundary `rolloutTurns` past the leaf's
+   *  turn (greedy's stopping rule — the same estimator the root priors use), or
+   *  the hard ply cap. A few extra plies past the cap reach quiescence if the
+   *  cap lands mid-stack — evaluating mid-stack misprices a position (fuel
+   *  spent, damage not yet dealt). */
   private rollout(s: GameState): { state: GameState; plies: number } {
     let rolloutSeed: number;
     [rolloutSeed, this.rng] = rngInt(this.rng, 2 ** 31);
@@ -330,6 +346,7 @@ export class IsmctsBot implements Agent {
       new HeuristicBot(rolloutSeed),
       new HeuristicBot((rolloutSeed ^ 0x27d4eb2f) | 0),
     ];
+    const startTurn = s.turnCount;
     let ply = 0;
     const step = (): boolean => {
       const actor: PlayerId = s.priorityPlayer;
@@ -339,6 +356,7 @@ export class IsmctsBot implements Agent {
       return true;
     };
     for (; ply < this.rolloutPlies && !isTerminal(s); ply++) {
+      if (s.phase === "main" && s.stack.length === 0 && !s.pendingChoice && s.turnCount > startTurn + this.rolloutTurns - 1) break;
       if (!step()) break;
     }
     for (let extra = 0; extra < 10 && !isTerminal(s) && (s.stack.length > 0 || s.pendingChoice); extra++, ply++) {
