@@ -119,14 +119,29 @@ export class GreedySimBot implements Agent {
       let total = 0;
       for (const s of samples) total += this.simulate(s.world, a, me, s.rolloutSeed);
       let score = total / samples.length;
-      // Forcing probe (1b): forced-card actions win ordinary auctions.
-      if (this.forceSuffix !== undefined && slugFor(state, a, me).endsWith(this.forceSuffix)) score += this.forceBonus;
+      // Forcing probe (1b): forced-card actions win ordinary auctions. Attach
+      // slugs name a slot, not a card, so assembly is forced via the slot's
+      // occupant — without this, expensive-cost cards stay "slotted but mute"
+      // under forcing (the Meteor probe's first-run finding, 2026-08-12).
+      if (this.forceSuffix !== undefined && this.isForced(state, a, me)) score += this.forceBonus;
       if (score > bestScore) {
         bestScore = score;
         best = a;
       }
     }
     return best;
+  }
+
+  /** Forcing-probe match: the action's slug names the forced card (prep/cast/
+   *  react/swap-in/choice-pick), or it attaches a component to the forced
+   *  card's prepared slot (attach slugs carry slot indices, not defIds). */
+  private isForced(state: GameState, a: Action, me: PlayerId): boolean {
+    if (a.type === "attach") {
+      const suffix = this.forceSuffix!;
+      const defId = state.players[me].prepared[a.preparedIndex]?.spell.defId;
+      return defId !== undefined && `-${defId.toLowerCase()}` === suffix;
+    }
+    return slugFor(state, a, me).endsWith(this.forceSuffix!);
   }
 
   /** Apply `action` in `world`, roll forward with the heuristic policy for both
