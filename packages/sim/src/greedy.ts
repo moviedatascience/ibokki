@@ -40,6 +40,16 @@ export interface GreedyOptions {
    *  fuel denial, round-long defense — visible at ~2x cost. Blind-spot plan
    *  3a (2026-07-29): the horizon gap is ledger entry #5. */
   rolloutTurns?: number;
+  /** FORCING PROBE (blind-spot plan 1b): bias action selection toward this
+   *  card — prep/cast/react/swap-in actions for the defId get `forceBonus`
+   *  added to their score, so the bot expresses the card whenever plausible.
+   *  Run the canonical seeds with and without: winrate UP under forcing =
+   *  the bot undervalues the card (verdict quarantined, ledger entry);
+   *  winrate flat/down = a real card verdict at bot level. */
+  forceDefId?: string;
+  /** Score bonus for forced-card actions, HP-denominated (default 3 — wins
+   *  ordinary prep/cast auctions; terminal lines still dominate). */
+  forceBonus?: number;
 }
 
 /** Tiny per-ply cost so equal outcomes prefer the DIRECT line (cast lethal now,
@@ -53,6 +63,8 @@ export class GreedySimBot implements Agent {
   private readonly worlds: number;
   private readonly maxPlies: number;
   private readonly turns: number;
+  private readonly forceSuffix: string | undefined;
+  private readonly forceBonus: number;
 
   constructor(seed: number, opts?: GreedyOptions) {
     this.rng = seed | 0;
@@ -60,6 +72,11 @@ export class GreedySimBot implements Agent {
     this.worlds = opts?.determinizations ?? 3;
     this.turns = Math.max(1, opts?.rolloutTurns ?? 1);
     this.maxPlies = opts?.rolloutPlies ?? 30 * this.turns;
+    // Slugs are kebab-cased defIds (`prep-evo-006`, `swap-div-005-div-020` —
+    // the trailing segment is the incoming card), so a "-<defid>" suffix match
+    // catches prep/cast/react and swap-IN without matching swap-OUT.
+    this.forceSuffix = opts?.forceDefId ? `-${opts.forceDefId.toLowerCase()}` : undefined;
+    this.forceBonus = opts?.forceBonus ?? 3;
   }
 
   chooseAction(view: PlayerView, legal: Action[], state?: GameState): Action {
@@ -101,7 +118,9 @@ export class GreedySimBot implements Agent {
     for (const a of candidates) {
       let total = 0;
       for (const s of samples) total += this.simulate(s.world, a, me, s.rolloutSeed);
-      const score = total / samples.length;
+      let score = total / samples.length;
+      // Forcing probe (1b): forced-card actions win ordinary auctions.
+      if (this.forceSuffix !== undefined && slugFor(state, a, me).endsWith(this.forceSuffix)) score += this.forceBonus;
       if (score > bestScore) {
         bestScore = score;
         best = a;

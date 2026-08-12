@@ -11,6 +11,7 @@ import {
   type GameState,
 } from "@ibokki/engine";
 import { GreedySimBot, HeuristicBot } from "../src/index.ts";
+import { slugFor } from "../src/render.ts";
 import { DEFAULT_WEIGHTS, evaluateState, WIN_SCORE } from "../src/evaluate.ts";
 import { CardStatsCollector } from "../src/telemetry.ts";
 import { runMatch } from "../src/runMatch.ts";
@@ -90,6 +91,21 @@ describe("GreedySimBot", () => {
     const bot = new GreedySimBot(7);
     const action = bot.chooseAction(redact(state, 0), legal, state);
     expect(action.type).toBe("cast");
+  });
+
+  it("forcing probe (1b): a forced card wins prep auctions it otherwise loses", () => {
+    // Fresh game, P0 Evocation, first prepare decision. Kindle [EVO-006] is the
+    // known id-order prep-starved card (audit's maiden catch) — the unforced bot
+    // never preps it first; the forced bot must.
+    const state = createGame({ seed: 11, players: [deckFor("Evocation"), deckFor("Divination")] });
+    expect(state.phase).toBe("prepare");
+    const legal = legalActions(state, 0);
+    const fast = { determinizations: 2, rolloutPlies: 12 };
+
+    const plain = new GreedySimBot(5, fast).chooseAction(redact(state, 0), legal, state);
+    const forced = new GreedySimBot(5, { ...fast, forceDefId: "EVO-006" }).chooseAction(redact(state, 0), legal, state);
+    expect(slugFor(state, plain, 0)).not.toBe("prep-evo-006");
+    expect(slugFor(state, forced, 0)).toBe("prep-evo-006");
   });
 
   it("is deterministic and beats the random bot from either seat", () => {
