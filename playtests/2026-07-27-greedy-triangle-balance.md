@@ -708,3 +708,54 @@ next bot-quality investment per the plan-of-record order is blindspot 1b
 (forcing probes) → 2 (auto-priors) — both cheaper and both serve measurement
 rather than play strength. Revisit search promotion after those, with paired
 n=30 as the gate and greedy-policy rollouts as the next lever to try.
+
+---
+
+## Blindspot 1b SHIPPED (2026-08-12, evening): forcing probes — first campaign
+
+`--force <defId>` (GreedyOptions.forceDefId): +3 HP-denominated bonus on any
+greedy action expressing the card — prep/cast/react/swap-in via slug suffix,
+plus attaches to the forced card's prepared slot (the first Meteor run caught
+that attach slugs name slots, not cards — without assembly forcing, expensive
+costs stay mute under the probe; fixed same-day and unit-tested). Decision
+rule: vs the same-seed unforced baseline, winrate UP = bot undervaluation
+(verdict quarantined); FLAT with expression up = real replacement-level
+verdict; DOWN = the bot was right to shun it.
+
+Deviation from the plan's acceptance test: retro-forcing PRE-FIX Stone Stance
+isn't reproducible on this tree (the eval fix shipped in exp-1b). Validation
+instead: the unit test (Kindle wins a prep auction only when forced) plus live
+expression on two of the three probes below (0→134 and 1→16 casts).
+
+### Campaign 1 — all three audit-flagged cards, canonical baselines (n=30 paired)
+
+| Card (flag) | Leg | Baseline | Forced | Expression | VERDICT |
+|---|---|---|---|---|---|
+| Kindle [EVO-006] (never seen) | Evo-Abj s100 | 9-21 (30%) | 10-20 (33%) | 0 → 134 casts, 30/30 games | REPLACEMENT-LEVEL — interchangeable with the cantrip pool (exp-1 substitution); not a blind spot |
+| Meteor [EVO-032] (slotted-but-mute) | Evo-Abj s100 | 9-21 (30%) | 9-21 (30%) | 1 → 3 casts EVEN WITH assembly forcing | STRUCTURALLY UNCASTABLE here: VVVV + 2-card attach cap + round-end sweep + L4 window vs 9.6-round games ⇒ needs two VV cards in hand the same late round. DESIGN datum, not valuation |
+| Echoes of the Past [DIV-028] (slotted-but-mute) | Div-Abj s200 | 22-8 (73%) | **17-13 (57%)** | 1 → 16 casts, 55% WR-used | CORRECTLY SHUNNED — casting it costs Div games (MMM displaces Omen/Foreclosure value); the bot's silence was right |
+
+(Echoes control: prep/cast-only forcing left it mute at 24 preps / 1 cast and
+winrate untouched — the assembly component of the probe is what unlocked the
+measurement; Meteor's continued muteness under the SAME machinery is what
+makes its structural verdict credible.)
+
+### Findings
+1. **Zero of the three flags were bot blind spots.** The July eval work
+   (ledger #1-#4 fixes + horizon 2) appears to have closed the known
+   valuation-gap classes; today's audit flags were all real card findings.
+   The blind-spot LAW survives (check before verdict) — it's just now a
+   one-command check instead of a discipline.
+2. **New verdict category discovered: structural castability.** Meteor-class
+   costs (4 symbols, one school) interact with the 2-card cap and the
+   round-end attachment sweep such that the card is near-uncastable inside
+   typical game lengths. Design options if Meteor should live: cost reshape
+   (VVV / VV+any), sweep exemption for L4 assembly, or accepting it as a
+   long-game-only card. Absolute Defense [ABJ-039] (SSSS, 29 preps 0 casts
+   historically) is almost certainly the same class — probe it when relevant.
+3. Probe cost: one forced run per card (the canonical baselines are standing).
+   ~30-40 min per probe on current hardware; entirely parallelizable.
+
+Next per plan order: workstream 2 (auto-derived cast priors) — now
+lower-urgency, since its motivating failure class (hand-table maintenance for
+valuation gaps) has produced zero new instances since the horizon change.
