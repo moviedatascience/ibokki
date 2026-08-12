@@ -138,3 +138,30 @@ Entry #5 (horizon) is CLOSED for measurement purposes. The open balance items
 are now: Evo–Div (real wall — systemic lever or piloted-match validation next)
 and re-baselining any future work on horizon-2 numbers. Next plan items in
 order: 1b (forcing probes), 2 (auto-priors).
+
+---
+
+## Executed 2026-08-12: 1b + 2 — the plan is COMPLETE
+
+**1b (forcing probes) shipped**: `--force <defId>` (+ assembly forcing after
+the Meteor probe caught that attach slugs name slots, not cards). First
+campaign: Kindle = replacement-level, Meteor = structurally uncastable (new
+verdict class: 4-symbol costs vs the 2-card cap + round-end sweep), Echoes of
+the Past = correctly shunned (forcing it COST 5 games). Zero of the three
+audit flags were bot blind spots — the July eval fixes closed the known
+valuation-gap classes.
+
+**2 (auto-priors) shipped**: `npm run derive-priors` → data/cast-priors.json,
+prior-free measurement, offense/defense kind tags, consumed for DIVINATION
+only at EvalWeights.castPrior. Wider scope was falsified three ways (raw /
+×0.5 / +defense-doom-discount — see the balance journal's re-baseline ladder);
+the old hand-table's "Div-only" design note is now a measured law. Acceptance:
+Omen/Foretell reproduce hand values; DIV-008 stays as the one class-C hand
+override; Evo–Abj replays byte-identically as the scope control. New canonical
+baseline: Div–Abj 30–0 (honest deepening — Abj play clean, Div engine fully
+priced), which RE-OPENS the "Abj anti-doom counterplay" design item at bot
+level (piloted calibration recommended before card surgery).
+
+Workstreams 1a, 1b, 2, 3a: done. 3b (hand-fuel eval term) obviated by 3a.
+3c (ISMCTS): turn-bounded rollouts shipped 2026-08-12 (first bot-Div wins vs
+greedy-Evo; iterations sweep flat; parked off-ladder — see journal).

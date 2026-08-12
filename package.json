@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "import-cards": "tsx tools/import-cards/src/index.ts",
     "sim": "tsx packages/sim/src/cli.ts",
+    "derive-priors": "tsx packages/sim/src/derivePriors.ts",
     "playtest": "tsx packages/sim/src/playtest.ts",
     "mcp": "tsx packages/mcp/src/server.ts",
     "play": "tsx apps/playvsclaude/src/server.ts",

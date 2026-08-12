@@ -759,3 +759,67 @@ makes its structural verdict credible.)
 Next per plan order: workstream 2 (auto-derived cast priors) — now
 lower-urgency, since its motivating failure class (hand-table maintenance for
 valuation gaps) has produced zero new instances since the horizon change.
+
+---
+
+## Workstream 2 SHIPPED (2026-08-12, night): auto-derived cast priors — and a three-way falsification of wider scope
+
+`npm run derive-priors` (packages/sim/src/derivePriors.ts) replaces the
+PREP_THREAT hand table: every implemented Spell is injected fully-paid (via
+PreparedSpell.bonus) into deterministic midgame snapshots (its school vs each
+opponent school × 2 seeds; L3/L4 bands walk at 60 HP so short games don't
+starve high tiers), cast against a PRIOR-FREE evaluator (first-run bug: live
+priors deflate their own remeasurement to ~0 — the generator must never see
+its own output), resolution forced with heuristic-resolved choices, eval delta
+recorded on the payoff-in-HP scale, clamped [0,2], floor 0.3. Each prior is
+kind-tagged offense/defense by delta decomposition (opponent loss vs own
+gain). Output: data/cast-priors.json (79 priors, 13 defense-tagged);
+evaluate.ts consumes it via an EvalWeights.castPrior scale with HAND_OVERRIDES
+absolute on top.
+
+Acceptance A (reproduce hand values): Omen 1.9 vs hand 1.7, Foretell 1.5 vs
+1.6 ✓. Cut the Thread derived 0 — CORRECT (a snapshot cannot see denial;
+ledger #5's shape) — and stays as the sole hand override (1.2), exactly the
+plan's designed division of labor.
+
+### Acceptance B — the re-baseline ladder (each n=30 paired, canonical seeds)
+
+| Config | Evo-Abj (was 70% Abj) | Div-Abj (was 73% Div) | Verdict |
+|---|---|---|---|
+| v1: raw scale, all schools | 93% Abj | 100% Div | REJECTED — priors dominate; Stone Stance 197 casts/30; vs dooms 126 at 3% WR |
+| v2: × 0.5 weight | 90% Abj | 97% Div | REJECTED — prep auctions still distorted: any positive prior outbids zero-prior REACTIONS (Counterbind 2 preps vs doom deck) |
+| v3: + defense-kind doom discount | 90% Abj | 93% Div | REJECTED — the doom signal is transient (2-turn fuses fire and vanish); prep decisions never see it |
+| v4: DIV-ONLY scope, full scale | **byte-identical control** (21-9, 9.63 rds, 91.5 turns) | **30-0 Div** | ACCEPTED — see below |
+
+The ladder is a measured confirmation of the old PREP_THREAT docstring's
+design note ("Deliberately Div-only … touching Evo's prep behavior would
+destabilize every tuned edge for no gain"): context-averaged priors on
+DEFENSIVE cards are matchup poison, board-state signals can't rescue them at
+prep time, and offense expression was only ever broken for Divination. Scope
+is enforced in evaluate.ts prepThreat; widening it again requires this ladder.
+
+### The v4 Div-Abj deepening is HONEST — and re-opens a design finding
+
+At v4 Abjuration's play is CLEAN (Stone Stance 75 casts ≈ baseline; Counterbind
+35 reacts; Omen resolve rate down to 85% — Abj counters MORE than baseline) and
+Div still goes 30-0: with its whole book priced (Premonition 1.4, Far Sight
+2.0, Unbind, Calculated Draw…) instead of 3 cards, Div's engine mix improves
+and closes the 8 games Abj used to win. Guard-rail #2 precedent applies
+("honest piloting DEEPENED Div-Abj, and that was correct").
+
+### Canonical triangle — NEW BASELINE (2026-08-12 night, post-priors tree)
+
+| Matchup | Result | Avg rounds | Design intent | Status |
+|---|---|---|---|---|
+| Evo vs Abj (seed 100) | 21-9 Abj (70%) | 9.63 | Abj > Evo | CORRECT (byte-identical, control) |
+| Div vs Abj (seed 200) | 30-0 Div (100%) | 10.17 | Div > Abj | CORRECT, DEGENERATE at bot level |
+| Evo vs Div (seed 300) | 30-0 Evo (100%) | 5.57 | Evo > Div | CORRECT, degenerate (piloted-validated as playable) |
+
+DESIGN ITEM RE-OPENED (user decision): "Abj needs counterplay against the doom
+clock" — July finding #1 was retracted at horizon 2 as measurement artifact;
+the better instrument now re-surfaces it at bot level. Candidates from the
+July analysis: rework a dead Abj card (Aegis [ABJ-004], Absolute Defense
+[ABJ-039] — the latter also flagged structurally uncastable by the forcing
+probe) into narrow anti-doom tech. NOTE the piloted caveat: bot-level 100% ≠
+human 100% (see the Evo-Div piloted series); a piloted Abj-vs-Div match would
+calibrate before any card surgery.

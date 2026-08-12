@@ -26,8 +26,9 @@ Thumbs.db
 # sim output
 sim-reports/
 
-# server database (SQLite + WAL sidecars)
-data/
+# server database (SQLite + WAL sidecars) — root data/ only; package data
+# (e.g. packages/sim/data/cast-priors.json) is version-controlled
+/data/
 
 # playtest session state (the .md logs ARE kept as artifacts)
 playtests/.sessions/
