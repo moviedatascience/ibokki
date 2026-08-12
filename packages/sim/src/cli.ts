@@ -64,6 +64,8 @@ interface Args {
    *  turn is scored; Div–Abj read 100% at horizon 1 vs 73% at horizon 2).
    *  Pass --horizon 1 to reproduce pre-regime numbers. */
   horizon: number;
+  /** ISMCTS iterations per decision for `search` agents (default 300). */
+  iters: number | undefined;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -82,6 +84,7 @@ function parseArgs(argv: string[]): Args {
     deck1: undefined,
     deck2: undefined,
     horizon: 2,
+    iters: undefined,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -129,6 +132,9 @@ function parseArgs(argv: string[]): Args {
         break;
       case "--horizon":
         args.horizon = Number(next());
+        break;
+      case "--iters":
+        args.iters = Number(next());
         break;
       default:
         if (a && a.startsWith("-")) console.warn(`Unknown flag: ${a}`);
@@ -187,11 +193,13 @@ function main(): void {
     ...(d2 ? { deck2: d2.deck } : {}),
     ...(collector ? { collector } : {}),
     greedy: { rolloutTurns: args.horizon },
+    ...(args.iters !== undefined ? { mcts: { iterations: args.iters } } : {}),
   });
 
   const label1 = d1 ? d1.label : args.s1;
   const label2 = d2 ? d2.label : args.s2;
-  console.log(`Matchup: P1 ${label1} (${args.p1}) vs P2 ${label2} (${args.p2})${args.paired ? " [paired seats]" : ""} [horizon ${args.horizon}]`);
+  const itersTag = args.iters !== undefined ? ` [iters ${args.iters}]` : "";
+  console.log(`Matchup: P1 ${label1} (${args.p1}) vs P2 ${label2} (${args.p2})${args.paired ? " [paired seats]" : ""} [horizon ${args.horizon}]${itersTag}`);
   console.log(`Games:   ${stats.games}`);
   console.log(`P1 wins: ${stats.p1Wins} (${pct(stats.p1Wins / stats.games).trim()})`);
   console.log(`P2 wins: ${stats.p2Wins} (${pct(stats.p2Wins / stats.games).trim()})`);

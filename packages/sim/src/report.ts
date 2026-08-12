@@ -2,6 +2,7 @@
 import { deckFor, type GameEvent, type PlayerConfig } from "@ibokki/engine";
 import type { School } from "@ibokki/cards";
 import { makeAgent, type AgentKind, type GreedyOptions } from "./greedy.ts";
+import type { MctsOptions } from "./mcts.ts";
 import { runMatch } from "./runMatch.ts";
 import type { CardStatsCollector } from "./telemetry.ts";
 
@@ -41,6 +42,8 @@ export interface MatchupConfig {
   collector?: CardStatsCollector;
   /** Options for any greedy agents (e.g. rolloutTurns for the horizon A/B). */
   greedy?: GreedyOptions;
+  /** Options for any search agents (e.g. iterations for the budget sweep). */
+  mcts?: MctsOptions;
 }
 
 export function runMatchup(cfg: MatchupConfig): MatchupStats {
@@ -66,7 +69,7 @@ export function runMatchup(cfg: MatchupConfig): MatchupStats {
     const result = runMatch({
       seed,
       decks: [a.deck, b.deck],
-      agents: [makeAgent(a.agent, agentSeed(seed, swapped ? 1 : 0), cfg.greedy), makeAgent(b.agent, agentSeed(seed, swapped ? 0 : 1), cfg.greedy)],
+      agents: [makeAgent(a.agent, agentSeed(seed, swapped ? 1 : 0), cfg.greedy, cfg.mcts), makeAgent(b.agent, agentSeed(seed, swapped ? 0 : 1), cfg.greedy, cfg.mcts)],
       ...(cfg.startingHp !== undefined ? { startingHp: cfg.startingHp } : {}),
       ...(cfg.collector ? { onEvents: (ev: GameEvent[]) => cfg.collector!.onEvents(ev) } : {}),
     });

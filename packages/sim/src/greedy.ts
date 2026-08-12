@@ -27,7 +27,7 @@ import {
 } from "@ibokki/engine";
 import { HeuristicBot, RandomBot, type Agent } from "./agent.ts";
 import { evaluateState } from "./evaluate.ts";
-import { IsmctsBot } from "./mcts.ts";
+import { IsmctsBot, type MctsOptions } from "./mcts.ts";
 import { slugFor } from "./render.ts";
 
 export interface GreedyOptions {
@@ -142,9 +142,9 @@ export class GreedySimBot implements Agent {
 
 export type AgentKind = "random" | "heuristic" | "greedy" | "search";
 
-export function makeAgent(kind: AgentKind, seed: number, greedyOpts?: GreedyOptions): Agent {
+export function makeAgent(kind: AgentKind, seed: number, greedyOpts?: GreedyOptions, mctsOpts?: MctsOptions): Agent {
   if (kind === "random") return new RandomBot(seed);
   if (kind === "greedy") return new GreedySimBot(seed, greedyOpts);
-  if (kind === "search") return new IsmctsBot(seed);
+  if (kind === "search") return new IsmctsBot(seed, mctsOpts);
   return new HeuristicBot(seed);
 }
