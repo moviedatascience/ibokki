@@ -1,9 +1,10 @@
 # Ibokki — UI & Art Polish Plan
 
 *Produced 2026-07-09 from a full-journey audit of the client (entry → match → post-game),
-the art pipeline state, and the working-tree delta. Companion docs: `PROJECT_PLAN.md`
-(macro roadmap), `art/STYLE_BIBLE.md` (art-direction law), `art/MANIFEST.md` (asset
-catalog — **header is stale**, see §6). File:line anchors refer to the 2026-07-09 tree.*
+the art pipeline state, and the working-tree delta. Companion docs: `ROADMAP.md`
+(macro roadmap — replaced `PROJECT_PLAN.md`, 2026-08-12), `art/STYLE_BIBLE.md`
+(art-direction law), `art/MANIFEST.md` (asset catalog — **header is stale**, see §6).
+File:line anchors refer to the 2026-07-09 tree.*
 
 ---
 

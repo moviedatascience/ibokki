@@ -2,8 +2,8 @@
 
 A fast, stack-based wizard dueling card game. This repo is a TypeScript monorepo
 built around a single **deterministic, headless rules engine** that runs everywhere
-(server, client, simulation, and Claude playtesting). See [PROJECT_PLAN.md](PROJECT_PLAN.md)
-for the full architecture and roadmap.
+(server, client, simulation, and Claude playtesting). See [CLAUDE.md](CLAUDE.md)
+for the working architecture and [ROADMAP.md](ROADMAP.md) for open work.
 
 ## Status
 

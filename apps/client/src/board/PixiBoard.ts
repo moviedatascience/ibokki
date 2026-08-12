@@ -164,7 +164,7 @@ export class PixiBoard {
     // Venue background (filed venue master, art/board). By far the largest asset,
     // so it must not gate board paint: it fades in whenever it lands. A failed
     // load falls back to the procedural placeholder rings — never a blank board.
-    Assets.load(`${BASE}art/board/table.png`).then(
+    Assets.load(`${BASE}art/board/table.webp`).then(
       (t) => {
         if (!this.app) return; // board destroyed while loading
         const v = new PixiSprite(t as Texture);
