@@ -88,6 +88,7 @@ interface Plate {
   /** True while the pointer is over one of this plate's ongoing chips (clears the detail on rebuild). */
   ongoingHoverLive: boolean;
   crestKey: string | null;
+  nameKey: string;
   box: Box;
   anchor: Pt; // floater anchor (center of plate, world coords)
 }
@@ -284,17 +285,16 @@ export class PixiBoard {
     const stats = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 11.5, fontFamily: "system-ui" } });
     stats.position.set(12, box.h - 19);
     const status = new Container();
-    status.position.set(12, 25);
+    status.position.set(12, 37);
     const ongoingRow = new Container();
     const clockL = new Text({ text: "", style: { fill: 0x9aa0ad, fontSize: 12, fontFamily: "ui-monospace, monospace", fontWeight: "700" } });
     clockL.position.set(12, box.h + 5);
     root.addChild(glow, bg, crest, name, hpMark, hp, bar, stats, status, ongoingRow, clockL);
-    return { root, glow, bar, crest, name, hp, hpMark, stats, status, ongoingRow, clockL, lastHp: NaN, statusKey: "\0", ongoingKey: "\0", ongoingHoverLive: false, crestKey: "\0", box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
+    return { root, glow, bar, crest, name, hp, hpMark, stats, status, ongoingRow, clockL, lastHp: NaN, statusKey: "\0", ongoingKey: "\0", ongoingHoverLive: false, crestKey: "\0", nameKey: "\0", box, anchor: { x: box.x + box.w / 2, y: box.y + box.h / 2 } };
   }
 
   private updatePlate(plate: Plate, label: string, seatLabel: string, v: PlayerView, active: boolean, mine: boolean): void {
     const box = plate.box;
-    plate.name.text = label;
     // School crest (Eye/Bow/Key), left of the name — resolved from the seat label (a school
     // name locally, a deck name online; custom online decks resolve to none → no crest).
     if (seatLabel !== plate.crestKey) {
@@ -307,6 +307,16 @@ export class PixiBoard {
         if (sp) plate.crest.addChild(sp);
       }
       plate.name.position.x = plate.crest.children.length ? 32 : 12;
+    }
+    // Name, ellipsized so a long deck/school label never runs into the ♥ hp readout.
+    const nameKey = `${plate.name.position.x}|${label}`;
+    if (nameKey !== plate.nameKey) {
+      plate.nameKey = nameKey;
+      plate.name.text = label;
+      const nameMax = box.w - 72 - plate.name.position.x; // hp ♥ sits at box.w - 66; keep a 6px gap
+      while (plate.name.width > nameMax && plate.name.text.length > 1) {
+        plate.name.text = plate.name.text.slice(0, -2) + "…";
+      }
     }
     // Pixi Text/fill setters no-op on unchanged values, but the Graphics bar re-triangulates
     // on every clear+draw — gate the hp block so it only runs when hp actually moved.
@@ -325,7 +335,7 @@ export class PixiBoard {
     }
     // Deck/hand counts render at the piles; prepared cards are visible on the board.
     plate.stats.text = `Lv ${v.level} · slots ${v.slotsUsedThisRound}/${v.slots}`;
-    // Status markers: woodcut glyph + count segments, right-aligned over the HP bar.
+    // Status markers: woodcut glyph + count segments, right-aligned just below the HP bar.
     // Each rebuild rasterizes new Text objects, so skip it while the markers are unchanged.
     const wardsLabel = v.wards && v.wards.length ? v.wards.join("/") : "";
     // Dooms show as payload@turns-left; "!" marks the unwardable one (Oblivion).
@@ -352,7 +362,10 @@ export class PixiBoard {
       if (v.burn > 0) seg("burn", 0xffa04d, String(v.burn));
       for (const label2 of doomLabels) seg("prophecy", 0xc9a0f0, label2);
       if (x > 0) x -= 8;
-      st.position.set(box.w - 12 - x, 25);
+      // Shrink rather than run off the plate when many statuses stack up.
+      const availSt = box.w - 24;
+      st.scale.set(x > availSt ? Math.max(0.6, availSt / x) : 1);
+      st.position.set(box.w - 12 - x * st.scale.x, 37);
     }
     // Ongoing-effect chips: a second status row, bottom-right (stats text owns
     // bottom-left). Hovering a chip surfaces its full description in the detail rail.
