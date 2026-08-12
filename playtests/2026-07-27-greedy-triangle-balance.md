@@ -686,3 +686,25 @@ buys lookahead instead of variance), (2) head-to-head on the remaining edges
 (Div–Abj both directions), (3) if promoted, ladder integration via `maxMillis`
 (the server already has the latency cap knob). Numbers here are n=10 unpaired —
 directional, not canonical; re-run paired at n=30 before any ladder decision.
+
+### Iterations sweep (same day): FLAT — budget is not the lever
+
+search-Div vs greedy-Evo, seed 300, n=10, `--iters` (now a CLI flag): 300 →
+**2-8** · 600 → **1-9** · 1000 → **1-9**. Differences of one game at n=10 are
+noise; the curve is flat. The turn-bounded rollout fix bought the 0% → ~10-20%
+step, and additional search budget buys nothing more on this edge.
+
+Reading: the remaining gap is STRUCTURAL, not budget. Candidate bottlenecks, in
+suspected order: (a) the rollout POLICY is still HeuristicBot — leaf values are
+clean at the boundary now, but the heuristic misplays doom lines inside the
+rollout window (the full 3c lever — greedy-policy rollouts — was deferred for
+cost: greedy per-ply is ~candidates × forced-line sims); (b) the doom-checkmate
+lines the pilots won with need the tree to hold a specific 4-6 ply line against
+branching factor ~10-20 — availability-count UCB may never focus that hard;
+(c) determinization quality on the opponent's V-fuel state.
+
+DECISION: search stays OFF the ladder; this line of work is PARKED here. The
+next bot-quality investment per the plan-of-record order is blindspot 1b
+(forcing probes) → 2 (auto-priors) — both cheaper and both serve measurement
+rather than play strength. Revisit search promotion after those, with paired
+n=30 as the gate and greedy-policy rollouts as the next lever to try.
