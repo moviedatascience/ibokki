@@ -75,8 +75,18 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
   correctly there; hard ladder bot matches). Numbers logged before 2026-07-29 evening are
   horizon-1 — reproduce with `--horizon 1`, never compare across regimes. `--cards` prints
   an expression audit; a flagged card means CHECK BOT VALUATION first (5-entry ledger +
-  plan: `playtests/2026-07-29-blindspot-plan.md`). Sim bots never retract and only detach before attaching (turn-bounded plies —
-  livelock-proof; runMatch throws past 400 plies/turn with the seed named).
+  plan: `playtests/2026-07-29-blindspot-plan.md`; forcing probe: `--force <defId>` vs the
+  same-seed baseline — winrate up = bot blind spot, flat = real card verdict). Sim bots
+  never retract and only detach before attaching (turn-bounded plies — livelock-proof;
+  runMatch throws past 400 plies/turn with the seed named), EXCEPT the round-final
+  detach-rescue cleanup mode (tier-1 valve, 2026-08-13).
+- PILOT-GAP DOCTRINE (2026-08-13, after two piloted series inverted both 100% edges):
+  bot-level winrates are LOWER BOUNDS on the losing school's potential, never balance
+  targets. Any edge ≥ ~90% triggers a 3-game subagent-piloted series BEFORE design action
+  (prompt template: the m5-m7 briefs in `playtests/2026-08-13-m*.md` transcripts). Bots are
+  for regression + magnitudes; pilots discover lines; the tier-1/2 behavior valves
+  (detach-rescue, waste accounting, doom-aware cancel holding, ward-battery term —
+  commits e3a07a5/b6db6e6) encode the discovered lines back into the instrument.
 - Live-bug pattern so far: every production bug was a `SIMPLIFIED`/auto-resolve stand-in for
   a real player decision, or a proxy condition for intent. `grep -rn SIMPLIFIED packages/engine`
   is the suspect list when a card misbehaves.

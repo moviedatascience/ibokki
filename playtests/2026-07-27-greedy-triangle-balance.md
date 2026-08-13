@@ -879,3 +879,44 @@ reaction fuel to hand before the sweep — bots never do).
    armed cancels is a solo-ladder exploit; bot-Abj uses none of the above
    tools (seal/cancel/detach-rescue/round-pacing are all absent from its
    play). Fixing these is ISMCTS-era work, not eval patches.
+
+---
+
+## Bot-improvement tiers 1+2 (2026-08-13): the pilot gap closes 13 points from behavior alone
+
+Program adopted after the piloted series: make the bots a trustworthy
+instrument without piloted sessions. Tier 1 (behavior valves, commit e3a07a5):
+detach-rescue on the round-final turn; sweep-aware fuel pricing (attached fuel
+on uncast spells ≈ dead once the owner is slot-exhausted; Reactions exempt);
+slot-waste rollout penalty (0.15/expired slot — passing is no longer free);
+doom-aware cancel holding (armed cancel-class reaction worth up to 2× vs live
+prophecy preps). Tier 2 (commit b6db6e6): ward-battery convertibility —
+prepared Ward Collapse [ABJ-031] prices its largest-ward payload,
+reckoningCharge mold. All measured one wave at a time, same canonical seeds:
+
+| Edge | pre-tier | Tier 1 | Tier 1+2 | Reading |
+|---|---|---|---|---|
+| Evo-Abj (s100) | 21-9 Abj (70%) | 16-14 Abj (53%) | 16-14 Abj (53%) | school-neutral fuel/waste hygiene pays the AGGRESSOR; the card-tuned 70% was measured under weaker play. Never piloted — pilot gap unknown |
+| Div-Abj (s200) | 30-0 Div (100%) | 26-4 Div (87%) | 27-3 Div (90%) | THE result: Phase Shift 90 fires + Counterbind 55; Foreclosure cancelled 38% while Omens get eaten — the m5-m7 cancel economics, emergent from one eval term |
+| Evo-Div (s300) | 30-0 Evo | 30-0 Evo | 30-0 Evo (byte-identical to T1) | immovable; clean no-Abj control for the T2 term |
+
+Tier-2 increment ≈ 0 at bot level, as predicted: the term drove Ward Collapse
+0 → 20 preps (the bot SLOTS the wincon now) but 1 cast/30 games — "slotted but
+mute," Meteor-class: SSS assembly inside a 1-2 round window at the L3 gate
+(level 10) is plan-level play. The term stays (correct pricing, zero cost,
+and it is exactly what a future search bot needs to find the line).
+
+Open items from this wave: Runic Seal STILL never prepped (the one piloted
+tool not expressing — candidate for a prior-scope widening or a seal-value
+term); Evo-Abj at 53% wants a piloted calibration series before any card
+reaction (that edge's pilot gap has never been measured); greedy freeze vs
+armed threats is reduced (slot-waste penalty) but bait sequencing remains
+unverified at telemetry level.
+
+### Canonical triangle — NEW BASELINE (2026-08-13, tier-1+2 bots)
+
+| Matchup | Result | Avg rounds | Design intent | Status |
+|---|---|---|---|---|
+| Evo vs Abj (seed 100) | 16-14 Abj (53%) | 9.43 | Abj > Evo | correct direction, near-flat — piloted calibration wanted |
+| Div vs Abj (seed 200) | 27-3 Div (90%) | 11.73 | Div > Abj | CORRECT (bot-level; piloted says Abj-favored — treat as lower bound on Abj) |
+| Evo vs Div (seed 300) | 30-0 Evo (100%) | 5.70 | Evo > Div | CORRECT (piloted: winnable, razor-thin) |
