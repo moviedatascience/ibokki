@@ -52,6 +52,11 @@ export interface EvalWeights {
   damageReductionPerHit: number;
   /** Reckoning's banked payload (ceil(match prevention / 2)) while it sits prepared. */
   reckoningCharge: number;
+  /** Ward Collapse's stored payload (largest own ward's HP, capped at opponent
+   *  HP) while ABJ-031 sits prepared — the ward battery the m5/m6 pilots won
+   *  with (29 and 42 damage) that flat wardHp pricing cannot see. Same
+   *  stored-value mold as reckoningCharge (tier 2, 2026-08-13). */
+  wardConvertible: number;
   /** Scale on the auto-derived cast priors (data/cast-priors.json), which are
    *  consumed for DIVINATION spells only (see prepThreat — wider scope was
    *  falsified three ways on 2026-08-12). 1.0 = the raw payoff scale, matching
@@ -79,6 +84,7 @@ export const DEFAULT_WEIGHTS: EvalWeights = {
   ongoingValue: 0.4,
   damageReductionPerHit: 0.8,
   reckoningCharge: 0.8,
+  wardConvertible: 0.8,
   castPrior: 1.0,
 };
 
@@ -244,6 +250,17 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
       // Stone Stance before damageReductionPerHit).
       const payload = Math.min(Math.ceil((p.damagePreventedTotal ?? 0) / 2), state.players[otherPlayer(id)].hp);
       score += payload * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * w.reckoningCharge;
+    }
+    if (prep.spell.defId === "ABJ-031") {
+      // Ward Collapse's stored payload: destroy your largest ward, deal its HP.
+      // Flat wardHp (0.8/HP, defense-priced) cannot see that a prepared
+      // collapse makes every ward point HALF A WINCON — the m5/m6 pilots built
+      // 29/42-HP batteries and one-shot the doom school with them while the
+      // bot never cast ABJ-031 at all. Same stored-value shape as Reckoning:
+      // payload × fuel progress × castability, bounded by opponent HP.
+      const battery = p.wards.reduce((best, ward) => Math.max(best, ward.hp), 0);
+      const payload = Math.min(battery, state.players[otherPlayer(id)].hp);
+      score += payload * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * w.wardConvertible;
     }
   }
 

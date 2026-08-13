@@ -90,6 +90,38 @@ describe("tier-1 bot behavior valves (2026-08-13)", () => {
     expect(gainDone).toBeLessThan(gainLive * 0.5); // sweep-bound fuel ≈ dead weight
   });
 
+  it("ward-battery convertibility (tier 2): a prepared Ward Collapse makes ward HP payload", () => {
+    const s = structuredClone(quietMainSpot(31));
+    s.players[0].level = 10; // past ABJ-031's L3 tier gate
+    s.players[1].level = 10;
+    s.players[0].wards = [{ wid: 9001, hp: 12 }];
+
+    const withCollapse = structuredClone(s);
+    withCollapse.players[0].prepared.push({
+      spell: { iid: 555020, defId: "ABJ-031" },
+      faceDown: true,
+      attached: [],
+      cast: false,
+      sealed: false,
+    });
+    // The prepared collapse must add MORE than a generic L3 prep would —
+    // the battery payload term. Compare against an equal-level non-battery prep.
+    const withGeneric = structuredClone(s);
+    withGeneric.players[0].prepared.push({
+      spell: { iid: 555021, defId: "ABJ-022" }, // Aegis Eternal, also L3 SSS
+      faceDown: true,
+      attached: [],
+      cast: false,
+      sealed: false,
+    });
+    expect(_sideScore(withCollapse, 0)).toBeGreaterThan(_sideScore(withGeneric, 0));
+
+    // And the payload scales with the battery: bigger ward, bigger score.
+    const bigBattery = structuredClone(withCollapse);
+    bigBattery.players[0].wards = [{ wid: 9002, hp: 25 }];
+    expect(_sideScore(bigBattery, 0)).toBeGreaterThan(_sideScore(withCollapse, 0));
+  });
+
   it("doom-aware option value: an armed cancel is worth more against live prophecy preps", () => {
     const s = structuredClone(quietMainSpot(31));
     // Phase Shift is L2 — the armed term requires castable, so lift the level
