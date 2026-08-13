@@ -25,32 +25,36 @@ interface Benchmark {
   pilotRecord: { wins: number; losses: number; logs: string };
 }
 
+// Records below are the NEW-DECK era (wave A+B presets, 2026-08-13 night,
+// m19-m27) — they SUPERSEDE the old-deck references (Div-Evo 4-0 m1..m4 then
+// 1-2 m16..m18; Abj-Div 3-0 m5..m7; Abj-Evo 3-0 m8..m10), which were played
+// on 17-basic/6-dual decks that no longer exist.
 const BENCHMARKS: Benchmark[] = [
   {
     pilotSide: "Divination",
     opponent: "Evocation",
     seed: 300,
-    pilotRecord: { wins: 4, losses: 0, logs: "playtests/2026-08-12-m1..m4" },
+    pilotRecord: { wins: 1, losses: 2, logs: "playtests/2026-08-13-m25..m27" },
   },
   {
     pilotSide: "Abjuration",
     opponent: "Divination",
     seed: 200,
-    pilotRecord: { wins: 3, losses: 0, logs: "playtests/2026-08-13-m5..m7" },
+    pilotRecord: { wins: 0, losses: 3, logs: "playtests/2026-08-13-m22..m24" },
   },
   {
     pilotSide: "Abjuration",
     opponent: "Evocation",
     seed: 100,
-    pilotRecord: { wins: 3, losses: 0, logs: "playtests/2026-08-13-m8..m10" },
+    pilotRecord: { wins: 3, losses: 0, logs: "playtests/2026-08-13-m19..m21" },
   },
-  // Evo side of the same edge: 2-3, both losses at the Reckoning wall (R10+);
-  // m14/m15 are post-gating-fix re-runs of the m12/m13 seeds.
+  // Evo side of Evo-Abj: STALE (old decks, m11-m15 incl. post-gating re-runs);
+  // kept directional until a new-deck series replaces it.
   {
     pilotSide: "Evocation",
     opponent: "Abjuration",
     seed: 100,
-    pilotRecord: { wins: 2, losses: 3, logs: "playtests/2026-08-13-m11..m15" },
+    pilotRecord: { wins: 2, losses: 3, logs: "playtests/2026-08-13-m11..m15 (old decks — stale)" },
   },
 ];
 
