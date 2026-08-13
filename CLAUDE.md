@@ -60,7 +60,10 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
   misfire, and `autoplay` hands your side to a bot pilot until a stop condition
   (`roundEnd`/`myTurn`/`reactionWindow`/`choice`/`gameOver`) so tokens go only to decisions
   that matter. Full piloted games fit one context now; for batches, run each match in its own
-  subagent and keep only the analysis in the main conversation.
+  subagent and keep only the analysis in the main conversation. ALWAYS spawn pilots with
+  `subagent_type: "pilot"` (`.claude/agents/pilot.md`) — it pins a cheaper model + effort
+  (sonnet/medium, 2026-08-13) so piloted series stop burning premium usage limits; never
+  pilot matches on the main-session model or with a default subagent.
 - Bot ladder, MEASURED (2026-07-27 paired benchmarks): `random` (fuzz) < `search`
   (IsmctsBot, `packages/sim/src/mcts.ts`) ≤ `heuristic` (fast policy; the rollout policy)
   < `greedy` (GreedySimBot, `packages/sim/src/greedy.ts`: scores candidates by simulating
@@ -82,7 +85,8 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
   detach-rescue cleanup mode (tier-1 valve, 2026-08-13).
 - PILOT-GAP DOCTRINE (2026-08-13, after two piloted series inverted both 100% edges):
   bot-level winrates are LOWER BOUNDS on the losing school's potential, never balance
-  targets. Any edge ≥ ~90% triggers a 3-game subagent-piloted series BEFORE design action
+  targets. Any edge ≥ ~90% triggers a 3-game piloted series (via the `pilot` agent, above)
+  BEFORE design action
   (prompt template: the m5-m7 briefs in `playtests/2026-08-13-m*.md` transcripts). Bots are
   for regression + magnitudes; pilots discover lines; the tier-1/2 behavior valves
   (detach-rescue, waste accounting, doom-aware cancel holding, ward-battery term —

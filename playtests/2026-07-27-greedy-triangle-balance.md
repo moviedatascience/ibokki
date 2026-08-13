@@ -961,3 +961,108 @@ lower bounds by doctrine (CLAUDE.md). Remaining known gaps: Runic Seal prep
 starvation, plan-level lines (ward battery execution, checkmate geometry) —
 search-class work. The economical loop stands: bots for regression, subagent
 pilots for discovery on ≥90% edges, `npm run pilot-gap` as the progress meter.
+
+---
+
+## Evo-Abj piloted calibration (2026-08-13, m8-m15) + the live-bug pattern strikes in LEGALITY — printed-trigger reaction gating ships
+
+The one unpiloted edge got its series, found the game's next confirmed engine
+bug mid-flight, and closed with both seats measured.
+
+### The series (8 games, all vs tier-1/2 greedy)
+
+**Abj side (m8-m10, seeds 3101-3103): 3-0, all wins at R10.** Identical line
+all three games: Stone Stance every round + ward stack metabolizes Evo's whole
+output into the Reckoning bank → one ~20-damage cast at L10. Pilots estimated
+the skilled edge at 90%+ vs greedy Evo.
+
+**Evo side (m11-m15, seeds 3201/3202/3203 + post-fix re-runs of 3202/3203): 2-3.**
+- m11 (3201) W R8: bank-starving discovered — refuse to feed stance/wards
+  (soak = 0.5 Reckoning damage later), hoard to hand cap, Dispelling Powder
+  the walls, alpha-strike in sweep windows (Detonate on a hoarded hand = 17).
+- m12 (3202) L R10: dominated to 3-vs-16 HP, then ONE Reckoning for 25. Two
+  casts into armed Absorb (banks the PRE-mitigation total, heals half) were
+  the leak.
+- m13 (3203) L R11: Reckoning 18 then ANOTHER 18 — the bank is LIFETIME and
+  the card is REPEATABLE. Text-faithful, confirmed in source: ABJ-032 reads
+  damagePreventedTotal; nothing resets it (stance.test.ts pins the
+  round-boundary carry; nothing pins — or refutes — the cast-to-cast carry).
+- m14 (3202 POST-FIX) W R9: same deterministic opening as m12; kill-before-R10
+  doctrine executed; Reckoning never existed. Discipline was the entire delta.
+- m15 (3203 POST-FIX) L R10 by an exactly-lethal 13: pilot's own ledger shows
+  4 HP of pure misplays (Battle Trance after the turn's cast, twice) were
+  precisely the margin. Winnable on the line as played.
+
+**Verdict:** design intent Abj > Evo holds at every level. The matchup is a
+race with a hard deadline — kill by end of R9 or the HP bar is a lie — and
+the margin at best play is razor-thin. Reckoning's accounting IS the edge.
+
+### The bug (live-bug ledger: the pattern's first LEGALITY entry)
+
+m10: bot Combust [EVO-016] fired in response to a SPELL cast; its text reads
+"when your opponent plays a Reaction". Root cause (legal.ts): the reaction
+window offered EVERY prepared+fueled Reaction whenever the opponent's cast
+topped the stack — no card's printed trigger was ever consulted. Same
+SIMPLIFIED-class shape as every prior production bug: a blanket proxy
+(generic window) standing in for printed intent.
+
+**Fix** (`reactionAnswersTop` in cardFlags.ts, enforced in BOTH legalActions
+and apply so they can't diverge):
+- "plays a Reaction" triggers (Combust, Combustive Counter) only answer
+  Reactions;
+- "casts a spell" triggers (Backdraft, Searing Backlash, Annihilation Strike,
+  Anticipate, Counter-Plan, Read the Signs, Spellbind) only answer spells —
+  the mirrored half of the same bug, caught by auditing all 35 Reaction texts
+  (Cinder Storm's printed "spell or Reaction" stays universal);
+- riderless conditional cancels are whiff-guarded: Counterbind needs an
+  M-cost target, Break Form an S-cost target (m12 watched the bot burn SM
+  into an M-less stack). Mana Burn EXEMPT — its 2-damage rider fires
+  regardless. Tests in interactions.test.ts; suite 242 green.
+
+### Canonical triangle — NEW BASELINE (2026-08-13, post-gating-fix)
+
+| Matchup | pre-fix | post-fix | Avg rounds | Reading |
+|---|---|---|---|---|
+| Evo vs Abj (seed 100) | 16-14 Abj (53%) | 19-11 Abj (63%) | 9.57 | REAL shift: the 53% was partly bot-Evo's ILLEGAL Combust damage; bot edge now points the piloted direction. Avg game dies at the Reckoning wall |
+| Div vs Abj (seed 200) | 27-3 Div (90%) | 26-4 Div (87%) | 11.67 | one game — noise range |
+| Evo vs Div (seed 300) | 30-0 Evo (100%) | 29-1 Evo (97%) | 5.63 | one game — noise range |
+
+Pilot-gap benchmark updated: Evo-Abj now carries BOTH seats' references
+(Abj 3-0, Evo 2-3). Bot-Evo 37% vs piloted-Evo 40% — that side's gap is
+nearly closed; bot-Abj 63% vs piloted 100% still gapes ~37 pts (the piloted
+Abj tools — seal, stance-first-seat habit, bank patience — remain unbotted).
+
+### Instrument note: pilots moved to cheap-tier subagents
+
+Usage limits were throttling the piloted channel. `.claude/agents/pilot.md`
+pins pilot subagents to sonnet/medium (per-call model override as the
+fallback in already-open sessions); CLAUDE.md now routes all piloted series
+through it. m14/m15 (sonnet) matched the earlier games' analysis quality —
+including catching their own misplays in the ledger — at a fraction of the
+usage. The channel is no longer rationed.
+
+### Open DESIGN decisions raised (none are code bugs — engine matches text)
+
+1. **Reckoning [ABJ-032]**: lifetime bank + ward-soak credit + repeatable
+   every round at SS from L10. Five games flag it; m13's 18+18 is the
+   existence proof. exp-1g's rationale for soak credit ("vs doom decks the
+   charge stays small") does not survive damage schools — the opponent's
+   MANDATORY offense charges it. Menu: reset-on-cast / cap / exclude soaks
+   (revert exp-1g) / reprice / once-per-match.
+2. **Burn vs mitigation**: engine routes burn ticks through stance+wards
+   (beginTurn → dealDamageToPlayer — settled from source; m15's "bypass"
+   report was a misread of a tick breaking a ward). Doctrine says burn
+   bypasses. m11: burn is "unplayable vs Abj" as-is. Pick one.
+3. **"Spell"-worded prevention/cancels vs Reactions**: Absorb ("one spell
+   that targets you") ate a Backdraft in m15. Deliberately left ungated —
+   either extend the trigger-type gate to the prevent/cancel class or rule
+   that "spell" on the stack includes Reactions and document it.
+4. Smaller: hand-cap auto-discard is a SIMPLIFIED-class stand-in (sculptValue
+   prices all trainers flat 1.5 — it discarded Dispelling Powder in m13, a
+   real player decision auto-resolved); Interrupt's defund bypasses
+   Lightning Bolt's "cannot be reduced below 1" (defund ≠ reduction — ruling
+   or fine?).
+
+Next: the Div side of Evo-Div wants post-fix re-validation (its 4-0 reference
+predates tier-1/2 AND the gating fix, which touched Div's whole reaction kit)
+— m16-m18.
