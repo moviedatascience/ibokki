@@ -1196,3 +1196,65 @@ to fuel (one SS card/round) and cast 21-34 times/30 games at bot level;
 (2) burn-vs-mitigation doctrine; (3) "spell"-worded reactions answering
 Reactions; (4) ledger #6: rollout-vs-live policy mismatch (Divine 28-29
 preps/0 casts through every wave, immune to prior demotion).
+
+---
+
+## NEW-DECK PILOTED TRIANGLE (2026-08-13, late night, m19-m27): every leg converges on design intent
+
+Nine subagent pilots (3/leg, sonnet tier, seeds 6101-03/6201-03/6301-03),
+all on the wave-A+B decks against the wave-C greedy. The deck redesign
+didn't just fix bot bricks — it REBALANCED THE GAME AT SKILL LEVEL: dooms
+and bursts both got faster, walls didn't.
+
+| Leg (pilot side) | old-deck piloted | NEW-DECK piloted | bot | intent | verdict |
+|---|---|---|---|---|---|
+| Abj vs Evo | 3-0 (est. 90%+) | 3-0 — margins +32, +38, then +1 | 50% | Abj > Evo | HOLDS at skill (bot flatness is bot-skill artifact) but the new Evo clock compressed a fortress into a race — m21 was a photo finish closed by FINAL RECKONING for 60 (4×rounds, uncapped) |
+| Abj vs Div | 3-0 Abj (intent inverted) | 0-3 — −30 blowout, −18 (pilot-error confound), −19 | 77% Div | Div > Abj | INVERTED BACK: MM-dense Div presents 2-3 funded dooms/round vs a denial kit that eats ~1; Foreclosure permanent, Entropy on schedule, Unbind kills the ward battery, denial spending exhausts Abj's own deck. Intent realized at BOTH levels for the first time |
+| Div vs Evo | 4-0 → 2-1 | 1-2 — all three razor-thin, the win required bot bricks on the two exactly-lethal turns | 100% Evo | Evo > Div | realized, arguably OVER-realized: skilled Div is coinflip-at-absolute-best; Foresight is the only real brake |
+
+The trigger-gating fix also proved itself as DESIGN, not just correctness:
+Combust's enforced "punish Reactions" identity deterred Anticipate in m26's
+clutch rounds and taxed Abj's whole offense in m21 — counterplay texture
+that the blanket window never allowed.
+
+### Design queue after the triangle (priority order, user decisions)
+1. **The Reckoning mold is the game's dominant design fact.** Lifetime
+   non-decrementing accumulators, repeatable: base Reckoning (16+17 back-to-
+   back in m20) and now FINAL RECKONING (m21: 60 damage, 4 HP per round
+   elapsed, uncapped — closed a 1-HP game through everything). Every
+   Abj-vs-Evo game across 8 piloted matches ends at this wall or races it.
+2. **Evo-Div margin**: if "coinflip at perfect play" is too harsh for the
+   disadvantaged school, Div needs a round-5 survival tool (Foresight-class);
+   if the triangle is meant to be sharp, ship as-is.
+3. **Abj-vs-Div at skill**: 0-3 may OVERSHOOT Div>Abj intent — the m22
+   pilot's freeze-the-bot deterrence still worked, but multi-doom rounds
+   are structurally unanswerable. Watch after any Reckoning change.
+4. Standing items: burn-vs-mitigation doctrine; "spell"-worded prevents vs
+   Reactions (Absorb ate a Backdraft, m15); ledger #6 (Divine).
+
+### Triage queue (engine/bot, from the nine transcripts)
+- **Counter-Plan vs REACTION_PROOF (decided m27)**: target-the-top reactions
+  are offered against Hex Bolt and silently no-op — extend the wave-fix
+  whiff-guard to reactionProof/unstoppable tops. Same class, clear fix.
+- **save_playtest collision — FIXED this commit**: the server's per-process
+  match counter re-issued m5/m6 after a restart and CLOBBERED two committed
+  reference transcripts (recovered from git). Filenames now carry the seed
+  and never overwrite.
+- Mana Drain: never fired across 4 rounds of qualifying attaches piloted
+  (m23) yet fires ~21/30 games at bot level — check arming conditions.
+- Single-instance oddities (m21, need targeted repro): Mana Burn dealt 1
+  not 2; one Stone Stance reduction applied -1 not -2; Chain Lightning's
+  multi-target routing is illegible in the compact log.
+- Ward Pulse whiffs with zero wards — feel-bad-guard candidate
+  (trainerHasEffect precedent).
+- Doctrine corrections logged for future briefs: attachments NEVER persist
+  across round boundaries (cost m22 the game, m26 3 cards); Foreclosure is
+  L2-gated (not R1-available); Absolute Defense's "spells" excludes gambit
+  damage (text-faithful).
+
+### Instrument note
+Nine parallel sonnet pilots, one session, full triangle. The piloted
+channel is now cheap enough to be the default calibration step after ANY
+balance-relevant change. Pilot-gap references updated to the new-deck era
+(pilotGap.ts); the Evo-side Evo-Abj reference (2-3, m11-m15) is the one
+remaining stale row.
