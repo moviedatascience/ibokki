@@ -123,6 +123,28 @@ const HAND_OVERRIDES: Record<string, number> = {
  *  measure PRIOR-FREE or the generator feeds back on its own output). */
 let priorTableOverride: Record<string, number> | null = null;
 
+/** Card-class caches for the tier-1 behavior terms (2026-08-13). Text-derived
+ *  once at first use — sim-only, so a regex over rules text is acceptable. */
+const prophecyCache = new Map<string, boolean>();
+function isProphecySpell(defId: string): boolean {
+  let v = prophecyCache.get(defId);
+  if (v === undefined) {
+    v = /^Prophecy\b/i.test(getCard(defId)?.text ?? "");
+    prophecyCache.set(defId, v);
+  }
+  return v;
+}
+const cancelCache = new Map<string, boolean>();
+function isCancelReaction(defId: string): boolean {
+  let v = cancelCache.get(defId);
+  if (v === undefined) {
+    const def = getCard(defId);
+    v = def?.type === "Reaction" && /\bcancel target spell\b/i.test(def.text ?? "");
+    cancelCache.set(defId, v);
+  }
+  return v;
+}
+
 function prepThreat(defId: string, w: EvalWeights, doomSoakShare: number): number {
   if (priorTableOverride) return priorTableOverride[defId] ?? 0;
   const hand = HAND_OVERRIDES[defId];
@@ -175,6 +197,21 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
 
   score += p.hand.length * w.handCard;
 
+  // Tier-1 waste accounting (2026-08-13): once this player can cast nothing
+  // more this round, fuel attached to UNCAST spells is sweep-bound — worth a
+  // fraction (detach-rescue can still convert it back to hand cards), not the
+  // full progress term. Without this, the bots hoard-attached into oppo-
+  // controlled round ends all series (m5: "it lost 5+ components to forced
+  // sweeps"). Reactions are exempt — they fire from windows, not cast slots.
+  const slotsDone = p.slotsUsedThisRound >= tier.slots;
+  // Doom-aware option value: an ARMED CANCEL is worth more while the opponent
+  // holds live prophecy spells — firing it on chip (Foretell) spends the
+  // answer the next doom needed. Piloted economics (m5-m7): cancels went to
+  // dooms ONLY, small dooms were eaten. Non-cancel reactions are unaffected.
+  const oppLiveDooms = state.players[otherPlayer(id)].prepared.filter(
+    (pr) => !pr.cast && !pr.sealed && isProphecySpell(pr.spell.defId),
+  ).length;
+
   for (const prep of p.prepared) {
     const def = getCard(prep.spell.defId);
     if (!def) continue;
@@ -188,13 +225,17 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
     const have = addCost(attachedSymbols(p, prep), prep.bonus ?? emptyCost());
     const need = def.cost.V + def.cost.S + def.cost.M;
     const paid = Math.min(have.V, def.cost.V) + Math.min(have.S, def.cost.S) + Math.min(have.M, def.cost.M);
-    const progress = need > 0 ? paid / need : 1;
+    const fuelFactor = slotsDone && def.type !== "Reaction" ? 0.15 : 1;
+    const progress = (need > 0 ? paid / need : 1) * fuelFactor;
     const castable = (def.level ?? 1) <= tier.maxSpellLevel;
     const worth = (w.prepBase + level * w.prepPerLevel) * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3);
     score += worth;
     const threat = prepThreat(prep.spell.defId, w, soakShare);
     if (threat) score += threat * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3);
-    if (def.type === "Reaction" && castable && meetsCost(def.cost, have)) score += w.armedReaction;
+    if (def.type === "Reaction" && castable && meetsCost(def.cost, have)) {
+      const optionScale = isCancelReaction(prep.spell.defId) ? 1 + 0.5 * Math.min(2, oppLiveDooms) : 1;
+      score += w.armedReaction * optionScale;
+    }
     if (prep.spell.defId === "ABJ-032") {
       // Reckoning's banked payload: cast deals ceil(match prevention / 2) raw.
       // The generic prep term prices it like any other L3, so the greedy bot

@@ -18,8 +18,10 @@ import {
   determinize,
   isTerminal,
   legalActions,
+  otherPlayer,
   redact,
   rngInt,
+  tierForLevel,
   type Action,
   type GameState,
   type PlayerId,
@@ -56,6 +58,14 @@ export interface GreedyOptions {
  * don't fiddle first) without ever outweighing a real evaluation difference. */
 const PLY_PENALTY = 0.01;
 
+/** Cast slots that EXPIRE unused when a round ends inside a rollout, priced as
+ * a small loss (tier-1 waste accounting, 2026-08-13). Without it, passing is
+ * free at every horizon — slots refresh at the boundary, so the greedy bot
+ * could hold a full board and pass forever against an armed cancel (the m6
+ * pilot froze it for ~6 straight rounds). Small by design: it tips pass-vs-act
+ * ties, it must never force a cast into certain death. */
+const SLOT_WASTE_PENALTY = 0.15;
+
 export class GreedySimBot implements Agent {
   readonly name = "greedy";
   private rng: number;
@@ -84,6 +94,31 @@ export class GreedySimBot implements Agent {
     // Without the true state there is nothing to simulate on — play the policy.
     if (!state) return this.fallback.chooseAction(view, legal);
     const me = view.you;
+
+    // DETACH-RESCUE (tier-1 valve, 2026-08-13): when the round will end after
+    // this turn (opponent slot-exhausted) and my cast is spent, every attached
+    // component on an uncast spell is about to be SWEPT — pull it back to hand
+    // instead of passing over it. Piloted matches m5-m7 used this every game
+    // ("roughly doubled mid-game component income"); bots never did, because
+    // the anti-livelock detach valve below blocks detaching after an attach.
+    // This mode is loop-safe by construction: only detaches (which strictly
+    // shrink the attachment count) and pass are ever returned from it.
+    if (state.phase === "main" && state.stack.length === 0 && !state.pendingChoice) {
+      const opp = state.players[otherPlayer(me)];
+      const oppDone = opp.slotsUsedThisRound >= tierForLevel(opp.level).slots;
+      const p = state.players[me];
+      const meDone = p.spellCastThisTurn || p.slotsUsedThisRound >= tierForLevel(p.level).slots;
+      if (oppDone && meDone) {
+        const rescue = legal.find((a) => a.type === "detach");
+        if (rescue) return rescue;
+        // Nothing left to rescue: END THE TURN. Falling through to normal
+        // selection here could attach again (valve fires again → detach →
+        // attach oscillation → the 400-ply livelock guard). Cleanup mode owns
+        // the rest of the turn by construction.
+        const pass = legal.find((a) => a.type === "pass");
+        if (pass) return pass;
+      }
+    }
 
     // Interchangeable actions share a slug (e.g. attaching either of two identical
     // components to the same slot) — evaluate one representative of each.
@@ -158,6 +193,7 @@ export class GreedySimBot implements Agent {
     const startTurn = world.turnCount;
     const policy: [HeuristicBot, HeuristicBot] = [new HeuristicBot(seed), new HeuristicBot((seed ^ 0x27d4eb2f) | 0)];
     let ply = 0;
+    let wasted = 0; // my expired slots minus theirs, across boundaries the rollout crosses
     for (; ply < this.maxPlies; ply++) {
       if (isTerminal(s)) break;
       // Quiescent at a LATER turn boundary: the candidate action's whole turn —
@@ -168,9 +204,17 @@ export class GreedySimBot implements Agent {
       const actor = s.priorityPlayer;
       const legal = legalActions(s, actor);
       if (legal.length === 0) break; // defensive: engine guarantees pass exists
-      s = apply(s, policy[actor].chooseAction(redact(s, actor), legal), actor).state;
+      const next = apply(s, policy[actor].chooseAction(redact(s, actor), legal), actor).state;
+      if (next.round > s.round) {
+        // A round ended inside the rollout: price both sides' expired slots.
+        const mine = s.players[me];
+        const theirs = s.players[otherPlayer(me)];
+        wasted += Math.max(0, tierForLevel(mine.level).slots - mine.slotsUsedThisRound);
+        wasted -= Math.max(0, tierForLevel(theirs.level).slots - theirs.slotsUsedThisRound);
+      }
+      s = next;
     }
-    return evaluateState(s, me) - Math.min(ply, this.maxPlies) * PLY_PENALTY;
+    return evaluateState(s, me) - Math.min(ply, this.maxPlies) * PLY_PENALTY - wasted * SLOT_WASTE_PENALTY;
   }
 }
 
