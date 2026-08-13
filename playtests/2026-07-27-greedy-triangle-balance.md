@@ -1137,3 +1137,24 @@ getting more honest, per the tier-1 precedent. Reckoning's wall stands
 
 Next: wave A (same-duals 6→8, basics 17→15 — the deck-side lever for the
 same shape class), then wave B (demand-proportional cross split).
+
+---
+
+## Wave A (2026-08-13, night): same-duals 6→8, basics 17→15 — the ramp dial to its ceiling
+
+DECK change (presets humans use too — this wave re-baselines the GAME, not
+just the bots; pre-A piloted references are no longer strictly comparable).
+Drought math: no-same-dual-in-hand5 42%→31%, L4 pair-drought hand10 53%→34%.
+
+| Edge | Wave C | Wave A | Reading |
+|---|---|---|---|
+| Evo vs Abj (s100) | 23-7 Abj (77%) | 17-13 Abj (57%) | VV assembly pays the AGGRESSOR: Fireball 44 / Inferno 28 / Wrath 34 casts inside 9.5-round games |
+| Div vs Abj (s200) | 27-3 Div (90%) | 25-5 Div (83%) | the shape class THAWS long-game: Ward Collapse 3 preps/2 casts, Calculated Draw 12/3 — first real bot casts ever — and Reckoning casts 14→34 (one SS card now refuels it every round) |
+| Evo vs Div (s300) | 30-0 Evo (100%) | 30-0 Evo (100%) | immovable control, as every wave |
+
+Meteor stays 6 preps/0 casts — the L3 assembly window itself, not dual
+supply, is its binding constraint now (search-class work, known).
+DESIGN NOTE: Reckoning at 34 casts/30 games sharpens the queued accounting
+decision — wave A made the wall CHEAPER to run. New minor ledger: Cut the
+Thread 16 preps/1 cast on the Evo edge (override wins slots; denial rarely
+fires at Evo's pace).

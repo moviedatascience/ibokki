@@ -95,9 +95,11 @@ export function resourceDeckFor(school: Exclude<School, "Neutral">): string[] {
     for (let i = 0; i < n; i++) deck.push(id);
   };
 
-  // 17 basics (was 18 before the exactly-40 deck rule) + 7 trainers = 40 total.
-  push(`CMP-${primary}`, 17); // primary basics
-  push(`CMP-${primary}${primary}`, 6); // same-symbol duals (the ramp dial)
+  // 15 basics + 8 same-duals (wave A, resource-deck audit 2026-08-13: the
+  // mute-trio shape class needs the dual; drought odds no-dual-in-hand5
+  // 42%→31%, L4 pair-drought 53%→34%) + 7 trainers = 40 total.
+  push(`CMP-${primary}`, 15); // primary basics
+  push(`CMP-${primary}${primary}`, 8); // same-symbol duals (the ramp dial, at its rules ceiling)
   push(dualId(primary, offA!), 4); // cross-duals: splash symbols that still carry the primary
   push(dualId(primary, offB!), 4);
   push("CMP-VSM", 2); // tri: universal glue
