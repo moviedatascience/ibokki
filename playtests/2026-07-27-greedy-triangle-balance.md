@@ -920,3 +920,44 @@ unverified at telemetry level.
 | Evo vs Abj (seed 100) | 16-14 Abj (53%) | 9.43 | Abj > Evo | correct direction, near-flat — piloted calibration wanted |
 | Div vs Abj (seed 200) | 27-3 Div (90%) | 11.73 | Div > Abj | CORRECT (bot-level; piloted says Abj-favored — treat as lower bound on Abj) |
 | Evo vs Div (seed 300) | 30-0 Evo (100%) | 5.70 | Evo > Div | CORRECT (piloted: winnable, razor-thin) |
+
+---
+
+## Tiers 3+4 (2026-08-13, late): the benchmark exists; tree guidance is a weak positive; search stays parked
+
+**Tier 3 shipped**: `npm run pilot-gap` (packages/sim/src/pilotGap.ts) — runs
+the piloted-reference edges bot-vs-bot and prints the gap to the piloted
+records. Inaugural table (canonical n=30 numbers): Div-side of Evo-Div — bot
+0% vs piloted 4-0 (gap ~100 pts, the racing lines are horizon-class);
+Abj-side of Div-Abj — bot 10-13% vs piloted 3-0 (gap ~87 pts, closed 13 by
+tier 1). Evo-Abj is listed UNPILOTED by design — its reference series is an
+open task.
+
+**Tier 4 shipped and A/B'd**: IsmctsBot gained tactic-informed progressive
+edge bias (cast priors, +2.5 cancel-the-prophecy, -1 spend-cancel-while-dooms-
+prepped, -0.5 idle pass, prep bias; tanh-squashed, /(1+visits) decay;
+`--bias 0` = off-switch) plus greedy's detach-rescue valve. Same-tree A/B,
+n=10, vs the TIER-IMPROVED greedy:
+
+| Config | bias 0 | bias 1 |
+|---|---|---|
+| search-Div vs greedy-Evo (s300) | 0-10 | 0-10 |
+| search-Abj vs greedy-Div (s200) | 0-10 | 1-9 |
+
+Verdict: guidance is a weak positive on the plan-level edge (+1 game, n=10 —
+directional, not significant) and nothing on the race edge. Note the moving
+bar: tier-1/2 made GREEDY stronger (the old search-Div 2-8 vs pre-tier greedy
+is not comparable — the same config now loses 0-10 to the improved opponent).
+That is the program working as intended: the INSTRUMENT (greedy) is the
+deliverable; search remains a research lane. PARKED again, with the bias
+mechanism in place for whoever picks it up — next documented levers: greedy-
+policy rollouts, wider bias vocabulary (round-pacing, battery assembly), or
+per-node forced-line priors past the root.
+
+**Program state after tiers 1-4**: expression ✓ (priors + audit + probes),
+integrity ✓✓ (catatonia priced, fuel hygiene, cancel discipline — Div-Abj
+pilot gap closed 13 pts), fidelity: directions all correct, magnitudes are
+lower bounds by doctrine (CLAUDE.md). Remaining known gaps: Runic Seal prep
+starvation, plan-level lines (ward battery execution, checkmate geometry) —
+search-class work. The economical loop stands: bots for regression, subagent
+pilots for discovery on ≥90% edges, `npm run pilot-gap` as the progress meter.
