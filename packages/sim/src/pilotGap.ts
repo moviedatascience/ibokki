@@ -1,9 +1,9 @@
 /**
  * Pilot-gap benchmark (tier 3, 2026-08-13).
  *
- * The two piloted series (Div-vs-Evo m1-m4, Abj-vs-Div m5-m7) proved that
- * bot-level winrates are LOWER BOUNDS on the losing school's potential, not
- * balance targets. This benchmark quantifies how far the bots still sit from
+ * The piloted series (Div-vs-Evo m1-m4, Abj-vs-Div m5-m7, Evo-Abj m8-m15)
+ * proved that bot-level winrates are LOWER BOUNDS on the losing school's
+ * potential, not balance targets. This benchmark quantifies how far the bots still sit from
  * piloted play on those edges: for each matchup with a piloted reference,
  * run the bot-vs-bot matchup and print the gap. Re-run after every bot
  * improvement — the program's progress metric is this table's gaps closing.
@@ -38,8 +38,20 @@ const BENCHMARKS: Benchmark[] = [
     seed: 200,
     pilotRecord: { wins: 3, losses: 0, logs: "playtests/2026-08-13-m5..m7" },
   },
-  // Evo-Abj has NO piloted reference yet — listed so its absence stays loud.
-  // Run a 3-game subagent series (m5-m7 brief style) to fill it in.
+  {
+    pilotSide: "Abjuration",
+    opponent: "Evocation",
+    seed: 100,
+    pilotRecord: { wins: 3, losses: 0, logs: "playtests/2026-08-13-m8..m10" },
+  },
+  // Evo side of the same edge: 2-3, both losses at the Reckoning wall (R10+);
+  // m14/m15 are post-gating-fix re-runs of the m12/m13 seeds.
+  {
+    pilotSide: "Evocation",
+    opponent: "Abjuration",
+    seed: 100,
+    pilotRecord: { wins: 2, losses: 3, logs: "playtests/2026-08-13-m11..m15" },
+  },
 ];
 
 function parseN(argv: string[]): number {
@@ -74,7 +86,6 @@ function main(): void {
   }
   console.log("\nGaps are directional (piloted n is tiny). A closing gap means the bots");
   console.log("are learning the piloted lines; see the balance journal for the ledger.");
-  console.log("Evo-Abj is UNPILOTED — run a 3-game subagent series to add its reference.");
 }
 
 main();
