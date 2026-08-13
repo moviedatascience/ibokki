@@ -36,8 +36,9 @@ import {
   type PlayerView,
 } from "@ibokki/engine";
 import { HeuristicBot, type Agent } from "./agent.ts";
-import { evaluateState } from "./evaluate.ts";
+import { castPriorValue, evaluateState, isProphecySpell } from "./evaluate.ts";
 import { slugFor } from "./render.ts";
+import { otherPlayer, tierForLevel } from "@ibokki/engine";
 
 export interface MctsOptions {
   /** Search iterations per decision (one sampled world each). Default 300. */
@@ -51,6 +52,9 @@ export interface MctsOptions {
   rolloutTurns?: number;
   /** Hard rollout cap in plies past the expanded node. Default 30 × rolloutTurns. */
   rolloutPlies?: number;
+  /** Scale on the tactic-informed edge priors (progressive bias). Default 1;
+   *  0 disables — the A/B knob for measuring what tree guidance buys. */
+  policyBias?: number;
   /** Uniform noise added to leaf values — the blunder dial for lower difficulties. Default 0. */
   evalNoise?: number;
   /** Wall-clock cap per decision, ms. NON-DETERMINISTIC — for live servers only. */
@@ -66,6 +70,13 @@ export interface MctsOptions {
  * at low budgets) rather than rediscovering it through noisy rollouts. */
 const PRIOR_VISITS = 8;
 
+/* Progressive-bias design note (tier 4, 2026-08-13): policyPrior() returns
+ * HP-ish magnitudes; squashed through tanh(x / evalScale) they land in the
+ * same [-1, 1] space as q, then decay as 1/(1+visits) so evidence overrides
+ * guidance. The iterations sweep showed budget alone buys nothing — the tree
+ * needs FOCUS toward the lines the piloted series proved matter (doom
+ * answers, prior casts, no idle passes). Scale via MctsOptions.policyBias. */
+
 interface Edge {
   /** A concrete instance of this slug's action (root edges hold TRUE-state actions). */
   action: Action;
@@ -75,6 +86,8 @@ interface Edge {
   total: number;
   /** Times this action was legal when the parent was UCB-selected over. */
   availability: number;
+  /** Tactic-informed policy prior, squashed to [-1, 1] (progressive bias). */
+  bias: number;
 }
 
 interface TreeNode {
@@ -94,6 +107,7 @@ export class IsmctsBot implements Agent {
   private readonly evalNoise: number;
   private readonly maxMillis: number | undefined;
   private readonly evalScale: number;
+  private readonly policyBias: number;
 
   constructor(seed: number, opts?: MctsOptions) {
     this.rng = seed | 0;
@@ -105,12 +119,29 @@ export class IsmctsBot implements Agent {
     this.evalNoise = opts?.evalNoise ?? 0;
     this.maxMillis = opts?.maxMillis;
     this.evalScale = opts?.evalScale ?? 12;
+    this.policyBias = opts?.policyBias ?? 1;
   }
 
   chooseAction(view: PlayerView, legal: Action[], state?: GameState): Action {
     if (legal.length === 1) return legal[0]!;
     if (!state) return this.fallback.chooseAction(view, legal);
     const me = view.you;
+
+    // Detach-rescue cleanup mode (tier-1 valve, shared with GreedySimBot): on
+    // the round-final turn with the cast spent, rescue sweep-bound fuel and
+    // end the turn. No search needed — the line is strictly good.
+    if (state.phase === "main" && state.stack.length === 0 && !state.pendingChoice) {
+      const opp = state.players[otherPlayer(me)];
+      const oppDone = opp.slotsUsedThisRound >= tierForLevel(opp.level).slots;
+      const p = state.players[me];
+      const meDone = p.spellCastThisTurn || p.slotsUsedThisRound >= tierForLevel(p.level).slots;
+      if (oppDone && meDone) {
+        const rescue = legal.find((a) => a.type === "detach");
+        if (rescue) return rescue;
+        const pass = legal.find((a) => a.type === "pass");
+        if (pass) return pass;
+      }
+    }
 
     // Root candidates come from the TRUE legal list (world legality can differ,
     // e.g. a trainer that is a no-op against some sampled hands) so the returned
@@ -167,6 +198,7 @@ export class IsmctsBot implements Agent {
         visits: PRIOR_VISITS,
         total: (me === 0 ? v0 : -v0) * PRIOR_VISITS,
         availability: PRIOR_VISITS,
+        bias: this.biasFor(state, action, me),
       });
     }
 
@@ -235,7 +267,7 @@ export class IsmctsBot implements Agent {
         const action = avail.get(slug)!;
         const applied = this.tryApply(s, action, actor);
         if (applied === null) return; // world-illegal quirk: skip this iteration
-        const edge: Edge = { action, child: newNode(), visits: 0, total: 0, availability: 1 };
+        const edge: Edge = { action, child: newNode(), visits: 0, total: 0, availability: 1, bias: this.biasFor(s, action, actor) };
         node.edges.set(slug, edge);
         path.push({ edge, actor });
         const rolled = this.rollout(applied);
@@ -244,7 +276,8 @@ export class IsmctsBot implements Agent {
         break;
       }
 
-      // All available actions tried before: UCB1 over the AVAILABLE edges only.
+      // All available actions tried before: UCB1 over the AVAILABLE edges only,
+      // plus the tactic-informed progressive bias (decays as evidence arrives).
       let chosen: { slug: string; edge: Edge } | undefined;
       let bestScore = -Infinity;
       for (const [slug, edge] of node.edges) {
@@ -252,8 +285,9 @@ export class IsmctsBot implements Agent {
         edge.availability++;
         const q = edge.total / edge.visits;
         const u = this.exploration * Math.sqrt(Math.log(edge.availability) / edge.visits);
-        if (q + u > bestScore) {
-          bestScore = q + u;
+        const b = edge.bias / (1 + edge.visits);
+        if (q + u + b > bestScore) {
+          bestScore = q + u + b;
           chosen = { slug, edge };
         }
       }
@@ -282,6 +316,51 @@ export class IsmctsBot implements Agent {
       step.edge.visits++;
       step.edge.total += step.actor === 0 ? v0 : -v0;
     }
+  }
+
+  /**
+   * Tactic-informed action prior (tier 4): HP-ish score nudging the tree
+   * toward the lines the piloted series proved out. Guidance only — the
+   * progressive-bias decay lets rollout evidence override it.
+   */
+  private policyPrior(s: GameState, a: Action, actor: PlayerId): number {
+    switch (a.type) {
+      case "cast": {
+        const defId = s.players[actor].prepared[a.preparedIndex]?.spell.defId;
+        return defId ? castPriorValue(defId) : 0;
+      }
+      case "castReaction": {
+        // Fire on an enemy prophecy = the m5-m7 cancel discipline; firing
+        // while enemy dooms sit prepped spends the answer they needed.
+        const enemyProphecyOnStack = s.stack.some((it) => it.controller !== actor && isProphecySpell(it.defId));
+        if (enemyProphecyOnStack) return 2.5;
+        const oppLiveDooms = s.players[otherPlayer(actor)].prepared.some(
+          (pr) => !pr.cast && !pr.sealed && isProphecySpell(pr.spell.defId),
+        );
+        return oppLiveDooms ? -1.0 : 0;
+      }
+      case "prepareSpell":
+      case "replacePrepared": {
+        const iid = a.spellIid;
+        const defId = s.players[actor].spellbook.find((c) => c.iid === iid)?.defId;
+        return defId ? 0.5 * castPriorValue(defId) : 0;
+      }
+      case "pass": {
+        // Idle pass with a live board = the armed-cancel freeze. Small nudge;
+        // the slot-waste rollout term does the heavy lifting.
+        if (s.phase !== "main" || s.stack.length > 0) return 0;
+        const p = s.players[actor];
+        const slotsLeft = p.slotsUsedThisRound < tierForLevel(p.level).slots;
+        return slotsLeft && !p.spellCastThisTurn && p.prepared.some((pr) => !pr.cast && !pr.sealed) ? -0.5 : 0;
+      }
+      default:
+        return 0;
+    }
+  }
+
+  private biasFor(s: GameState, a: Action, actor: PlayerId): number {
+    if (this.policyBias === 0) return 0;
+    return Math.tanh(this.policyPrior(s, a, actor) / this.evalScale) * this.policyBias;
   }
 
   /** apply() that treats world-illegal actions (hidden-info legality quirks) as a skip. */

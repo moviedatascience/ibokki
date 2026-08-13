@@ -66,6 +66,8 @@ interface Args {
   horizon: number;
   /** ISMCTS iterations per decision for `search` agents (default 300). */
   iters: number | undefined;
+  /** ISMCTS tactic-bias scale (default 1; 0 = the A/B off-switch). */
+  bias: number | undefined;
   /** Forcing probe (blind-spot plan 1b): bias greedy agents toward this card.
    *  Compare a forced run against the same-seed unforced baseline: winrate up
    *  = bot undervaluation (quarantine the card verdict); flat = real verdict. */
@@ -89,6 +91,7 @@ function parseArgs(argv: string[]): Args {
     deck2: undefined,
     horizon: 2,
     iters: undefined,
+    bias: undefined,
     force: undefined,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -140,6 +143,9 @@ function parseArgs(argv: string[]): Args {
         break;
       case "--iters":
         args.iters = Number(next());
+        break;
+      case "--bias":
+        args.bias = Number(next());
         break;
       case "--force":
         args.force = next().toUpperCase();
@@ -201,12 +207,14 @@ function main(): void {
     ...(d2 ? { deck2: d2.deck } : {}),
     ...(collector ? { collector } : {}),
     greedy: { rolloutTurns: args.horizon, ...(args.force !== undefined ? { forceDefId: args.force } : {}) },
-    ...(args.iters !== undefined ? { mcts: { iterations: args.iters } } : {}),
+    ...(args.iters !== undefined || args.bias !== undefined
+      ? { mcts: { ...(args.iters !== undefined ? { iterations: args.iters } : {}), ...(args.bias !== undefined ? { policyBias: args.bias } : {}) } }
+      : {}),
   });
 
   const label1 = d1 ? d1.label : args.s1;
   const label2 = d2 ? d2.label : args.s2;
-  const itersTag = args.iters !== undefined ? ` [iters ${args.iters}]` : "";
+  const itersTag = (args.iters !== undefined ? ` [iters ${args.iters}]` : "") + (args.bias !== undefined ? ` [bias ${args.bias}]` : "");
   const forceTag = args.force !== undefined ? ` [FORCING ${args.force}]` : "";
   console.log(`Matchup: P1 ${label1} (${args.p1}) vs P2 ${label2} (${args.p2})${args.paired ? " [paired seats]" : ""} [horizon ${args.horizon}]${itersTag}${forceTag}`);
   console.log(`Games:   ${stats.games}`);

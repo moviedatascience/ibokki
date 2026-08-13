@@ -132,7 +132,7 @@ let priorTableOverride: Record<string, number> | null = null;
 /** Card-class caches for the tier-1 behavior terms (2026-08-13). Text-derived
  *  once at first use — sim-only, so a regex over rules text is acceptable. */
 const prophecyCache = new Map<string, boolean>();
-function isProphecySpell(defId: string): boolean {
+export function isProphecySpell(defId: string): boolean {
   let v = prophecyCache.get(defId);
   if (v === undefined) {
     v = /^Prophecy\b/i.test(getCard(defId)?.text ?? "");
@@ -171,6 +171,13 @@ function prepThreat(defId: string, w: EvalWeights, doomSoakShare: number): numbe
 /** Derivation-time hook (derivePriors.ts / tests). Pass null to restore. */
 export function _overridePrepThreat(table: Record<string, number> | null): void {
   priorTableOverride = table;
+}
+
+/** The scoped cast prior a card carries (hand override or Div-scoped generated
+ *  value × castPrior weight), context-free — for POLICY GUIDANCE (ISMCTS edge
+ *  bias), not state scoring. Doom discounting is deliberately omitted here. */
+export function castPriorValue(defId: string, w: EvalWeights = DEFAULT_WEIGHTS): number {
+  return prepThreat(defId, w, 1);
 }
 
 function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
