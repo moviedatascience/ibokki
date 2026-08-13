@@ -3,7 +3,7 @@
  * readable transcript (moves + my notes), applies a chosen action, auto-plays the
  * bot side, and can save a playtest log to disk.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   apply,
@@ -227,12 +227,18 @@ export function autoplay(match: Match, until: AutoplayUntil, botKind: Exclude<Ag
   );
 }
 
-/** Write the transcript (+ optional analysis) to playtests/<id>.md; returns the path. */
+/** Write the transcript (+ optional analysis) to playtests/; returns the path.
+ *  The filename carries the match SEED (unique per configuration — match.id is
+ *  a per-process counter that a restarted server re-issues from m1), and an
+ *  existing file is NEVER overwritten: on 2026-08-13 a counter collision
+ *  clobbered two committed reference transcripts (recovered from git). */
 export function savePlaytest(match: Match, analysis?: string): string {
   const dir = resolve(process.cwd(), "playtests");
   mkdirSync(dir, { recursive: true });
   const safe = (s: string) => s.replace(/[^\w-]+/g, "_");
-  const path = resolve(dir, `${new Date().toISOString().slice(0, 10)}-${match.id}-${safe(match.labels[0])}-vs-${safe(match.labels[1])}.md`);
+  const base = `${new Date().toISOString().slice(0, 10)}-${match.id}-s${match.state.seed}-${safe(match.labels[0])}-vs-${safe(match.labels[1])}`;
+  let path = resolve(dir, `${base}.md`);
+  for (let n = 2; existsSync(path); n++) path = resolve(dir, `${base}-${n}.md`);
   const result = isTerminal(match.state)
     ? `**Result:** ${match.state.winner === null ? "draw" : `P${match.state.winner} wins`} (${match.state.endReason}), round ${match.state.round}.`
     : "**Result:** (in progress)";
