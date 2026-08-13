@@ -1158,3 +1158,41 @@ DESIGN NOTE: Reckoning at 34 casts/30 games sharpens the queued accounting
 decision — wave A made the wall CHEAPER to run. New minor ledger: Cut the
 Thread 16 preps/1 cast on the Evo edge (override wins slots; denial rarely
 fires at Evo's pace).
+
+---
+
+## Wave B (2026-08-13, night): demand-proportional cross split — the audit program closes
+
+Cross-duals now follow each school's MEASURED off-primary demand instead of
+uniform 4/4: Evo 2 VS / 6 VM, Abj 2 VS / 6 SM, Div 6 VM / 2 SM
+(`CROSS_SPLIT` in decks.ts). Deck change #2 — player-facing, like wave A.
+
+| Edge | Wave A | Wave B | Reading |
+|---|---|---|---|
+| Evo vs Abj (s100) | 17-13 Abj (57%) | 15-15 (50%) | demand-matched crosses fire on BOTH sides: Wrath of the Mage 48 casts (VM 4→6), Counterbind 7 real fires, Meteor down to 1 wasted prep, zero mutes |
+| Div vs Abj (s200) | 25-5 Div (83%) | 23-7 Div (77%) | the shape class is fully ALIVE: Ward Collapse 7 preps/8 casts at 100% WR-used, Final Reckoning's FIRST cast ever, Calculated Draw 10/8, Counterbind 64 fires |
+| Evo vs Div (s300) | 30-0 Evo (100%) | 30-0 Evo (100%) | composition-insensitive at bot level — the constraint is Div's round-5 survival, not fuel |
+
+### Canonical triangle — NEW BASELINE (2026-08-13 night, wave A+B decks + wave-C bots)
+
+| Matchup | Result | Avg rounds | Design intent | Status |
+|---|---|---|---|---|
+| Evo vs Abj (seed 100) | 15-15 (50%) | 9.57 | Abj > Evo | FLAT at bot level — piloted references (m8-m15) predate the deck waves; fresh piloted calibration REQUIRED before design conclusions |
+| Div vs Abj (seed 200) | 23-7 Div (77%) | 11.97 | Div > Abj | correct direction (piloted said Abj-favored on OLD decks — stale reference) |
+| Evo vs Div (seed 300) | 30-0 Evo (100%) | 5.57 | Evo > Div | correct, degenerate; ≥90% doctrine trigger — re-pilot on NEW decks |
+
+### Program synthesis (audit → C → A → B, one session)
+
+The audit's diagnosis held end to end: shape supply, not symbol supply, was
+the constraint, and the three waves attacked it from both sides — wave C
+stopped the bots WASTING slots on unassemblable shapes (~35 preps/90 games
+recovered), waves A+B made the shapes ASSEMBLABLE (mute trio now casting;
+Wrath/Counterbind/Ward Collapse/Final Reckoning all expressing for the
+first time). Cost: every pre-wave piloted reference is stale (decks
+changed), and Evo-Abj sits flat where design intent says Abj > Evo — the
+next piloted calibration answers whether skilled play restores the edge.
+STANDING DESIGN QUEUE, sharpened: (1) Reckoning — the wall is now cheaper
+to fuel (one SS card/round) and cast 21-34 times/30 games at bot level;
+(2) burn-vs-mitigation doctrine; (3) "spell"-worded reactions answering
+Reactions; (4) ledger #6: rollout-vs-live policy mismatch (Divine 28-29
+preps/0 casts through every wave, immune to prior demotion).

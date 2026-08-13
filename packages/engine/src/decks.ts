@@ -87,6 +87,16 @@ const ARCHETYPE_TRAINERS: Record<Exclude<School, "Neutral">, string[]> = {
   ],
 };
 
+/** Wave B (resource-deck audit 2026-08-13): cross-duals follow each school's
+ *  MEASURED off-primary symbol demand instead of a uniform 4/4 — Evo needs
+ *  M=6 vs S=3, Abj M=8 vs V=3, Div V=4 vs S=2. Counts are [offA, offB] in
+ *  the recipe's V<S<M off-symbol order. */
+const CROSS_SPLIT: Record<Exclude<School, "Neutral">, [number, number]> = {
+  Evocation: [2, 6], // VS 2, VM 6
+  Abjuration: [2, 6], // VS 2, SM 6
+  Divination: [6, 2], // VM 6, SM 2
+};
+
 export function resourceDeckFor(school: Exclude<School, "Neutral">): string[] {
   const primary = PRIMARY_SYMBOL[school];
   const [offA, offB] = (["V", "S", "M"] as Sym[]).filter((s) => s !== primary);
@@ -100,8 +110,9 @@ export function resourceDeckFor(school: Exclude<School, "Neutral">): string[] {
   // 42%→31%, L4 pair-drought 53%→34%) + 7 trainers = 40 total.
   push(`CMP-${primary}`, 15); // primary basics
   push(`CMP-${primary}${primary}`, 8); // same-symbol duals (the ramp dial, at its rules ceiling)
-  push(dualId(primary, offA!), 4); // cross-duals: splash symbols that still carry the primary
-  push(dualId(primary, offB!), 4);
+  const [nA, nB] = CROSS_SPLIT[school];
+  push(dualId(primary, offA!), nA); // cross-duals: splash symbols that still carry the
+  push(dualId(primary, offB!), nB); // primary, allocated by measured off-color demand
   push("CMP-VSM", 2); // tri: universal glue
 
   deck.push(...ARCHETYPE_TRAINERS[school]);
