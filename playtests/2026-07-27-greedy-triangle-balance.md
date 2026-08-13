@@ -1096,3 +1096,44 @@ the briefed filename and REPORT stray auto-names, never shell-delete.
 Triage: m17's "Foretell uncastable vs empty hand" is NOT a code bug — the
 reveal no-ops safely and no legality path reads hand size; the observation
 matches the one-spell-per-turn reset at the turn boundary (brief clarified).
+
+---
+
+## Wave C (2026-08-13, evening): the prep-fundability valve ships — and Divine exposes a NEW blind-spot class
+
+First instrument fix from the resource-deck audit. Two pieces:
+
+**Fundability term** (`evaluate.ts`, weight `fundability`, 0 = off): every
+uncast prep's worth (generic + prior + Reckoning/Collapse payload terms) now
+scales by whether its REMAINING cost is completable within the 2-component-
+card cap: from hand = 1; one deck-draw away = 0.3-0.7 by helper-card density;
+two+ draws away = 0.15. The v1 cut priced the fallback by whole-deck pair
+inventory — saturates for every triple-primary shape, Meteor didn't move —
+and was retuned to single-draw helper density the same session. Measure
+twice, tune once.
+
+**Divine [DIV-003] prior zeroed** — and the demotion FAILED, which is the
+finding: 0.2 still slotted 25/30, 0.0 still slotted 28-29/30. The prep
+auction isn't decided by prepThreat at all here: greedy's ROLLOUT POLICY
+(heuristic) happily casts Divine mid-rollout (always fundable, scry+cleanse
+nudges eval), while greedy's LIVE cast auctions never do. A rollout-vs-live
+policy mismatch keeps a spell slotted that will never be cast — a NEW
+ledger class (#6): prepThreat overrides cannot demote what the rollout
+likes. OPEN; costs Div one slot on edges where it's dominant or hopeless,
+so not chased this wave.
+
+### Measured (n=30 paired greedy, canonical seeds; pre-wave = post-gating-fix)
+
+| Edge | pre-wave | Wave C | shape-waste movement |
+|---|---|---|---|
+| Evo vs Abj (s100) | 19-11 Abj (63%) | 23-7 Abj (77%) | Meteor 13-14 preps/≤1 cast → 6/0; freed slots went to Wrath of the Mage (5 preps, 36 casts) — a fundable cross-cost that actually fires |
+| Div vs Abj (s200) | 26-4 Div (87%) | 27-3 Div (90%) | Ward Collapse 17→3 preps, Calculated Draw 17→7 |
+| Evo vs Div (s300) | 29-1 Evo (97%) | 30-0 Evo (100%) | Divine 28-29 preps/0 casts — unchanged (ledger #6) |
+
+~35 wasted slot-preps per 90 games recovered. Every winrate moved TOWARD its
+piloted reference (Evo-Abj bot-Abj 63→77 vs piloted 100) — the instrument
+getting more honest, per the tier-1 precedent. Reckoning's wall stands
+(25 preps/32 casts/96% WR on the Evo edge — design decision still queued).
+
+Next: wave A (same-duals 6→8, basics 17→15 — the deck-side lever for the
+same shape class), then wave B (demand-proportional cross split).

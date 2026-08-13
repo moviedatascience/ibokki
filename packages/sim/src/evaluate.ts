@@ -8,7 +8,7 @@
  * Scores are roughly HP-denominated: 1.0 ≈ one point of life. Symmetric by
  * construction (my side minus opponent's side), so evaluate(s, 0) === -evaluate(s, 1).
  */
-import { getCard } from "@ibokki/cards";
+import { getCard, getComponent, type Cost } from "@ibokki/cards";
 import {
   addCost,
   attachedSymbols,
@@ -63,6 +63,13 @@ export interface EvalWeights {
    *  the hand values (Omen 1.7 / Foretell 1.6) the tuned triangle baseline was
    *  measured with. Hand overrides bypass this. */
   castPrior: number;
+  /** Scale on the prep-fundability discount (wave C, resource-deck audit
+   *  2026-08-13): a prep whose remaining cost can't be completed within the
+   *  2-component-card cap from the owner's hand is discounted toward its
+   *  deck-density odds (the audit's mute trio — Meteor/Ward Collapse/
+   *  Calculated Draw, ~48 wasted slot-rounds per 90 games — were priced
+   *  identically to always-fundable siblings). 1 = full discount, 0 = off. */
+  fundability: number;
 }
 
 export const DEFAULT_WEIGHTS: EvalWeights = {
@@ -86,6 +93,7 @@ export const DEFAULT_WEIGHTS: EvalWeights = {
   reckoningCharge: 0.8,
   wardConvertible: 0.8,
   castPrior: 1.0,
+  fundability: 1.0,
 };
 
 /**
@@ -123,6 +131,14 @@ const HAND_OVERRIDES: Record<string, number> = {
   // ledger #5's shape. Value = exp-7's judgment (~a cantrip of enemy fuel),
   // unchanged since the horizon-2 baseline was measured with it.
   "DIV-008": 1.2,
+  // Divine: the inverse failure — the snapshot delta overvalues cleanse+scry,
+  // so it wins prep auctions but loses EVERY cast auction: 57 preps / 0 casts
+  // across the 60 post-gating-fix canonical games (resource-deck audit
+  // 2026-08-13). A 0.2 demotion measurably failed (still 25/30 preps, 0
+  // casts — the whole rest of the L1 pool derives below 0.2, including
+  // Foresight at 46-65 casts/30 when slotted). Zeroed so it ties the pool
+  // floor and loses the auction to spells that actually cast.
+  "DIV-003": 0,
 };
 
 /** Non-null = explicit table replacing the whole mechanism (derivation must
@@ -180,6 +196,67 @@ export function castPriorValue(defId: string, w: EvalWeights = DEFAULT_WEIGHTS):
   return prepThreat(defId, w, 1);
 }
 
+/** Component-type counts among a card list (non-components ignored). */
+function componentCounts(cards: ReadonlyArray<{ defId: string }>): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const c of cards) {
+    if (getComponent(c.defId)) counts.set(c.defId, (counts.get(c.defId) ?? 0) + 1);
+  }
+  return counts;
+}
+
+const symOf = (defId: string): Cost => getComponent(defId)!.symbols;
+const coversRemaining = (prov: Cost, r: Cost): boolean => prov.V >= r.V && prov.S >= r.S && prov.M >= r.M;
+
+/** Weighted count of ≤capacity-card combos from `counts` covering remaining
+ *  cost `r` (the audit's "ways" metric: singles n, pairs n·m / C(n,2)). */
+function fundingWays(r: Cost, capacity: number, counts: Map<string, number>): number {
+  const ids = [...counts.keys()];
+  let ways = 0;
+  for (const a of ids) {
+    if (coversRemaining(symOf(a), r)) ways += counts.get(a)!;
+  }
+  if (capacity >= 2) {
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i; j < ids.length; j++) {
+        const a = ids[i]!, b = ids[j]!;
+        if (coversRemaining(symOf(a), r) || coversRemaining(symOf(b), r)) continue; // counted as singles
+        const sa = symOf(a), sb = symOf(b);
+        if (!coversRemaining({ V: sa.V + sb.V, S: sa.S + sb.S, M: sa.M + sb.M }, r)) continue;
+        const na = counts.get(a)!, nb = counts.get(b)!;
+        ways += a === b ? (na * (na - 1)) / 2 : na * nb;
+      }
+    }
+  }
+  return ways;
+}
+
+/** Wave-C fundability (resource-deck audit 2026-08-13): 1 when the prep's
+ *  remaining cost is completable from HAND within the 2-component-card cap;
+ *  otherwise priced by the density of SINGLE deck draws that would complete
+ *  it — the assembly-window reality behind the audit's mute trio. (The first
+ *  cut priced the fallback by whole-deck pair inventory, which saturates for
+ *  every triple-primary shape — Meteor stayed 13 preps / 0 casts.) A shape
+ *  two or more draws away is near-dead for the window. */
+function fundability(cost: Cost, have: Cost, capacity: number, hand: Map<string, number>, deck: Map<string, number>): number {
+  const r = { V: Math.max(0, cost.V - have.V), S: Math.max(0, cost.S - have.S), M: Math.max(0, cost.M - have.M) };
+  if (r.V + r.S + r.M === 0) return 1;
+  if (capacity <= 0) return 0.15; // cap reached, cost unmet — dead without a detach reset
+  if (fundingWays(r, capacity, hand) > 0) return 1;
+  let deckCards = 0;
+  let helpers = 0;
+  for (const [cid, n] of deck) {
+    deckCards += n;
+    hand.set(cid, (hand.get(cid) ?? 0) + 1); // trial draw
+    if (fundingWays(r, capacity, hand) > 0) helpers += n;
+    const back = hand.get(cid)! - 1;
+    if (back === 0) hand.delete(cid);
+    else hand.set(cid, back);
+  }
+  if (helpers === 0 || deckCards === 0) return 0.15;
+  return 0.3 + 0.4 * Math.min(1, (4 * helpers) / deckCards);
+}
+
 function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
   const p: PlayerState = state.players[id];
   const tier = tierForLevel(p.level);
@@ -225,6 +302,10 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
     (pr) => !pr.cast && !pr.sealed && isProphecySpell(pr.spell.defId),
   ).length;
 
+  // Wave-C fundability inventory: hand (assemble now) vs deck (draw to finish).
+  const handComp = componentCounts(p.hand);
+  const deckComp = componentCounts(p.resourceDeck);
+
   for (const prep of p.prepared) {
     const def = getCard(prep.spell.defId);
     if (!def) continue;
@@ -241,10 +322,14 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
     const fuelFactor = slotsDone && def.type !== "Reaction" ? 0.15 : 1;
     const progress = (need > 0 ? paid / need : 1) * fuelFactor;
     const castable = (def.level ?? 1) <= tier.maxSpellLevel;
-    const worth = (w.prepBase + level * w.prepPerLevel) * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3);
+    // Wave-C fundability: discount preps whose remaining cost shape the owner
+    // can't actually assemble (off-switch: w.fundability = 0).
+    const fund = fundability(def.cost, have, 2 - prep.attached.length, handComp, deckComp);
+    const fundEff = 1 - w.fundability * (1 - fund);
+    const worth = (w.prepBase + level * w.prepPerLevel) * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * fundEff;
     score += worth;
     const threat = prepThreat(prep.spell.defId, w, soakShare);
-    if (threat) score += threat * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3);
+    if (threat) score += threat * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * fundEff;
     if (def.type === "Reaction" && castable && meetsCost(def.cost, have)) {
       const optionScale = isCancelReaction(prep.spell.defId) ? 1 + 0.5 * Math.min(2, oppLiveDooms) : 1;
       score += w.armedReaction * optionScale;
@@ -256,7 +341,7 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
       // despite the exp-1d match-window rework (same blind-spot class as
       // Stone Stance before damageReductionPerHit).
       const payload = Math.min(Math.ceil((p.damagePreventedTotal ?? 0) / 2), state.players[otherPlayer(id)].hp);
-      score += payload * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * w.reckoningCharge;
+      score += payload * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * w.reckoningCharge * fundEff;
     }
     if (prep.spell.defId === "ABJ-031") {
       // Ward Collapse's stored payload: destroy your largest ward, deal its HP.
@@ -267,7 +352,7 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
       // payload × fuel progress × castability, bounded by opponent HP.
       const battery = p.wards.reduce((best, ward) => Math.max(best, ward.hp), 0);
       const payload = Math.min(battery, state.players[otherPlayer(id)].hp);
-      score += payload * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * w.wardConvertible;
+      score += payload * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * w.wardConvertible * fundEff;
     }
   }
 

@@ -10,7 +10,7 @@ import {
   type GameState,
 } from "@ibokki/engine";
 import { GreedySimBot, HeuristicBot } from "../src/index.ts";
-import { _sideScore, evaluateState } from "../src/evaluate.ts";
+import { _sideScore, castPriorValue, evaluateState } from "../src/evaluate.ts";
 
 /** Play forward with heuristic bots until `stop(state)` (or terminal / step cap). */
 function playUntil(state: GameState, stop: (s: GameState) => boolean, maxSteps = 3000): GameState {
@@ -158,5 +158,43 @@ describe("tier-1 bot behavior valves (2026-08-13)", () => {
     expect(_sideScore(withDoom, 0)).toBeGreaterThan(_sideScore(withDraw, 0));
     // Sanity: composite eval still runs on these states.
     expect(Number.isFinite(evaluateState(withDoom, 0))).toBe(true);
+  });
+});
+
+describe("wave-C prep valves (resource-deck audit 2026-08-13)", () => {
+  it("fundability: an unassemblable triple-primary prep is worth far less than an assemblable one", () => {
+    // P0 is Abjuration in quietMainSpot — its resource deck has NO Verbal
+    // duals, so a prepped Meteor (VVV) is unassemblable under the 2-card cap
+    // unless the hand supplies CMP-VV (the audit's mute-trio shape).
+    const meteor = { spell: { iid: 555032, defId: "EVO-032" }, faceDown: true, attached: [], cast: false, sealed: false };
+    const mk = (hand: Array<[number, string]>, withMeteor: boolean): GameState => {
+      const s = structuredClone(quietMainSpot(31));
+      s.players[0].level = 10; // past Meteor's L3 tier gate
+      s.players[1].level = 10;
+      s.players[0].hand = hand.map(([iid, defId]) => ({ iid, defId }));
+      if (withMeteor) s.players[0].prepared.push(structuredClone(meteor));
+      return s;
+    };
+    const deadHand: Array<[number, string]> = [[555030, "CMP-V"], [555031, "CMP-V"]];
+    const liveHand: Array<[number, string]> = [[555033, "CMP-VV"], [555034, "CMP-V"]];
+    const gainDead = _sideScore(mk(deadHand, true), 0) - _sideScore(mk(deadHand, false), 0);
+    const gainLive = _sideScore(mk(liveHand, true), 0) - _sideScore(mk(liveHand, false), 0);
+    expect(gainLive).toBeGreaterThan(gainDead * 2);
+  });
+
+  it("fundability: a fundable-from-hand prep is not discounted at all", () => {
+    // Fortify (S) with an S basic in hand: fund = 1, so the prep gain must
+    // match the pre-wave-C generic prep worth (no accidental discounts).
+    const s = structuredClone(quietMainSpot(31));
+    s.players[0].hand = [{ iid: 555040, defId: "CMP-S" }];
+    const withPrep = structuredClone(s);
+    withPrep.players[0].prepared.push({ spell: { iid: 555041, defId: "ABJ-001" }, faceDown: true, attached: [], cast: false, sealed: false });
+    const gain = _sideScore(withPrep, 0) - _sideScore(s, 0);
+    expect(gain).toBeGreaterThan(0.3); // (prepBase + 1·perLevel) · 0.35 = 0.42 undiscounted
+  });
+
+  it("Divine's prior is demoted below the casts-when-slotted alternatives", () => {
+    expect(castPriorValue("DIV-003")).toBeLessThanOrEqual(0.2); // 57 preps / 0 casts measured
+    expect(castPriorValue("DIV-011")).toBeGreaterThan(castPriorValue("DIV-003")); // Foretell actually casts
   });
 });
