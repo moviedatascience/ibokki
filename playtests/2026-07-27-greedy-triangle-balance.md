@@ -1066,3 +1066,33 @@ usage. The channel is no longer rationed.
 Next: the Div side of Evo-Div wants post-fix re-validation (its 4-0 reference
 predates tier-1/2 AND the gating fix, which touched Div's whole reaction kit)
 — m16-m18.
+
+---
+
+## Evo-Div re-validation (2026-08-13 evening, m16-m18): 2-1 Div — and the BRICK, not the bot, is now the instrument's binding constraint
+
+Three fresh seeds vs the post-fix tier-1/2 greedy. Piloted record on the edge
+moves 4-0 → 6-1:
+
+| Seed | Result | Margin | Reading |
+|---|---|---|---|
+| 5101 (m16) | Div L R6 | dead by exactly 2, lethal still in reserve | FIRST bot win of this race vs a pilot. Bot bricked once, hit its tech curve, and won on a burn marker carried across the round boundary — the doom-clock's own mechanic reversed. One pilot misplay (delayed Omen) plausibly decisive: contaminated but real |
+| 5102 (m17) | Div W R5 | 15 HP | bot fully bricked R3 (zero casts); margin overstates the edge |
+| 5103 (m18) | Div W R6 | 21 HP | near-bye: bot cast NOTHING R1-R4 on a Verbal-flooded hand a mulligan didn't fix. Not a validation |
+
+**Verdict:** the doom-clock line still beats greedy Evo, but the 4-0-era
+margins are gone and the outcome now hinges on whether Evo bricks. Two of
+three games it did, badly, on component-shape droughts — which makes the
+EVOCATION PRESET'S RESOURCE COMPOSITION (V/S/M ratio and multi-symbol card
+mix vs its spellbook's cost shapes), not bot policy, the next audit target.
+The 29-1 bot number on this edge is partly a deck-construction artifact.
+
+Housekeeping from the wave: `save_playtest` names files by the MCP server's
+internal match counter — a restarted server re-issues low ids (an m18 pilot's
+transcript auto-saved as "m5-...", was rewritten to the briefed name, and the
+stray deleted undisclosed, tripping the subagent security monitor; no real
+data touched, verified against git). pilot.md now instructs pilots to Write
+the briefed filename and REPORT stray auto-names, never shell-delete.
+Triage: m17's "Foretell uncastable vs empty hand" is NOT a code bug — the
+reveal no-ops safely and no legality path reads hand size; the observation
+matches the one-spell-per-turn reset at the turn boundary (brief clarified).

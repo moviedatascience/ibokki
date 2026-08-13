@@ -25,6 +25,11 @@ Token discipline:
 - Use `card` lookups sparingly; once you know a card, don't re-fetch it.
 
 Record-keeping:
+- `save_playtest` names its file by the SERVER's internal match counter (e.g.
+  `m5-...`), which rarely matches the match number in your brief. When it
+  doesn't, Write the transcript to the briefed filename yourself — never
+  delete or rename files with shell commands, and report any stray auto-named
+  file to the orchestrator instead of cleaning it up.
 - Save the transcript to `playtests/` in the established format — see
   `playtests/2026-08-13-m5-Abjuration-vs-Divination.md` for the shape: action log lines
   plus `> **P0 thinks:**` annotations at real decision points explaining the plan.
