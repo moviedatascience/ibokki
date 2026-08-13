@@ -56,6 +56,35 @@ export const PREVENT_TRAPS: Readonly<Record<string, number>> = {
 export const TRAP_REACTIONS: ReadonlySet<string> = new Set([...Object.keys(ATTACH_TRAPS), ...Object.keys(PREVENT_TRAPS)]);
 
 /**
+ * Reactions whose printed trigger names the opponent's card type — "when your
+ * opponent casts a spell" vs "plays a Reaction". Castable only from a window
+ * whose stack top matches (piloted m10/m12 finding: the blanket window let
+ * Combust answer a Spell cast). Absent = any opponent cast: prevention/utility
+ * reactions, and Cinder Storm's printed "spell or Reaction".
+ */
+export const REACTION_TRIGGER_TYPE: Readonly<Record<string, "spell" | "reaction">> = {
+  "EVO-013": "spell", // Backdraft
+  "EVO-016": "reaction", // Combust
+  "EVO-028": "spell", // Searing Backlash
+  "EVO-031": "reaction", // Combustive Counter
+  "EVO-042": "spell", // Annihilation Strike
+  "DIV-014": "spell", // Anticipate
+  "DIV-024": "spell", // Counter-Plan
+  "DIV-025": "spell", // Read the Signs
+  "DIV-035": "spell", // Spellbind
+};
+
+/** Riderless conditional cancels ("Cancel target spell that requires …"): a
+ *  non-qualifying target is a deterministic whiff, so the cast isn't offered
+ *  (same feel-bad guard as trainerHasEffect; piloted m12 saw the greedy bot
+ *  burn Counterbind's SM into an M-less stack). Mana Burn is NOT listed — its
+ *  2-damage rider lands whether or not the cancel condition holds. */
+export const CANCEL_REQUIRES_SYMBOL: Readonly<Record<string, "V" | "S" | "M">> = {
+  "ABJ-015": "M", // Counterbind
+  "ABJ-016": "S", // Break Form
+};
+
+/**
  * Spells whose effect casts a copy of another spell (Borrowed Spell / Borrowed
  * Power / Convergence). They are never THEMSELVES eligible recast targets: a
  * copy-spell copying a copy-spell recurses without bound — DIV-045 picking
@@ -67,7 +96,22 @@ export const RECAST_SPELLS: ReadonlySet<string> = new Set(["DIV-027", "DIV-037",
 
 import { getCard, getComponent } from "@ibokki/cards";
 import { tierForLevel } from "./levels.ts";
-import { isComponentDefId, otherPlayer, type GameState, type PlayerId } from "./types.ts";
+import { isComponentDefId, otherPlayer, type GameState, type PlayerId, type StackItem } from "./types.ts";
+
+/** Whether casting `defId` as a Reaction may answer the stack top under its
+ *  printed trigger (REACTION_TRIGGER_TYPE) and whiff guard (CANCEL_REQUIRES_SYMBOL).
+ *  Shared by legalActions (offer) and apply (refuse) so the two can't diverge. */
+export function reactionAnswersTop(defId: string, top: StackItem): boolean {
+  const trigger = REACTION_TRIGGER_TYPE[defId];
+  if (trigger === "reaction" && !top.isReaction) return false;
+  if (trigger === "spell" && top.isReaction) return false;
+  const reqSym = CANCEL_REQUIRES_SYMBOL[defId];
+  if (reqSym) {
+    const cost = getCard(top.defId)?.cost;
+    if (!cost || cost[reqSym] <= 0) return false;
+  }
+  return true;
+}
 
 /**
  * False when playing this trainer right now would deterministically do NOTHING

@@ -1,7 +1,7 @@
 /** The pure reducer: apply one action to a state, producing a new state + events. */
 import { getCard, getComponent, type ComponentDef } from "@ibokki/cards";
 import { addCost, attachedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
-import { ATTACH_TRAPS, PREVENT_TRAPS, trainerHasEffect } from "./cardFlags.ts";
+import { ATTACH_TRAPS, PREVENT_TRAPS, reactionAnswersTop, trainerHasEffect } from "./cardFlags.ts";
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
@@ -404,6 +404,8 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
       if (!def || !def.cost) throw new Error(`${prep.spell.defId} is not a castable spell`);
       if (def.type !== "Reaction") throw new Error("Only Reactions can be cast in response");
       if ((def.level ?? 1) > tier.maxSpellLevel) throw new Error("Reaction level too high");
+      if (!reactionAnswersTop(prep.spell.defId, state.stack[state.stack.length - 1]!))
+        throw new Error("This Reaction's printed trigger doesn't answer the cast on top of the stack");
 
       // Like any cast, a Reaction's cost must ALREADY be attached (no hand payment).
       // Stone Stance discounts the S cost of your first Reaction; Aetheric Lock taxes it.

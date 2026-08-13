@@ -626,12 +626,15 @@ describe("Volatile Bolt attach-trap (EVO-015)", () => {
 });
 
 describe("reactions answer opponent casts only (ruling 2026-07-08, playtest m1 finding)", () => {
-  /** P1 casts Spark while BOTH sides hold a fueled Backdraft; P1 keeps priority post-cast. */
+  /** P1 casts Spark holding a fueled Combust; P0 holds a fueled Backdraft; P1 keeps
+   *  priority post-cast. P1's answer must be Combust ("plays a Reaction") because
+   *  printed-trigger gating stops Backdraft from answering a Reaction. */
   function windowState(): GameState {
     const s = blankState();
+    s.players[1].level = 10; // Combust is L2 — clear the tier gate
     s.players[1].prepared = [
       { spell: inst("EVO-001"), faceDown: false, attached: [inst("CMP-V")], cast: false, sealed: false },
-      { spell: inst("EVO-013"), faceDown: true, attached: [inst("CMP-V")], cast: false, sealed: false },
+      { spell: inst("EVO-016"), faceDown: true, attached: [inst("CMP-V"), inst("CMP-V")], cast: false, sealed: false },
     ];
     s.players[0].prepared = [{ spell: inst("EVO-013"), faceDown: true, attached: [inst("CMP-V")], cast: false, sealed: false }];
     s.activePlayer = 1;
@@ -662,6 +665,48 @@ describe("reactions answer opponent casts only (ruling 2026-07-08, playtest m1 f
     s = apply(s, { type: "pass" }).state; // P1 passes — priority back to P0, own reaction on top
     expect(legalActions(s, 0).some((a) => a.type === "castReaction")).toBe(false);
     expect(() => apply(s, { type: "castReaction", preparedIndex: 1 })).toThrow(/opponent/);
+  });
+});
+
+describe("printed reaction triggers gate the window (piloted m10/m12 findings)", () => {
+  const prep = (defId: string, ...fuel: string[]) =>
+    ({ spell: inst(defId), faceDown: true, attached: fuel.map(inst), cast: false, sealed: false });
+  /** P1 casts `spellId`, then commits (passes) — P0's reaction window. */
+  function windowOn(spellId: string, fuel: string, ...p0Reactions: Array<[string, ...string[]]>): GameState {
+    const s = blankState();
+    s.players[0].level = 10; // clear tier gates for L2 reactions
+    s.players[1].level = 10;
+    s.players[1].prepared = [{ ...prep(spellId, fuel), faceDown: false }];
+    s.players[0].prepared = p0Reactions.map((r) => prep(...r));
+    s.activePlayer = 1;
+    s.priorityPlayer = 1;
+    const t = apply(s, { type: "cast", preparedIndex: 0 }).state;
+    return apply(t, { type: "pass" }).state;
+  }
+
+  it("Combust ('plays a Reaction') cannot answer a Spell cast — m10's misfire", () => {
+    const s = windowOn("EVO-001", "CMP-V", ["EVO-016", "CMP-V", "CMP-V"], ["EVO-013", "CMP-V"]);
+    const offered = legalActions(s, 0).filter((a) => a.type === "castReaction");
+    expect(offered).toEqual([{ type: "castReaction", preparedIndex: 1 }]); // Backdraft only
+    expect(() => apply(s, { type: "castReaction", preparedIndex: 0 })).toThrow(/trigger/);
+  });
+
+  it("Combust answers the opponent's Reaction; Backdraft ('casts a spell') cannot", () => {
+    let s = windowOn("EVO-001", "CMP-V", ["EVO-013", "CMP-V"]);
+    s.players[1].prepared.push(prep("EVO-016", "CMP-V", "CMP-V"), prep("EVO-013", "CMP-V"));
+    s = apply(s, { type: "castReaction", preparedIndex: 0 }).state; // P0's Backdraft tops
+    const offered = legalActions(s, 1).filter((a) => a.type === "castReaction");
+    expect(offered).toEqual([{ type: "castReaction", preparedIndex: 1 }]); // Combust only
+    expect(() => apply(s, { type: "castReaction", preparedIndex: 2 })).toThrow(/trigger/);
+    expect(() => apply(s, { type: "castReaction", preparedIndex: 1 })).not.toThrow();
+  });
+
+  it("Counterbind is whiff-guarded: refused vs an M-less cast, offered vs an M cast", () => {
+    const vsSpark = windowOn("EVO-001", "CMP-V", ["ABJ-015", "CMP-S", "CMP-M"]);
+    expect(legalActions(vsSpark, 0).some((a) => a.type === "castReaction")).toBe(false);
+    expect(() => apply(vsSpark, { type: "castReaction", preparedIndex: 0 })).toThrow(/trigger/);
+    const vsMSpell = windowOn("DIV-001", "CMP-M", ["ABJ-015", "CMP-S", "CMP-M"]);
+    expect(legalActions(vsMSpell, 0).some((a) => a.type === "castReaction")).toBe(true);
   });
 });
 

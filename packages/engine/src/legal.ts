@@ -1,7 +1,7 @@
 /** Enumerate the legal actions for the player who holds priority. */
 import { getCard, getComponent, type ComponentDef, type Cost } from "@ibokki/cards";
 import { addCost, attachedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
-import { TRAP_REACTIONS, trainerHasEffect } from "./cardFlags.ts";
+import { TRAP_REACTIONS, reactionAnswersTop, trainerHasEffect } from "./cardFlags.ts";
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { sumOngoing } from "./state-ops.ts";
 import {
@@ -175,6 +175,10 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
         // Trap reactions (Volatile Bolt, Mana Drain, Searing Riposte) fire
         // automatically on their trigger — never cast from a reaction window.
         if (TRAP_REACTIONS.has(prep.spell.defId)) continue;
+        // Printed-trigger gate: "plays a Reaction" cards only answer Reactions,
+        // "casts a spell" cards only spells; riderless conditional cancels need
+        // a target they can actually cancel.
+        if (!reactionAnswersTop(prep.spell.defId, top)) continue;
         if ((def.level ?? 1) > tier.maxSpellLevel) continue;
         const cost = reactionCost(def.cost, discount, tax);
         if (!meetsCost(cost, attachedSymbols(p, prep))) continue;
