@@ -823,3 +823,59 @@ July analysis: rework a dead Abj card (Aegis [ABJ-004], Absolute Defense
 probe) into narrow anti-doom tech. NOTE the piloted caveat: bot-level 100% ≠
 human 100% (see the Evo-Div piloted series); a piloted Abj-vs-Div match would
 calibrate before any card surgery.
+
+---
+
+## PILOTED Abj-vs-Div series (2026-08-12/13): 3-0 ABJUTATION SWEEP — the design item is FALSIFIED at human level
+
+Three piloted matches (subagent pilots, seeds 2101/2102/2103, greedy Div
+opponent; logs m5/m6/m7 2026-08-13). The 30-0 bot edge inverted completely:
+
+| Seed | Result | Margin | Wincon | Div's total damage landed |
+|---|---|---|---|---|
+| 2101 | Abj W R10 | 21 HP | Ward Collapse [ABJ-031] for 29 (9-round ward battery) | 9 HP in 10 rounds |
+| 2102 | Abj W R13 | 19 HP | Ward Collapse for 42; Counterbind DETERRENCE froze the bot ~6 rounds | never below 19 |
+| 2103 | Abj W R12 | 23 HP | Reckoning 8/8/10 off the ward-soak bank | 8 HP in 12 rounds |
+
+Three different wincons, all lopsided. Load-bearing tools (none of which
+bot-Abj uses): Runic Seal on the doom slot (uptime denial, incl. stranding
+mid-assembly fuel), Phase Shift/Counterbind ON DOOMS ONLY (and Counterbind as
+a STANDING THREAT — the greedy bot goes near-catatonic against an armed
+cancel: fuels its board and passes for rounds), Aegis-class untargetability
+(blanks any spell paid with ONE component card — single-card MM Omens
+included), eat-the-small-doom economics, round-END pacing (exhaust own slots
+to force-sweep the bot's hoarded attachments), and detach-rescue (pull unused
+reaction fuel to hand before the sweep — bots never do).
+
+### Standing verdicts after both piloted series
+- BOTH degenerate bot numbers (Evo-Div 100%, Div-Abj 100%) are pilot
+  artifacts. The triangle's bot-level magnitudes are lower bounds on the
+  DISADVANTAGED school's human potential, not balance targets.
+- "Abj needs anti-doom tech" is CLOSED-FALSIFIED: at human level Abj may be
+  FAVORED vs Div. The rework menu drafted before this series (Fate Ward,
+  doom-delay Aegis, Absolute Defense clock-stop) is SHELVED.
+
+### NEW design flags the series raised (user decisions, priority order)
+1. **Div has zero ward removal** — the ward battery (a 42-HP single ward!) is
+   uncounterable by the entire school; Dispelling Powder is a neutral gambit
+   Div presets apparently don't leverage. This is the actual human-level hole
+   in the Div>Abj intent.
+2. **Ward Collapse [ABJ-031] is an unbounded stored OTK** vs no-removal
+   opponents (29 and 42 this series). Candidates: cap the conversion, consume
+   ward + cap, or leave it as the reward for a school that can't remove wards
+   being punished for it.
+3. **Gambit dooms (Saboteur's Kit) bypass the stack** — uncancellable,
+   unsealable; they were the pilots' ONLY unavoidable damage. Intended?
+4. **Sealed Vault deletes the exhaustion wincon for free** (reset a 4-card
+   deck to 38 in m7).
+5. **First-action doom timing hole**: a doom cast as the round's first action
+   is unanswerable (seals can't hit cast spells; reaction fuel died in the
+   sweep). The greedy bot found this once (m7 R6) — real counterplay texture
+   or a hole, design call.
+6. Smaller: Counterbind costs SM in an S-flooded school (Phase Shift SS
+   outclasses it); Mana Drain's auto-trigger is uncontrollable; Quenching
+   Salts dead vs Div (sideboard texture, probably fine).
+7. **Bot-side (ladder QoL, known class of limitation)**: greedy passivity vs
+   armed cancels is a solo-ladder exploit; bot-Abj uses none of the above
+   tools (seal/cancel/detach-rescue/round-pacing are all absent from its
+   play). Fixing these is ISMCTS-era work, not eval patches.
