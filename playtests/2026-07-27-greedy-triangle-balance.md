@@ -1258,3 +1258,64 @@ channel is now cheap enough to be the default calibration step after ANY
 balance-relevant change. Pilot-gap references updated to the new-deck era
 (pilotGap.ts); the Evo-side Evo-Abj reference (2-3, m11-m15) is the one
 remaining stale row.
+
+---
+
+## THE LEDGER FAMILY ships (2026-08-13→14, ABJ-046/047/048, measured m28-m33): optionality instead of a Reckoning rework
+
+User direction after the triangle: don't nerf the mold — give Abjuration
+MORE SPENDERS of the banks it already owns. Three cards (xlsx-authored,
+inlineStr rows; imported; effects + `spendPrevented` context op — the first
+and ONLY decrementer of damagePreventedTotal; sub-minimum whiff guards in
+the LEDGER_MIN family; bots given stored-value payload terms up front):
+
+- **Warding Tithe** (S, L1): spend ≤4 → a Ward that big.
+- **Sealed Verdict** (S, L2 Reaction): spend 6 → cancel target spell
+  (one attached card vs Phase Shift's two).
+- **Restoring Rune** (S, L2): spend ≤6 → heal half.
+
+### Measured (bots n=30 paired / pilots 3+3, seeds 71xx/72xx)
+
+| Edge | pre-ledger | ledger (bots) | ledger (piloted) | Reading |
+|---|---|---|---|---|
+| Evo vs Abj (s100) | 15-15 (50%) | 19-11 Abj (63%), 12.3 rds | Abj 3-0: +26, +30 (R19!), +42 | family expresses HUGELY (Tithe 198 casts/30); games became attrition engines; the wall got RICHER AND STRONGER |
+| Div vs Abj (s200) | 23-7 Div (77%) | 28-2 Div (93%) | Div 3-0 | bots MISUSE the spenders at low bank (28 tiny Tithes, 8% WR-used); pilots verify: STARVED-BY-MATCHUP, not dead-by-design |
+| Evo vs Div (s300) | 30-0 | 30-0 | (control) | untouched, as expected |
+
+### What the pilots proved
+- **Every mechanism live**: Tithe constantly (m29 ~13 casts), Rune real
+  sustain (5×3 HP, above 30 — heals are uncapped), Verdict clean cancels
+  including FORECLOSURE ITSELF (m32, the flagship doom denied by a
+  bank-funded cancel).
+- **The spend-down consequence is REAL**: m29 over-spent and Reckoning
+  WHIFFED FOR 0 at R17 with Tithe locked by its own LEDGER_MIN — the
+  designed tension, arriving under exactly the sustained-spending play the
+  bot benchmarks smooth over.
+- **The soak-refill loop** (Tithe ward soaks recharge the bank) is generous
+  but NOT degenerate: ward-destroy and Chain Lightning's ward-sweep never
+  credit the ledger (verified in state-ops routing) — shipped counterplay,
+  and consolidating into big wards beats the small-ward swarm.
+- **Emergent Reckoning counterplay**: m28's 13-damage Reckoning ate a
+  Final Riposte reflect for 26 — big banks are now double-edged into Evo's
+  legal riposte suite. (Lethal Reckonings skip the reflect: gameover gates
+  the branch.)
+- **The Div-side starvation, quantified**: bank ≈ 0.6/round (m31); doom
+  damage credits ZERO; sealing a Foretell PREVENTS charging (denial and
+  ledger fight each other, m33); the opponent can swap out its last
+  soakable spell and zero the channel permanently (m32/m33).
+
+### Verdict + queue for the user
+The family achieves its brief on the Evo leg (richer play, real choices,
+wall preserved — margins actually WIDENED from m21's photo finish) and is
+mechanically proven but economically starved on the Div leg, where it was
+most needed. THE CONVERGENT FIX (all three Div-leg pilots independently):
+**let pierce/doom damage feed the ledger at a reduced rate** — "weathering
+the prophesied blow" is lore-clean, un-opt-out-able, and would make
+Verdict live in exactly the matchup that needs the extra answer. Options:
+engine rule (pierce damage credits floor(n/2)) vs a card/stance converter.
+Text polish queued: Tithe/Rune "up to" reads as a choice but auto-spends
+min(cap, bank); Reckoning's non-consuming read deserves printed text
+("...without spending it"). Small flags: Reckoning can whiff for 0 (bank-0
+casts — LEDGER_MIN candidate); Evo-Abj bot games now END ON EXHAUSTION
+regularly (12+ rounds — the escalating reshuffle penalty is a live design
+surface); no HP cap on heals (confirmed intended?).
