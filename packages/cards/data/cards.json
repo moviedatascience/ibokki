@@ -675,6 +675,51 @@
     "comment": "Board wipe for the Ward layer. Destroys everything — including your own — and deals 3 per Ward. Creates a dramatic reset moment late in the game and rewards whoever had more Wards built up. The self-destruction cost prevents it from being purely one-sided."
   },
   {
+    "id": "ABJ-046",
+    "name": "Warding Tithe",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 1,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Spend up to 4 of the damage you have prevented this match. Create a Ward with HP equal to the amount spent.",
+    "comment": "Ledger family (2026-08-13). Spends the Reckoning bank for tempo - every point spent is a point the late nuke loses. Gives prevention a use against doom decks that never touch wards."
+  },
+  {
+    "id": "ABJ-047",
+    "name": "Sealed Verdict",
+    "school": "Abjuration",
+    "type": "Reaction",
+    "level": 2,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Spend 6 of the damage you have prevented this match: cancel target spell. Castable only while you have at least 6 prevented.",
+    "comment": "Ledger family. A cancel funded by the bank instead of scarce attached fuel - the extra answer per round Abjuration lacked against multi-doom turns."
+  },
+  {
+    "id": "ABJ-048",
+    "name": "Restoring Rune",
+    "school": "Abjuration",
+    "type": "Spell",
+    "level": 2,
+    "costText": "S",
+    "cost": {
+      "V": 0,
+      "S": 1,
+      "M": 0
+    },
+    "text": "Spend up to 6 of the damage you have prevented this match. Heal half the amount spent, rounded down.",
+    "comment": "Ledger family. Sustain option - trades future Reckoning payload for present HP."
+  },
+  {
     "id": "EVO-001",
     "name": "Spark",
     "school": "Evocation",

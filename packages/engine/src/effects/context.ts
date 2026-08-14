@@ -217,6 +217,12 @@ export interface EffectContext {
   damagePreventedThisRound(): number;
   /** Lifetime prevention this match (Reckoning's match window). */
   damagePreventedTotal(): number;
+  /** Spend up to `max` from the lifetime prevention ledger (the ledger family,
+   *  2026-08-13: Warding Tithe / Sealed Verdict / Restoring Rune). Returns the
+   *  amount actually spent. The ONLY decrementer of damagePreventedTotal —
+   *  Reckoning reads whatever remains, so every point spent here is a point
+   *  the late nuke loses. */
+  spendPrevented(max: number): number;
   /** Stage a "seal target prepared spell" choice: the caster picks which opponent
    *  prepared spell (uncast, unsealed) gains the Seal. Face-down candidates appear
    *  as FACEDOWN-<slot> — targeting a slot never reveals its identity. No-op when
@@ -863,6 +869,12 @@ export function makeContext(
     },
     damagePreventedTotal() {
       return self.damagePreventedTotal ?? 0;
+    },
+    spendPrevented(max) {
+      const bank = self.damagePreventedTotal ?? 0;
+      const spent = Math.min(Math.max(0, max), bank);
+      self.damagePreventedTotal = bank - spent;
+      return spent;
     },
     requestSealOpponentPrepared() {
       const targets = opponent.prepared

@@ -75,6 +75,16 @@ register("ABJ-031", (c) => {
 // assembly time — at SSS it was prepped in 23/30 games yet cast in only 6; the
 // round-10 window is too short to attach three S before the game ends.
 register("ABJ-032", (c) => c.dealRawDamage(Math.ceil(c.damagePreventedTotal() / 2))); // Reckoning
+
+// ---- Ledger family (2026-08-13): spend the Reckoning bank for options ----
+// The new-deck triangle verdict: the lifetime accumulator was Abjuration's
+// ONLY spender, making every game script toward the R10 wall. These spend the
+// SAME bank earlier and smaller — optionality as soft moderation, Reckoning's
+// text untouched. Sub-minimum casts are whiffs, so LEDGER_MIN (cardFlags)
+// gates legality in the trainerHasEffect tradition.
+register("ABJ-046", (c) => { const n = c.spendPrevented(4); if (n > 0) c.createWardForSelf(n); }); // Warding Tithe
+register("ABJ-047", (c) => { if (c.spendPrevented(6) >= 6) c.cancelTarget(); }); // Sealed Verdict
+register("ABJ-048", (c) => { const n = c.spendPrevented(6); if (n > 1) c.heal(Math.floor(n / 2)); }); // Restoring Rune
 register("ABJ-033", (c) => c.dealRawDamage(3 * c.reactionsCastThisRound())); // Backlash
 register("ABJ-034", (c) => c.addReactionPunish(3)); // Exhausting Aura
 register("ABJ-035", (c) => c.dealRawDamage(c.selfHasWard() ? 7 : 5)); // Banishing Bolt

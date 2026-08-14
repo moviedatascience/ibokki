@@ -84,6 +84,16 @@ export const CANCEL_REQUIRES_SYMBOL: Readonly<Record<string, "V" | "S" | "M">> =
   "ABJ-016": "S", // Break Form
 };
 
+/** Ledger-family casts (2026-08-13) additionally spend the caster's lifetime
+ *  prevention (damagePreventedTotal). Below the minimum the cast is a
+ *  deterministic whiff, so legalActions doesn't offer it and apply refuses —
+ *  the same guard family as trainerHasEffect / CANCEL_REQUIRES_SYMBOL. */
+export const LEDGER_MIN: Readonly<Record<string, number>> = {
+  "ABJ-046": 1, // Warding Tithe — any bank makes a ward
+  "ABJ-047": 6, // Sealed Verdict — printed "at least 6 prevented"
+  "ABJ-048": 2, // Restoring Rune — spending 2 heals 1
+};
+
 /**
  * Spells whose effect casts a copy of another spell (Borrowed Spell / Borrowed
  * Power / Convergence). They are never THEMSELVES eligible recast targets: a

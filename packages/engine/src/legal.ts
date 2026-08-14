@@ -1,7 +1,7 @@
 /** Enumerate the legal actions for the player who holds priority. */
 import { getCard, getComponent, type ComponentDef, type Cost } from "@ibokki/cards";
 import { addCost, attachedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
-import { TRAP_REACTIONS, reactionAnswersTop, trainerHasEffect } from "./cardFlags.ts";
+import { LEDGER_MIN, TRAP_REACTIONS, reactionAnswersTop, trainerHasEffect } from "./cardFlags.ts";
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { sumOngoing } from "./state-ops.ts";
 import {
@@ -133,6 +133,8 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
         const def = getCard(prep.spell.defId);
         if (!def || !def.cost || def.type === "Reaction") continue;
         if ((def.level ?? 1) > tier.maxSpellLevel) continue;
+        // Ledger-family whiff guard: below the spend minimum the cast does nothing.
+        if ((LEDGER_MIN[prep.spell.defId] ?? 0) > (p.damagePreventedTotal ?? 0)) continue;
         if (costMet(p, prep)) actions.push({ type: "cast", preparedIndex: i });
       }
     }
@@ -179,6 +181,8 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
         // "casts a spell" cards only spells; riderless conditional cancels need
         // a target they can actually cancel.
         if (!reactionAnswersTop(prep.spell.defId, top)) continue;
+        // Ledger-family whiff guard (Sealed Verdict): needs the bank to spend.
+        if ((LEDGER_MIN[prep.spell.defId] ?? 0) > (p.damagePreventedTotal ?? 0)) continue;
         if ((def.level ?? 1) > tier.maxSpellLevel) continue;
         const cost = reactionCost(def.cost, discount, tax);
         if (!meetsCost(cost, attachedSymbols(p, prep))) continue;

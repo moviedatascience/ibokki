@@ -13,6 +13,7 @@ import {
   addCost,
   attachedSymbols,
   emptyCost,
+  LEDGER_MIN,
   meetsCost,
   otherPlayer,
   tierForLevel,
@@ -70,6 +71,11 @@ export interface EvalWeights {
    *  Calculated Draw, ~48 wasted slot-rounds per 90 games — were priced
    *  identically to always-fundable siblings). 1 = full discount, 0 = off. */
   fundability: number;
+  /** Scale on the ledger-family payload terms (Warding Tithe / Restoring
+   *  Rune, 2026-08-13): a prepared spender is worth its immediate bank
+   *  conversion, so the bot ever slots them (the mute-trio lesson applied
+   *  proactively to new cards). */
+  ledgerOption: number;
 }
 
 export const DEFAULT_WEIGHTS: EvalWeights = {
@@ -94,6 +100,7 @@ export const DEFAULT_WEIGHTS: EvalWeights = {
   wardConvertible: 0.8,
   castPrior: 1.0,
   fundability: 1.0,
+  ledgerOption: 0.7,
 };
 
 /**
@@ -330,7 +337,13 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
     score += worth;
     const threat = prepThreat(prep.spell.defId, w, soakShare);
     if (threat) score += threat * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * fundEff;
-    if (def.type === "Reaction" && castable && meetsCost(def.cost, have)) {
+    if (
+      def.type === "Reaction" &&
+      castable &&
+      meetsCost(def.cost, have) &&
+      // A ledger reaction below its spend minimum isn't armed (Sealed Verdict).
+      (LEDGER_MIN[prep.spell.defId] ?? 0) <= (p.damagePreventedTotal ?? 0)
+    ) {
       const optionScale = isCancelReaction(prep.spell.defId) ? 1 + 0.5 * Math.min(2, oppLiveDooms) : 1;
       score += w.armedReaction * optionScale;
     }
@@ -342,6 +355,17 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
       // Stone Stance before damageReductionPerHit).
       const payload = Math.min(Math.ceil((p.damagePreventedTotal ?? 0) / 2), state.players[otherPlayer(id)].hp);
       score += payload * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * w.reckoningCharge * fundEff;
+    }
+    if (prep.spell.defId === "ABJ-046" || prep.spell.defId === "ABJ-048") {
+      // Ledger spenders (2026-08-13): a prepared Tithe/Rune converts the bank
+      // into ward HP / healing NOW instead of Reckoning damage LATER. Priced
+      // like the other stored-value molds so the bot ever slots them.
+      const bank = p.damagePreventedTotal ?? 0;
+      const payload =
+        prep.spell.defId === "ABJ-046"
+          ? Math.min(4, bank) * w.wardHp * soakShare
+          : Math.floor(Math.min(6, bank) / 2) * w.hp;
+      score += payload * (0.35 + 0.65 * progress) * (castable ? 1 : 0.3) * w.ledgerOption * fundEff;
     }
     if (prep.spell.defId === "ABJ-031") {
       // Ward Collapse's stored payload: destroy your largest ward, deal its HP.

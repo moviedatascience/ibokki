@@ -1,7 +1,7 @@
 /** The pure reducer: apply one action to a state, producing a new state + events. */
 import { getCard, getComponent, type ComponentDef } from "@ibokki/cards";
 import { addCost, attachedSymbols, emptyCost, meetsCost, reactionCost } from "./cost.ts";
-import { ATTACH_TRAPS, PREVENT_TRAPS, reactionAnswersTop, trainerHasEffect } from "./cardFlags.ts";
+import { ATTACH_TRAPS, LEDGER_MIN, PREVENT_TRAPS, reactionAnswersTop, trainerHasEffect } from "./cardFlags.ts";
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
@@ -352,6 +352,8 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
       if (!def || !def.cost) throw new Error(`${prep.spell.defId} is not a castable spell`);
       if (def.type === "Reaction") throw new Error("Reactions are cast with castReaction");
       if ((def.level ?? 1) > tier.maxSpellLevel) throw new Error("Spell level too high");
+      if ((LEDGER_MIN[prep.spell.defId] ?? 0) > (p.damagePreventedTotal ?? 0))
+        throw new Error("Not enough prevented damage in your ledger");
       if (!costMet(p, prep)) throw new Error("Cost not met");
 
       pushToStack(state, me, action.preparedIndex, false, null, events);
@@ -406,6 +408,8 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
       if ((def.level ?? 1) > tier.maxSpellLevel) throw new Error("Reaction level too high");
       if (!reactionAnswersTop(prep.spell.defId, state.stack[state.stack.length - 1]!))
         throw new Error("This Reaction's printed trigger doesn't answer the cast on top of the stack");
+      if ((LEDGER_MIN[prep.spell.defId] ?? 0) > (p.damagePreventedTotal ?? 0))
+        throw new Error("Not enough prevented damage in your ledger");
 
       // Like any cast, a Reaction's cost must ALREADY be attached (no hand payment).
       // Stone Stance discounts the S cost of your first Reaction; Aetheric Lock taxes it.

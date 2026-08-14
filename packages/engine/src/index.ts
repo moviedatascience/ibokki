@@ -9,6 +9,7 @@ export { createGame, DEFAULT_STARTING_HP, type GameConfig, type PlayerConfig } f
 export { apply } from "./apply.ts";
 export { determinize } from "./determinize.ts";
 export { legalActions } from "./legal.ts";
+export { LEDGER_MIN } from "./cardFlags.ts";
 export { TURN_CAP } from "./mechanics.ts";
 export {
   redact,
