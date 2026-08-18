@@ -21,7 +21,11 @@ Token discipline:
   ambiguous.
 - Act by stable slug (e.g. `slug:"cast-evo-017"`), never by index.
 - Use `autoplay` with a stop condition (`roundEnd`/`myTurn`/`reactionWindow`/`choice`/
-  `gameOver`) so tokens go only to decisions that matter.
+  `gameOver`) so tokens go only to decisions that matter. WARNING (m41/m42, 2026-08-17):
+  `autoplay` hands YOUR side to a bot until the stop condition, and `reactionWindow`
+  never fires if you have no armed reaction — it ran 145 pilot decisions straight to
+  game over, including prep swaps. Only stop on `myTurn` or `choice`, never autoplay
+  across a prep phase, and re-read the board after every stop.
 - Use `card` lookups sparingly; once you know a card, don't re-fetch it.
 
 Record-keeping:

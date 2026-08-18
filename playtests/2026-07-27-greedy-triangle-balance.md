@@ -1319,3 +1319,104 @@ min(cap, bank); Reckoning's non-consuming read deserves printed text
 casts — LEDGER_MIN candidate); Evo-Abj bot games now END ON EXHAUSTION
 regularly (12+ rounds — the escalating reshuffle penalty is a live design
 surface); no HP cap on heals (confirmed intended?).
+
+---
+
+## LEDGER-ERA PILOTED TRIANGLE (2026-08-17, m34-m44): both Abj edges overshoot at skill; the Div-Evo race flips toward the pilot
+
+Full piloted triangle on the ledger tree (fcc14e7): 9 pilots + 2 clean
+re-runs, all vs the tier-1/2 greedy on wave-A+B decks. Side selection by
+doctrine and open items: EVO on the Evo-Abj leg (refreshing the one stale
+pilot-gap row, m11-m15), ABJ on the Div-Abj leg (93% trigger — a win-hunt
+on the m31-m33 starvation verdict), DIV on Evo-Div (100% trigger).
+
+| Leg (pilot side) | Result | Games | Reading |
+|---|---|---|---|
+| Evo vs Abj (m34-m36, seeds 8101-03) | **0-3** | L R10 (-32), L R14 (-9), L R13 (-6) | With m28-m30's Abj 3-0, BOTH seats of this leg are now measured on the ledger tree: Abj is strongly favored at skill. Intent Abj > Evo realized — possibly overshooting; the 63% bot number underestimates the skill edge |
+| Abj vs Div (m37-m39, seeds 8201-03) | **0-3** (0-6 cumulative ledger era) | L R11, L R17, L R11 | Starvation verdict robust — with one big nuance (m38, below) |
+| Div vs Evo (m40/m43/m44 clean, seeds 8301-03) | **2-1 DIV** | W R6 (+7), L R6 (-6), W R7 (+9) | Both wins COMFORTABLE — supersedes the m25-m27 "coinflip at absolute best" read; the round-5-survival-tool fear softens |
+
+### Evo-Abj: the ledger family closed Evocation's old winning line
+- m34: the soak-refill loop in the wild — Tithe converts bank→wards, Evo's
+  V-heavy book is forced to hit them, every soaked point re-feeds the bank.
+  One Dispelling Powder seen in 10 rounds; Reckoning 16 off a ~31 bank ended it.
+- m35: Restoring Rune bounced the bot off single digits THREE times; Reckoning
+  fired 4x with visibly decaying damage (6→4) as the bot spent the bank down —
+  the decrement mechanic and the designed spend-vs-nuke tension are both live.
+- m36: bank-starving executed to perfection (three Reckonings landed 1/1/1) and
+  Abj won anyway through NON-ledger tech: Overcharge sacrificed its own 7-HP
+  ward for 14 face, and Abjure the Wicked cancel+punished a multi-component bomb.
+- Absorb hard-counters hoard-and-Detonate (ate an 18 and a 12 across the
+  series, healing off both; not reliably baitable — the bot fired it on a
+  4-dmg spell as readily as a 12). Evocation has no prevention tools and no
+  Reaction-immune damage bigger than Hex Bolt — the answer menu is thin.
+- The old Evo-side reference (2-3, old decks) is formally superseded by 0-3.
+
+### Abj-Div: starved, confirmed — with calibration numbers and a new failure axis
+- Bank reality: peaked at 2 in m37 and m39; zero spenders fired in m39, two
+  2-HP Tithes in m37. m38 milked ~10-14 via Stone Stance but Tithe (defense)
+  drained the shared pool before Reckoning unlocked — its one cast dealt 0,
+  the queued LEDGER_MIN flag caught live.
+- CALIBRATION for the pending half-rate pierce-feeds-ledger fix: uncharged
+  doom damage was 33 (m37), 33 (m39), ~19 (m38) → ~16/16/9 extra bank per
+  game at floor(n/2). Enough to make Tithe/Verdict real, not enough to have
+  flipped any of these three games on its own.
+- THE M38 DISCOVERY: disciplined seal/cancel/pacing held Div to a 16-round
+  near-standstill (7 Foreclosures denied; round-end slot-exhaustion stranded
+  loaded prep slots in 4 rounds) — and Abj died to its OWN escalating
+  deck-exhaustion penalty (2/4/6 per reshuffle) at HP4. A control line that
+  survives 15+ rounds kills itself by drawing; the July pacing flag is now a
+  skill-level design item, not just a bot artifact.
+- Mana Drain fired 4/4 when loaded in m39 — the m23 never-fires anomaly did
+  not reproduce. m39 also reports Reckoning never surfacing as a prep option
+  through L11 (spellbook draw variance this seed — watch, don't act).
+
+### Div-Evo: skilled Div is no longer the underdog vs greedy Evo
+- The winning package, twice: Saboteur's Kit as a FREE off-stack second doom
+  clock (Gambits bypass the stack and the one-spell-per-turn limit), the
+  Omen→Foreclosure swap the moment L2 unlocks (~R5, same MM, double damage),
+  and near-100% Foresight uptime.
+- m43 (the clean loss): 100% Foresight uptime and disciplined reaction holds
+  still lost — each round has a naked window between round-start and Div's
+  first cast, and Evo's L2 VV burst outpaced the doom clock. The "no hard
+  defense once behind" gap is real but only binding when already behind.
+- Both wins were padded by bot blind spots (Mana Burn — Evo's answer to an
+  all-M school — never funded in time; multi-round sandbagging), so 2-1 is a
+  vs-greedy statement, not a both-skilled one. The never-measured seat
+  (piloted Evo vs Div) is now this leg's missing reference.
+
+### Standing verdict after m34-m44
+At skill level the triangle currently reads: Abj beats Evo decisively, Div
+beats Abj decisively (Abj 0-6 on the ledger tree), and Div at least holds
+its own against Evo — i.e. two intents realized-to-overshooting and one
+(Evo > Div) in doubt at skill level. Design queue, updated: (1) the
+half-rate pierce-feeds-ledger fix now has its calibration data (~9-16
+bank/game); (2) deck-exhaustion as a self-clock for control archetypes
+(m38) joins the pacing review; (3) Evo's thin answer menu vs the ledger
+engine (no prevention school; Absorb/Overcharge asymmetries) is the
+Evo-Abj overshoot lever if 0-3 vs 3-0 is too deep; (4) the round-5
+survival tool for Div looks UNNECESSARY on current evidence.
+
+### Instrument/triage (tooling, not design)
+- `autoplay until:"reactionWindow"` is a footgun: it hands the pilot's side
+  to a bot and the stop never fires without an armed reaction — it ran
+  m41/m42 to game over (121 and 145 decisions) and excursed R2-R5 of m37.
+  Both contaminated games are kept as transcripts but EXCLUDED from all
+  references; their slots were re-run clean as m43/m44 (same seeds).
+  pilot.md now carries the guardrail (myTurn/choice stops only). Candidate
+  server-side fix: autoplay should hard-stop at the pilot's prep phase.
+- save_playtest's seed-carrying filenames worked as designed (11 strays,
+  zero clobbers); strays were verified byte-duplicates of the briefed
+  transcripts and deleted. One stray ended with leaked tool-call markup
+  (`</analysis></invoke>`) — likely a malformed pilot call; watch for
+  recurrence before suspecting the server.
+- OPEN redaction question (m38): prep-phase "replace X with Y" log lines
+  name the opponent's facedown cards in the pilot-visible log, enabling
+  near-perfect Runic Seal targeting. Check what protocol/mcp actually
+  redact for opponent prep events vs what the board render hides.
+- Disposed: m38's "attach cap bug" is the documented 2-card cap (types.ts);
+  m43's "Foreclosure unlocks L5" was level-vs-round confusion (card is L2,
+  which unlocks ~R5). Confirmed mechanics for future briefs: wards persist
+  across rounds (only attachments sweep); Absorb does NOT stop prophecy
+  inscription (only cast-time cancels do); overkill cascades through
+  stacked wards; trigger gating behaves as printed.

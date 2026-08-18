@@ -25,36 +25,35 @@ interface Benchmark {
   pilotRecord: { wins: number; losses: number; logs: string };
 }
 
-// Records below are the NEW-DECK era (wave A+B presets, 2026-08-13 night,
-// m19-m27) — they SUPERSEDE the old-deck references (Div-Evo 4-0 m1..m4 then
-// 1-2 m16..m18; Abj-Div 3-0 m5..m7; Abj-Evo 3-0 m8..m10), which were played
-// on 17-basic/6-dual decks that no longer exist.
+// Records below are the LEDGER era (wave A+B presets + ABJ-046/047/048,
+// series m28-m44) — they SUPERSEDE the pre-ledger new-deck references
+// (m19-m27) on the Abj legs, and the m25-m27 Div-Evo row is superseded by
+// the larger 2026-08-17 clean series (m41/m42 excluded: autoplay-contaminated).
 const BENCHMARKS: Benchmark[] = [
   {
     pilotSide: "Divination",
     opponent: "Evocation",
     seed: 300,
-    pilotRecord: { wins: 1, losses: 2, logs: "playtests/2026-08-13-m25..m27" },
+    pilotRecord: { wins: 2, losses: 1, logs: "playtests/2026-08-17-m40,m43,m44" },
   },
+  // Cumulative ledger-era record: m31..m33 (0-3) + m37..m39 (0-3).
   {
     pilotSide: "Abjuration",
     opponent: "Divination",
     seed: 200,
-    pilotRecord: { wins: 0, losses: 3, logs: "playtests/2026-08-13-m22..m24" },
+    pilotRecord: { wins: 0, losses: 6, logs: "playtests/2026-08-13-m31..m33 + 2026-08-17-m37..m39" },
   },
   {
     pilotSide: "Abjuration",
     opponent: "Evocation",
     seed: 100,
-    pilotRecord: { wins: 3, losses: 0, logs: "playtests/2026-08-13-m19..m21" },
+    pilotRecord: { wins: 3, losses: 0, logs: "playtests/2026-08-13-m28..m30" },
   },
-  // Evo side of Evo-Abj: STALE (old decks, m11-m15 incl. post-gating re-runs);
-  // kept directional until a new-deck series replaces it.
   {
     pilotSide: "Evocation",
     opponent: "Abjuration",
     seed: 100,
-    pilotRecord: { wins: 2, losses: 3, logs: "playtests/2026-08-13-m11..m15 (old decks — stale)" },
+    pilotRecord: { wins: 0, losses: 3, logs: "playtests/2026-08-17-m34..m36" },
   },
 ];
 
