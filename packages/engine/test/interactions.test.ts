@@ -367,7 +367,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
 
   it("Omen (DIV-012): inscribes the L1 starter doom — 2 damage on a 2-turn fuse, no pause", () => {
     const { state } = play("DIV-012", () => {});
-    expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 2, pierce: true, defId: "DIV-012" }]);
+    expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 2, pierce: false, defId: "DIV-012" }]);
     expect(state.pendingChoice).toBeNull();
     expect(state.players[1].hp).toBe(30); // nothing until the fuse runs out
   });
@@ -436,7 +436,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
       s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-M", "CMP-VV"].map(inst);
     });
     expect(state.players[1].hp).toBe(30); // no immediate damage — the doom is delayed
-    expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 1, pierce: true, defId: "DIV-023" }]);
+    expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 1, pierce: false, defId: "DIV-023" }]);
     const pc = state.pendingChoice!;
     expect(pc.mode).toBe("orderToTop");
     expect(pc.candidates.map((c) => c.defId)).toEqual(["CMP-S", "CMP-M", "CMP-VV"]);
@@ -1029,7 +1029,7 @@ describe("trigger-window traps + riders (the remaining SIMPLIFIED family)", () =
 
 describe("prophecies (Divination's delayed dooms)", () => {
   /** A state where P1 is the active player about to begin a turn, decks stocked. */
-  function doomedState(prophecy: { amount: number; turnsLeft: number; pierce: boolean }): GameState {
+  function doomedState(prophecy: { amount: number; turnsLeft: number; pierce: boolean; payload?: "collapseLargestWard" }): GameState {
     const s = blankState();
     s.players[0].resourceDeck = ["CMP-M", "CMP-M", "CMP-M"].map(inst);
     s.players[1].resourceDeck = ["CMP-V", "CMP-V", "CMP-V"].map(inst);
@@ -1054,8 +1054,8 @@ describe("prophecies (Divination's delayed dooms)", () => {
     expect(events2.some((e) => e.type === "prophecyFired" && e.player === 1 && e.amount === 4)).toBe(true);
   });
 
-  // Since exp-2 no card inscribes pierce:false, but the soakable branch stays a
-  // supported engine vocabulary — this pins it for any future soakable doom.
+  // Since exp-8 (2026-08-17) soakable IS the default: every card's doom routes
+  // through wards/reduction. This pins the standard behavior.
   it("normal dooms soak into Wards; the opponent's turn never ticks them", () => {
     const s = doomedState({ amount: 4, turnsLeft: 1, pierce: false });
     s.players[1].wards = [{ wid: 1, hp: 3 }];
@@ -1072,7 +1072,9 @@ describe("prophecies (Divination's delayed dooms)", () => {
     expect(s.players[1].hp).toBe(29); // 1 overflowed to face
   });
 
-  it("a piercing doom (Oblivion) ignores Wards entirely and can end the game", () => {
+  // No current card inscribes pierce:true (exp-8 purged it, Oblivion included); the
+  // branch stays engine-honored for a future printed-immunity card — pinned here.
+  it("a piercing doom (synthetic) ignores Wards entirely and can end the game", () => {
     const s = doomedState({ amount: 9, turnsLeft: 1, pierce: true });
     s.players[1].wards = [{ wid: 1, hp: 10 }];
     s.players[1].hp = 9;
@@ -1082,6 +1084,46 @@ describe("prophecies (Divination's delayed dooms)", () => {
     expect(s.players[1].hp).toBe(0);
     expect(s.phase).toBe("gameover");
     expect(s.winner).toBe(0);
+  });
+
+  it("exp-8c: a doom's damage SHATTERS the ward that blocks it — absorbed part credited, remainder evaporates", () => {
+    const s = doomedState({ amount: 4, turnsLeft: 1, pierce: false });
+    s.players[1].wards = [{ wid: 1, hp: 10 }];
+    const events: GameEvent[] = [];
+    beginTurn(s, events);
+    expect(s.players[1].wards).toHaveLength(0); // shattered outright
+    expect(s.players[1].hp).toBe(30); // the doom itself was fully blocked
+    expect(s.players[1].damagePreventedTotal).toBe(4); // only the truly absorbed 4 charges the ledger
+  });
+
+  it("exp-8c: protected wards (Sanctum-class) do not shatter", () => {
+    const s = doomedState({ amount: 4, turnsLeft: 1, pierce: false });
+    s.players[1].wards = [{ wid: 1, hp: 10, protected: true }];
+    beginTurn(s, []);
+    expect(s.players[1].wards).toEqual([{ wid: 1, hp: 6, protected: true }]); // soaks, survives
+  });
+
+  it("exp-8d: Fortress's round shield stops the shatter for ALL own wards", () => {
+    const s = doomedState({ amount: 4, turnsLeft: 1, pierce: false });
+    s.players[1].wards = [{ wid: 1, hp: 10 }];
+    s.players[1].ongoing.push({ id: 999, owner: 1, kind: "wardsProtected", value: 1, expiry: "endOfRound" });
+    beginTurn(s, []);
+    expect(s.players[1].wards).toEqual([{ wid: 1, hp: 6 }]); // soaks, survives, no permanent flag involved
+  });
+
+  it("a ward-collapse doom destroys the doomed player's largest ward when it fires — and whiffs on none", () => {
+    const s = doomedState({ amount: 0, turnsLeft: 1, pierce: false, payload: "collapseLargestWard" });
+    s.players[1].wards = [{ wid: 1, hp: 4 }, { wid: 2, hp: 11 }];
+    const events: GameEvent[] = [];
+    beginTurn(s, events);
+    expect(s.players[1].wards).toEqual([{ wid: 1, hp: 4 }]); // the battery died; HP untouched
+    expect(s.players[1].hp).toBe(30);
+    expect(events.some((e) => e.type === "wardDestroyed" && e.player === 1)).toBe(true);
+
+    const whiff = doomedState({ amount: 0, turnsLeft: 1, pierce: false, payload: "collapseLargestWard" });
+    beginTurn(whiff, []);
+    expect(whiff.players[1].hp).toBe(30); // nothing to collapse — no crash, no damage
+    expect(whiff.players[1].prophecies).toHaveLength(0); // spent regardless
   });
 
   it("multiple dooms tick independently and fire together when due", () => {

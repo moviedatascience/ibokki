@@ -33,7 +33,11 @@ register("DIV-001", (c) => c.draw(2)); // Insight (1→2: draw-1-for-M was stric
 // wincon/defense that functions inside 5 rounds.)
 register("DIV-002", (c) => { c.addDamageReductionThisRound(1); c.requestTakeFromTop(3, 1, "top"); }); // Foresight (look 3, choose 1, rest on top)
 register("DIV-003", (c) => { c.removeOwnBurn(1); c.requestTakeFromTop(2, 1, "bottom"); }); // Divine (look 2, choose 1, other to bottom)
-register("DIV-004", (c) => c.lookSelectMaterialToHand(1)); // Augury (top card: draw if M, else bottom)
+// Exp-8 unraveling suite (2026-08-17): the pierce revert's replacement — Div's
+// edge vs the wall is dismantling it through play, not damage immunity. All
+// three live in the old telemetry-dead L1 utility row. Targets are PRINTED
+// (largest/weakest) and match the auto-pick, so text and behavior can't diverge.
+register("DIV-004", (c) => c.prophesyWardCollapse(2)); // Prophecy of Collapse — an announced Unbind; spend the ward or lose it
 register("DIV-005", (c) => {
   // Premonition — draw 2; if either is a multi-symbol component, draw a third.
   // (Bumped alongside Insight 1→2 so its gamble ceiling stays above the flat draw.)
@@ -44,7 +48,8 @@ register("DIV-005", (c) => {
 });
 register("DIV-006", (c) => c.requestReturnDiscardComponentsToHand(1)); // Recover — YOU pick the component
 register("DIV-007", (c) => {
-  c.returnOwnAttachedComponent(); // Refocus
+  c.damageOpponentWeakestWard(2); // Unravel — chip the small-ward swarm (Fortify 2s, Tithe ≤4s)
+  c.requestOrderTopOfDeck(2); // scry floor so the card is never fully dead vs wardless boards
 });
 // Cut the Thread [DIV-008] — second rework (exp-7, 2026-07-29). History: Scry
 // Glyph (bottom their top card) was never prepped or cast all series; exp-6's
@@ -56,7 +61,7 @@ register("DIV-007", (c) => {
 // cut the thread their next turn hangs by. Attached components are safe —
 // attach-first play dodges it, which is the counterplay texture.
 register("DIV-008", (c) => c.requestOpponentDiscardChoice(true));
-register("DIV-009", (c) => c.addAttuneBonus()); // Attune — next attach counts as +1 needed symbol
+register("DIV-009", (c) => c.halveOpponentLargestWard()); // Flaw in the Weave — the proportional battery answer
 register("DIV-010", (c) => { c.draw(1); c.requestBankToDeckTop(1); }); // Mind's Eye (draw 1, choose 1 to bank on top)
 register("DIV-011", (c) => { c.dealDamage(2); c.requestRevealOpponentHand(); }); // Foretell — the "intel" half is real now
 // Omen — the L1 starter doom (m12 finding: L2+ dooms left rounds 1-4 empty). Back to the
@@ -134,7 +139,7 @@ register("DIV-040", (c) => {
 });
 register("DIV-041", (c) => c.returnAllComponentsFromDiscard()); // Eternal Return
 register("DIV-042", (c) => c.requestSearchDeck({ filter: "any", takeN: 3, optional: true, reason: "Search: take up to 3 cards to hand" })); // Grand Design
-register("DIV-043", (c) => c.prophesy(9, 3, true)); // Oblivion — the death you cannot ward (pierces)
+register("DIV-043", (c) => c.prophesy(9, 3)); // Oblivion — the L4 doom (soakable since exp-8; immunity clause removed from card)
 register("DIV-044", (c) => c.reshuffleEverythingAndDraw(5)); // Time Spiral
 register("DIV-045", (c) => {
   c.recastPreparedSpell(4, true); // Convergence — recur the biggest spell and take an extra cast

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { presetDeck } from "@ibokki/engine";
-import { act, autoplay, autoPlayBots, createMatch, renderState, resolveDeck } from "../src/matches.ts";
+import { legalActions, presetDeck } from "@ibokki/engine";
+import { act, addNote, autoplay, autoPlayBots, createMatch, renderState, resolveDeck, transcriptView } from "../src/matches.ts";
 
 describe("MCP match loop", () => {
   it("drives a vs-bot match to completion (index 0 is always 'pass')", () => {
@@ -88,5 +88,54 @@ describe("MCP match loop", () => {
     expect(m.transcript[0]).toContain("Emberworks (P0) vs Bastion (P1)");
     act(m, 0);
     expect(m.state.phase).not.toBe("gameover");
+  });
+});
+
+describe("pvp mode (exp-8d): two separately-sighted pilots on one match", () => {
+  const prepOne = (m: ReturnType<typeof createMatch>, seat: 0 | 1): string => {
+    const legal = legalActions(m.state, seat);
+    const i = legal.findIndex((a) => a.type === "prepareSpell");
+    expect(i).toBeGreaterThanOrEqual(0);
+    return act(m, i, undefined, undefined, false, seat);
+  };
+
+  it("requires a seat and lets both seats prepare simultaneously", () => {
+    const m = createMatch("Divination", "Abjuration", 42, "pvp");
+    expect(act(m, 0)).toContain("PILOT-vs-PILOT");
+    prepOne(m, 0);
+    prepOne(m, 1); // the other seat acts in the SAME prepare phase
+    expect(m.state.players[0].prepared.length).toBe(1);
+    expect(m.state.players[1].prepared.length).toBe(1);
+  });
+
+  it("redacts the other pilot's face-down preps and private notes; the saved record keeps everything", () => {
+    const m = createMatch("Divination", "Abjuration", 43, "pvp");
+    prepOne(m, 1);
+    addNote(m, "my secret plan", 1);
+    const p0view = transcriptView(m, 0).join("\n");
+    const p1view = transcriptView(m, 1).join("\n");
+    const record = transcriptView(m).join("\n");
+    expect(p0view).toContain("prepare a spell (face-down)");
+    expect(p0view).not.toContain("my secret plan");
+    expect(p1view).toContain("my secret plan");
+    expect(p1view).not.toContain("(face-down)"); // your own preps stay named for you
+    expect(record).toContain("my secret plan");
+    expect(record).not.toContain("(face-down)"); // the record names the real spell
+  });
+
+  it("rejects acting out of turn with a cheap WAITING line and disables autoplay", () => {
+    const m = createMatch("Evocation", "Abjuration", 44, "pvp");
+    let guard = 0;
+    while (m.state.phase === "prepare" && guard++ < 40) {
+      for (const seat of [0, 1] as const) {
+        const legal = legalActions(m.state, seat);
+        const done = legal.findIndex((a) => a.type === "donePreparing");
+        if (done >= 0) act(m, done, undefined, undefined, false, seat);
+      }
+    }
+    expect(m.state.phase).toBe("main");
+    const waiter = m.state.priorityPlayer === 0 ? 1 : 0;
+    expect(act(m, 0, undefined, undefined, false, waiter)).toContain("WAITING");
+    expect(autoplay(m, "roundEnd", "heuristic", 10)).toContain("disabled");
   });
 });

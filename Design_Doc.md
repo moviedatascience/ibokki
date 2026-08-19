@@ -40,14 +40,22 @@ clutter; deep skill expression.
   fuse counted in the doomed Wizard's turns. At the **start of the doomed Wizard's turn**
   (after Burn ticks) every prophecy on them counts down one; a prophecy reaching zero
   **fires** for its payload and is removed. The payload is **fixed at inscription** —
-  damage amps and buffs never modify it (the future is already written) — and it fires
-  **like exhaustion: it cannot be prevented or absorbed by Wards** (2026-07-28 balance
-  rework; before, only Oblivion pierced, and a warded-up opponent could blank the entire
-  clock — Wards answer spells, not fate). The cast itself uses the stack as usual:
+  damage amps and buffs never modify it (the future is already written) — and it is
+  **ordinary damage when it lands**: Wards, reduction, and prevention all apply (and
+  charge the defender's prevention ledger as usual) — but **fate shatters what blocks
+  it**: any Ward a prophecy's damage soaks into is destroyed outright afterward, its
+  remaining HP lost (and never credited to the ledger). Blocking a doom is always
+  possible and never free — an exactly-sized Ward is the clean block, an oversized
+  battery a costly one. Protected Wards (Sanctum-class) do not shatter.
+  The cast itself uses the stack:
   a prophecy can be countered as it is cast, but once it resolves the doom is locked in.
-  This is Divination's win condition — counter the setup or eat the payload. (The 2026-07-05
-  identity rework: prophecies replaced opponent-milling, which won on the exhaustion axis
-  but played poorly.)
+  Divination's edge against a wall of Wards is not immunity but **unraveling** — the
+  school dismantles protections (Unbind and the L1 unraveling suite) so its scheduled
+  damage lands on flesh. (History: the 2026-07-28 exp-2 rework made ALL dooms pierce
+  Wards outright; exp-8, 2026-08-17, reverted it — a damage type exempt from the
+  defender's entire mechanic proved to be a bye, not a matchup. The 2026-07-05 identity
+  rework: prophecies replaced opponent-milling, which won on the exhaustion axis but
+  played poorly.)
 - **Zones:** Hand, Prepared Spells, Casting Zone, Discard.
 - **Objects:** Spell Deck, Resource Deck, HP / Level / Slot tracker, Status Markers
   (Spent, Channel, Delayed, Ward).

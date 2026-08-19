@@ -79,7 +79,7 @@ export function dealDamageToPlayer(
   targetId: PlayerId,
   amount: number,
   events: GameEvent[],
-  opts?: { unpreventable?: boolean },
+  opts?: { unpreventable?: boolean; shatterWards?: boolean },
 ): void {
   if (amount <= 0) return;
   const target = state.players[targetId];
@@ -136,6 +136,16 @@ export function dealDamageToPlayer(
       events.push({ type: "wardDestroyed", player: targetId });
       fireWardDestroyed(state, targetId, ward, events);
       if (state.phase === "gameover") return;
+    } else if (opts?.shatterWards && absorbed > 0 && !wardShielded(target, ward)) {
+      // Exp-8c (2026-08-17): fate shatters what blocks it. A prophecy's damage
+      // soaks normally (and the absorbed part charged the ledger above), but a
+      // ward it touches is destroyed outright — the surviving remainder
+      // evaporates UNCREDITED. `protected` wards (Sanctum-class) are the
+      // printed tech answer; on-destroy triggers still fire (real destruction).
+      target.wards.shift();
+      events.push({ type: "wardDestroyed", player: targetId });
+      fireWardDestroyed(state, targetId, ward, events);
+      if (state.phase === "gameover") return;
     }
   }
   if (dealt <= 0) return;
@@ -185,6 +195,13 @@ export function createWard(
   return ward;
 }
 
+/** True if the opponent may not target/destroy/shatter this ward: its own
+ *  `protected` flag, or the owner's round-scoped Fortress effect (exp-8d bug
+ *  fix — Fortress's printed text covers ALL wards you control this round). */
+export function wardShielded(owner: PlayerState, ward: Ward): boolean {
+  return !!ward.protected || sumOngoing(owner, "wardsProtected") > 0;
+}
+
 export function dealDamageToWard(
   state: GameState,
   ownerId: PlayerId,
@@ -210,7 +227,7 @@ export function damageAllWards(
   skipProtected = false,
 ): void {
   for (const ward of [...state.players[ownerId].wards]) {
-    if (skipProtected && ward.protected) continue;
+    if (skipProtected && wardShielded(state.players[ownerId], ward)) continue;
     dealDamageToWard(state, ownerId, ward, amount, events);
   }
 }
@@ -223,7 +240,7 @@ export function destroyAllWards(
   skipProtected = false,
 ): number {
   const player = state.players[ownerId];
-  const doomed = skipProtected ? player.wards.filter((w) => !w.protected) : player.wards;
+  const doomed = skipProtected ? player.wards.filter((w) => !wardShielded(player, w)) : player.wards;
   let total = 0;
   for (const ward of doomed) total += Math.max(0, ward.hp);
   if (doomed.length > 0) {

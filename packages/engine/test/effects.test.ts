@@ -190,9 +190,9 @@ describe("Divination effects", () => {
     expect(miss.state.players[0].hand).toHaveLength(2); // singles only — no bonus
   });
 
-  it("Foreclosure (DIV-020) inscribes a 4-damage doom on a 2-turn fuse (piercing since exp-2)", () => {
+  it("Foreclosure (DIV-020) inscribes a 4-damage doom on a 2-turn fuse (soakable since exp-8)", () => {
     const { state, events } = cast("DIV-020", () => {});
-    expect(state.players[1].prophecies).toEqual([{ amount: 4, turnsLeft: 2, pierce: true, defId: "DIV-020" }]);
+    expect(state.players[1].prophecies).toEqual([{ amount: 4, turnsLeft: 2, pierce: false, defId: "DIV-020" }]);
     expect(events.some((e) => e.type === "prophecyCreated" && e.target === 1 && e.amount === 4 && e.turns === 2)).toBe(true);
     expect(state.players[1].hp).toBe(30); // nothing happens until the fuse runs out
   });
@@ -215,6 +215,52 @@ describe("Divination effects", () => {
     });
     expect(state.players[1].wards).toHaveLength(0);
     expect(state.players[0].hand).toHaveLength(1);
+  });
+
+  it("Fortress (ABJ-029) shields ALL own wards for the round — no permanent flags (exp-8d fix)", () => {
+    const { state } = cast("ABJ-029", (s) => {
+      s.players[0].wards = [{ wid: 900, hp: 8 }];
+    });
+    expect(state.players[0].wards.map((w) => w.hp)).toEqual([8, 4]); // pre-existing + the new 4
+    expect(state.players[0].wards.every((w) => !w.protected)).toBe(true);
+    expect(state.players[0].ongoing.some((o) => o.kind === "wardsProtected" && o.expiry === "endOfRound")).toBe(true);
+  });
+
+  it("Unbind cannot destroy wards behind Fortress's round shield", () => {
+    const { state } = cast("DIV-019", (s) => {
+      s.players[1].wards = [{ wid: 1, hp: 3 }];
+      s.players[1].ongoing.push({ id: 999, owner: 1, kind: "wardsProtected", value: 1, expiry: "endOfRound" });
+      s.players[0].resourceDeck = [inst("CMP-M")];
+    });
+    expect(state.players[1].wards).toHaveLength(1); // untouched
+  });
+
+  // ---- exp-8 unraveling suite ----
+
+  it("Prophecy of Collapse (DIV-004) inscribes a ward-collapse doom on a 2-turn fuse", () => {
+    const { state, events } = cast("DIV-004", () => {});
+    expect(state.players[1].prophecies).toEqual([
+      { amount: 0, turnsLeft: 2, pierce: false, payload: "collapseLargestWard", defId: "DIV-004" },
+    ]);
+    expect(events.some((e) => e.type === "prophecyCreated" && e.target === 1)).toBe(true);
+  });
+
+  it("Unravel (DIV-007) chips the WEAKEST opponent ward and offers the scry", () => {
+    const { state } = cast("DIV-007", (s) => {
+      s.players[1].wards = [{ wid: 1, hp: 5 }, { wid: 2, hp: 2 }];
+      s.players[0].resourceDeck = [inst("CMP-M"), inst("CMP-S")];
+    });
+    expect(state.players[1].wards).toEqual([{ wid: 1, hp: 5 }]); // the 2-HP ward died; the big one untouched
+    expect(state.pendingChoice).toBeTruthy(); // the scry-2 reorder
+  });
+
+  it("Flaw in the Weave (DIV-009) halves the LARGEST opponent ward rounding up, and whiffs safely on none", () => {
+    const { state } = cast("DIV-009", (s) => {
+      s.players[1].wards = [{ wid: 1, hp: 3 }, { wid: 2, hp: 9 }];
+    });
+    expect(state.players[1].wards).toEqual([{ wid: 1, hp: 3 }, { wid: 2, hp: 4 }]); // 9 - ceil(9/2)
+    const none = cast("DIV-009", () => {});
+    expect(none.state.players[1].wards).toHaveLength(0); // no wards — clean no-op
   });
 });
 
@@ -728,17 +774,8 @@ describe("Divination deck sculpting", () => {
     expect(events).toHaveLength(0);
   });
 
-  it("Augury (DIV-004) draws a Material top card but bottoms a non-Material one", () => {
-    const hit = cast("DIV-004", (s) => {
-      s.players[0].resourceDeck = [inst("CMP-V"), inst("CMP-M")]; // top = CMP-M
-    });
-    expect(hit.state.players[0].hand.map((c) => c.defId)).toEqual(["CMP-M"]);
-    const miss = cast("DIV-004", (s) => {
-      s.players[0].resourceDeck = [inst("CMP-MM"), inst("CMP-V")]; // top = CMP-V (no M)
-    });
-    expect(miss.state.players[0].hand).toHaveLength(0);
-    expect(miss.state.players[0].resourceDeck[0]!.defId).toBe("CMP-V"); // bottomed
-  });
+  // (The old Augury filter test retired with exp-8: DIV-004 is now Prophecy of
+  // Collapse — covered in the Divination describe above and the doom suite.)
 
   it("Index (DIV-022) pauses for the PLAYER to order the top 5 (no card gain)", () => {
     // Interactive since the 2026-07 sweep; the full ordering flow is covered

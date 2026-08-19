@@ -52,7 +52,13 @@ register("ABJ-022", (c) => {
 register("ABJ-024", (c) => c.addDamageToHeal(5)); // Inversion Field (incoming damage heals you, max 5/round)
 register("ABJ-025", (c) => c.buffAllOwnWards(2)); // Sanctum (forced "wards first" is satisfied by ward-absorption)
 register("ABJ-027", (c) => c.createWardForSelfWith(5, { onDestroy: "replace2" })); // Ritual Ward
-register("ABJ-029", (c) => c.createWardForSelfWith(4, { protected: true })); // Fortress
+// Fortress — exp-8d bug fix (m50): printed text protects ALL your wards this
+// round, not just the new one, and only for the round (the old impl gave the
+// new ward a PERMANENT protected flag and left existing wards exposed).
+register("ABJ-029", (c) => {
+  c.createWardForSelf(4);
+  c.addWardsProtectedThisRound();
+});
 register("ABJ-030", (c) => {
   c.requestSealOpponentPrepared(); // Penumbral Seal (exile ~ seal; "Choose" — caster picks)
 });

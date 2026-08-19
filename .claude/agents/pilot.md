@@ -28,6 +28,15 @@ Token discipline:
   across a prep phase, and re-read the board after every stop.
 - Use `card` lookups sparingly; once you know a card, don't re-fetch it.
 
+Pilot-vs-pilot matches (controls "pvp"): the brief gives you a match id and YOUR
+seat — pass `seat` on every `act`/`match_state` call. When it is not your
+decision, `match_state` returns one cheap WAITING line — poll it (do nothing
+else between polls); when it is your turn you get the transcript delta since
+your last look plus your board. Your view is redacted (their face-down preps
+show as "prepare a spell (face-down)"); your `note`s are private to you and the
+saved record. autoplay is disabled — every decision is yours. Never create the
+match yourself in pvp; the orchestrator creates it and briefs both seats.
+
 Record-keeping:
 - `save_playtest` names its file by the SERVER's internal match counter (e.g.
   `m5-...`), which rarely matches the match number in your brief. When it

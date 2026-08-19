@@ -10,10 +10,13 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { getCard, CARDS } from "@ibokki/cards";
 import { runMatchup } from "@ibokki/sim";
-import { act, autoplay, autoPlayBots, createMatch, getMatch, renderState, savePlaytest } from "./matches.ts";
+import { act, autoplay, autoPlayBots, createMatch, getMatch, pvpState, renderState, savePlaytest } from "./matches.ts";
+import type { PlayerId } from "@ibokki/engine";
 
 const SCHOOL = z.enum(["Evocation", "Abjuration", "Divination"]);
-const CONTROLS = z.enum(["0", "1", "both"]);
+const CONTROLS = z.enum(["0", "1", "both", "pvp"]);
+const SEAT = z.enum(["0", "1"]);
+const asSeat = (s?: "0" | "1"): PlayerId | undefined => (s === undefined ? undefined : (Number(s) as PlayerId));
 
 const text = (s: string) => ({ content: [{ type: "text" as const, text: s }] });
 
@@ -21,7 +24,7 @@ const server = new McpServer({ name: "ibokki-playtest", version: "0.1.0" });
 
 server.tool(
   "new_match",
-  "Start a new Ibokki match between two schools. `controls` picks which side(s) you (Claude) play: \"0\", \"1\", or \"both\". `deck1`/`deck2` optionally override a side's deck: a preset name (Emberworks/Bastion/Riptide) or a JSON DeckDefinition {name?, spellbook, resourceDeck} validated against the construction rules. `bot` picks the strength of the non-controlled side (default heuristic; greedy is much stronger, search strongest but ~1s/move). Returns the opening position and your numbered legal actions.",
+  "Start a new Ibokki match between two schools. `controls` picks which side(s) you (Claude) play: \"0\", \"1\", \"both\", or \"pvp\" (two separately-sighted pilots share the match: every act/match_state call then REQUIRES a `seat`, views are redacted per seat, autoplay is disabled). `deck1`/`deck2` optionally override a side's deck: a preset name (Emberworks/Bastion/Riptide) or a JSON DeckDefinition {name?, spellbook, resourceDeck} validated against the construction rules. `bot` picks the strength of the non-controlled side (default heuristic; greedy is much stronger, search strongest but ~1s/move; unused in pvp). Returns the opening position and your numbered legal actions.",
   {
     school1: SCHOOL.describe("Player 0's school"),
     school2: SCHOOL.describe("Player 1's school"),
@@ -50,11 +53,16 @@ server.tool(
 
 server.tool(
   "match_state",
-  "Show the current position and numbered legal actions for a match.",
-  { matchId: z.string(), verbose: z.boolean().optional() },
-  async ({ matchId, verbose }) => {
+  "Show the current position and numbered legal actions for a match. In a pvp match, pass your `seat`: while the other pilot is deciding this returns a single cheap WAITING line (poll it); when it is your decision you get the transcript delta since your last look plus your redacted board.",
+  { matchId: z.string(), verbose: z.boolean().optional(), seat: SEAT.optional().describe("your seat in a pvp match") },
+  async ({ matchId, verbose, seat }) => {
     const match = getMatch(matchId);
     if (!match) return text(`No match ${matchId}.`);
+    if (match.controls === "pvp") {
+      const s = asSeat(seat);
+      if (s === undefined) return text(`This is a PILOT-vs-PILOT match — pass your seat ("0" or "1").`);
+      return text(pvpState(match, s));
+    }
     return text(renderState(match, verbose));
   },
 );
@@ -68,12 +76,13 @@ server.tool(
     slug: z.string().optional().describe("Stable action id from the listing, e.g. cast-evo-017"),
     note: z.string().optional(),
     verbose: z.boolean().optional(),
+    seat: SEAT.optional().describe("your seat in a pvp match (required there; the call is rejected when it is not your decision)"),
   },
-  async ({ matchId, index, slug, note, verbose }) => {
+  async ({ matchId, index, slug, note, verbose, seat }) => {
     const match = getMatch(matchId);
     if (!match) return text(`No match ${matchId}.`);
     if (index === undefined && slug === undefined) return text("Pass `index` or `slug`.");
-    return text(act(match, index, note, slug, verbose));
+    return text(act(match, index, note, slug, verbose, asSeat(seat)));
   },
 );
 

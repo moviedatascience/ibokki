@@ -31,7 +31,7 @@ interface SideCommon {
   /** Burn markers on this player. */
   burn: number;
   /** Delayed dooms on this player — public (payload, fuse, source). */
-  prophecies: { amount: number; turnsLeft: number; pierce: boolean; defId: string }[];
+  prophecies: { amount: number; turnsLeft: number; pierce: boolean; payload?: "collapseLargestWard"; defId: string }[];
   /** Times this player's discard has recycled into their deck (exhaustion clock). Public. */
   reshuffles: number;
   /** Lifetime damage prevented this match (Reckoning's charge) — public, like the open plays that built it. */

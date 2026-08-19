@@ -32,7 +32,15 @@ import {
 } from "@ibokki/sim";
 
 export type School = "Evocation" | "Abjuration" | "Divination";
-export type Controls = "0" | "1" | "both";
+/** "pvp" (exp-8d): BOTH seats are Claude-piloted via seat-scoped calls — two
+ *  separately-sighted pilots on one match. No bot; every render/transcript view
+ *  is redacted per seat; autoplay is disabled. */
+export type Controls = "0" | "1" | "both" | "pvp";
+
+/** A transcript line. Strings are public. Object lines belong to an actor:
+ *  `full` for that actor (and the saved record); `redacted` for the other
+ *  seat's live view (null = omit entirely, e.g. private notes). */
+type TranscriptLine = string | { actor: PlayerId; full: string; redacted: string | null };
 
 export interface Match {
   id: string;
@@ -42,14 +50,53 @@ export interface Match {
   controls: Controls;
   seed: number;
   bot: Agent;
-  transcript: string[];
+  transcript: TranscriptLine[];
+  /** Per-seat transcript cursors (pvp): index of the next line each seat has NOT seen. */
+  seenCursor: [number, number];
+}
+
+/** The transcript as a given viewer may see it (undefined viewer = the full record). */
+export function transcriptView(match: Match, viewer?: PlayerId, from = 0): string[] {
+  const out: string[] = [];
+  for (const l of match.transcript.slice(from)) {
+    if (typeof l === "string") out.push(l);
+    else if (viewer === undefined || l.actor === viewer) out.push(l.full);
+    else if (l.redacted !== null) out.push(l.redacted);
+  }
+  return out;
 }
 
 const matches = new Map<string, Match>();
 let counter = 0;
 
 export function claudeControls(match: Match, player: PlayerId): boolean {
-  return match.controls === "both" || match.controls === String(player);
+  return match.controls === "both" || match.controls === "pvp" || match.controls === String(player);
+}
+
+/** In pvp, whether `seat` currently has a decision to make (mirrors protocol's isActor). */
+export function pvpMayAct(state: GameState, seat: PlayerId): boolean {
+  if (state.phase === "gameover") return false;
+  if (state.pendingChoice) return state.pendingChoice.player === seat;
+  if (state.phase === "prepare") return !state.players[seat].prepareDone;
+  return state.priorityPlayer === seat;
+}
+
+/** One cheap line for a pvp seat that has nothing to decide (poll-friendly). */
+function waitLine(match: Match, seat: PlayerId): string {
+  const s = match.state;
+  const other = seat === 0 ? 1 : 0;
+  return `WAITING (R${s.round} T${s.turnCount}): P${other} is deciding — poll match_state (seat ${seat}) again.`;
+}
+
+/** A pvp seat's view: a cheap wait line when there is nothing to decide, else
+ *  the transcript delta since this seat's last look plus the redacted board. */
+export function pvpState(match: Match, seat: PlayerId): string {
+  const terminal = isTerminal(match.state);
+  if (!terminal && !pvpMayAct(match.state, seat)) return waitLine(match, seat);
+  const from = match.seenCursor[seat];
+  match.seenCursor[seat] = match.transcript.length;
+  const delta = transcriptView(match, seat, from);
+  return (delta.length ? delta.join("\n") + "\n\n" : "") + renderState(match, false, seat);
 }
 
 function labels(match: Match): [string, string] {
@@ -102,7 +149,10 @@ export function createMatch(
     controls,
     seed,
     bot: makeAgent(botKind, (seed ^ 0x5bd1e995) | 0),
-    transcript: [`# Playtest ${id}: ${d0.label} (P0) vs ${d1.label} (P1) — seed ${seed} — bot ${botKind}`],
+    transcript: [
+      `# Playtest ${id}: ${d0.label} (P0) vs ${d1.label} (P1) — seed ${seed} — ${controls === "pvp" ? "PILOT vs PILOT" : `bot ${botKind}`}`,
+    ],
+    seenCursor: [0, 0],
   };
   matches.set(id, match);
   return match;
@@ -112,21 +162,42 @@ export function getMatch(id: string): Match | undefined {
   return matches.get(id);
 }
 
+/** The opponent-safe label for actions whose full label names hidden information
+ *  (exp-8d fix — the shared transcript used to leak face-down prep identities to
+ *  the pilot, m38). Public actions return undefined (full label is safe). */
+function redactedLabel(action: Action): string | undefined {
+  switch (action.type) {
+    case "prepareSpell":
+      return "prepare a spell (face-down)";
+    case "replacePrepared":
+      return `replace prepared[${action.preparedIndex}] with a spell (face-down)`;
+    case "choose":
+      return "resolve a choice (private)";
+    default:
+      return undefined;
+  }
+}
+
 /** Apply an action, labelling it (against the pre-action state) and logging events. */
-function applyLogged(match: Match, action: Action, tag = ""): void {
-  const actor = match.state.priorityPlayer;
-  const label = describeAction(match.state, action);
-  const { state, events } = apply(match.state, action);
+function applyLogged(match: Match, action: Action, tag = "", actorOverride?: PlayerId): void {
+  const actor = actorOverride ?? match.state.priorityPlayer;
+  const label = describeAction(match.state, action, actor);
+  const { state, events } = apply(match.state, action, actor);
   match.state = state;
-  match.transcript.push(`- P${actor}${tag}: ${label}`);
+  const line = `- P${actor}${tag}: ${label}`;
+  const red = redactedLabel(action);
+  match.transcript.push(red === undefined ? line : { actor, full: line, redacted: `- P${actor}${tag}: ${red}` });
   for (const e of events) {
     const s = describeEvent(e);
     if (s) match.transcript.push(`    ${s}`);
   }
 }
 
-export function addNote(match: Match, text: string): void {
-  match.transcript.push(`> **P${match.state.priorityPlayer} thinks:** ${text}`);
+export function addNote(match: Match, text: string, seat?: PlayerId): void {
+  const actor = seat ?? match.state.priorityPlayer;
+  // Notes are the noting pilot's private reasoning: full in the saved record,
+  // omitted from the other seat's live view.
+  match.transcript.push({ actor, full: `> **P${actor} thinks:** ${text}`, redacted: null });
 }
 
 /** Advance bot-controlled decisions until it's Claude's turn or the game ends. */
@@ -141,12 +212,39 @@ export function autoPlayBots(match: Match): void {
   }
 }
 
-export function renderState(match: Match, verbose = false): string {
+export function renderState(match: Match, verbose = false, seat?: PlayerId): string {
+  // pvp is compact-only and always seat-redacted (renderDecision has no viewer).
+  if (match.controls === "pvp") return renderCompact(match.state, (seat ?? match.state.priorityPlayer) as 0 | 1);
   return verbose ? renderDecision(match.state, labels(match)) : renderCompact(match.state);
 }
 
-/** Apply the legal action at `index` (or matching `slug`) for the priority player, then auto-play bots. */
-export function act(match: Match, index: number | undefined, note?: string, slug?: string, verbose = false): string {
+/** Apply the legal action at `index` (or matching `slug`), then auto-play bots.
+ *  In pvp, `seat` names the acting pilot (validated against who may act) and the
+ *  returned delta/board are redacted to that seat's view. */
+export function act(match: Match, index: number | undefined, note?: string, slug?: string, verbose = false, seat?: PlayerId): string {
+  if (match.controls === "pvp") {
+    if (seat === undefined) return `This is a PILOT-vs-PILOT match — pass your seat ("0" or "1") on every call.`;
+    if (isTerminal(match.state)) return "Match is over.\n\n" + pvpState(match, seat);
+    if (!pvpMayAct(match.state, seat)) return waitLine(match, seat);
+    const legal = legalActions(match.state, seat);
+    let action: Action | undefined;
+    if (slug !== undefined) {
+      action = legal.find((a) => slugFor(match.state, a, seat) === slug);
+      if (!action) return `No legal action with slug "${slug}".\n\n` + pvpState(match, seat);
+    } else {
+      if (index === undefined || index < 0 || index >= legal.length) {
+        return `Invalid index ${index}. Valid 0..${legal.length - 1} (or act by slug).\n\n` + pvpState(match, seat);
+      }
+      action = legal[index]!;
+    }
+    if (note) addNote(match, note, seat);
+    const from = match.seenCursor[seat];
+    applyLogged(match, action, "", seat);
+    match.seenCursor[seat] = match.transcript.length;
+    const delta = transcriptView(match, seat, from);
+    return delta.join("\n") + "\n\n" + renderState(match, false, seat);
+  }
+
   if (isTerminal(match.state)) return "Match is over.\n\n" + renderState(match, verbose);
   const actor = match.state.priorityPlayer;
   if (!claudeControls(match, actor)) {
@@ -168,7 +266,7 @@ export function act(match: Match, index: number | undefined, note?: string, slug
   const before = match.transcript.length;
   applyLogged(match, action);
   autoPlayBots(match);
-  return match.transcript.slice(before).join("\n") + "\n\n" + renderState(match, verbose);
+  return transcriptView(match, undefined, before).join("\n") + "\n\n" + renderState(match, verbose);
 }
 
 export type AutoplayUntil = "gameOver" | "roundEnd" | "reactionWindow" | "choice" | "myTurn";
@@ -180,6 +278,7 @@ export type AutoplayUntil = "gameOver" | "roundEnd" | "reactionWindow" | "choice
  * through. Game over stops everything regardless of `until`.
  */
 export function autoplay(match: Match, until: AutoplayUntil, botKind: Exclude<AgentKind, "random">, maxPlies: number, verbose = false): string {
+  if (match.controls === "pvp") return "autoplay is disabled in PILOT-vs-PILOT matches — every decision is manual.";
   if (isTerminal(match.state)) return "Match is over.\n\n" + renderState(match, verbose);
   const pilot = makeAgent(botKind, (match.seed ^ (match.transcript.length * 0x9e3779b1)) | 0);
   const startRound = match.state.round;
@@ -242,10 +341,13 @@ export function savePlaytest(match: Match, analysis?: string): string {
   const result = isTerminal(match.state)
     ? `**Result:** ${match.state.winner === null ? "draw" : `P${match.state.winner} wins`} (${match.state.endReason}), round ${match.state.round}.`
     : "**Result:** (in progress)";
+  // exp-8d: strip trailing tool-call markup that leaked into two saved analyses
+  // (stray `</analysis></invoke>` tails, m42/m49) — literal or entity-encoded.
+  const cleanAnalysis = analysis?.replace(/(?:\s*(?:<\/[\w-]+>|&lt;\/[\w-]+&gt;))+\s*$/, "").trimEnd();
   const body =
-    match.transcript.join("\n") +
+    transcriptView(match).join("\n") +
     `\n\n${result}\n` +
-    (analysis ? `\n## Analysis\n\n${analysis}\n` : "");
+    (cleanAnalysis ? `\n## Analysis\n\n${cleanAnalysis}\n` : "");
   writeFileSync(path, body, "utf8");
   return path;
 }

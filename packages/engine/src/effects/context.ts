@@ -17,6 +17,7 @@ import {
   damageAllWards,
   dealDamageToPlayer,
   dealDamageToWard,
+  wardShielded,
   destroyAllWards,
   discardRandom,
   discardTopBySymbols,
@@ -82,11 +83,15 @@ export interface EffectContext {
   discardOpponentRandom(n: number): number;
   /** Inscribe a delayed doom on the opponent: deal `amount` at the start of their
    *  `turns`-th turn from now (Prophecy — Divination's win condition). The payload
-   *  is fixed at inscription. Exp-2 (2026-07-28): ALL dooms are inscribed piercing —
-   *  exhaustion-style, no wards/reduction/heal-conversion. Wards answer the caster's
-   *  tempo, not the clock; the clock is answered at cast time or raced. The `pierce`
-   *  param is retained (ignored) so per-card soakable dooms stay expressible on revert. */
+   *  is fixed at inscription and lands as ORDINARY damage (wards/reduction apply and
+   *  charge the prevention ledger) — exp-8 (2026-08-17) reverted exp-2's blanket
+   *  pierce. `pierce: true` is honored for a future printed-immunity card; no
+   *  current card passes it. */
   prophesy(amount: number, turns: number, pierce?: boolean): void;
+  /** Inscribe a ward-collapse doom on the opponent (exp-8, Prophecy of Collapse):
+   *  when the fuse hits zero, their largest unprotected Ward is destroyed. An
+   *  announced Unbind — the counterplay is to spend or shrink the ward first. */
+  prophesyWardCollapse(turns: number): void;
 
   // ---- Divination: deck sculpting (look at top N / select / reorder / loot) ----
   /** Pause for the controller to pick `takeN` of the top `lookN` cards into hand; rest go to `leftover` (interactive). */
@@ -196,6 +201,10 @@ export interface EffectContext {
   /** Create a ward carrying trigger flags (on-destroy / reflect / protected / immunity). */
   createWardForSelfWith(hp: number, flags: WardFlags): Ward;
   damageOneOpponentWard(amount: number): void;
+  /** Exp-8 (Unravel): damage the opponent's LOWEST-HP unprotected ward — the printed pick. */
+  damageOpponentWeakestWard(amount: number): void;
+  /** Exp-8 (Flaw in the Weave): the opponent's largest unprotected ward loses ceil(hp/2). */
+  halveOpponentLargestWard(): void;
   damageEachOpponentWard(amount: number): void;
   /** Destroy all opponent wards; returns the total HP destroyed. */
   destroyOpponentWards(): number;
@@ -214,6 +223,9 @@ export interface EffectContext {
   /** Destroy every ward on the board; returns how many were destroyed (Collapse the Veil). */
   destroyAllWardsEverywhere(): number;
   addDamageReductionThisRound(amount: number): void;
+  /** Fortress (exp-8d fix): ALL your wards are untargetable/undestroyable/
+   *  unshatterable by the opponent until end of round — the printed text. */
+  addWardsProtectedThisRound(): void;
   damagePreventedThisRound(): number;
   /** Lifetime prevention this match (Reckoning's match window). */
   damagePreventedTotal(): number;
@@ -392,11 +404,16 @@ export function makeContext(
       if (sumOngoing(opponent, "cannotBeForcedToDiscard") > 0) return 0; // Iron Will
       return discardRandom(state, opponentId, n, events);
     },
-    prophesy(amount, turns, _pierce) {
-      // Exp-2: every doom pierces (see interface doc). Flag kept true here so
-      // redaction/eval/UI all price the doom as what it is.
-      opponent.prophecies.push({ amount, turnsLeft: turns, pierce: true, defId: card.defId });
+    prophesy(amount, turns, pierce = false) {
+      // Exp-8 (2026-08-17): the exp-2 blanket pierce rule is reverted — dooms are
+      // soakable unless the CARD says otherwise, and no current card does. The flag
+      // stays honored so a future printed-pierce card is one argument away.
+      opponent.prophecies.push({ amount, turnsLeft: turns, pierce, defId: card.defId });
       events.push({ type: "prophecyCreated", target: opponentId, amount, turns, defId: card.defId });
+    },
+    prophesyWardCollapse(turns) {
+      opponent.prophecies.push({ amount: 0, turnsLeft: turns, pierce: false, payload: "collapseLargestWard", defId: card.defId });
+      events.push({ type: "prophecyCreated", target: opponentId, amount: 0, turns, defId: card.defId });
     },
 
     requestSearchDeck({ filter, takeN, optional, reason }) {
@@ -757,7 +774,7 @@ export function makeContext(
       return false;
     },
     destroyOneOpponentWard() {
-      const ward = opponent.wards.find((w) => !w.protected);
+      const ward = opponent.wards.find((w) => !wardShielded(opponent, w));
       if (ward) dealDamageToWard(state, opponentId, ward, ward.hp, events);
     },
 
@@ -814,8 +831,20 @@ export function makeContext(
       return createWard(state, selfId, hp, events, flags);
     },
     damageOneOpponentWard(amount) {
-      const ward = opponent.wards.find((w) => !w.protected);
+      const ward = opponent.wards.find((w) => !wardShielded(opponent, w));
       if (ward) dealDamageToWard(state, opponentId, ward, amount, events);
+    },
+    damageOpponentWeakestWard(amount) {
+      const targets = opponent.wards.filter((w) => !wardShielded(opponent, w));
+      if (targets.length === 0) return;
+      const weakest = targets.reduce((a, b) => (b.hp < a.hp ? b : a));
+      dealDamageToWard(state, opponentId, weakest, amount, events);
+    },
+    halveOpponentLargestWard() {
+      const targets = opponent.wards.filter((w) => !wardShielded(opponent, w));
+      if (targets.length === 0) return;
+      const big = targets.reduce((a, b) => (b.hp > a.hp ? b : a));
+      dealDamageToWard(state, opponentId, big, Math.ceil(big.hp / 2), events);
     },
     damageEachOpponentWard(amount) {
       damageAllWards(state, opponentId, amount, events, true);
@@ -856,13 +885,16 @@ export function makeContext(
       return destroyAllWards(state, selfId, events);
     },
     destroyAllWardsEverywhere() {
-      const count = self.wards.length + opponent.wards.filter((w) => !w.protected).length;
+      const count = self.wards.length + opponent.wards.filter((w) => !wardShielded(opponent, w)).length;
       destroyAllWards(state, selfId, events);
       destroyAllWards(state, opponentId, events, true);
       return count;
     },
     addDamageReductionThisRound(amount) {
       addOngoing(state, selfId, "damageReduction", amount, "endOfRound", events);
+    },
+    addWardsProtectedThisRound() {
+      addOngoing(state, selfId, "wardsProtected", 1, "endOfRound", events);
     },
     damagePreventedThisRound() {
       return self.damagePreventedThisRound;

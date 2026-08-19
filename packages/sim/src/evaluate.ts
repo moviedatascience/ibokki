@@ -138,6 +138,16 @@ const HAND_OVERRIDES: Record<string, number> = {
   // ledger #5's shape. Value = exp-7's judgment (~a cantrip of enemy fuel),
   // unchanged since the horizon-2 baseline was measured with it.
   "DIV-008": 1.2,
+  // Exp-8 unraveling suite (2026-08-17): ward-removal payoff needs an enemy
+  // Ward standing in the snapshot to register, and the canonical snapshots
+  // have few/none — derived DIV-004 0.3 / DIV-007 0.1 / DIV-009 0. Same
+  // class-C shape as Cut the Thread. Sized against Foretell (1.5): the
+  // announced Unbind highest, the halving next, the chip+scry at DIV-008's
+  // level. Matchup-blindness is priced in (Unravel keeps a scry floor vs
+  // wardless schools); s300 is the watch leg.
+  "DIV-004": 1.4,
+  "DIV-007": 1.2,
+  "DIV-009": 1.3,
   // Divine: the inverse failure — the snapshot delta overvalues cleanse+scry,
   // so it wins prep auctions but loses EVERY cast auction: 57 preps / 0 casts
   // across the 60 post-gating-fix canonical games (resource-deck audit
@@ -288,7 +298,16 @@ function sideScore(state: GameState, id: PlayerId, w: EvalWeights): number {
   if (p.burn > 0) score -= Math.min((p.burn * (p.burn + 1)) / 2, p.hp) * w.burn;
 
   for (const doom of p.prophecies) {
-    const discounted = doom.amount * Math.pow(w.doomDecay, Math.max(0, doom.turnsLeft - 1));
+    const decay = Math.pow(w.doomDecay, Math.max(0, doom.turnsLeft - 1));
+    if (doom.payload === "collapseLargestWard") {
+      // Exp-8: the threat is ward economy, not HP — the largest ward's priced
+      // value is what evaporates when the fuse hits zero. Without this term the
+      // amount-0 doom prices at nothing and the bots neither cast nor respect it.
+      const big = p.wards.reduce((m, wd) => Math.max(m, wd.hp), 0);
+      score -= big * w.wardHp * decay;
+      continue;
+    }
+    const discounted = doom.amount * decay;
     score -= discounted * w.doom * (doom.pierce ? w.doomPierce : 1);
   }
 

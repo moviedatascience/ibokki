@@ -1420,3 +1420,150 @@ survival tool for Div looks UNNECESSARY on current evidence.
   across rounds (only attachments sweep); Absorb does NOT stop prophecy
   inscription (only cast-time cancels do); overkill cascades through
   stacked wards; trigger gating behaves as printed.
+
+---
+
+## EXP-8: THE UNRAVELING (2026-08-17) — exp-2's pierce rule is REVERTED; Div rebuilds on ward interaction. Bot ladder at 27%, user checkpoint
+
+USER DIRECTION (same day, after the m34-m44 triangle): exp-2 ("all dooms
+pierce") is judged the WORST structural change in the project — a damage type
+exempt from the defender's entire mechanic is a bye, not a matchup, and every
+pathology since (ledger starvation, seal-vs-economy tension, the shelved
+half-rate patch) is downstream of the exemption. Full plan + measurements:
+`2026-08-17-unraveling-plan.md`. Pierce is purged ENTIRELY (user call —
+Oblivion's printed immunity clause removed too; the engine still honors the
+flag for a future printed card). Printed text was on the revert's side all
+along: only Oblivion ever printed the immunity.
+
+The replacement identity: **Divination dismantles preparations** — the seer
+knows where your shield will be. Three reworks in the telemetry-dead L1
+utility row (xlsx-authored, targets PRINTED to match the auto-pick):
+- **Prophecy of Collapse** [DIV-004, was Augury] (M): doom, 2-turn fuse —
+  destroy their largest Ward. An announced Unbind; spend the ward or lose it.
+- **Unravel** [DIV-007, was Refocus] (M): 2 damage to their weakest Ward +
+  scry 2 (never fully dead vs wardless schools).
+- **Flaw in the Weave** [DIV-009, was Attune] (M): their largest Ward loses
+  half its HP, rounded up — the proportional battery answer.
+Engine additions: `Prophecy.payload: "collapseLargestWard"` (a non-damage
+doom payload), weakest/halve ward ops. Priors: all three are class-C
+(removal payoff invisible without a standing ward in the snapshot) → hand
+overrides 1.4/1.2/1.3; the doom row re-derived honestly for the soakable
+world (Omen 1.9→1.1 — a blockable doom IS worth less; Foreclosure → the 2.0
+clamp once shatter shipped; acceptance pin re-based).
+
+### The measured ladder (s200 Div-Abj, n=30 paired; controls clean every rung)
+
+| Rung | Tree | Result | Reading |
+|---|---|---|---|
+| baseline | pierce world | 28-2 Div (93%) | the bye |
+| 8a | revert only | 1-29 Div (3%), 15.5 rds | full re-inversion — pierce WAS the whole matchup. The ledger engine detonates off soaked dooms (Tithe 157 casts, Reckoning 85 @96% WR-used); Unbind alone (169 casts!) cannot race the wall |
+| 8b | + suite | 2-28 Div (7%), 17.2 rds | the suite EXPRESSES (~9 removal casts/game, Collapse 133 @93% resolve) and loses the exchange rate: every soaked point funds Tithe→ward→soak→Reckoning — Div feeds the machine that kills it |
+| 8c | + shatter rule | **8-22 Div (27%)**, 17.0 rds | the plan's named backstop: prophecy damage soaks NORMALLY (credited) but destroys every unprotected ward it touches, remainder evaporating uncredited. +20 pts — the first real movement. Sanctum emerges as printed tech (4 casts, 100% WR-used); Reckoning WR-used 92→76% |
+
+Controls: s100 byte-identical at every rung (19-11 Abj, no Div cards); s300
+unmoved at 30-0/5.6 rds (no Evo wards to shatter; one hygiene flag — Collapse
+slotted 30/30, cast 0 vs wardless Evo, the matchup-blind override's cost in
+an already-0% leg).
+
+### Where the remaining 27→60 gap lives + the lever menu (USER DECISIONS)
+
+Bot-Abj's bank still runs on chip soaks + the soaked fraction of dooms; Rune
+heals and 17-round pacing favor the L4 wall (Final Reckoning 7 casts, 100%
+WR-used). Menu, in recommended order:
+1. **Piloted probe first (pilot-gap doctrine)**: bot-Div is the instrument's
+   historically weakest seat (Evo-Div: bots 0%, pilots 2-1) — 27% may be 50%+
+   at skill. BLOCKER: the MCP server holds pre-exp-8 code; restart before any
+   piloted wave.
+2. Ledger vocabulary rule: foretold damage stops charging the bank (costs a
+   printed-text asterisk on the ledger family).
+3. Number notches (Unravel damage, Collapse fuse, doom amounts) — July law
+   says these buy points, not flips.
+4. Restoring Rune rate/caps.
+
+STATUS: uncommitted experiment tree (engine+cards+sim+docs, 256/256 green),
+awaiting user checkpoint. UI follow-up queued: client doom markers assume a
+damage amount — payload dooms (amount 0) need a glyph (sim shows `W@Nt`).
+
+### 8d — PILOTED CALIBRATION (2026-08-18, m45-m50): both seats sweep — the matchup has agency in both directions for the first time
+
+Six fully-manual pilots, 3/seat, exp-8c tree. **Div seat 3-0** (R10-R12
+blowouts, margins ~28-31): bank starving is total — chip lands on flesh only,
+pure-destroy removal (Unbind/Prophecy of Collapse deal NO damage) deletes
+wards for zero bank credit, ordering doctrine "destroy > shatter >
+damage-into-ward"; Abj's bank never passed ~6, Reckoning never profitably
+fired. **Abj seat 3-0** (R12-R16, margins 25/28/68): exact-size bumpers bank
+every doom's full face value (Stone Stance applies BEFORE ward routing — ≤2
+dooms need no ward), Reckoning cashes 7-15 repeatedly, m50 took 4 face damage
+in 16 rounds and closed with Final Reckoning for 64. All three Abj pilots
+independently: the sizing minigame is "REAL TEXTURE, NOT A TAX."
+
+Reading: pilot-vs-bot cannot resolve the skill-vs-skill edge (both seats
+crush greedy), but it resolves QUALITY — the leg went from a bye (pierce) /
+helplessness (old-world Abj 0-6) to dueling economies with rich, repeatable
+lines on both sides. Bot 73% Abj is a lower bound on BOTH schools. Div>Abj
+magnitude at equal skill needs pilot-vs-pilot or better bots.
+
+Triage (full list in the plan doc): Fortress [ABJ-029] text/impl BUG
+(protects only its new ward, text says all — live-bug pattern class);
+contradictory component-funding legality reports (react-vs-cast paths, needs
+unit repro); doom fires opening no prevent-reaction window re-affirmed as a
+deliberate design choice or changed; save_playtest trailing-markup artifact
+recurred; Fortify buffs the OLDEST ward.
+
+### 8e — the fix wave + PvP infrastructure (2026-08-18)
+
+All 8d triage cleared (Fortress fixed to printed text via round-scoped
+`wardsProtected`; funding reports disposed as designed behavior with pins;
+save artifact stripped; the m38 transcript leak fixed with actor-tagged
+redacted lines) and the MCP server gained PILOT-vs-PILOT mode: seat-scoped
+redacted views on one match, cheap WAITING polls, private notes, autoplay
+disabled. 266/266 green; Fortress fix measured balance-neutral (s200 8-22,
+16.8 rds ≈ 8c exactly). Details: the unraveling plan doc.
+
+### 8f — PILOT vs PILOT, the first equal-skill series (2026-08-19, m51-m53): DIV SWEEPS 3-0; the matchup is a real duel
+
+Three games, six pilots, both seats separately sighted, seeds 8601-03,
+manual-only. Canonical transcripts + both seats' analyses:
+`2026-08-19-m5x-Divination-vs-Abjuration-PVP.md`.
+
+| Game | Result | Shape |
+|---|---|---|
+| m51 | Div, R16, 1 HP vs -1 | photo finish — Abj was one pure-S card short of a Final Reckoning kill; died to Entropy timed across the round boundary as Stone Stance expired |
+| m52 | Div, R13, 20 vs -3 | the cancel duel decided it: Counter-Plan sniped 6 casts, Reckoning cashed once; Fortress's one no-sell of Unbind bought the only extra round |
+| m53 | Div, R13, 14 vs 0 | seven wards deleted for zero credit; Reckoning held to 2 then 8; Stonewarden's L1 lock and Counterbind-on-Counter-Plan premiered as Abj's real answers |
+
+EQUAL-SKILL VERDICT: Div > Abj intent REALIZED at equal skill — Div favored,
+margins razor-to-comfortable, and every game a genuine duel (Abj live to win
+in all three; every mechanic on both sides fired). The matchup's discovered
+center is the CANCEL DUEL: Counter-Plan (strips a component off a cast,
+killing exact-cost spells — Stone Stance, Arcane Shell, RECKONING at SS) vs
+Counterbind (which can snipe Counter-Plan itself). Supporting skills: ward
+sizing/pumping vs shrink-then-doom under shatter, round-boundary doom
+geometry, three simultaneous clocks (HP, doom fuses, deck exhaustion).
+
+PLAYBOOK CORRECTIONS (encode in future briefs): Counter-Plan protection
+requires 2+ SEPARATE component cards (a dual is one physical strip target);
+front-load reaction fuel every round (seat order alternates); track live
+board objects, not cancelled casts (Stonewarden's persisted ward blanked L1
+removal for 10 rounds unnoticed); shatter overflow past a DYING ward carries
+to face (only a SURVIVING ward's remainder evaporates).
+
+DESIGN QUEUE from the series (user decisions):
+1. If 3-0 is hotter than intended: Counter-Plan is the matchup's strongest
+   card (6 snipes in m52); the round-end sweep of REACTION funding is a
+   structural tax on the reactive school (refund-from-zero windows are
+   exactly where dooms land) — either is a magnitude lever. If Div-favored
+   with living counterplay is the intent: ship as-is.
+2. Sealed Vault reset a 7-card deck to 32 (m52) — the exhaustion-clock
+   deletion flag, third sighting.
+3. One-time check: prep-pool level gating (m39/m53 reports of high-tier
+   spells never surfacing — largely the level ramp + short games, but verify
+   once); cast-slot attach hygiene (dead attaches stay legal); 2-card cap UX
+   hint (fourth pilot confusion).
+
+INSTRUMENT: PvP orchestration works end-to-end — referee creates the match,
+two pilot agents play it, valve collisions (mutual poll-timeouts) are
+resolved by SendMessage resume with 150-poll ceilings, cost ≈ 0.7-0.9M
+sonnet tokens/game. The pilot-gap ladder now has a third rung: bots (27%
+Div) < pilot-vs-bot (sweeps both directions) < pilot-vs-pilot (Div 3-0) —
+each instrument a lower bound on the next's losing side.

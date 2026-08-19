@@ -1459,7 +1459,7 @@
   },
   {
     "id": "DIV-004",
-    "name": "Augury",
+    "name": "Prophecy of Collapse",
     "school": "Divination",
     "type": "Spell",
     "level": 1,
@@ -1469,7 +1469,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Reveal the top card of your Resource Deck. If it is a Material (M) component, draw it. Otherwise, put it on the bottom.",
+    "text": "Prophecy - at the start of your opponent's second turn from now, destroy their largest Ward.",
     "comment": "Rewards a heavily tuned M deck — the more Material you run, the more often this draws. Quietly punishes greedy multi-school splashes."
   },
   {
@@ -1504,7 +1504,7 @@
   },
   {
     "id": "DIV-007",
-    "name": "Refocus",
+    "name": "Unravel",
     "school": "Divination",
     "type": "Spell",
     "level": 1,
@@ -1514,7 +1514,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Return a face-up component attached to one of your prepared spells to your hand.",
+    "text": "Deal 2 damage to your opponent's weakest Ward. Look at the top 2 cards of your Resource Deck and put them back in any order.",
     "comment": "Pick a component back up to re-aim it at a different spell. Pure tempo — undoes a misread or frees a piece for a better line."
   },
   {
@@ -1534,7 +1534,7 @@
   },
   {
     "id": "DIV-009",
-    "name": "Attune",
+    "name": "Flaw in the Weave",
     "school": "Divination",
     "type": "Spell",
     "level": 1,
@@ -1544,7 +1544,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Until the end of the round, the next component you attach to a prepared spell counts as having one additional symbol of a type you choose.",
+    "text": "Your opponent's largest Ward loses half its HP, rounded up.",
     "comment": "The precision fixer: bridges an off-color cost when you're a single symbol short. Embodies the doc's 'right piece at the right time.'"
   },
   {
@@ -2039,7 +2039,7 @@
       "S": 0,
       "M": 4
     },
-    "text": "Prophecy - at the start of your opponent's third turn from now, deal 9 damage to them. This damage cannot be prevented or absorbed by Wards.",
+    "text": "Prophecy - at the start of your opponent's third turn from now, deal 9 damage to them.",
     "comment": "The prophecy haymaker - 9 unwardable damage in 3 turns. Answer it at cast time or race it."
   },
   {

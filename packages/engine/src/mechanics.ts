@@ -4,7 +4,7 @@
  * round → level-up transition.
  */
 import { MAX_LEVEL, tierForLevel } from "./levels.ts";
-import { dealDamageToPlayer, drawN, endGame, sumOngoing, winnerByHp } from "./state-ops.ts";
+import { dealDamageToPlayer, dealDamageToWard, drawN, endGame, sumOngoing, wardShielded, winnerByHp } from "./state-ops.ts";
 import { otherPlayer, type GameEvent, type GameState, type PlayerId } from "./types.ts";
 
 /**
@@ -102,9 +102,10 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
   }
 
   // Prophecies tick after Burn: every doom on the active player counts down one turn;
-  // any that reach 0 fire. The payload was fixed at inscription (no amps). Since exp-2
-  // (2026-07-28) every doom is inscribed piercing (exhaustion-style direct HP); the
-  // soakable branch below remains for any future pierce:false card.
+  // any that reach 0 fire. The payload was fixed at inscription (no amps). Exp-8
+  // (2026-08-17) reverted exp-2's blanket pierce: dooms route through wards/reduction
+  // like any damage (and so charge the defender's prevention ledger). The pierce
+  // branch below stays engine-honored for a future printed-immunity card.
   if (player.prophecies.length > 0) {
     const firing: typeof player.prophecies = [];
     player.prophecies = player.prophecies.filter((p) => {
@@ -115,12 +116,23 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
     });
     for (const p of firing) {
       events.push({ type: "prophecyFired", player: player.id, amount: p.amount, defId: p.defId });
-      if (p.pierce) {
+      if (p.payload === "collapseLargestWard") {
+        // Exp-8 suite: the doom's payload is ward economy, not HP. Targeted ward
+        // destruction never credits the prevention ledger (Dispelling Powder rule).
+        const targets = player.wards.filter((wd) => !wardShielded(player, wd));
+        if (targets.length > 0) {
+          const big = targets.reduce((a, b) => (b.hp > a.hp ? b : a));
+          dealDamageToWard(state, player.id, big, big.hp, events);
+        }
+      } else if (p.pierce) {
         player.hp -= p.amount; // the death you cannot ward: no wards, no reduction, no heal-conversion
         events.push({ type: "damage", target: player.id, amount: p.amount });
         if (player.hp <= 0) endGame(state, otherPlayer(player.id), "hp", events);
       } else {
-        dealDamageToPlayer(state, player.id, p.amount, events);
+        // Exp-8c: prophecy damage shatters the wards that block it (see state-ops).
+        // Fully interactive — soak, reduction, and ledger credit all apply — but
+        // walling the clock costs ward stock; exact-size wards are the clean block.
+        dealDamageToPlayer(state, player.id, p.amount, events, { shatterWards: true });
       }
       if (state.phase === "gameover") return;
     }

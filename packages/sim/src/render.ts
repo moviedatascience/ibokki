@@ -185,8 +185,8 @@ export function renderCompact(state: GameState, viewer?: 0 | 1): string {
   const opp = v.opponent;
   const lines: string[] = [];
 
-  const doomStr = (p: { prophecies: { amount: number; turnsLeft: number; pierce: boolean }[] }): string =>
-    p.prophecies.length ? ` doom[${p.prophecies.map((d) => `${d.amount}${d.pierce ? "!" : ""}@${d.turnsLeft}t`).join(",")}]` : "";
+  const doomStr = (p: { prophecies: { amount: number; turnsLeft: number; pierce: boolean; payload?: string }[] }): string =>
+    p.prophecies.length ? ` doom[${p.prophecies.map((d) => `${d.payload ? "W" : d.amount}${d.pierce ? "!" : ""}@${d.turnsLeft}t`).join(",")}]` : "";
   const wardStr = (wards: number[]): string => (wards.length ? ` wards[${wards.join(",")}]` : "");
   const burnStr = (burn: number): string => (burn > 0 ? ` burn${burn}` : "");
 
@@ -302,8 +302,8 @@ export function renderDecision(state: GameState, schools?: [string, string], vie
     }
   }
 
-  const dooms = (ps: { prophecies: { amount: number; turnsLeft: number; pierce: boolean }[] }): string =>
-    ps.prophecies.length ? ` | doom [${ps.prophecies.map((p) => `${p.amount}${p.pierce ? "!" : ""}@${p.turnsLeft}t`).join(", ")}]` : "";
+  const dooms = (ps: { prophecies: { amount: number; turnsLeft: number; pierce: boolean; payload?: string }[] }): string =>
+    ps.prophecies.length ? ` | doom [${ps.prophecies.map((p) => `${p.payload ? "W" : p.amount}${p.pierce ? "!" : ""}@${p.turnsLeft}t`).join(", ")}]` : "";
 
   const self = v.self;
   lines.push(

@@ -58,7 +58,8 @@ export type OngoingKind =
   | "cannotBeForcedToDiscard" // the opponent can't make you discard or strip your hand/prepared (Iron Will)
   | "drawLock" // YOUR opponent can't draw via effects (only their normal turn-draw) (Mana Sickness)
   | "attuneBonus" // your next attached component counts as +1 needed symbol (Attune)
-  | "damageReduction"; // reduce incoming damage by value (Aegis Eternal, Absolute Defense)
+  | "damageReduction" // reduce incoming damage by value (Aegis Eternal, Absolute Defense)
+  | "wardsProtected"; // ALL your wards: opponent can't target/destroy/shatter them this round (Fortress)
 
 /** A lasting effect tracked with a marker until its expiry (design doc: "Ongoing Effects"). */
 export interface OngoingEffect {
@@ -72,17 +73,23 @@ export interface OngoingEffect {
 /**
  * A delayed doom inscribed on a player (Divination's win condition). Public to both
  * players. `turnsLeft` counts down at the start of the doomed player's turn (the same
- * hook where Burn ticks); at 0 it fires for `amount` damage. Exp-2 (2026-07-28): every
- * doom is inscribed `pierce` — like exhaustion, it ignores Wards/prevention (before,
- * only Oblivion pierced and Abj's ward wall blanked the whole clock). The engine still
- * honors `pierce: false` (soakable) if a future card wants it.
- * The payload is fixed at inscription — amps and buffs never touch it (the future is
- * already written).
+ * hook where Burn ticks); at 0 it fires for `amount` damage. Exp-8 (2026-08-17):
+ * exp-2's blanket pierce is REVERTED — dooms are soakable damage that engages
+ * wards/reduction (and charges the defender's prevention ledger); Div's edge vs the
+ * wall comes from ward interaction (Unbind + the exp-8 unraveling suite), not damage
+ * immunity. No current card inscribes `pierce: true`; the engine still honors it for
+ * a future printed-immunity card. The payload is fixed at inscription — amps and
+ * buffs never touch it (the future is already written).
  */
 export interface Prophecy {
   amount: number;
   turnsLeft: number;
   pierce: boolean;
+  /** Non-damage payload variant (exp-8 unraveling suite): at zero, destroy the
+   *  doomed player's largest unprotected Ward instead of dealing damage.
+   *  `amount` stays 0 for these. Counterplay is printed on the card: spend or
+   *  shrink the ward before the fuse runs out. */
+  payload?: "collapseLargestWard";
   /** The spell/trainer that inscribed it (public: it was cast openly). */
   defId: string;
 }
