@@ -3,6 +3,13 @@
     "ibokki-playtest": {
       "command": "node",
       "args": ["--import", "tsx", "packages/mcp/src/server.ts"]
+    },
+    "pixellab": {
+      "type": "http",
+      "url": "https://api.pixellab.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${PIXELLAB_SECRET}"
+      }
     }
   }
 }

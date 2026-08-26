@@ -36,3 +36,7 @@ playtests/.sessions/
 # playwright output
 test-results/
 playwright-report/
+
+# DSH multi-agent org — agent scratch state (the playbook, briefs, roster and
+# presets ARE version-controlled under .dsh/)
+.dsh/notes/

@@ -102,6 +102,11 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 - `/art <asset|defId|next>` skill: generate options via the local ComfyUI Krea2 MCP
   (`mcp__comfyui__generate_image`), stage in `art/review/` (gitignored), present a gallery
   artifact, user picks, winner lands in `apps/client/public/art/` keyed by defId.
+- **PixelLab track (2026-08-22):** the board/arena and the two dueling champions (sprites +
+  animations) are PIXEL ART via the hosted PixelLab MCP (`pixellab` in `.mcp.json`, HTTP;
+  needs `PIXELLAB_SECRET` env var — token from pixellab.ai). ComfyUI stays for card
+  illustrations/icons/branding. Same review flow (options → gallery → user picks); see the
+  PixelLab section in `.claude/skills/art/SKILL.md` and MANIFEST §1-px.
 - `art/STYLE_BIBLE.md` = the art-direction law (2026-07-07): old-school D&D/early-MtG
   homage, Plate vs Cover registers by card tier, muted-earth palette + one school accent,
   immutable prompt blocks (§13) + standing negative prompt, QA kill-list (§15). Follow it
@@ -128,6 +133,18 @@ redeploy: rooms persist to SQLite (`matches` table) and rehydrate on boot by det
 replay; clients rejoin with their stored seat tokens. Client is built with
 `IBOKKI_BASE=/play/`; nginx strips the prefix. Build-version handshake: GIT_SHA baked into
 bundle + server; mismatch shows a refresh banner.
+
+## DeepSeek Harness multi-agent org (`.dsh/`)
+
+The repo also runs a DSH-native multi-agent org alongside this Claude setup —
+see `.dsh/README.md` for the full playbook. In short: a supervisor session
+(lead preset) spawns two lead agents (Builder/Auditor) → project leads → ICs as
+continuable subagents; messaging is parent↔child only; the supervisor relays
+cross-reviews and restarts dead agents per `.dsh/agents/handoff.md`. Live state
+lives in `.dsh/roster.md`; presets are synced to `~/.dsh/.agent-presets` by
+`.dsh/sync-presets.ps1`. Keep `.dsh/` conventions consistent with this file:
+playtest pilots run on cheap models, the pilot-gap doctrine and the `npm run
+typecheck && npm test` gate apply to DSH agents exactly as to Claude ones.
 
 ## Cross-vendor collaboration (Claude ↔ DeepSeek Harness)
 

@@ -28,6 +28,25 @@
 | 9 | **Favicon + OG/social image** | `apps/client/index.html` `<head>` — currently has NO icon link, NO meta/OG tags; ibokki.com/play shares render blank | Missing | Favicon: 1:1 master 512×512 (+32, +180 apple-touch); OG: 1200×630 | 2 sets |
 | 10 | **Logo / IBOKKI wordmark** | `TopBar.tsx` `.brand` (15px), `Home.tsx` `h1.logo` (34px), playvsclaude header | Placeholder — letterspaced text tinted `#d7c4ff` | Wide SVG (~5:1) + square mark-only variant; must scale 15px→40px height | 1–2 |
 
+### P1-px — PixelLab pixel-art track (direction 2026-08-22)
+
+> The board/arena and the dueling champions moved OFF ComfyUI onto the hosted PixelLab
+> MCP (`pixellab` in `.mcp.json`, needs `PIXELLAB_SECRET`). Row **#1 above is superseded**
+> by this track — the filed ComfyUI venue (`apps/client/public/art/board/table.png`,
+> wired 2026-07-20) remains as the load-failure fallback until the pixel arena replaces it.
+> Framing law unchanged: Tekken-style side view, two facing wizard profiles, no circle.
+
+| # | Asset | Plugs in at | Target size / aspect | Count |
+|---|---|---|---|---|
+| px1 | **Champion sprites** — one wizard per school (Evo/Abj/Div), side profile, authored facing one direction (client mirrors the far seat; mirror matches flip the same sprite) | new champion layer in `PixiBoard` between `bgLayer` and the stack, flanking the arena center (world 640,300) | 64–128 px character canvas, integer-scaled ×N with nearest-neighbor | 3 |
+| px2 | **Champion animation sets** — idle, cast, hit, defeat (victory later) | PixiJS `AnimatedSprite` from PixelLab sprite sheets, `apps/client/public/art/champions/<school>/` | same canvas as px1; sheet layout recorded in `chosen.json` | 3×4 |
+| px3 | **Board/arena stage** (replaces #1) | `PixiBoard.buildStatic()` `bgLayer` (existing venue sprite slot) | authored small (e.g. 640×400), integer-scaled to the 2560×1600 / 16:10 slot, nearest-neighbor | 1 |
+
+**Integration notes (px track):** set `texture.source.scaleMode = 'nearest'` on all px
+assets; champions + arena must share one logical pixel size. PixelLab characters are
+server-side objects — record their character ids in `chosen.json` so later animations
+attach to the same approved character.
+
 ### P2 — completes the experience
 
 | # | Asset | Plugs in at | Current state | Target size / aspect | Count |

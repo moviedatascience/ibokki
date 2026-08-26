@@ -1,6 +1,6 @@
 ---
 name: art
-description: Generate art asset options for ibokki via the local ComfyUI Krea2 MCP, present them for review, and let the user pick the winner. Use when the user asks to create, generate, or choose art for the game (card illustrations, icons, board, card back, branding). Args - an asset name, a card defId (e.g. EVO-017), or "next" for the highest-priority unchosen asset.
+description: Generate art asset options for ibokki — card illustrations, icons, card back, and branding via the local ComfyUI Krea2 MCP; the board/arena and champion sprites/animations via the hosted PixelLab MCP (pixel-art track) — present them for review, and let the user pick the winner. Use when the user asks to create, generate, or choose art for the game. Args - an asset name, a card defId (e.g. EVO-017), or "next" for the highest-priority unchosen asset.
 ---
 
 # ibokki art generation & selection pipeline
@@ -24,6 +24,37 @@ The user is the art director; never pick for them.
   `E:\ai\ComfyUI_windows_portable\ComfyUI_windows_portable\ComfyUI\output\` (filenames are
   returned by the MCP call). ComfyUI must be running; if generation fails, check
   `mcp__comfyui__comfy_status` first and tell the user to start ComfyUI if it's down.
+
+## PixelLab track — board/arena · champions · animations (2026-08-22 direction)
+
+The dueling stage and the two champions who fight on it are **pixel art**, generated via
+the hosted PixelLab MCP (`pixellab` in `.mcp.json`; requires `PIXELLAB_SECRET` env var —
+token from pixellab.ai/vibe-coding). ComfyUI/Krea2 remains the tool for everything else
+in this skill (card illustrations, alt scenes, card back, branding). If the `pixellab`
+tools are missing, the env var isn't set or the session predates it — tell the user.
+
+- **Assets on this track:** 3 school champions (Evo/Abj/Div wizards — the two seated
+  players' schools decide which pair appears; mirror matches flip the same sprite),
+  their animation sets (idle, cast, hit, defeat first; victory later), and the
+  board/arena stage. This supersedes the ComfyUI venue `board/table.png` (wired
+  2026-07-20), which stays as the load-failure fallback until the pixel arena is filed.
+- **Framing law still applies** (MANIFEST §1 row 1, STYLE_BIBLE §11, art-direction
+  rulings): Tekken-style SIDE VIEW, champions in profile facing each other across open
+  floor, NO ritual circle, quiet dark zones where the UI sits. Author champions facing
+  one direction; the client mirrors for the far seat.
+- **Palette law survives the register change:** bible §4 — muted earth + one school
+  accent; the arena stays close to the felt `#0e1411` family so gold waiting-glow and
+  card sprites keep contrast.
+- **Pixel discipline:** author SMALL and integer-scale in Pixi with nearest-neighbor
+  (`texture.source.scaleMode = 'nearest'`); never upscale in the generator, never
+  mix pixel densities in one scene (champions and arena share one logical pixel size).
+- **Same selection ritual as ComfyUI:** generate options → stage PNGs in
+  `art/review/<slug>/` → gallery artifact → AskUserQuestion → file winners: arena to
+  `apps/client/public/art/board/`, champion sheets to
+  `apps/client/public/art/champions/<school>/` — and append to `chosen.json` with
+  `"model": "pixellab"` plus whatever generation params/ids the MCP returns (PixelLab
+  characters are server-side objects; record their ids so animations can be added to
+  the SAME character later).
 
 ## Pipeline
 
