@@ -841,23 +841,23 @@ describe("reflect-by-actual-damage + redirect (the retired SIMPLIFIED reaction f
     const { s } = fireballWithReaction("EVO-043", (st) => {
       st.players[0].ongoing.push({ id: 1, owner: 0, kind: "damageBuff", value: 1, expiry: "endOfRound" });
     });
-    expect(s.players[1].hp).toBe(30 - 6); // Fireball 5 + Catalyst-style +1
-    expect(s.players[0].hp).toBe(30 - 12); // that 6, doubled back
+    expect(s.players[1].hp).toBe(30 - 7); // Fireball 6 + Catalyst-style +1
+    expect(s.players[0].hp).toBe(30 - 14); // that 7, doubled back
   });
 
   it("ward soak lowers the riposte — only damage that reaches you reflects", () => {
     const { s } = fireballWithReaction("EVO-043", (st) => {
       st.players[1].wards = [{ wid: 1, hp: 3 }];
     });
-    expect(s.players[1].hp).toBe(30 - 2); // 5, 3 soaked
+    expect(s.players[1].hp).toBe(30 - 3); // 6, 3 soaked
     expect(s.players[1].wards).toHaveLength(0);
-    expect(s.players[0].hp).toBe(30 - 4); // 2 doubled
+    expect(s.players[0].hp).toBe(30 - 6); // 3 doubled
   });
 
   it("Pyromancer's Reckoning triples the actual damage", () => {
     const { s } = fireballWithReaction("EVO-047");
-    expect(s.players[1].hp).toBe(30 - 5);
-    expect(s.players[0].hp).toBe(30 - 15);
+    expect(s.players[1].hp).toBe(30 - 6);
+    expect(s.players[0].hp).toBe(30 - 18);
   });
 
   it("Retributive Strike cancels and reflects the PREDICTED damage doubled", () => {
@@ -865,7 +865,7 @@ describe("reflect-by-actual-damage + redirect (the retired SIMPLIFIED reaction f
       st.players[0].ongoing.push({ id: 1, owner: 0, kind: "damageBuff", value: 1, expiry: "endOfRound" });
     });
     expect(s.players[1].hp).toBe(30); // cancelled — the Fireball never lands
-    expect(s.players[0].hp).toBe(30 - 12); // predicted 6 (buff included), doubled
+    expect(s.players[0].hp).toBe(30 - 14); // predicted 7 (buff included), doubled
     expect(events.some((e) => e.type === "spellCancelled")).toBe(true);
   });
 
@@ -875,7 +875,7 @@ describe("reflect-by-actual-damage + redirect (the retired SIMPLIFIED reaction f
       st.players[0].wards = [{ wid: 1, hp: 2 }];
     });
     expect(s.players[1].hp).toBe(30); // the intended target is untouched
-    expect(s.players[0].hp).toBe(30 - 4); // 6 at self, 2 soaked by their own ward
+    expect(s.players[0].hp).toBe(30 - 5); // 7 at self, 2 soaked by their own ward
     expect(s.players[0].wards).toHaveLength(0);
     expect(events.some((e) => e.type === "spellRedirected")).toBe(true);
   });
@@ -884,7 +884,7 @@ describe("reflect-by-actual-damage + redirect (the retired SIMPLIFIED reaction f
     const { s, events } = fireballWithReaction("DIV-026", (st) => {
       st.players[0].ongoing.push({ id: 1, owner: 0, kind: "spellsUncounterable", value: 1, expiry: "endOfRound" });
     });
-    expect(s.players[1].hp).toBe(30 - 5); // hits the intended target anyway
+    expect(s.players[1].hp).toBe(30 - 6); // hits the intended target anyway
     expect(s.players[0].hp).toBe(30);
     expect(events.some((e) => e.type === "spellRedirected")).toBe(false);
   });
@@ -902,8 +902,8 @@ describe("trigger-window traps + riders (the remaining SIMPLIFIED family)", () =
     let r = apply(s, { type: "cast", preparedIndex: 0 });
     r = apply(r.state, { type: "pass" }); // P0 lets it proceed
     r = apply(r.state, { type: "pass" }); // P1 passes → Fireball resolves reduced → trap fires
-    // 5-1 from Fireball, then the riposte's 2 is ALSO trimmed by the same ongoing reduction.
-    expect(r.state.players[1].hp).toBe(30 - 4 - 1);
+    // 6-1 from Fireball, then the riposte's 2 is ALSO trimmed by the same ongoing reduction.
+    expect(r.state.players[1].hp).toBe(30 - 5 - 1);
     expect(r.state.players[0].prepared[1]!.cast).toBe(true); // trap spent
     expect(r.state.players[0].prepared[1]!.attached).toHaveLength(0);
   });
@@ -944,7 +944,7 @@ describe("trigger-window traps + riders (the remaining SIMPLIFIED family)", () =
     pushToStack(s, 1, 0, true, s.stack[0]!.sid, events);
     resolveTop(s, events); // Absorb
     resolveTop(s, events); // Fireball — fully prevented
-    expect(s.players[1].hp).toBe(20 + 2); // floor(5/2)
+    expect(s.players[1].hp).toBe(20 + 3); // floor(6/2)
   });
 
   it("Phase Shift cancels and grants an instant-speed attach; passing forfeits it", () => {
