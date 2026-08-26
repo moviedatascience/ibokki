@@ -12,7 +12,7 @@ Deliverable: branch `claude/exp9-evo-tune-ledger-hud` (3 commits)
     from REACTION_TRIGGER_TYPE it already answered Reactions — print caught
     up to engine); every Fireball-derived test pin recomputed; cast-priors
     regenerated
-  - 8d0/playtests: `playtests/2026-08-25-exp9-triangle-ab.md` — A/B triangle
+  - 3564645 playtests: `playtests/2026-08-25-exp9-triangle-ab.md` — A/B triangle
 Evidence: gate green — typecheck clean, 267/267 tests (incl. new Stoke unit),
   client tsc clean, xlsx↔cards.json zero drift. A/B triangle (greedy paired
   n=30, horizon 2, seeds 100/200/300), full table in the playtests file:
