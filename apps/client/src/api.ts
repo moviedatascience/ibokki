@@ -35,6 +35,11 @@ export interface PlayerView {
   prophecies: { amount: number; turnsLeft: number; pierce: boolean; defId: string }[];
   /** Times the discard has been reshuffled into the deck (exhaustion clock). */
   reshuffles: number;
+  /** Lifetime damage prevented this match — the prevention ledger that funds
+   *  Reckoning/Tithe/Verdict/Rune. Public (already on the wire); surfaced in
+   *  the HUD since m55's invisible 35-damage Reckoning. Optional for older
+   *  server payloads. */
+  damagePreventedTotal?: number;
   /** Active lasting effects this player owns (public table markers). */
   ongoing: { kind: string; value: number; expiry: "endOfRound" | "startOfOwnNextTurn" }[];
   level: number;
