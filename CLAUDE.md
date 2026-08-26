@@ -128,3 +128,22 @@ redeploy: rooms persist to SQLite (`matches` table) and rehydrate on boot by det
 replay; clients rejoin with their stored seat tokens. Client is built with
 `IBOKKI_BASE=/play/`; nginx strips the prefix. Build-version handshake: GIT_SHA baked into
 bundle + server; mismatch shows a refresh banner.
+
+## Cross-vendor collaboration (Claude ↔ DeepSeek Harness)
+
+Claude (here) and the DeepSeek Harness org (`.dsh/`) are two vendors on ONE repo.
+They never talk in real time; they coordinate through **git + `interop/`**, and
+the human routes. Full protocol: `interop/COORDINATION.md`.
+
+Start-of-session duty (every time): read `interop/COORDINATION.md`,
+`interop/OWNERSHIP.md`, `interop/DECISIONS.md`, and drain `interop/inbox/`.
+
+Conventions that bind this side:
+- **Branch-per-task:** one change = one branch `claude/<slug>`; run the gate
+  (`npm run typecheck && npm test`) on the branch before requesting review; merge
+  to `main` only after the opposite vendor approves.
+- **Enforced pairing:** your builder output is reviewed by **DeepSeek
+  Lead-Auditor**; you review **DeepSeek Lead-Builder** output (auditor hat — file
+  `interop/reviews/<slug>.md`). Self-review is not a verdict.
+- **Decisions:** disagreements resolve in `interop/DECISIONS.md`; cite the number.
+- One repo, one truth: `F:\Programming\ibokki`.
