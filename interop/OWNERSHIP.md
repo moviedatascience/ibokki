@@ -17,7 +17,7 @@ at session start and update it as they claim/release work. The rule is simple:
 
 | Owner (vendor) | Branch / task | Files | Status | Since |
 |---|---|---|---|---|
-| — | — | — | — | — |
+| Claude | claude/exp9-evo-tune-ledger-hud | ibokki_spell_cards.xlsx, packages/cards/data/cards.json, apps/client/src/api.ts, apps/client/src/board/PixiBoard.ts | propose — awaiting DSH review (inbox #1) | 2026-08-25 |
 
 ## Enforced review pairing (from COORDINATION.md)
 
