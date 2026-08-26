@@ -21,7 +21,7 @@ The user is the art director; never pick for them.
 - Card facts (name, school, cost, effect text) come from `packages/cards/data/cards.json`
   (components: `packages/cards/src/components.ts`). Asset key = defId.
 - ComfyUI saves full-res originals to
-  `E:\ai\ComfyUI_windows_portable\ComfyUI_windows_portable\ComfyUI\output\` (filenames are
+  `E:\Comfy-Desktop\ComfyUI-Shared\output\` (shared store; models live in `ComfyUI-Shared\models`, the portable engine reads them via `extra_model_paths.yaml`) (filenames are
   returned by the MCP call). ComfyUI must be running; if generation fails, check
   `mcp__comfyui__comfy_status` first and tell the user to start ComfyUI if it's down.
 

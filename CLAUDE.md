@@ -117,7 +117,7 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
   style anchors. The user is the art director: never generate batches or file winners
   without being asked.
 - ComfyUI must be running; originals save to
-  `E:\ai\ComfyUI_windows_portable\ComfyUI_windows_portable\ComfyUI\output\`.
+  `E:\Comfy-Desktop\ComfyUI-Shared\output\` (shared store; models live in `ComfyUI-Shared\models`, the portable engine reads them via `extra_model_paths.yaml`).
 - Approved woodcut glyphs live in `art/glyphs/` (SVG source of truth) and are WIRED into
   the client: `.claude/skills/art/ship-glyphs.ps1` copies them (white-filled for Pixi
   tinting) to `apps/client/public/art/`; Pixi consumers go through
