@@ -170,8 +170,11 @@ export function Home({ auth, deckData, online, error, hasLocalMatch, onPlayBot, 
       </div>
 
       <div className="homecol">
-        <div className="panel">
-          <h3>Play online</h3>
+        {/* Solo is the first-session path (UI_POLISH_PLAN §2.3): the mode a new player with
+            no opponent needs is the featured card, not the third button in the online panel. */}
+        <div className="panel modecard" data-testid="mode-solo">
+          <h3>Play vs bot</h3>
+          <div className="modelede">Duel a rival wizard right now — no opponent needed.</div>
           <label className="field">
             Your deck
             <select value={choice} onChange={(e) => setChoice(e.target.value)} data-testid="deck-select">
@@ -182,6 +185,23 @@ export function Home({ auth, deckData, online, error, hasLocalMatch, onPlayBot, 
               ))}
             </select>
           </label>
+          <label className="field">
+            Difficulty
+            <select value={botLevel} onChange={(e) => setBotLevel(e.target.value as BotLevel)} data-testid="online-bot-level" title="Bot strength">
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </label>
+          <button className="cta" disabled={connecting} onClick={() => online.createBot(decodeChoice(choice), botLevel)} data-testid="online-bot">
+            Start duel
+          </button>
+          <div className="hint">The bot plays a random archetype deck.</div>
+        </div>
+
+        <div className="panel" data-testid="mode-online">
+          <h3>Play online</h3>
+          <div className="hint">Uses the deck picked above.</div>
           <button className="primary" style={{ width: "100%" }} disabled={connecting} onClick={() => online.create(decodeChoice(choice))} data-testid="online-create">
             Create room
           </button>
@@ -192,24 +212,13 @@ export function Home({ auth, deckData, online, error, hasLocalMatch, onPlayBot, 
           <button style={{ width: "100%" }} disabled={connecting || joinCode.trim().length < 5} onClick={() => online.join(joinCode, decodeChoice(choice))} data-testid="online-join">
             Join room
           </button>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button style={{ flex: 1 }} disabled={connecting} onClick={() => online.createBot(decodeChoice(choice), botLevel)} data-testid="online-bot">
-              Play vs bot
-            </button>
-            <select value={botLevel} onChange={(e) => setBotLevel(e.target.value as BotLevel)} data-testid="online-bot-level" title="Bot strength">
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
-          </div>
           {connecting && <div className="hint">Connecting…</div>}
           {error && <div className="formerror" data-testid="online-error">{error}</div>}
-          <div className="hint">No opponent? The bot plays a random archetype deck.</div>
         </div>
 
         {hasLocalMatch && (
         <div className="panel">
-          <h3>Play vs bot</h3>
+          <h3>Local dev match</h3>
           <label className="field">
             You
             <select value={p0} onChange={(e) => setP0(e.target.value as School)}>
