@@ -21,6 +21,7 @@ at session start and update it as they claim/release work. The rule is simple:
 | Claude | claude/error-monitoring (board #22) | apps/server/src/monitor.ts (new), apps/server/src/app.ts, apps/server/src/api.ts, apps/server/src/server.ts, apps/server/src/db.ts, apps/server/src/botPool.ts, apps/server/test/monitor.test.ts (new) | propose — awaiting DSH review (inbox #5, PR #29) | 2026-09-01 |
 | Claude | claude/fix-decks-e2e-pin | apps/client/test/decks.spec.ts | propose — awaiting DSH review (inbox #6, PR #30) | 2026-09-01 |
 | Claude | claude/bot-mode-card (board #18) | apps/client/src/components/Home.tsx, apps/client/src/styles.css | propose — awaiting DSH review (inbox #7, PR #31) | 2026-09-01 |
+| DeepSeek | dsh/fix-skills-presets | .dsh/skills/{engineer,art,qa,pm}/**, .dsh/skills/pm/sync-board.ps1, .dsh/agent-presets/{engineer,designer,pm,qa}/**, .dsh/sync-presets.ps1, .dsh/README.md | propose — awaiting Claude review (inbox #11) | 2026-09-01 |
 
 ## Enforced review pairing (from COORDINATION.md)
 

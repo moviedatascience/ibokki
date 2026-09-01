@@ -25,6 +25,15 @@ You — this session, `lead` preset = the SUPERVISOR (daily driver)
 The supervisor is the root. Leads are its direct children; project leads are the
 leads' children; ICs are the project leads' children.
 
+## Standalone role presets (outside the org tree)
+
+Separate from the org, four single-session role presets run as focused specialists
+with their own skills, picked from the GUI session picker: `pm`, `engineer`,
+`designer`, and `qa` — each loads its matching `.dsh/skills/<role>/` skill. `lead`
+is the supervisor (org root) and `ic` is a standalone contributor session; both load
+the `org` skill. The designer's `art` skill is a shim that delegates to the
+canonical `.claude/skills/art/SKILL.md`.
+
 ## DSH mechanics — the honest mapping
 
 - **Messaging is a strict parent↔child tree.** An agent `send_message`s its direct
@@ -107,8 +116,8 @@ Rules this org must honor:
 |---|---|
 | `.dsh/roster.md` | Live org state — durable ids, statuses, current tasks (supervisor owns it) |
 | `.dsh/agents/` | Spawn briefs — the role definitions (lead-builder, lead-auditor, project-lead, ic, handoff) |
-| `.dsh/skills/org/` | The org playbook as a DSH skill (load with the skill tool) |
-| `.dsh/agent-presets/` | Preset templates, synced to `~/.dsh/.agent-presets` by `sync-presets.ps1` |
+| `.dsh/skills/` | Role skills: `org`, `engineer`, `art` (shim → `.claude/skills/art`), `qa`, `pm` (+ `pm/sync-board.ps1`) |
+| `.dsh/agent-presets/` | Preset templates (`lead`, `ic`, `engineer`, `designer`, `pm`, `qa`), synced to `~/.dsh/.agent-presets` by `sync-presets.ps1` |
 | `.dsh/notes/` | Gitignored scratch state written by agents so a replacement can continue |
 | `.dsh/bootstrap.md` | Day-one prompt that boots the whole org |
 | `interop/` | Cross-vendor bus — `COORDINATION.md` (protocol), `DECISIONS.md`, `OWNERSHIP.md`, `inbox/`, `reviews/` |
