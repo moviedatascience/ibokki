@@ -18,7 +18,6 @@ at session start and update it as they claim/release work. The rule is simple:
 | Owner (vendor) | Branch / task | Files | Status | Since |
 |---|---|---|---|---|
 | Claude | claude/exp9-evo-tune-ledger-hud | ibokki_spell_cards.xlsx, packages/cards/data/cards.json, apps/client/src/api.ts, apps/client/src/board/PixiBoard.ts, packages/engine/src/effects/evocation.ts, packages/engine/src/effects/context.ts, packages/engine/test/effects.test.ts, packages/engine/test/interactions.test.ts, packages/sim/data/cast-priors.json, playtests/2026-08-25-exp9-triangle-ab.md, playtests/2026-09-01-m56/m57/m58 transcripts, playtests/2026-07-27-greedy-triangle-balance.md (EXP-9 section) | re-review requested (inbox #9, 2026-09-01) — pilot series m56–m58 **Abj 3–0**, priors confound bounded (Δ = 0); awaiting DSH verdict | 2026-08-25 |
-| Claude | claude/error-monitoring (board #22) | apps/server/src/monitor.ts (new), apps/server/src/app.ts, apps/server/src/api.ts, apps/server/src/server.ts, apps/server/src/db.ts, apps/server/src/botPool.ts, apps/server/test/monitor.test.ts (new) | propose — awaiting DSH review (inbox #5, PR #29) | 2026-09-01 |
 | Claude | claude/bot-mode-card (board #18) | apps/client/src/components/Home.tsx, apps/client/src/styles.css | propose — awaiting DSH review (inbox #7, PR #31) | 2026-09-01 |
 
 ## Enforced review pairing (from COORDINATION.md)
