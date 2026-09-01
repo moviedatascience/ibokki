@@ -163,4 +163,8 @@ Conventions that bind this side:
   Lead-Auditor**; you review **DeepSeek Lead-Builder** output (auditor hat — file
   `interop/reviews/<slug>.md`). Self-review is not a verdict.
 - **Decisions:** disagreements resolve in `interop/DECISIONS.md`; cite the number.
-- One repo, one truth: `F:\Programming\ibokki`.
+- One repo, one truth: `F:\Programming\ibokki` — but do branch work from your OWN
+  worktree (DECISIONS #2): `git worktree add F:\Programming\ibokki-<name> <branch>`,
+  `npm ci` there once, remove it when the branch lands. The repo-home tree stays
+  on `main`; other agents (DSH, sibling Claude sessions) share it — never
+  `git add -A` there, never switch its branch while anyone has uncommitted work.

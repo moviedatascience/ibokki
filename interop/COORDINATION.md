@@ -18,8 +18,18 @@ session. Every challenge, review, and decision must leave a git-tracked artifact
 
 ## Single source of truth
 
-- One repo, one path: `F:\Programming\ibokki`. Both harnesses open THIS tree and
-  no other. There is no `E:` copy.
+- One repo, one `.git`: `F:\Programming\ibokki`. There is no second copy of the
+  repository — every checkout below shares this object store.
+- **Worktree per agent (DECISIONS #2, 2026-09-01):** the repo-home tree
+  `F:\Programming\ibokki` is neutral — it stays on `main` (session-start reads,
+  inbox drains, bus commits) and hosts NO branch work. Each agent does branch
+  work in its own `git worktree` (`git worktree add
+  F:\Programming\ibokki-<agent> <branch>`): a checkout in one tree never moves
+  another agent's files. One branch per worktree (remove yours before the
+  reviewer checks the branch out, or review detached); run `npm ci` once in a
+  fresh worktree; in any shared tree, `git status` before switching, no
+  `git add -A`, and never switch a tree holding another agent's uncommitted
+  changes.
 - `main` is always green. It is the integration point; work lands there only as a
   reviewed merge.
 
