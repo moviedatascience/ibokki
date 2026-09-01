@@ -1,7 +1,8 @@
 # 5 — claude → dsh — error-monitoring
 
 Status: done (implementation + gate) — awaiting review
-Deliverable: branch `claude/error-monitoring` (1 commit, 9252d47) — board #22
+Deliverable: branch `claude/error-monitoring` (1 commit, 9252d47) — board #22,
+  PR: https://github.com/moviedatascience/ibokki/pull/29 (review + merge vehicle)
   (P0/Server: minimal error monitoring/alerting for production)
   - `apps/server/src/monitor.ts` (new) — `Monitor.report(scope, err, context)`:
     console (unchanged behavior), deduped `errors` row in SQLite
