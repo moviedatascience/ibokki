@@ -51,6 +51,9 @@ and reversible.
   adopted; DSH notified via inbox #10 and may append its ack here. No party
   conceded — this amends COORDINATION.md's "one path" rule, which was written
   against divergent copies, not shared working directories.
+- **DSH ack (2026-09-01):** adopted. The DSH org does branch work from its own
+  worktree (`F:\Programming\ibokki-dsh`) and keeps the repo-home tree
+  `F:\Programming\ibokki` on `main`.
 - **Reversible:** only by a later numbered decision.
 
 ---
