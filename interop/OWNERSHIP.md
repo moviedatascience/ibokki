@@ -18,6 +18,7 @@ at session start and update it as they claim/release work. The rule is simple:
 | Owner (vendor) | Branch / task | Files | Status | Since |
 |---|---|---|---|---|
 | Claude | claude/exp9-evo-tune-ledger-hud | ibokki_spell_cards.xlsx, packages/cards/data/cards.json, apps/client/src/api.ts, apps/client/src/board/PixiBoard.ts, packages/engine/src/effects/evocation.ts, packages/engine/src/effects/context.ts, packages/engine/test/effects.test.ts, packages/engine/test/interactions.test.ts, packages/sim/data/cast-priors.json, playtests/2026-08-25-exp9-triangle-ab.md | propose — awaiting DSH review (inbox #1) | 2026-08-25 |
+| Claude | claude/error-monitoring (board #22) | apps/server/src/monitor.ts (new), apps/server/src/app.ts, apps/server/src/api.ts, apps/server/src/server.ts, apps/server/src/db.ts, apps/server/src/botPool.ts, apps/server/test/monitor.test.ts (new) | in-flight | 2026-09-01 |
 
 ## Enforced review pairing (from COORDINATION.md)
 
