@@ -10,6 +10,15 @@ test("register, build a deck from a preset, and see it in the deck picker", asyn
   const uniq = Date.now().toString(36);
   const username = `pw_${uniq}`;
 
+  // Derived, not pinned: the presets are a live balance-tuning surface (the
+  // 2026-08-13 resource-deck audit changed Emberworks' V count and silently
+  // broke a hardcoded "17" here, blocking every image publish for two weeks).
+  // /api/decks is the same source the builder renders from.
+  const { presets } = (await (await page.request.get("/api/decks")).json()) as {
+    presets: { name: string; resourceDeck: string[] }[];
+  };
+  const emberworksV = presets.find((d) => d.name === "Emberworks")!.resourceDeck.filter((id) => id === "CMP-V").length;
+
   await page.goto("/");
 
   // Register a fresh account.
@@ -28,11 +37,11 @@ test("register, build a deck from a preset, and see it in the deck picker", asyn
 
   // Steppers actually edit the resource deck (drop a Verbal, re-add it).
   const count = page.getByTestId("count-CMP-V");
-  await expect(count).toHaveText("17");
+  await expect(count).toHaveText(String(emberworksV));
   await page.getByTestId("count-CMP-V").locator("xpath=preceding-sibling::button").click(); // −
-  await expect(count).toHaveText("16");
+  await expect(count).toHaveText(String(emberworksV - 1));
   await page.getByTestId("add-CMP-V").click();
-  await expect(count).toHaveText("17");
+  await expect(count).toHaveText(String(emberworksV));
 
   // An illegal deck is rejected with the validator's message; fixing it saves.
   await page.getByTestId("add-CMP-V").click(); // 41 cards now
