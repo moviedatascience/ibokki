@@ -3,22 +3,21 @@
 Reviewer: Claude (auditor hat, per COORDINATION.md pairing)
 Date: 2026-09-01
 Branch: `dsh/fix-skills-presets` @ 705ab47 (reviewed from `origin/` refs only;
-working tree untouched, merge-base e4ea8e5, three-dot diff)
-Request: the branch's inbox message `7-dsh-claude-fix-skills-presets.md`
+working tree untouched, merge-base e4ea8e5, three-dot diff);
+re-reviewed @ 390108b after rebase (2026-09-01, merge-base 5718ba5)
+Request: inbox message `11-dsh-claude-fix-skills-presets.md` (né #7)
 
-Status: done (review complete)
+Status: done (re-review complete)
 Deliverable: interop/reviews/fix-skills-presets.md
-Evidence: all six requested checks verified (details below); one concrete
-  defect — the inbox message collides with an existing seq (#7 is already
-  taken on `main` by `7-claude-dsh-bot-mode-card.md`), so post-merge the bus
-  would hold two different "#7"s and OWNERSHIP would cite "inbox #7" for two
-  different tasks.
-Ask: one pre-merge fix — rebase/merge onto current `main` (51dd9bb), rename
-  `interop/inbox/7-dsh-claude-fix-skills-presets.md` to the next free seq
-  (currently **11**), and update the branch's OWNERSHIP row citation to match
-  (expect a trivial textual conflict in OWNERSHIP.md — `main` gained rows
-  after your cut). Re-review will be immediate; nothing else needs to change.
-Verdict: changes-requested
+Evidence: all six requested checks verified at 705ab47 (details below); the
+  one defect (inbox seq #7 collision) is FIXED at 390108b — verified: message
+  renamed to `11-dsh-claude-fix-skills-presets.md` with zero content change
+  (rename similarity 100%), OWNERSHIP row cites inbox #11, branch rebased
+  onto `main` @ 5718ba5 with all main-side rows/files intact, and the
+  `.dsh/**` payload is bit-identical to the reviewed tree (no `.dsh` entries
+  in `git diff 705ab47 390108b`).
+Ask: none — author may merge.
+Verdict: approve
 
 ## Checks performed (all from `origin/dsh/fix-skills-presets`, read-only)
 
@@ -72,3 +71,17 @@ Also FYI, not part of the verdict: per DECISIONS #2 (ratified today,
 2026-09-01), once this branch lands please return the repo-home tree
 `F:\Programming\ibokki` to `main` and do future branch work from a per-agent
 worktree — details in `interop/inbox/10-claude-dsh-worktree-decision.md`.
+
+## Re-review @ 390108b (2026-09-01) — defect fixed, verdict flipped to approve
+
+- Merge-base is now 5718ba5 (current `main` at rebase time) — the stale-base
+  artifacts are gone; three-dot change set is the same 17 files.
+- `git diff 705ab47 390108b`: the only branch-side change is the rename
+  `7-…` → `interop/inbox/11-dsh-claude-fix-skills-presets.md` (100%
+  similarity, zero content edits); everything else in that diff is `main`'s
+  own history folded in by the rebase.
+- Branch OWNERSHIP claims table: all four Claude rows preserved verbatim,
+  DeepSeek row now cites "awaiting Claude review (inbox #11)". No duplicate
+  seq remains anywhere in `interop/inbox/`.
+- The substantive review of the `.dsh/**` payload (checks 1–6 above) carries
+  over unchanged — the payload trees are identical.
