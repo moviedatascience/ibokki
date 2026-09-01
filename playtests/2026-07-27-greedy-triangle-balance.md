@@ -1567,3 +1567,66 @@ resolved by SendMessage resume with 150-poll ceilings, cost ≈ 0.7-0.9M
 sonnet tokens/game. The pilot-gap ladder now has a third rung: bots (27%
 Div) < pilot-vs-bot (sweeps both directions) < pilot-vs-pilot (Div 3-0) —
 each instrument a lower bound on the next's losing side.
+
+## EXP-9: THE EVO TUNE (2026-08-25 → 2026-09-01) — Fireball 6 / Lance 5 / Kindle→Stoke / Mana Burn "spell or Reaction"; bots level Evo/Abj to a coin flip, pilots say Abj still sweeps
+
+Branch `claude/exp9-evo-tune-ledger-hud`; evidence file
+`2026-08-25-exp9-triangle-ab.md`. Four deliberate Evo buffs (EVO-017 5→6,
+EVO-011 4→5, EVO-006 Kindle→Stoke = return up to two V-providers from discard,
+EVO-029 print widened to "spell or Reaction" — engine already did) plus the
+prevention-ledger HUD (public `damagePreventedTotal` seal segment).
+
+### 9a — A/B triangle (2026-08-25; greedy paired n=30, horizon 2, seeds 100/200/300)
+
+Evo/Abj **Abj 63.3% → Evo 53.3%** (the moved leg, +16.6 pts); Div/Abj 73.3% Abj
+bit-identical (isolation check); Evo/Div 100% both sides (standing, pre-exp-9).
+DS review (`interop/reviews/exp9-evo-tune-ledger-hud.md`, 2026-09-01):
+**changes-requested** — inverting a documented triangle leg at bot level needs
+the piloted measurement the doctrine prescribes, and the same-commit
+cast-priors regeneration was an unbounded confound.
+
+### 9b — priors confound bounded (2026-09-01): contribution = 0
+
+Branch code + `main`'s `cast-priors.json`, same command and seed → Evo 53.3%
+(16–14), 12.33 r, every per-card line identical (Fireball 78 / Lance 73 / Mana
+Burn 30 @ 23% cancel / Stoke 5). Bit-identical replay: the moved priors are all
+L3–L4 cards a 12-round game rarely reaches. The swing is 100% cards.
+
+### 9c — PILOTED Evo-vs-Abj on the branch (2026-09-01, m56–m58): **Abj 3–0**
+
+Abj seat piloted (sonnet `pilot` agent), greedy-Evo, Evo first seat in 2 of 3.
+m56 R12 (Abj 3 / Evo −23; Reckoning 20 then 24), m57 R10 (28 / 0; Overcharge
+18 into exactly 18), m58 R10 (27 / −6; Reckoning 28 off a 56-point bank).
+Piloted record on the leg is now **11–0 Abj** (m8/m9/m28–m30 5–0 and m34–m36
+3–0 pre-exp-9; 3–0 now). Mechanism: Stone Stance's −2 is recast every round and
+applies before ward routing, so buffed Fireball/Lance land 4/3 (was 3/2) — one
+point more into a wall sized one point larger; Reckoning reads the bank and
+profits from the bigger soaks. The bot-level
+regression is a bot-competence artifact: greedy-Abj neither Stances every
+round nor sizes wards post-Stance; greedy-Evo chips into a growing wall and
+(m56) passed two turns at 1 HP with lethal on board. Doctrine reading:
+bot-even + pilot-3–0 = the leg is Abj-favored with Evo less hopeless in weak
+hands, which is the tune's intent. Neither Stoke (never prepped by the bot in
+three games) nor the widened Mana Burn clause (no M-cost target arose — the
+pilots closed with S/V-only Overcharge/Reckoning) was exercised.
+
+### 9d — `--force EVO-006` probe + flags (2026-09-01)
+
+Forced Stoke, same seed: **Evo 13.3% (4–26)** vs the 53.3% baseline; Stoke
+288 casts / 30 games (95% resolve), Fireball 78→66. Down, not up: forcing an
+enabler makes greedy loop it and spend casts on recursion instead of damage. No
+undervaluation signal — Stoke's 5-per-30 baseline is a real card read (V is not
+the binding constraint in these decks; m56's pilot said the same). Instrument
+note for the blind-spot plan: `--force` over-fires on enablers; a per-round cap
+would read them.
+
+Flags, all pre-exp-9: Mana Burn's M clause gates only the cancel — the reaction
+is castable at any spell as a 2-dmg ping (`effects/evocation.ts:125`; 77% of
+its 30 bot reactions in the A/B were pings) — design question: targeting
+restriction or conditional rider? Seat parity (one cold full-damage hit per
+round before Stone Stance is back up). Reactions must be armed a main phase
+ahead (holding Absorb = a multi-turn component tie-up). Stoke's SIMPLIFIED
+auto-pick = board issue #3. m54/m55 transcripts unrecoverable.
+
+STATUS: branch re-submitted for DS review (inbox #9). On approve: merge; the
+prevention-ledger HUD ships with the tune.
