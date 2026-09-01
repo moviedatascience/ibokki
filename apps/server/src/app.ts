@@ -55,6 +55,7 @@ import { asBotLevel, type BotLevel } from "./bots.ts";
 import { BotPool } from "./botPool.ts";
 import { Db } from "./db.ts";
 import { createMailer, type Mailer } from "./mail.ts";
+import { createMonitor, type Monitor } from "./monitor.ts";
 import { handleApi, oidcFromEnv, userFromRequest, type ApiContext, type OidcConfig } from "./api.ts";
 
 const CATALOG = buildCardCatalog();
@@ -121,6 +122,8 @@ interface Hub {
   db: Db;
   /** Worker thread for solo-bot move computation (inline fallback inside). */
   bots: BotPool;
+  /** Error funnel: console + errors table + rate-limited alert mail. */
+  monitor: Monitor;
 }
 
 interface Seat {
@@ -284,7 +287,7 @@ function startMatch(room: Room): void {
     const seats: SeatRecord[] = room.seats.map((s) => ({ token: s!.token, deckName: s!.deckName, deck: s!.deck, userId: s!.userId }));
     room.matchId = room.hub.db.createMatch(room.code, seed, JSON.stringify(seats), !!room.bot, room.botLevel);
   } catch (err) {
-    console.error(`failed to persist match for room ${room.code}:`, err); // the match still plays, it just won't survive a restart
+    room.hub.monitor.report("persist-match", err, `room ${room.code}`); // the match still plays, it just won't survive a restart
   }
 }
 
@@ -297,7 +300,7 @@ function recordResult(room: Room): void {
       JSON.stringify({ winner: room.state.winner, endReason: room.state.endReason, forfeit: room.forfeitInfo }),
     );
   } catch (err) {
-    console.error(`failed to record result for room ${room.code}:`, err);
+    room.hub.monitor.report("persist-result", err, `room ${room.code}`);
   }
 }
 
@@ -307,7 +310,7 @@ function abandonRow(room: Room): void {
   try {
     room.hub.db.finishMatch(room.matchId, JSON.stringify({ winner: null, endReason: "abandoned", forfeit: null }));
   } catch (err) {
-    console.error(`failed to abandon match row for room ${room.code}:`, err);
+    room.hub.monitor.report("abandon-row", err, `room ${room.code}`);
   }
 }
 
@@ -392,7 +395,7 @@ function applyAction(room: Room, side: PlayerId, action: Action, record = true):
     try {
       room.hub.db.updateMatchActions(room.matchId, JSON.stringify(room.actionLog));
     } catch (err) {
-      console.error(`failed to persist action for room ${room.code}:`, err);
+      room.hub.monitor.report("persist-action", err, `room ${room.code}`);
     }
     if (isTerminal(next)) recordResult(room);
   }
@@ -528,7 +531,7 @@ function armClocks(room: Room): void {
       try {
         onClockTimeout(room, side);
       } catch (err) {
-        console.error("turn clock error:", err);
+        room.hub.monitor.report("turn-clock", err, `room ${room.code}`);
       }
     }, budget);
     t.unref();
@@ -625,7 +628,7 @@ function armInactivity(room: Room): void {
         endMatch(room, abandon(room.state!, null), () => "— match abandoned (both idle)");
       }
     } catch (err) {
-      console.error("inactivity timer error:", err);
+      room.hub.monitor.report("inactivity-timer", err, `room ${room.code}`);
     }
   }, room.hub.cfg.inactivityMs);
   t.unref();
@@ -664,7 +667,7 @@ function startGrace(room: Room, side: PlayerId): void {
         forfeit(room, side, "disconnected");
       }
     } catch (err) {
-      console.error("grace timer error:", err);
+      room.hub.monitor.report("grace-timer", err, `room ${room.code}`);
     }
   }, room.hub.cfg.disconnectGraceMs);
   t.unref();
@@ -846,7 +849,7 @@ function rehydrateRooms(hub: Hub): void {
   try {
     hub.db.abandonMatchesBefore(Date.now() - IDLE_MS);
   } catch (err) {
-    console.error("failed to sweep stale match rows:", err);
+    hub.monitor.report("sweep-stale-rows", err);
     return; // a broken matches table must not stop the server from booting
   }
   for (const row of hub.db.liveMatches()) {
@@ -890,7 +893,7 @@ function rehydrateRooms(hub: Hub): void {
       // async reply — resume any pending bot move so the room doesn't stall.
       if (room.bot) void autoPlayBot(room);
     } catch (err) {
-      console.error(`failed to restore match ${row.id} (room ${row.code}):`, err);
+      hub.monitor.report("rehydrate", err, `match ${row.id}, room ${row.code}`);
       try {
         hub.db.finishMatch(row.id, abandonedResult);
       } catch {
@@ -927,11 +930,17 @@ export interface ServerOptions {
   msgRefillPerSec?: number;
   /** Starting HP for new games — test knob (see Config.startingHp). Default: engine's 30. */
   startingHp?: number;
+  /** Error-alert mail destination. Default: env IBOKKI_ALERT_EMAIL; unset ⇒ no alert mail. */
+  alertEmail?: string;
+  /** Minimum gap between alert mails. Default: env IBOKKI_ALERT_MIN_INTERVAL_MS or 15 min. */
+  alertMinIntervalMs?: number;
 }
 
 export interface OnlineServer {
   http: HttpServer;
   db: Db;
+  /** Error funnel — server.ts routes the process-level guards through it. */
+  monitor: Monitor;
   /** Notify clients, stop timers, and close the WS + HTTP servers gracefully. */
   shutdown: () => Promise<void>;
 }
@@ -987,12 +996,26 @@ function originAllowed(origin: string | undefined, allow: string[]): boolean {
 export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
   const db = new Db(opts.dbFile ?? process.env.IBOKKI_DB ?? "data/ibokki.db");
   const cfg = resolveConfig(opts);
-  const hub: Hub = { rooms: new Map<string, Room>(), cfg, db, bots: new BotPool() };
+  const mailer = opts.mailer ?? createMailer();
+  const monitor = createMonitor({
+    db,
+    mailer,
+    alertTo: opts.alertEmail ?? process.env.IBOKKI_ALERT_EMAIL,
+    minIntervalMs: opts.alertMinIntervalMs ?? envInt("IBOKKI_ALERT_MIN_INTERVAL_MS"),
+  });
+  const hub: Hub = {
+    rooms: new Map<string, Room>(),
+    cfg,
+    db,
+    bots: new BotPool((scope, err, context) => monitor.report(scope, err, context)),
+    monitor,
+  };
   const { rooms } = hub;
   rehydrateRooms(hub);
   const ctx: ApiContext = {
     db,
-    mailer: opts.mailer ?? createMailer(),
+    mailer,
+    monitor,
     baseUrl: opts.baseUrl ?? process.env.IBOKKI_BASE_URL ?? "http://localhost:7788",
     secureCookies: opts.secureCookies ?? process.env.IBOKKI_SECURE_COOKIES === "1",
     oidc: opts.oidc ?? oidcFromEnv(),
@@ -1011,7 +1034,7 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
       res.writeHead(404, { "content-type": "text/plain" });
       res.end("Ibokki online server — connect via WebSocket at /ws");
     })().catch((err) => {
-      console.error("http error:", err);
+      monitor.report("http", err, req.url ?? "");
       if (!res.headersSent) res.writeHead(500);
       res.end();
     });
@@ -1065,12 +1088,12 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
         // Async (bot replies are awaited inside) — rejections must land in the same
         // sanitized path as sync throws, never as an unhandled rejection.
         handleMessage(hub, ws, msg, db, userId).catch((err: unknown) => {
-          console.error("ws message error:", err);
+          monitor.report("ws-message", err, msg.t);
           pushError(ws, "server error");
         });
       } catch (err) {
         // Sanitized: log the real error, never echo internals (stack-ish strings) to a client.
-        console.error("ws message error:", err);
+        monitor.report("ws-message", err, msg.t);
         pushError(ws, "server error");
       }
     });
@@ -1107,6 +1130,7 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
     clearInterval(sweep);
     for (const room of rooms.values()) clearRoomTimers(room);
     hub.bots.dispose();
+    monitor.dispose();
     db.close();
   });
 
@@ -1128,5 +1152,5 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
     });
   };
 
-  return { http, db, shutdown };
+  return { http, db, monitor, shutdown };
 }

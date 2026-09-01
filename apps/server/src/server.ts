@@ -37,10 +37,12 @@ process.on("SIGINT", () => void shutdown("SIGINT"));
 // Last-resort process guards. Timer/message callbacks are already wrapped, so these
 // should be rare; log them loudly rather than dying silently. An uncaught exception
 // leaves the process in an undefined state, so drain and let the supervisor restart.
+// Both route through the monitor: console + errors table + alert mail (the DB row is
+// guaranteed; on the uncaught path the mail races the 10s shutdown window, best-effort).
 process.on("unhandledRejection", (reason) => {
-  console.error("unhandledRejection:", reason);
+  srv.monitor.report("unhandledRejection", reason);
 });
 process.on("uncaughtException", (err) => {
-  console.error("uncaughtException:", err);
+  srv.monitor.report("uncaughtException", err);
   void shutdown("uncaughtException");
 });

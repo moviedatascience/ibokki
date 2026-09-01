@@ -15,11 +15,16 @@ interface BotReply {
   error?: string;
 }
 
+/** How BotPool surfaces internal faults (wired to the server's Monitor; console in tests). */
+type ErrorReporter = (scope: string, err: unknown, context?: string) => void;
+
 export class BotPool {
   private worker: Worker | null = null;
   private broken = false;
   private nextId = 1;
   private pending = new Map<number, { resolve: (a: Action | null) => void; reject: (err: Error) => void }>();
+
+  constructor(private readonly reportError: ErrorReporter = (scope, err, context) => console.error(`[${scope}]${context ? ` (${context})` : ""}`, err)) {}
 
   /** Compute one bot decision for seat 1; null = no legal action. Never rejects. */
   async compute(level: BotLevel, seed: number, state: GameState): Promise<Action | null> {
@@ -58,7 +63,7 @@ export class BotPool {
         else req.resolve(msg.action ?? null);
       });
       worker.on("error", (err) => {
-        console.error("bot worker crashed — falling back to inline bot compute:", err);
+        this.reportError("bot-worker", err, "crashed — falling back to inline bot compute");
         this.worker = null;
         this.broken = true; // don't respawn-loop a worker that can't boot
         this.fail(err instanceof Error ? err : new Error(String(err)));
@@ -70,7 +75,7 @@ export class BotPool {
       this.worker = worker;
       return worker;
     } catch (err) {
-      console.error("bot worker unavailable — using inline bot compute:", err);
+      this.reportError("bot-worker", err, "unavailable — using inline bot compute");
       this.broken = true;
       return null;
     }

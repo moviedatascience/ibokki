@@ -42,6 +42,7 @@ const DECK_RULES = {
 const HTTP_CATALOG = buildCardCatalog();
 import type { Db, UserRow } from "./db.ts";
 import type { Mailer } from "./mail.ts";
+import type { Monitor } from "./monitor.ts";
 
 /**
  * SSO against the ibokki.com site (django-oauth-toolkit as the OIDC provider).
@@ -76,6 +77,8 @@ export function oidcFromEnv(): OidcConfig | undefined {
 export interface ApiContext {
   db: Db;
   mailer: Mailer;
+  /** Error funnel: console + errors table + rate-limited alert mail. */
+  monitor: Monitor;
   /** Public origin for links in mails, e.g. https://ibokki.com */
   baseUrl: string;
   /** Set Secure on cookies (behind TLS in production). */
@@ -182,7 +185,7 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse, ctx: 
 
     if (path === "/api/auth/oidc/callback" && method === "GET" && ctx.oidc) {
       const fail = (why: string) => {
-        console.error("oidc callback failed:", why);
+        ctx.monitor.report("oidc-callback", why);
         res.writeHead(302, { location: `${ctx.oidc!.publicPath}?sso=failed` });
         res.end();
       };
@@ -256,7 +259,7 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse, ctx: 
           "Verify your Ibokki account",
           `Welcome to Ibokki, ${username}!\n\nVerify your email so you can recover your account later:\n${ctx.baseUrl}/api/auth/verify?token=${token}\n\nThe link is valid for 72 hours.`,
         )
-        .catch((err) => console.error("verify mail failed:", err));
+        .catch((err) => ctx.monitor.report("verify-mail", err));
       setSessionCookie(res, ctx, db.createSession(user.id));
       sendJson(res, { user: publicUser(user) }, 201);
       return true;
@@ -310,7 +313,7 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse, ctx: 
             "Reset your Ibokki password",
             `Someone (hopefully you) asked to reset the password for ${user.username}.\n\nReset it here within 1 hour:\n${ctx.baseUrl}/reset?token=${token}\n\nIf this wasn't you, ignore this mail.`,
           )
-          .catch((err) => console.error("reset mail failed:", err));
+          .catch((err) => ctx.monitor.report("reset-mail", err));
       }
       sendJson(res, { ok: true });
       return true;
@@ -383,7 +386,7 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse, ctx: 
     sendJson(res, { error: "not found" }, 404);
     return true;
   } catch (err) {
-    console.error("api error:", err);
+    ctx.monitor.report("api", err, `${method} ${path}`);
     sendJson(res, { error: "server error" }, 500);
     return true;
   }

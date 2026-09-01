@@ -32,6 +32,19 @@ export interface DeckRow {
   updated_at: number;
 }
 
+export interface ErrorRow {
+  id: number;
+  /** Dedupe key: scope + first line of the message (room codes etc. stay out). */
+  fingerprint: string;
+  scope: string;
+  message: string;
+  stack: string;
+  /** How many times this fault has fired since first_seen. */
+  count: number;
+  first_seen: number;
+  last_seen: number;
+}
+
 export interface MatchRow {
   id: number;
   code: string;
@@ -120,6 +133,16 @@ export class Db {
         ended_at INTEGER
       );
       CREATE INDEX IF NOT EXISTS idx_matches_live ON matches(updated_at) WHERE result IS NULL;
+      CREATE TABLE IF NOT EXISTS errors (
+        id INTEGER PRIMARY KEY,
+        fingerprint TEXT NOT NULL UNIQUE,
+        scope TEXT NOT NULL,
+        message TEXT NOT NULL,
+        stack TEXT NOT NULL DEFAULT '',
+        count INTEGER NOT NULL DEFAULT 1,
+        first_seen INTEGER NOT NULL,
+        last_seen INTEGER NOT NULL
+      );
     `);
     // Additive migration for databases created before SSO support.
     try {
@@ -298,6 +321,24 @@ export class Db {
     this.db
       .prepare("UPDATE matches SET result = ?, ended_at = ? WHERE result IS NULL AND updated_at < ?")
       .run(JSON.stringify({ winner: null, endReason: "abandoned", forfeit: null }), Date.now(), cutoff);
+  }
+
+  // ---- errors (production monitoring — see monitor.ts) ----
+
+  /** Record one error occurrence, deduped by fingerprint (count increments). */
+  recordError(fingerprint: string, scope: string, message: string, stack: string): void {
+    const now = Date.now();
+    this.db
+      .prepare(
+        `INSERT INTO errors (fingerprint, scope, message, stack, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(fingerprint) DO UPDATE SET count = count + 1, last_seen = excluded.last_seen, stack = excluded.stack`,
+      )
+      .run(fingerprint, scope, message, stack, now, now);
+  }
+
+  /** Errors last seen at/after `cutoff`, newest first. */
+  errorsSince(cutoff: number): ErrorRow[] {
+    return this.db.prepare("SELECT * FROM errors WHERE last_seen >= ? ORDER BY last_seen DESC").all(cutoff) as ErrorRow[];
   }
 
   close(): void {
