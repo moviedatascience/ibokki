@@ -26,6 +26,7 @@ import {
   apply,
   concede,
   createGame,
+  DEFAULT_STARTING_HP,
   isTerminal,
   legalActions,
   presetDeck,
@@ -285,7 +286,10 @@ function startMatch(room: Room): void {
   room.matchId = null;
   try {
     const seats: SeatRecord[] = room.seats.map((s) => ({ token: s!.token, deckName: s!.deckName, deck: s!.deck, userId: s!.userId }));
-    room.matchId = room.hub.db.createMatch(room.code, seed, JSON.stringify(seats), !!room.bot, room.botLevel);
+    // Record the RESOLVED starting HP (not the raw knob) so replays and rehydration
+    // rebuild this game exactly even if the server knob changes later; NULL now
+    // unambiguously means "row predates the column".
+    room.matchId = room.hub.db.createMatch(room.code, seed, JSON.stringify(seats), !!room.bot, room.botLevel, hpOverride || DEFAULT_STARTING_HP);
   } catch (err) {
     room.hub.monitor.report("persist-match", err, `room ${room.code}`); // the match still plays, it just won't survive a restart
   }
@@ -862,7 +866,8 @@ function rehydrateRooms(hub: Hub): void {
           { ...seats[0], ws: null },
           { ...seats[1], ws: null },
         ],
-        state: createGame({ seed: row.seed, players: [seats[0].deck, seats[1].deck], ...(hub.cfg.startingHp ? { startingHp: hub.cfg.startingHp } : {}) }),
+        // Prefer the row's recorded HP; cfg covers rows predating the starting_hp column.
+        state: createGame({ seed: row.seed, players: [seats[0].deck, seats[1].deck], ...((row.starting_hp ?? hub.cfg.startingHp) ? { startingHp: (row.starting_hp ?? hub.cfg.startingHp)! } : {}) }),
         logs: [[], []],
         epoch: 0,
         recentEvents: [],
@@ -1019,6 +1024,7 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
     baseUrl: opts.baseUrl ?? process.env.IBOKKI_BASE_URL ?? "http://localhost:7788",
     secureCookies: opts.secureCookies ?? process.env.IBOKKI_SECURE_COOKIES === "1",
     oidc: opts.oidc ?? oidcFromEnv(),
+    startingHp: cfg.startingHp,
   };
 
   const distDir = resolve(process.env.IBOKKI_CLIENT_DIST ?? DEFAULT_DIST);

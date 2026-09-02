@@ -159,6 +159,60 @@ export interface DeckError {
   message: string;
 }
 
+// ---- match history & replays (the online server's persistence loop) ----
+
+export interface WinLoss {
+  wins: number;
+  losses: number;
+  draws: number;
+}
+
+/** One finished match in the signed-in user's history (GET /api/matches). */
+export interface HistoryEntry {
+  id: number;
+  endedAt: number | null;
+  durationMs: number | null;
+  mode: "solo" | "pvp";
+  botLevel: string | null;
+  yourDeck: string;
+  opponentName: string;
+  opponentDeck: string;
+  outcome: "win" | "loss" | "draw";
+  /** "hp" | "deckout" | "turn-limit" | "forfeit" (server may add values). */
+  endReason: string | null;
+  forfeit: { by: Side | null; cause: string } | null;
+  /** Set once a share link was minted for this match (idempotent). */
+  shareToken: string | null;
+}
+
+export interface MatchHistoryResponse {
+  record: { pvp: WinLoss; solo: WinLoss };
+  matches: HistoryEntry[];
+}
+
+/** Where a replay comes from: a public share token, or the viewer's own match id. */
+export type ReplaySource = { token: string } | { matchId: number };
+
+/** Replay metadata; everything is viewer-relative (0 = the seat being watched). */
+export interface ReplayMeta {
+  decks: [string, string];
+  bot: boolean;
+  botLevel: string | null;
+  startedAt: number;
+  /** Total frame count (initial position + one per action). */
+  total: number;
+  /** The recorded outcome; null only for pathological rows. */
+  result: { winner: Side | null; endReason: string | null; forfeit: { by: Side | null; cause: string } | null } | null;
+}
+
+export interface ReplayFramesChunk {
+  from: number;
+  total: number;
+  frames: MatchState[];
+}
+
+const replayBase = (src: ReplaySource) => ("token" in src ? `${BASE}api/replays/${src.token}` : `${BASE}api/matches/${src.matchId}/replay`);
+
 /** Non-2xx API responses carry {error} (and deck saves may add {errors}). */
 export class ApiError extends Error {
   errors?: DeckError[];
@@ -207,6 +261,14 @@ export const api = {
   decks: () => getJson<DeckListResponse>(`${BASE}api/decks`),
   saveDeck: (deck: Deck) => postJson<{ deck: Deck & { id: number } }>(`${BASE}api/decks`, deck),
   deleteDeck: (id: number) => request<{ ok: true }>(`${BASE}api/decks/${id}`, { method: "DELETE" }),
+
+  /** The catalog from the ONLINE server (the dev proxy sends plain /api/cards to the local play server). */
+  replayCatalog: () => getJson<CardCatalog>(`${BASE}api/replays/catalog`),
+  matches: () => getJson<MatchHistoryResponse>(`${BASE}api/matches`),
+  shareMatch: (id: number) => postJson<{ token: string }>(`${BASE}api/matches/${id}/share`, {}),
+  replayMeta: (src: ReplaySource) => getJson<ReplayMeta>(replayBase(src)),
+  replayFrames: (src: ReplaySource, from: number, count = 100) =>
+    getJson<ReplayFramesChunk>(`${replayBase(src)}/frames?from=${from}&count=${count}`),
 };
 
 export const MY_SIDE = SIDE;

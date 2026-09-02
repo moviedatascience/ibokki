@@ -313,3 +313,24 @@ button:disabled { opacity: .4; cursor: default; }
   color: #c9a0f0; border: 1px solid #5a3f7a; border-radius: 4px; padding: 0 4px;
   font-size: 9px; text-transform: uppercase; letter-spacing: 1px;
 }
+
+/* ---- match history panel (Home) ---- */
+.record { display: flex; gap: 14px; font-size: 12.5px; margin-bottom: 8px; }
+.record b { color: var(--good); font-variant-numeric: tabular-nums; }
+.historylist { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow-y: auto; }
+.historylist li { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #262c37; font-size: 12.5px; }
+.hout {
+  flex: none; width: 18px; height: 18px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+}
+.hout.win { background: #1d3323; color: var(--good); }
+.hout.loss { background: #33201d; color: var(--bad); }
+.hout.draw { background: #332e1d; color: var(--warn); }
+.hwho { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hwhen { color: var(--mute); font-size: 11px; white-space: nowrap; }
+
+/* ---- replay viewer transport (reuses the actionbar dock under the board) ---- */
+.replaybar { gap: 10px; }
+.replaybar input[type="range"] { width: min(420px, 38vw); accent-color: var(--act); }
+.replaybar .rpos { font-variant-numeric: tabular-nums; color: var(--mute); font-size: 12px; }

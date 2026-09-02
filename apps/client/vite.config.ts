@@ -19,9 +19,12 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // Accounts + saved decks live on the online server; match-vs-bot /api stays local.
+      // Accounts + saved decks + history/replays live on the online server;
+      // match-vs-bot /api stays local. (Vite matches proxy keys in order.)
       "/api/auth": { target: ONLINE_HTTP, changeOrigin: true },
       "/api/decks": { target: ONLINE_HTTP, changeOrigin: true },
+      "/api/matches": { target: ONLINE_HTTP, changeOrigin: true },
+      "/api/replays": { target: ONLINE_HTTP, changeOrigin: true },
       "/api": { target: PLAY_SERVER, changeOrigin: true },
       "/ws": { target: ONLINE_SERVER, ws: true },
     },

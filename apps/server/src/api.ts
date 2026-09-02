@@ -40,9 +40,11 @@ const DECK_RULES = {
 };
 
 const HTTP_CATALOG = buildCardCatalog();
-import type { Db, UserRow } from "./db.ts";
+import { gzipSync } from "node:zlib";
+import type { Db, MatchRow, UserRow } from "./db.ts";
 import type { Mailer } from "./mail.ts";
 import type { Monitor } from "./monitor.ts";
+import { buildReplayFrames, parseSeats, ReplayTooLong, type StoredSeat } from "./replay.ts";
 
 /**
  * SSO against the ibokki.com site (django-oauth-toolkit as the OIDC provider).
@@ -84,6 +86,8 @@ export interface ApiContext {
   /** Set Secure on cookies (behind TLS in production). */
   secureCookies: boolean;
   oidc?: OidcConfig;
+  /** The server's startingHp override — replay fallback for rows predating starting_hp. */
+  startingHp?: number;
 }
 
 const SESSION_COOKIE = "ibokki_session";
@@ -134,6 +138,175 @@ export function userFromRequest(req: IncomingMessage, db: Db): UserRow | undefin
 
 function publicUser(u: UserRow) {
   return { id: u.id, username: u.username, email: u.email, emailVerified: !!u.email_verified };
+}
+
+// ---- match history / replay helpers ----
+
+/** The stored result of a finished match (MatchRow.result parsed). */
+interface StoredResult {
+  winner: 0 | 1 | null;
+  endReason: string | null;
+  forfeit: { by: 0 | 1 | null; cause: string } | null;
+}
+
+/** Which seat `userId` played, or null if they weren't in this match. Seat 0 wins a self-match. */
+function seatOfUser(seats: [StoredSeat, StoredSeat], userId: number): 0 | 1 | null {
+  if (seats[0].userId === userId) return 0;
+  if (seats[1].userId === userId) return 1;
+  return null;
+}
+
+/** One history row, viewer-relative (outcome/opponent are from `userId`'s seat). */
+function historyJson(db: Db, row: MatchRow, userId: number) {
+  const seats = parseSeats(row);
+  const seat = seatOfUser(seats, userId) ?? 0;
+  const other = (seat ^ 1) as 0 | 1;
+  const result = JSON.parse(row.result!) as StoredResult;
+  const opp = seats[other];
+  return {
+    id: row.id,
+    endedAt: row.ended_at,
+    durationMs: row.ended_at === null ? null : row.ended_at - row.started_at,
+    mode: row.bot ? "solo" : "pvp",
+    botLevel: row.bot_level,
+    yourDeck: seats[seat].deckName,
+    opponentName: opp.userId !== undefined ? (db.userById(opp.userId)?.username ?? "?") : row.bot ? "Bot" : "Guest",
+    opponentDeck: opp.deckName,
+    outcome: result.winner === null ? "draw" : result.winner === seat ? "win" : "loss",
+    endReason: result.endReason,
+    forfeit: result.forfeit ? { by: result.forfeit.by === null ? null : result.forfeit.by === seat ? 0 : 1, cause: result.forfeit.cause } : null,
+    shareToken: db.shareTokenFor(row.id, seat),
+  };
+}
+
+/**
+ * Replay metadata, relative to the sharing seat (0 = sharer). Deliberately carries
+ * deck NAMES only, never usernames: the token route is public, live play never
+ * reveals usernames to an opponent, and a username doubles as a login identifier.
+ */
+function replayMetaJson(row: MatchRow, seat: 0 | 1) {
+  const seats = parseSeats(row);
+  const other = (seat ^ 1) as 0 | 1;
+  const rel = (p: 0 | 1 | null): 0 | 1 | null => (p === null ? null : p === seat ? 0 : 1);
+  const result = row.result ? (JSON.parse(row.result) as StoredResult) : null;
+  const total = (JSON.parse(row.actions) as unknown[]).length + 1;
+  return {
+    decks: [seats[seat].deckName, seats[other].deckName],
+    bot: !!row.bot,
+    botLevel: row.bot_level,
+    startedAt: row.started_at,
+    total,
+    result: result
+      ? {
+          winner: rel(result.winner),
+          endReason: result.endReason,
+          forfeit: result.forfeit ? { by: rel(result.forfeit.by), cause: result.forfeit.cause } : null,
+        }
+      : null,
+  };
+}
+
+/** 409 text when a row can't (yet / ever) replay, or null when it can. */
+function notReplayable(row: MatchRow): string | null {
+  if (!row.result) return "match still in progress";
+  const r = JSON.parse(row.result) as StoredResult;
+  return r.endReason === "abandoned" ? "match was abandoned before it finished" : null;
+}
+
+// ---- replay serving: build-once cache + compression ----
+
+/**
+ * A built replay is immutable for the life of the process (the row is finished, the
+ * engine is fixed at deploy), and a build costs ~0.1ms of synchronous CPU per action
+ * on the same event loop that serves live matches — so builds happen once and are
+ * cached as per-frame JSON strings (chunk responses are slice+join). Failures are
+ * cached too: a drifted or over-long row must fail FAST on every later hit, not
+ * re-walk its whole action log per public request. Keyed per Db so parallel test
+ * servers over ":memory:" databases can't cross-serve each other. Evicted LRU-first
+ * to a byte budget (frame strings dominate memory) plus an entry-count backstop for
+ * the byte-free error entries.
+ */
+type ReplayCacheEntry = { frames: string[]; bytes: number } | { error: Error };
+const REPLAY_CACHES = new WeakMap<Db, Map<string, ReplayCacheEntry>>();
+const REPLAY_CACHE_BYTES = 64 * 1024 * 1024;
+const REPLAY_CACHE_MAX_ENTRIES = 256;
+
+function cachedFrames(db: Db, row: MatchRow, seat: 0 | 1, fallbackHp?: number): string[] {
+  let cache = REPLAY_CACHES.get(db);
+  if (!cache) REPLAY_CACHES.set(db, (cache = new Map()));
+  const key = `${row.id}:${seat}`; // same frames whether reached by share token or own history
+  let entry = cache.get(key);
+  if (entry) {
+    cache.delete(key); // LRU bump
+    cache.set(key, entry);
+  } else {
+    try {
+      const frames = buildReplayFrames(row, seat, fallbackHp).map((f) => JSON.stringify(f));
+      entry = { frames, bytes: frames.reduce((n, s) => n + s.length, 0) };
+    } catch (err) {
+      entry = { error: err instanceof Error ? err : new Error(String(err)) };
+    }
+    cache.set(key, entry);
+    let total = 0;
+    for (const e of cache.values()) total += "frames" in e ? e.bytes : 0;
+    for (const k of cache.keys()) {
+      if (k === key || (total <= REPLAY_CACHE_BYTES && cache.size <= REPLAY_CACHE_MAX_ENTRIES)) break;
+      const e = cache.get(k)!;
+      cache.delete(k);
+      total -= "frames" in e ? e.bytes : 0;
+    }
+  }
+  if ("error" in entry) throw entry.error;
+  return entry.frames;
+}
+
+/** True when the client accepts gzip — `gzip;q=0` is an explicit refusal. */
+function acceptsGzip(req: IncomingMessage): boolean {
+  for (const part of String(req.headers["accept-encoding"] ?? "").split(",")) {
+    const [enc, ...params] = part.trim().toLowerCase().split(";");
+    if (enc !== "gzip" && enc !== "*") continue;
+    const q = params.map((p) => p.trim()).find((p) => p.startsWith("q="));
+    return !q || parseFloat(q.slice(2)) > 0;
+  }
+  return false;
+}
+
+/**
+ * Replay frames are immutable and repetitive (~50x gzip): compress when accepted.
+ * `cacheable` is true ONLY for the public token routes, where the capability URL is
+ * the whole credential and browser-caching by URL is safe. The authenticated
+ * own-replay responses stay no-store: a browser cache is URL-keyed and cookie-blind,
+ * so on a shared profile it would happily replay user A's private frames to user B.
+ * ("private" keeps the cacheable ones out of shared proxy caches.)
+ */
+function sendReplayJson(req: IncomingMessage, res: ServerResponse, body: string, cacheable: boolean): void {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    "cache-control": cacheable ? "private, max-age=86400" : "no-store",
+    ...(cacheable ? { vary: "Accept-Encoding" } : {}),
+  };
+  const gzipOk = acceptsGzip(req);
+  const payload = gzipOk ? gzipSync(body) : body;
+  if (gzipOk) headers["content-encoding"] = "gzip";
+  res.writeHead(200, headers);
+  res.end(payload);
+}
+
+/** Serve one frames chunk for a replayable row (shared by the token and own-history routes). */
+function serveFrames(req: IncomingMessage, res: ServerResponse, url: URL, db: Db, row: MatchRow, seat: 0 | 1, cacheable: boolean, fallbackHp?: number): void {
+  const fromRaw = url.searchParams.get("from");
+  const from = fromRaw === null ? 0 : Number(fromRaw);
+  if (!Number.isInteger(from) || from < 0) return sendJson(res, { error: "'from' must be a non-negative integer" }, 400);
+  const count = Math.min(200, Math.max(1, Math.trunc(Number(url.searchParams.get("count")) || 100)));
+  try {
+    const frames = cachedFrames(db, row, seat, fallbackHp);
+    sendReplayJson(req, res, `{"from":${from},"total":${frames.length},"frames":[${frames.slice(from, from + count).join(",")}]}`, cacheable);
+  } catch (err) {
+    if (err instanceof ReplayTooLong) return sendJson(res, { error: "this match's action log is too long to replay" }, 413);
+    // Expected after engine/balance deploys (structural or outcome drift) — an old
+    // link dying is not a fault, so it stays out of the alert-mail funnel.
+    sendJson(res, { error: "this replay was recorded under an older version of the game rules" }, 410);
+  }
 }
 
 function deckJson(row: { id: number; name: string; spellbook: string; resource_deck: string }) {
@@ -380,6 +553,61 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse, ctx: 
       if (!user) return sendJson(res, { error: "sign in first" }, 401), true;
       const gone = db.deleteDeck(user.id, Number(deckMatch[1]));
       sendJson(res, gone ? { ok: true } : { error: "no such deck" }, gone ? 200 : 404);
+      return true;
+    }
+
+    // ---------- match history & replays ----------
+    if (path === "/api/matches" && method === "GET") {
+      const user = userFromRequest(req, db);
+      if (!user) return sendJson(res, { error: "sign in to see match history" }, 401), true;
+      sendJson(res, {
+        record: db.recordForUser(user.id),
+        matches: db.matchesForUser(user.id).map((row) => historyJson(db, row, user.id)),
+      });
+      return true;
+    }
+
+    // Sharing and own-rewatch both address a match by id — resolve once. The same
+    // 404 covers absent and not-yours (checked BEFORE any 409): a non-participant
+    // must never learn whether a match id exists or is live.
+    const matchAction = /^\/api\/matches\/(\d+)\/(share|replay|replay\/frames)$/.exec(path);
+    if (matchAction && (matchAction[2] === "share" ? method === "POST" : method === "GET")) {
+      const user = userFromRequest(req, db);
+      if (!user) return sendJson(res, { error: "sign in first" }, 401), true;
+      const row = db.matchById(Number(matchAction[1]));
+      let seat: 0 | 1 | null = null;
+      if (row) {
+        try {
+          seat = seatOfUser(parseSeats(row), user.id);
+        } catch {
+          /* legacy row without both seats — nobody's history */
+        }
+      }
+      if (!row || seat === null) return sendJson(res, { error: "no such match" }, 404), true;
+      const blocked = notReplayable(row);
+      if (blocked) return sendJson(res, { error: blocked }, 409), true;
+      if (matchAction[2] === "share") sendJson(res, { token: db.getOrCreateShare(row.id, seat) });
+      else if (matchAction[2] === "replay") sendJson(res, replayMetaJson(row, seat));
+      else serveFrames(req, res, url, db, row, seat, false, ctx.startingHp);
+      return true;
+    }
+
+    // Card catalog under the /api/replays prefix: the replay viewer must reach THIS
+    // server's catalog even in dev, where the generic /api/cards proxies to the local
+    // play server. ("catalog" can't collide with tokens — they are 48 chars, {8,} min.)
+    // no-store like /api/cards: card text changes with deploys, unlike frames.
+    if (path === "/api/replays/catalog" && method === "GET") {
+      sendJson(res, HTTP_CATALOG);
+      return true;
+    }
+
+    // Public share-token routes: the unguessable token is the whole credential.
+    const replayRoute = /^\/api\/replays\/([A-Za-z0-9_-]{8,})(\/frames)?$/.exec(path);
+    if (replayRoute && method === "GET") {
+      const found = db.matchByShareToken(replayRoute[1]!);
+      if (!found) return sendJson(res, { error: "no such replay" }, 404), true;
+      if (replayRoute[2]) serveFrames(req, res, url, db, found.row, found.seat, true, ctx.startingHp);
+      else sendJson(res, replayMetaJson(found.row, found.seat));
       return true;
     }
 

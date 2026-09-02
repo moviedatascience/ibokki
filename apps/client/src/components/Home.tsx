@@ -9,6 +9,7 @@ import { storedSeat, type BotLevel, type DeckChoice } from "../online.ts";
 import type { UseAuth } from "../useAuth.ts";
 import type { OnlineApi } from "../useMatch.ts";
 import { schoolOf } from "../schools.ts";
+import { HistoryPanel } from "./HistoryPanel.tsx";
 import { SchoolCrest } from "./Pips.tsx";
 
 const SCHOOLS: School[] = ["Evocation", "Abjuration", "Divination"];
@@ -287,6 +288,7 @@ export function Home({ auth, deckData, online, error, hasLocalMatch, onPlayBot, 
             </button>
           )}
         </div>
+        <HistoryPanel auth={auth} />
       </div>
     </div>
   );
