@@ -25,7 +25,7 @@ register("EVO-004", (c) => {
   c.discardOpponentRandomComponent(1);
 });
 register("EVO-005", (c) => c.addDamageBuffThisRound(1)); // Catalyst
-register("EVO-006", (c) => c.addBurnToOpponent(1)); // Kindle (2→1: persistent burn made repeated Kindle compound to lethal-by-R4; playtests cvc3/cvc4)
+register("EVO-006", (c) => c.returnVComponentsFromDiscard(2)); // Stoke (exp-9 rework; was Kindle burn) — SIMPLIFIED: auto-picks most-recent V-providers, no player choice
 // Wild Surge — the PLAYER picks the discard (interactive); damage resolves on the pick.
 register("EVO-007", (c) => c.requestDiscardForDamage());
 register("EVO-008", (c) => {
@@ -40,11 +40,11 @@ register("EVO-010", (c) => {
   c.dealDamage(1); // Crackle
   c.damageOneOpponentWard(2);
 });
-register("EVO-011", (c) => c.dealDamage(4)); // Inferno Lance
+register("EVO-011", (c) => c.dealDamage(5)); // Inferno Lance (exp-9: 4->5)
 register("EVO-012", (c) => c.dealDamage(3)); // Hex Bolt (reaction-immunity via cardFlags.REACTION_PROOF)
 
 // ---- Level 2 ----
-register("EVO-017", (c) => c.dealDamage(5)); // Fireball
+register("EVO-017", (c) => c.dealDamage(6)); // Fireball (exp-9: 5->6)
 register("EVO-018", (c) => c.dealDamage(4)); // Lightning Bolt (min-1 floor via cardFlags.MIN_DAMAGE)
 register("EVO-019", (c) => {
   c.dealDamage(3); // Inferno
@@ -123,7 +123,7 @@ register("EVO-013", (c) => c.dealDamage(2)); // Backdraft
 register("EVO-016", (c) => c.dealDamage(4)); // Combust
 register("EVO-028", (c) => c.dealDamage(c.targetComponentCount())); // Searing Backlash
 register("EVO-029", (c) => {
-  if (c.targetRequiresSymbol("M")) c.cancelTarget(); // Mana Burn
+  if (c.targetRequiresSymbol("M")) c.cancelTarget(); // Mana Burn (exp-9 print: "spell or Reaction" — engine already answered both; no REACTION_TRIGGER_TYPE entry)
   c.dealDamage(2);
 });
 register("EVO-030", (c) => c.dealDamage(3)); // Flame Riposte

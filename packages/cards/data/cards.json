@@ -794,7 +794,7 @@
   },
   {
     "id": "EVO-006",
-    "name": "Kindle",
+    "name": "Stoke",
     "school": "Evocation",
     "type": "Spell",
     "level": 1,
@@ -804,7 +804,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Place 1 Burn marker on your opponent."
+    "text": "Return up to two Verbal-providing component cards from your discard pile to your hand."
   },
   {
     "id": "EVO-007",
@@ -876,7 +876,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 4 damage to your opponent."
+    "text": "Deal 5 damage to your opponent."
   },
   {
     "id": "EVO-012",
@@ -963,7 +963,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 5 damage to your opponent.",
+    "text": "Deal 6 damage to your opponent.",
     "comment": "Iconic spell at iconic cost. Anchors the L2 power curve."
   },
   {
@@ -1142,7 +1142,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Cancel target spell that requires a Material (M) component. Deal 2 damage to your opponent.",
+    "text": "Cancel target spell or Reaction that requires a Material (M) component. Deal 2 damage to your opponent.",
     "comment": "The Evocation parallel to Counterbind — same anti-school role but with damage tacked on rather than pure denial."
   },
   {

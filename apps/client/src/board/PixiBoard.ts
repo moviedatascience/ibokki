@@ -340,7 +340,7 @@ export class PixiBoard {
     const wardsLabel = v.wards && v.wards.length ? v.wards.join("/") : "";
     // Dooms show as payload@turns-left; "!" marks the unwardable one (Oblivion).
     const doomLabels = (v.prophecies ?? []).map((p) => `${p.amount}${p.pierce ? "!" : ""}@${p.turnsLeft}`);
-    const statusKey = `${wardsLabel}|${v.burn}|${doomLabels.join(" ")}`;
+    const statusKey = `${wardsLabel}|${v.burn}|${v.damagePreventedTotal ?? 0}|${doomLabels.join(" ")}`;
     if (statusKey !== plate.statusKey) {
       plate.statusKey = statusKey;
       const st = plate.status;
@@ -360,6 +360,9 @@ export class PixiBoard {
       };
       if (wardsLabel) seg("ward", 0x8fd0ff, wardsLabel);
       if (v.burn > 0) seg("burn", 0xffa04d, String(v.burn));
+      // The prevention ledger is public (it funds Reckoning/Tithe/Verdict/Rune);
+      // hiding it made m55's 35-damage Reckoning feel like a cheat to the loser.
+      if ((v.damagePreventedTotal ?? 0) > 0) seg("seal", 0xd8c27a, String(v.damagePreventedTotal));
       for (const label2 of doomLabels) seg("prophecy", 0xc9a0f0, label2);
       if (x > 0) x -= 8;
       // Shrink rather than run off the plate when many statuses stack up.

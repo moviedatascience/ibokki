@@ -88,9 +88,9 @@ function cast(id: string, setup?: (s: GameState) => void): { state: GameState; e
 }
 
 describe("Evocation effects", () => {
-  it("Fireball (EVO-017) deals 5", () => {
+  it("Fireball (EVO-017) deals 6", () => {
     const { state } = cast("EVO-017");
-    expect(state.players[1].hp).toBe(25);
+    expect(state.players[1].hp).toBe(24);
   });
 
   it("Spark (EVO-001) deals 2", () => {
@@ -103,6 +103,14 @@ describe("Evocation effects", () => {
     expect(state.players[1].burn).toBe(1);
   });
 
+  it("Stoke (EVO-006) returns up to 2 V-providing components from the discard", () => {
+    const { state } = cast("EVO-006", (s) => {
+      s.players[0].discard = [inst("CMP-M"), inst("CMP-V"), inst("CMP-SS"), inst("CMP-VS")];
+    });
+    expect(state.players[0].hand.map((c) => c.defId).sort()).toEqual(["CMP-V", "CMP-VS"]);
+    expect(state.players[0].discard.map((c) => c.defId).sort()).toEqual(["CMP-M", "CMP-SS"]);
+  });
+
   it("Catalyst (EVO-005) buffs the next damaging spell this round", () => {
     const state = blankState();
     const events: GameEvent[] = [];
@@ -110,7 +118,7 @@ describe("Evocation effects", () => {
     getEffect("EVO-005")!(makeContext(state, 0, catalyst, events), catalyst);
     const fireball = inst("EVO-017");
     getEffect("EVO-017")!(makeContext(state, 0, fireball, events), fireball);
-    expect(state.players[1].hp).toBe(30 - 6); // 5 + 1 buff
+    expect(state.players[1].hp).toBe(30 - 7); // 6 + 1 buff
   });
 
   it("Voltaic Overload (EVO-039) costs 3 self HP to deal 8", () => {
@@ -294,11 +302,11 @@ describe("Abjuration effects", () => {
     const aegis = inst("ABJ-022");
     getEffect("ABJ-022")!(makeContext(state, 0, aegis, events), aegis);
     expect(state.players[0].wards.map((w) => w.hp)).toEqual([6]);
-    // Player 1 fires a Fireball (5) at player 0 — reduced to 4, then soaked by the ward (6 -> 2), 0 to face.
+    // Player 1 fires a Fireball (6) at player 0 — reduced to 5, then soaked by the ward (6 -> 1), 0 to face.
     const fb = inst("EVO-017");
     getEffect("EVO-017")!(makeContext(state, 1, fb, events), fb);
     expect(state.players[0].hp).toBe(30);
-    expect(state.players[0].wards.map((w) => w.hp)).toEqual([2]);
+    expect(state.players[0].wards.map((w) => w.hp)).toEqual([1]);
     expect(state.players[0].damagePreventedThisRound).toBe(1);
   });
 
@@ -306,11 +314,11 @@ describe("Abjuration effects", () => {
     const state = blankState();
     const events: GameEvent[] = [];
     state.players[0].wards = [{ wid: 1, hp: 2 }];
-    // Player 1 Fireball (5) at player 0: ward (2) destroyed, 3 overflow to HP -> 27.
+    // Player 1 Fireball (6) at player 0: ward (2) destroyed, 4 overflow to HP -> 26.
     const fb = inst("EVO-017");
     getEffect("EVO-017")!(makeContext(state, 1, fb, events), fb);
     expect(state.players[0].wards).toHaveLength(0);
-    expect(state.players[0].hp).toBe(27);
+    expect(state.players[0].hp).toBe(26);
   });
 
   it("Ward Collapse (ABJ-031) converts your largest ward into damage", () => {
@@ -483,7 +491,7 @@ describe("Reactions", () => {
       damageBonus: 0,
     };
     getEffect("EVO-017")!(makeContext(state, 0, inst("EVO-017"), events, item), inst("EVO-017"));
-    expect(state.players[1].hp).toBe(26); // Fireball 5 -> 4
+    expect(state.players[1].hp).toBe(25); // Fireball 6 -> 5
   });
 });
 
@@ -888,8 +896,8 @@ describe("Triggers, replacements, and immunity flags", () => {
     state.players[0].hp = 20;
     state.players[0].ongoing = [{ id: 1, owner: 0, kind: "damageToHeal", value: 5, expiry: "endOfRound" }];
     const events: GameEvent[] = [];
-    getEffect("EVO-017")!(makeContext(state, 1, inst("EVO-017"), events), inst("EVO-017")); // Fireball 5 at P0
-    expect(state.players[0].hp).toBe(25); // 5 damage healed instead
+    getEffect("EVO-017")!(makeContext(state, 1, inst("EVO-017"), events), inst("EVO-017")); // Fireball 6 at P0
+    expect(state.players[0].hp).toBe(24); // 5 healed (the cap), the 6th point lands
     expect(state.players[0].damageHealedThisRound).toBe(5);
   });
 

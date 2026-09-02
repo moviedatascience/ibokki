@@ -158,6 +158,8 @@ export interface EffectContext {
    *  rest preserved — no shuffle), then draw `drawAfter` more. */
   requestTutorAnyThenDraw(drawAfter: number): void;
   returnComponentsFromDiscard(n: number): number;
+  /** Return up to n V-providing components from own discard to hand (Stoke). */
+  returnVComponentsFromDiscard(n: number): number;
   returnAllComponentsFromDiscard(): number;
   shuffleOwnDiscardIntoDeck(): number;
   opponentShuffleHandIntoDeck(): number;
@@ -739,6 +741,12 @@ export function makeContext(
     },
     returnComponentsFromDiscard(n) {
       return returnFromDiscard(state, selfId, n, events, (defId) => isComponentDefId(defId));
+    },
+    returnVComponentsFromDiscard(n) {
+      return returnFromDiscard(state, selfId, n, events, (defId) => {
+        const comp = getComponent(defId);
+        return !!comp && comp.symbols.V > 0;
+      });
     },
     returnAllComponentsFromDiscard() {
       return returnFromDiscard(state, selfId, self.discard.length, events, (defId) =>
