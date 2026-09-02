@@ -17,9 +17,8 @@ at session start and update it as they claim/release work. The rule is simple:
 
 | Owner (vendor) | Branch / task | Files | Status | Since |
 |---|---|---|---|---|
-| Claude | claude/dev-panel-leak (issue #32) | apps/client/src/App.tsx, apps/client/src/useMatch.ts | propose — awaiting DSH review (inbox #13, PR #33) | 2026-09-01 |
 | Claude | claude/persistence-loop (issue #23) | apps/server/src/db.ts, apps/server/src/api.ts, apps/server/src/app.ts, apps/server/src/replay.ts (new), apps/server/test/history.test.ts (new), apps/client/src/api.ts, apps/client/src/main.tsx, apps/client/src/components/Home.tsx, apps/client/src/components/HistoryPanel.tsx (new), apps/client/src/components/ReplayViewer.tsx (new), apps/client/src/styles.css | in-flight — implementing | 2026-09-01 |
-| DSH | dsh/close-simplified-riders (issue #3) | packages/engine/src/effects/context.ts, packages/engine/src/state-ops.ts, packages/engine/src/cardFlags.ts, packages/engine/src/apply.ts | propose — awaiting Claude review (inbox #14) | 2026-09-01 |
+| Claude | claude/mana-burn-targeting (DECISIONS #3) | packages/engine/src/cardFlags.ts, packages/engine/src/effects/evocation.ts, packages/engine/test/interactions.test.ts | in-flight — implementing | 2026-09-01 |
 
 ## Enforced review pairing (from COORDINATION.md)
 
