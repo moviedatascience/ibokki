@@ -42,7 +42,8 @@ Risk: anything off the rails (omit when none)
 ## Files
 
 - `.dsh/roster.md` — live ids/statuses (supervisor owns; agents never edit it)
-- `.dsh/agents/*.md` — spawn briefs (role definitions)
+- `.dsh/agents/*.md` — spawn briefs (role definitions; `pm-lead.md` is the PM track)
+- `.dsh/skills/pm/` — project-manager skill: reconcile codebase ↔ board ↔ issues
 - `.dsh/notes/<agent-id>.md` — gitignored scratch state so a replacement can continue
 - `.dsh/bootstrap.md` — day-one boot prompt
 

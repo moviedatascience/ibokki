@@ -115,8 +115,8 @@ Rules this org must honor:
 | Path | What it is |
 |---|---|
 | `.dsh/roster.md` | Live org state — durable ids, statuses, current tasks (supervisor owns it) |
-| `.dsh/agents/` | Spawn briefs — the role definitions (lead-builder, lead-auditor, project-lead, ic, handoff) |
-| `.dsh/skills/` | Role skills: `org`, `engineer`, `art` (shim → `.claude/skills/art`), `qa`, `pm` (+ `pm/sync-board.ps1`) |
+| `.dsh/agents/` | Spawn briefs — the role definitions (lead-builder, lead-auditor, project-lead, pm-lead, ic, handoff) |
+| `.dsh/skills/` | Role skills: `org`, `supervisor`, `engineer`, `art` (shim → `.claude/skills/art`), `qa`, `pm` (+ `pm/sync-board.ps1`) |
 | `.dsh/agent-presets/` | Preset templates (`lead`, `ic`, `engineer`, `designer`, `pm`, `qa`), synced to `~/.dsh/.agent-presets` by `sync-presets.ps1` |
 | `.dsh/notes/` | Gitignored scratch state written by agents so a replacement can continue |
 | `.dsh/bootstrap.md` | Day-one prompt that boots the whole org |
