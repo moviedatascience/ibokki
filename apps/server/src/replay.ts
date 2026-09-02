@@ -15,6 +15,9 @@
  * outcome — the replay meta endpoint serves it for the viewer's end card. The
  * inverse crash-window shape (a terminal action tail under an "abandoned"
  * result) is fine too: the viewer trusts a terminal final frame over the meta.
+ * Similarly, mid-game transcript lines written outside applyAction (the turn
+ * clock's "out of time" strikes) aren't derivable from the action log — a
+ * timed-out turn replays as its forced pass actions without that context line.
  *
  * Throws when the stored actions no longer replay under the current engine
  * (rules changed between deploys) — structurally (apply throws) or by outcome
@@ -69,7 +72,10 @@ export function buildReplayFrames(row: MatchRow, viewer: PlayerId, fallbackHp?: 
     frames.push(frame);
   };
   let state = createGame({ seed: row.seed, players: [seats[0].deck, seats[1].deck], ...(hp ? { startingHp: hp } : {}) });
-  push(state, [`Match start: ${schools[0]} vs ${schools[1]} — seed ${row.seed}`], [], 0);
+  // NO seed in the replay's intro line (unlike the live room intro): frames go out on
+  // a public route, and {seed, decks} deterministically reconstructs BOTH players'
+  // shuffled deck orders — handing any link holder the opponent's hidden hand.
+  push(state, [`Match start: ${schools[0]} vs ${schools[1]}`], [], 0);
   actions.forEach(({ s, a }, i) => {
     // Same per-viewer transcript the live server writes in applyAction.
     const log = [`${s === viewer ? "You" : "Opp"}: ${actionLabelFor(viewer, state, a, s)}`];

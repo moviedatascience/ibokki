@@ -218,34 +218,74 @@ function notReplayable(row: MatchRow): string | null {
 /**
  * A built replay is immutable for the life of the process (the row is finished, the
  * engine is fixed at deploy), and a build costs ~0.1ms of synchronous CPU per action
- * on the same event loop that serves live matches — so frames are built once and
- * cached as per-frame JSON strings (chunk responses are slice+join). Keyed per Db so
- * parallel test servers over ":memory:" databases can't cross-serve each other.
+ * on the same event loop that serves live matches — so builds happen once and are
+ * cached as per-frame JSON strings (chunk responses are slice+join). Failures are
+ * cached too: a drifted or over-long row must fail FAST on every later hit, not
+ * re-walk its whole action log per public request. Keyed per Db so parallel test
+ * servers over ":memory:" databases can't cross-serve each other. Evicted LRU-first
+ * to a byte budget (frame strings dominate memory) plus an entry-count backstop for
+ * the byte-free error entries.
  */
-const REPLAY_CACHES = new WeakMap<Db, Map<string, string[]>>();
-const REPLAY_CACHE_MAX = 4;
+type ReplayCacheEntry = { frames: string[]; bytes: number } | { error: Error };
+const REPLAY_CACHES = new WeakMap<Db, Map<string, ReplayCacheEntry>>();
+const REPLAY_CACHE_BYTES = 64 * 1024 * 1024;
+const REPLAY_CACHE_MAX_ENTRIES = 256;
 
 function cachedFrames(db: Db, row: MatchRow, seat: 0 | 1, fallbackHp?: number): string[] {
   let cache = REPLAY_CACHES.get(db);
   if (!cache) REPLAY_CACHES.set(db, (cache = new Map()));
   const key = `${row.id}:${seat}`; // same frames whether reached by share token or own history
-  const hit = cache.get(key);
-  if (hit) {
+  let entry = cache.get(key);
+  if (entry) {
     cache.delete(key); // LRU bump
-    cache.set(key, hit);
-    return hit;
+    cache.set(key, entry);
+  } else {
+    try {
+      const frames = buildReplayFrames(row, seat, fallbackHp).map((f) => JSON.stringify(f));
+      entry = { frames, bytes: frames.reduce((n, s) => n + s.length, 0) };
+    } catch (err) {
+      entry = { error: err instanceof Error ? err : new Error(String(err)) };
+    }
+    cache.set(key, entry);
+    let total = 0;
+    for (const e of cache.values()) total += "frames" in e ? e.bytes : 0;
+    for (const k of cache.keys()) {
+      if (k === key || (total <= REPLAY_CACHE_BYTES && cache.size <= REPLAY_CACHE_MAX_ENTRIES)) break;
+      const e = cache.get(k)!;
+      cache.delete(k);
+      total -= "frames" in e ? e.bytes : 0;
+    }
   }
-  const frames = buildReplayFrames(row, seat, fallbackHp).map((f) => JSON.stringify(f));
-  cache.set(key, frames);
-  if (cache.size > REPLAY_CACHE_MAX) cache.delete(cache.keys().next().value!);
-  return frames;
+  if ("error" in entry) throw entry.error;
+  return entry.frames;
 }
 
-/** Replay frames are immutable and repetitive (~50x gzip): compress when accepted, and
- *  let the browser cache them ("private": capability-URL responses stay out of shared caches). */
-function sendReplayJson(req: IncomingMessage, res: ServerResponse, body: string): void {
-  const headers: Record<string, string> = { "content-type": "application/json", "cache-control": "private, max-age=86400" };
-  const gzipOk = /\bgzip\b/.test(String(req.headers["accept-encoding"] ?? ""));
+/** True when the client accepts gzip — `gzip;q=0` is an explicit refusal. */
+function acceptsGzip(req: IncomingMessage): boolean {
+  for (const part of String(req.headers["accept-encoding"] ?? "").split(",")) {
+    const [enc, ...params] = part.trim().toLowerCase().split(";");
+    if (enc !== "gzip" && enc !== "*") continue;
+    const q = params.map((p) => p.trim()).find((p) => p.startsWith("q="));
+    return !q || parseFloat(q.slice(2)) > 0;
+  }
+  return false;
+}
+
+/**
+ * Replay frames are immutable and repetitive (~50x gzip): compress when accepted.
+ * `cacheable` is true ONLY for the public token routes, where the capability URL is
+ * the whole credential and browser-caching by URL is safe. The authenticated
+ * own-replay responses stay no-store: a browser cache is URL-keyed and cookie-blind,
+ * so on a shared profile it would happily replay user A's private frames to user B.
+ * ("private" keeps the cacheable ones out of shared proxy caches.)
+ */
+function sendReplayJson(req: IncomingMessage, res: ServerResponse, body: string, cacheable: boolean): void {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    "cache-control": cacheable ? "private, max-age=86400" : "no-store",
+    ...(cacheable ? { vary: "Accept-Encoding" } : {}),
+  };
+  const gzipOk = acceptsGzip(req);
   const payload = gzipOk ? gzipSync(body) : body;
   if (gzipOk) headers["content-encoding"] = "gzip";
   res.writeHead(200, headers);
@@ -253,14 +293,14 @@ function sendReplayJson(req: IncomingMessage, res: ServerResponse, body: string)
 }
 
 /** Serve one frames chunk for a replayable row (shared by the token and own-history routes). */
-function serveFrames(req: IncomingMessage, res: ServerResponse, url: URL, db: Db, row: MatchRow, seat: 0 | 1, fallbackHp?: number): void {
+function serveFrames(req: IncomingMessage, res: ServerResponse, url: URL, db: Db, row: MatchRow, seat: 0 | 1, cacheable: boolean, fallbackHp?: number): void {
   const fromRaw = url.searchParams.get("from");
   const from = fromRaw === null ? 0 : Number(fromRaw);
   if (!Number.isInteger(from) || from < 0) return sendJson(res, { error: "'from' must be a non-negative integer" }, 400);
   const count = Math.min(200, Math.max(1, Math.trunc(Number(url.searchParams.get("count")) || 100)));
   try {
     const frames = cachedFrames(db, row, seat, fallbackHp);
-    sendReplayJson(req, res, `{"from":${from},"total":${frames.length},"frames":[${frames.slice(from, from + count).join(",")}]}`);
+    sendReplayJson(req, res, `{"from":${from},"total":${frames.length},"frames":[${frames.slice(from, from + count).join(",")}]}`, cacheable);
   } catch (err) {
     if (err instanceof ReplayTooLong) return sendJson(res, { error: "this match's action log is too long to replay" }, 413);
     // Expected after engine/balance deploys (structural or outcome drift) — an old
@@ -548,15 +588,16 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse, ctx: 
       if (blocked) return sendJson(res, { error: blocked }, 409), true;
       if (matchAction[2] === "share") sendJson(res, { token: db.getOrCreateShare(row.id, seat) });
       else if (matchAction[2] === "replay") sendJson(res, replayMetaJson(row, seat));
-      else serveFrames(req, res, url, db, row, seat, ctx.startingHp);
+      else serveFrames(req, res, url, db, row, seat, false, ctx.startingHp);
       return true;
     }
 
     // Card catalog under the /api/replays prefix: the replay viewer must reach THIS
     // server's catalog even in dev, where the generic /api/cards proxies to the local
     // play server. ("catalog" can't collide with tokens — they are 48 chars, {8,} min.)
+    // no-store like /api/cards: card text changes with deploys, unlike frames.
     if (path === "/api/replays/catalog" && method === "GET") {
-      sendReplayJson(req, res, JSON.stringify(HTTP_CATALOG));
+      sendJson(res, HTTP_CATALOG);
       return true;
     }
 
@@ -565,7 +606,7 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse, ctx: 
     if (replayRoute && method === "GET") {
       const found = db.matchByShareToken(replayRoute[1]!);
       if (!found) return sendJson(res, { error: "no such replay" }, 404), true;
-      if (replayRoute[2]) serveFrames(req, res, url, db, found.row, found.seat, ctx.startingHp);
+      if (replayRoute[2]) serveFrames(req, res, url, db, found.row, found.seat, true, ctx.startingHp);
       else sendJson(res, replayMetaJson(found.row, found.seat));
       return true;
     }

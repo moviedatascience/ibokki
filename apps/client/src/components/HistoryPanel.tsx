@@ -29,6 +29,9 @@ function opponentLabel(m: HistoryEntry): string {
 export function HistoryPanel({ auth }: { auth: UseAuth }) {
   const [data, setData] = useState<MatchHistoryResponse | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  /** Tokens minted this visit — a retry must reach the clipboard synchronously (Safari
+   *  drops the user activation across the mint round-trip, failing writeText). */
+  const [minted, setMinted] = useState<Record<number, string>>({});
   const userId = auth.user?.id;
 
   useEffect(() => {
@@ -52,13 +55,24 @@ export function HistoryPanel({ auth }: { auth: UseAuth }) {
   const played = record.pvp.wins + record.pvp.losses + record.pvp.draws + record.solo.wins + record.solo.losses + record.solo.draws;
 
   const copyLink = async (m: HistoryEntry) => {
+    let token = m.shareToken ?? minted[m.id];
+    if (!token) {
+      try {
+        token = (await api.shareMatch(m.id)).token;
+        setMinted((prev) => ({ ...prev, [m.id]: token! }));
+      } catch {
+        return; // server down — nothing to copy
+      }
+    }
+    const url = new URL(`${BASE}?replay=${token}`, location.origin).href;
     try {
-      const token = m.shareToken ?? (await api.shareMatch(m.id)).token;
-      await navigator.clipboard.writeText(new URL(`${BASE}?replay=${token}`, location.origin).href);
+      await navigator.clipboard.writeText(url);
       setCopiedId(m.id);
       setTimeout(() => setCopiedId((prev) => (prev === m.id ? null : prev)), 1600);
     } catch {
-      /* clipboard denied or server down — nothing sensible to show in a panel */
+      // Clipboard unavailable (insecure origin) or activation lost across the mint
+      // round-trip (Safari) — hand the link over in a copyable prompt instead.
+      window.prompt("Copy the replay link:", url);
     }
   };
 
@@ -91,11 +105,9 @@ export function HistoryPanel({ auth }: { auth: UseAuth }) {
               <button onClick={() => location.assign(`${BASE}?rewatch=${m.id}`)} title="Watch this match again" data-testid={`history-watch-${m.id}`}>
                 Watch
               </button>
-              {!!navigator.clipboard && (
-                <button onClick={() => void copyLink(m)} title="Copy a shareable replay link" data-testid={`history-share-${m.id}`}>
-                  {copiedId === m.id ? "Copied!" : "Share"}
-                </button>
-              )}
+              <button onClick={() => void copyLink(m)} title="Copy a shareable replay link" data-testid={`history-share-${m.id}`}>
+                {copiedId === m.id ? "Copied!" : "Share"}
+              </button>
             </span>
           </li>
         ))}

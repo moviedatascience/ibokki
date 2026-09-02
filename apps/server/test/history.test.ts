@@ -11,6 +11,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import WebSocket from "ws";
+import Database from "better-sqlite3";
 import { createOnlineServer, type ServerOptions } from "../src/app.ts";
 import { Db } from "../src/db.ts";
 import { buildReplayFrames, MAX_REPLAY_ACTIONS, ReplayTooLong } from "../src/replay.ts";
@@ -204,8 +205,10 @@ describe("solo match: history, W-L record, share, deterministic replay", () => {
     expect(last.view.opponent.hp).toBe(live.view.opponent.hp);
     expect(frames[0]!.view.self.hp).toBe(4);
 
-    // Redaction and leak guards hold on every frame: the opponent never exposes a
-    // hand or spellbook, nothing is clickable, and no rejoin token appears anywhere.
+    // Redaction and leak guards hold on every frame: the opponent view never exposes
+    // a hand or spellbook key, nothing is clickable, and no rejoin token appears
+    // anywhere. (Face-down prep redaction itself is owned by the protocol's
+    // eventForViewer/redact and their tests — frames only reuse it.)
     for (const f of frames) {
       expect("hand" in f.view.opponent).toBe(false);
       expect("spellbook" in f.view.opponent).toBe(false);
@@ -214,26 +217,43 @@ describe("solo match: history, W-L record, share, deterministic replay", () => {
     const bodies = JSON.stringify(frames) + meta.text + hist.text;
     expect(bodies).not.toContain(a.lobby!.token);
 
-    // The accumulated log deltas replay the live transcript (same line count, same tail).
+    // The accumulated log deltas replay the live transcript (same line count, same
+    // tail). Assumes no turn-clock strike fired mid-match (bot rooms run no clocks;
+    // an "out of time" line is live-only and would offset the count by one).
     const lines = frames.flatMap((f) => f.log);
     expect(lines.length).toBe(live.log.length);
     expect(lines.slice(-5)).toEqual(live.log.slice(-5));
 
-    // Frames are served gzipped when accepted, raw otherwise; bad `from` is a 400.
+    // Chunk pagination is deterministic regardless of match length: a 1-frame window
+    // at the end must deep-equal the corresponding frame of the full fetch.
+    const probe = await anon.call("GET", `/api/replays/${token}/frames?from=${frames.length - 1}&count=1`);
+    expect(probe.json.frames).toHaveLength(1);
+    expect(probe.json.frames[0]).toEqual(frames[frames.length - 1]);
+
+    // Frames are served gzipped when accepted, raw otherwise — same payload both
+    // ways — and only the PUBLIC token route is browser-cacheable; bad `from` is 400.
     const gz = await anon.call("GET", `/api/replays/${token}/frames?from=0&count=1`);
     expect(gz.headers.get("content-encoding")).toBe("gzip"); // node fetch advertises gzip + auto-decompresses
+    expect(gz.headers.get("cache-control")).toContain("max-age");
     const raw = await anon.call("GET", `/api/replays/${token}/frames?from=0&count=1`, undefined, { "accept-encoding": "identity" });
     expect(raw.headers.get("content-encoding")).toBeNull();
+    expect(gz.text).toBe(raw.text);
     expect((await anon.call("GET", `/api/replays/${token}/frames?from=-1`)).status).toBe(400);
     expect((await anon.call("GET", `/api/replays/${token}/frames?from=abc`)).status).toBe(400);
 
-    // Own rewatch (no token minted, cookie required) serves the same replay.
+    // Own rewatch (no token minted, cookie required) serves the same replay from the
+    // same SEAT — deep-equality of the final frame pins the seat (seat 1's view.self
+    // would differ) — and must never be browser-cacheable (URL-keyed caches are
+    // cookie-blind on shared profiles).
     expect((await anon.call("GET", `/api/matches/${entry.id}/replay/frames`)).status).toBe(401);
     const own = await alice.call("GET", `/api/matches/${entry.id}/replay`);
     expect(own.status).toBe(200);
     expect(own.json.total).toBe(meta.json.total);
     const ownFrames = await allFrames(alice, `/api/matches/${entry.id}/replay`);
     expect(ownFrames.length).toBe(frames.length);
+    expect(ownFrames[ownFrames.length - 1]).toEqual(frames[frames.length - 1]);
+    const ownChunk = await alice.call("GET", `/api/matches/${entry.id}/replay/frames?from=0&count=1`);
+    expect(ownChunk.headers.get("cache-control")).toBe("no-store");
 
     // The viewer's catalog is served under the replay prefix (dev-proxy routing).
     const cat = await anon.call("GET", "/api/replays/catalog");
@@ -251,6 +271,20 @@ describe("solo match: history, W-L record, share, deterministic replay", () => {
     expect(again[0]!.view.self.hp).toBe(4);
     expect(again[again.length - 1]!.gameOver).toBe(true);
     await srv2.shutdown();
+
+    // Outcome-drift honesty over HTTP: tamper the stored result (flip the winner —
+    // the stored result is the replay's checksum) and the frames route must 410
+    // instead of serving a replay that contradicts the record.
+    const rawDb = new Database(dbFile);
+    rawDb.prepare("UPDATE matches SET result = json_set(result, '$.winner', ?) WHERE id = ?").run(live.winner === 0 ? 1 : 0, entry.id);
+    rawDb.close();
+    const srv3 = await startServer({ dbFile });
+    const alice3 = new Http(srv3.base);
+    alice3.cookie = alice.cookie;
+    const drift = await alice3.call("GET", `/api/matches/${entry.id}/replay/frames`);
+    expect(drift.status).toBe(410);
+    expect(drift.json.error).toContain("older version");
+    await srv3.shutdown();
   });
 });
 
@@ -298,16 +332,26 @@ describe("PvP forfeit: out-of-band endings in history and replay meta", () => {
     const dt = (await dave.call("POST", `/api/matches/${id}/share`)).json.token as string;
     expect(ct).not.toBe(dt);
     const anon = new Http(srv.base);
-    const cmeta = (await anon.call("GET", `/api/replays/${ct}`)).json;
-    const dmeta = (await anon.call("GET", `/api/replays/${dt}`)).json;
+    const cm = await anon.call("GET", `/api/replays/${ct}`);
+    const dm = await anon.call("GET", `/api/replays/${dt}`);
+    const cmeta = cm.json;
+    const dmeta = dm.json;
     expect(cmeta.result.winner).toBe(0);
     expect(cmeta.result.forfeit).toEqual({ by: 1, cause: "disconnected" });
     expect(dmeta.result.winner).toBe(1);
     expect(dmeta.result.forfeit).toEqual({ by: 0, cause: "disconnected" });
 
     // A forfeit is match-layer, not an action: the replay ends before the ending.
-    const frames = await allFrames(anon, `/api/replays/${ct}`);
-    expect(frames[frames.length - 1]!.gameOver).toBe(false);
+    // And the OPPONENT's plaintext rejoin token (stored beside the sharer's in the
+    // seats JSON) must never surface in either seat's public meta or frames —
+    // nor either token in a participant's own history payload.
+    const cFrames = await allFrames(anon, `/api/replays/${ct}`);
+    expect(cFrames[cFrames.length - 1]!.gameOver).toBe(false);
+    expect(JSON.stringify(cFrames) + cm.text).not.toContain(d.lobby!.token);
+    const dFrames = await allFrames(anon, `/api/replays/${dt}`);
+    expect(JSON.stringify(dFrames) + dm.text).not.toContain(c.lobby!.token);
+    expect(ch.text).not.toContain(c.lobby!.token);
+    expect(ch.text).not.toContain(d.lobby!.token);
 
     // A second, unfinished match: 409 for its player, 404 for a stranger.
     const c2 = new TestClient(srv.wsUrl, cara.cookie);

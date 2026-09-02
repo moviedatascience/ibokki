@@ -28,18 +28,19 @@ const noop = () => {};
 
 /** The end card's verdict, preferring a terminal final frame (ground truth from the
  *  action log) over the stored meta result (which covers out-of-band endings). */
-function verdictOf(meta: ReplayMeta, last: MatchState | undefined): { title: string; reason: string } {
+function verdictOf(meta: ReplayMeta, last: MatchState | undefined): { title: string; reason: string; tone: "win" | "loss" | "draw" } {
   const side = (w: 0 | 1) => `${meta.decks[w]} ${w === 0 ? "(this seat)" : "(opponent)"}`;
+  const tone = (w: 0 | 1 | null) => (w === null ? "draw" : w === 0 ? "win" : "loss") as "win" | "loss" | "draw";
   if (last?.gameOver) {
     const reason = last.endReason ? (END_REASON[last.endReason] ?? last.endReason) : "";
-    return { title: last.winner === null ? "Draw" : `${side(last.winner)} wins`, reason };
+    return { title: last.winner === null ? "Draw" : `${side(last.winner)} wins`, reason, tone: tone(last.winner) };
   }
   const r = meta.result;
-  if (!r) return { title: "Recording ends here", reason: "no result was recorded" };
+  if (!r) return { title: "Recording ends here", reason: "no result was recorded", tone: "draw" };
   const f = r.forfeit;
   const cause = f ? `${f.by === null ? "both players" : f.by === 0 ? "this seat" : "opponent"} ${FORFEIT_CAUSE[f.cause] ?? f.cause}` : "";
   const reason = r.endReason === "forfeit" ? `forfeit — ${cause}` : r.endReason ? (END_REASON[r.endReason] ?? r.endReason) : "";
-  return { title: r.winner === null ? "Draw" : `${side(r.winner)} wins`, reason };
+  return { title: r.winner === null ? "Draw" : `${side(r.winner)} wins`, reason, tone: tone(r.winner) };
 }
 
 export function ReplayViewer({ source }: { source: ReplaySource }) {
@@ -122,10 +123,15 @@ export function ReplayViewer({ source }: { source: ReplaySource }) {
   }, [visibleLines.length]);
 
   // Only a single forward step keeps its events — scrubbing or jumping backward
-  // must not re-fire that frame's damage floaters.
+  // must not re-fire that frame's damage floaters. The ref write happens in an
+  // effect (post-commit), never during render: StrictMode double-invokes render
+  // bodies, and an inline write would make the committed pass always see
+  // pos === lastPos and strip every step's events in dev.
   const frame = frames[pos];
   const singleStep = pos === lastPosRef.current + 1;
-  lastPosRef.current = pos;
+  useEffect(() => {
+    lastPosRef.current = pos;
+  }, [pos]);
   const shown = frame && !singleStep ? { ...frame, events: [] } : frame;
 
   const atEnd = meta !== null && pos >= meta.total - 1 && frames.length >= meta.total;
@@ -182,7 +188,7 @@ export function ReplayViewer({ source }: { source: ReplaySource }) {
             {verdict && !endDismissed && (
               <div className="gameover">
                 <div className="gopanel">
-                  <h2 className={verdict.title === "Draw" ? "draw" : "win"} data-testid="replay-verdict">
+                  <h2 className={verdict.tone} data-testid="replay-verdict">
                     {verdict.title}
                   </h2>
                   <p className="goreason">{verdict.reason}</p>

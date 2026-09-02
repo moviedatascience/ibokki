@@ -367,9 +367,13 @@ export class Db {
    * rooms — nobody played those to an end) are bookkeeping, not history.
    */
   matchesForUser(userId: number, limit = 50): MatchRow[] {
+    // History never reads the action log, and a long match's blob is hundreds of KB
+    // per row (rewritten every ply) — ship a placeholder instead of hauling it.
     return this.db
       .prepare(
-        `SELECT * FROM matches
+        `SELECT id, code, seed, seats, bot, bot_level, '[]' AS actions, result,
+                starting_hp, started_at, updated_at, ended_at
+         FROM matches
          WHERE result IS NOT NULL
            AND json_extract(result, '$.endReason') IS NOT 'abandoned'
            AND ${Db.SEATED}

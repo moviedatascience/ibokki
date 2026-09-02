@@ -8,6 +8,7 @@ import { test, expect, type Page } from "@playwright/test";
 interface HookState {
   yourTurn: boolean;
   gameOver: boolean;
+  winner: number | null;
   legal: { index: number }[];
 }
 
@@ -58,15 +59,20 @@ test("a finished solo match shows up in history and replays in the viewer", asyn
     over = !!(await hookState(page))?.gameOver;
   }
   expect(over, "solo match should reach game over").toBe(true);
+  const finalWinner = (await hookState(page))!.winner; // viewer-relative: 0 = the player
+  const expectedTone = finalWinner === null ? "draw" : finalWinner === 0 ? "win" : "loss";
 
   // Back on Home the match is history: a record line and a watchable row.
   await page.getByTestId("to-menu").click();
   await expect(page.getByTestId("history-panel")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByTestId("history-record")).toContainText("Solo");
   await expect(page.locator(".historylist li")).toHaveCount(1);
+  const watchBtn = page.locator('[data-testid^="history-watch-"]').first();
+  const matchId = (await watchBtn.getAttribute("data-testid"))!.replace("history-watch-", "");
 
-  // Watch it: the standalone viewer loads every frame, the end card renders.
-  await page.locator('[data-testid^="history-watch-"]').first().click();
+  // Watch it: the standalone viewer loads every frame, the end card renders the
+  // SAME outcome (verdict tone class) the live match produced.
+  await watchBtn.click();
   await expect(page.getByTestId("replay-title")).toContainText("Emberworks", { timeout: 15_000 });
   await expect
     .poll(async () => (await page.getByTestId("replay-pos").textContent()) ?? "", { timeout: 60_000 })
@@ -74,6 +80,7 @@ test("a finished solo match shows up in history and replays in the viewer", asyn
   await page.getByTestId("replay-end").click();
   await expect(page.getByTestId("replay-verdict")).toBeVisible();
   await expect(page.getByTestId("replay-verdict")).toContainText(/wins|Draw/);
+  await expect(page.getByTestId("replay-verdict")).toHaveClass(expectedTone);
 
   // Scrubbing back to the start shows the opening position again.
   await page.getByTestId("replay-start").click();
@@ -82,4 +89,13 @@ test("a finished solo match shows up in history and replays in the viewer", asyn
   // Exit returns to the app shell.
   await page.getByTestId("replay-exit").click();
   await expect(page.getByTestId("mode-solo")).toBeVisible({ timeout: 10_000 });
+
+  // The public half of the loop: mint a share link (the page context carries the
+  // session cookie) and open it via ?replay=<token> like an anonymous recipient.
+  const share = await page.request.post(`/api/matches/${matchId}/share`);
+  expect(share.ok()).toBe(true);
+  const { token } = (await share.json()) as { token: string };
+  await page.goto(`/?replay=${token}`);
+  await expect(page.getByTestId("replay-title")).toContainText("Emberworks", { timeout: 15_000 });
+  await expect(page.getByTestId("replay-pos")).toContainText("/", { timeout: 15_000 });
 });
