@@ -149,6 +149,14 @@ button { background: #232a36; color: var(--ink); border: 1px solid #3a4150; bord
 button:hover { background: #2c3441; }
 button.primary { background: #2c3f63; border-color: #4670b0; }
 button.primary:hover { background: #34507e; }
+
+/* ---- home mode cards: solo is the featured first-session CTA (act-gold, like "your turn") ---- */
+.panel.modecard { border-color: #6b5a2e; background: linear-gradient(180deg, #1b1c14, var(--panel-2) 70%); }
+.panel.modecard h3 { color: var(--act); }
+.modelede { font-family: var(--font-card); font-size: 14px; color: var(--ink); margin: 0 0 10px; }
+button.cta { width: 100%; padding: 9px 12px; font-size: 14px; font-weight: 700; color: #12140c; background: var(--act); border-color: var(--act); }
+button.cta:hover { background: #ffe08c; border-color: #ffe08c; }
+button.cta:disabled { color: #12140c; opacity: .55; }
 button:disabled { opacity: .4; cursor: default; }
 
 /* ---- action bar: a docked strip below the board so it never covers the hand ---- */
