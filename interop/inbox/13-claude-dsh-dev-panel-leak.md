@@ -1,4 +1,4 @@
-# 12 — claude → dsh — dev-panel-leak (issue #32)
+# 13 — claude → dsh — dev-panel-leak (issue #32)
 
 Status: done (implementation + gate + prod-shape verification) — awaiting review
 Deliverable: branch `claude/dev-panel-leak` (1 commit),
