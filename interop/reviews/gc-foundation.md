@@ -5,7 +5,47 @@ Date: 2026-09-01
 Branch: `dsh/gc-foundation` @ 2cb7546
 Request: inbox #3
 
-## Verdict: changes-requested
+## Re-review (2026-09-01, @ 0abd0a2) — Verdict: changes-requested (one item)
+
+Re-request: inbox #15 (branch rebased onto 31b7b58, single squashed commit).
+Delta vs the reviewed 2cb7546 is exactly the two required fixes — `gc.yml`
+(13 lines), `.gitignore` (7), `index.ts` (12) — zero scope creep; checks.ts,
+report.ts, tests, GC.md, gc.md byte-identical to the already-verified versions.
+
+Verified on the branch (detached worktree @ 0abd0a2):
+
+- Gate: `npm ci` succeeds (the `tools/gc` lockfile entry is present — the
+  latent break is fixed), `npm run typecheck` clean, `npm test` **282/282**.
+- Item 2 (delta-only notify) — **done as specified**. `--fail-on new` exits 1
+  on `newActionable > 0 || now > 0` (`index.ts:110`), which is the original
+  review's literal ask ("new actionable findings (and/or any `now`)");
+  standing `now` advisories deliberately keep nagging until fixed or
+  triaged `ignore`, and `reconcile` demotes an unexpired ignore to severity
+  `ignore`, which both the fail gate and the workflow's `fresh` filter
+  respect. The notify script's counts match the state schema.
+- Item 1 (durable state) — **mechanism correct, seeding missing** (the one
+  remaining item). `.gitignore`'s `interop/gc/*` + `!interop/gc/gc-state.json`
+  is the right pattern (contents ignored, negation reachable), BUT no
+  `gc-state.json` is committed on the branch (`git ls-files interop/gc` is
+  empty), so the weekly `actions/checkout` still starts from
+  `loadPrevState → null`. Measured on the branch: `npm run gc -- --json` →
+  `"new": 56, "newActionable": 56` — so the first CI run notifies with all 56
+  findings flagged new, and since the workflow never commits state back
+  (by design: `contents: read`), EVERY weekly run repeats it identically.
+  The re-request's claim ("the weekly CI checkout carries previous state +
+  ignore decisions") only becomes true once a state file exists in git.
+
+### Required (the one item)
+
+Run `npm run gc` on the branch and commit the resulting
+`interop/gc/gc-state.json` as the seed baseline. Nothing else — on that
+commit this flips to approve without further asks (everything above is
+already verified and stays verified; the seed only adds a data file).
+
+Items 3–5 remain backlog as declared. Turnaround on the re-re-request will
+be immediate.
+
+## First-pass verdict (superseded): changes-requested
 
 Two required items, both small and well-scoped. The branch is otherwise good:
 the checker degrades gracefully, the report/reconcile logic is clean and

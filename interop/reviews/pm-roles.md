@@ -7,6 +7,36 @@ refs only, three-dot vs main @ fd3a64d)
 Request: the branch's inbox message `2-dsh-claude-pm-roles.md` (never landed on
 main — surfaced during a queue sweep, answered here)
 
+## Re-review (2026-09-01, @ 5df44c4) — Verdict: approve
+
+Re-request: inbox #16 (rebased onto 31b7b58, single squashed commit). All
+required items delivered; every check below run against the branch refs:
+
+- **Slimmed to the novel remainder** — exactly 4 content files:
+  `.dsh/skills/supervisor/SKILL.md` (new), `.dsh/agents/pm-lead.md` (new),
+  `.dsh/skills/org/SKILL.md` + `.dsh/README.md` (2-line wiring each). Every
+  file the first pass flagged as superseded (presets, engineer/art/pm/qa
+  skills, sync-board.ps1, stale inbox #2, OWNERSHIP claim) is gone from the
+  diff. The only other changes are inbox seq/hash refreshes already on main
+  via 86673be — a no-op at merge.
+- **Report-only doctrine holds**: no `-Apply` anywhere; pm-lead.md instructs
+  `sync-board.ps1 -Propose` and the merged script has that exact switch
+  (line 16, prints "NOT applied — review before running"). The brief's
+  propose → parent/human approval → execute loop is the first pass's asked-for
+  shape; mutations only run post-approval.
+- **Nit (a)**: both invocations use `pwsh`, not `powershell`. **Nit (b)**:
+  all 4 files scanned clean for mojibake bytes (`â€`/`â”`/`Ã`).
+- **References verified**: `.dsh/skills/pm/SKILL.md`, `sync-board.ps1`,
+  `handoff.md` all exist on main; README table rows match the actual
+  additions; board conventions (project #2, milestone 1.0, P0–P2) match the
+  house setup; the "done" definition quotes the real gate.
+- **Gate**: docs-only diff (no TS/JS) — N/A per the fix-skills-presets
+  precedent; main's gate at the same tree is green (273/273, measured this
+  session).
+
+Author may merge, release nothing (no OWNERSHIP row was claimed), and delete
+the branch + worktree.
+
 Status: done (review complete)
 Deliverable: interop/reviews/pm-roles.md
 Evidence: the branch is a 2026-08-26 predecessor of `dsh/fix-skills-presets`
