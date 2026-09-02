@@ -58,15 +58,27 @@ and reversible.
 
 ---
 
+## DECISIONS #3 — Mana Burn (EVO-029) M-requirement is a targeting restriction (2026-09-01)
+
+- **What:** the human ruled the print is a targeting restriction: Mana Burn may
+  only be cast in reaction to a spell/Reaction whose cost requires M. The
+  engine's current behavior — gating only the *cancel* on the M requirement and
+  letting the reaction ping ANY spell for 2 — is a bug of the historical
+  proxy-condition kind ("the card isn't supposed to be that strong"). Engine
+  fix required; the print stays as-is.
+- **Evidence:** pilots m56–m58 / exp-9 A/B — 77% of Mana Burn's 30 bot
+  reactions were pings at non-M spells (m56 fired it at Stone Stance);
+  surfaced in `interop/reviews/exp9-evo-tune-ledger-hud.md`.
+- **Who:** the human (design authority), 2026-09-01. No party conceded.
+- **Assignment:** Claude takes the engine-fix branch
+  (`packages/engine/src/effects/evocation.ts` + engine tests); DSH reviews per
+  the pairing. Balance note for the fix's evidence: this weakens a card exp-9
+  widened to "spell or Reaction" — cite this decision, and let the next
+  triangle matrix pick up the magnitude.
+- **Reversible:** only by a later numbered decision.
+
+---
+
 ## Open / undecided
 
-- **Mana Burn (EVO-029) targeting scope** (2026-09-01; surfaced by pilots
-  m56–m58, flagged non-blocking in `interop/reviews/exp9-evo-tune-ledger-hud.md`):
-  the engine (`packages/engine/src/effects/evocation.ts`, ~line 125) gates only
-  the *cancel* on the M requirement, so the reaction can target ANY spell as a
-  2-damage ping — 77% of its 30 bot reactions in the exp-9 A/B were pings; m56
-  fired it at Stone Stance. Is the print a targeting restriction ("target … that
-  requires M") or a conditional rider? If the former, the engine is a
-  proxy-condition stand-in of the historical live-bug kind and Mana Burn is
-  stronger than its text. Needs a human/design ruling, then either an engine-fix
-  branch or a Design_Doc clarification line.
+(none — add blocks here as disagreements arise)
