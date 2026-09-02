@@ -1,0 +1,519 @@
+{
+  "generatedAt": "2026-09-02T14:16:55.042Z",
+  "sinceDays": 30,
+  "findings": [
+    {
+      "id": "r1-file-apps-playvsclaude-verify-ui-mjs",
+      "rule": "R1",
+      "title": "unused file",
+      "file": "apps/playvsclaude/verify-ui.mjs",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-dependency-apps-playvsclaude-package-json-ibokki-cards",
+      "rule": "R1",
+      "title": "unused dependency `@ibokki/cards`",
+      "file": "apps/playvsclaude/package.json",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-devdependency-package-json-adm-zip",
+      "rule": "R1",
+      "title": "unused devDependency `adm-zip`",
+      "file": "package.json",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-tools-import-cards-src-xlsx-ts-unzip",
+      "rule": "R1",
+      "title": "unused export `unzip`",
+      "file": "tools/import-cards/src/xlsx.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-tools-import-cards-src-xlsx-ts-parsesharedstrings",
+      "rule": "R1",
+      "title": "unused export `parseSharedStrings`",
+      "file": "tools/import-cards/src/xlsx.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-tools-import-cards-src-xlsx-ts-parsesheet",
+      "rule": "R1",
+      "title": "unused export `parseSheet`",
+      "file": "tools/import-cards/src/xlsx.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-packages-mcp-src-matches-ts-claudecontrols",
+      "rule": "R1",
+      "title": "unused export `claudeControls`",
+      "file": "packages/mcp/src/matches.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-packages-mcp-src-matches-ts-pvpmayact",
+      "rule": "R1",
+      "title": "unused export `pvpMayAct`",
+      "file": "packages/mcp/src/matches.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-apps-server-src-db-ts-hashtoken",
+      "rule": "R1",
+      "title": "unused export `hashToken`",
+      "file": "apps/server/src/db.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-apps-server-src-db-ts-newtoken",
+      "rule": "R1",
+      "title": "unused export `newToken`",
+      "file": "apps/server/src/db.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-packages-engine-src-cardflags-ts-reaction-trigger-type",
+      "rule": "R1",
+      "title": "unused export `REACTION_TRIGGER_TYPE`",
+      "file": "packages/engine/src/cardFlags.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-packages-engine-src-cardflags-ts-cancel-requires-symbol",
+      "rule": "R1",
+      "title": "unused export `CANCEL_REQUIRES_SYMBOL`",
+      "file": "packages/engine/src/cardFlags.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-packages-engine-src-mechanics-ts-roundleader",
+      "rule": "R1",
+      "title": "unused export `roundLeader`",
+      "file": "packages/engine/src/mechanics.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-packages-engine-src-mechanics-ts-enterprepare",
+      "rule": "R1",
+      "title": "unused export `enterPrepare`",
+      "file": "packages/engine/src/mechanics.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-apps-server-src-bots-ts-bot-levels",
+      "rule": "R1",
+      "title": "unused export `BOT_LEVELS`",
+      "file": "apps/server/src/bots.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-export-apps-server-src-bots-ts-makebot",
+      "rule": "R1",
+      "title": "unused export `makeBot`",
+      "file": "apps/server/src/bots.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-type-export-apps-server-src-app-ts-botlevel",
+      "rule": "R1",
+      "title": "unused type export `BotLevel`",
+      "file": "apps/server/src/app.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-type-export-packages-engine-src-redact-ts-ongoingview",
+      "rule": "R1",
+      "title": "unused type export `OngoingView`",
+      "file": "packages/engine/src/redact.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r1-type-export-packages-engine-src-redact-ts-pendingchoiceview",
+      "rule": "R1",
+      "title": "unused type export `PendingChoiceView`",
+      "file": "packages/engine/src/redact.ts",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-fontsource-alegreya",
+      "rule": "R4",
+      "title": "@fontsource/alegreya outdated",
+      "detail": "5.2.8 → wanted 5.3.0 → latest 5.3.0",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-fontsource-im-fell-english",
+      "rule": "R4",
+      "title": "@fontsource/im-fell-english outdated",
+      "detail": "5.2.6 → wanted 5.3.0 → latest 5.3.0",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-fontsource-im-fell-english-sc",
+      "rule": "R4",
+      "title": "@fontsource/im-fell-english-sc outdated",
+      "detail": "5.2.6 → wanted 5.3.0 → latest 5.3.0",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-modelcontextprotocol-sdk",
+      "rule": "R4",
+      "title": "@modelcontextprotocol/sdk outdated",
+      "detail": "1.29.0 → wanted 1.30.0 → latest 1.30.0",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-playwright-test",
+      "rule": "R4",
+      "title": "@playwright/test outdated",
+      "detail": "1.61.1 → wanted 1.62.1 → latest 1.62.1",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-types-better-sqlite3",
+      "rule": "R4",
+      "title": "@types/better-sqlite3 outdated",
+      "detail": "7.6.13 → wanted 7.6.13 → latest 9.6.0",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-types-node",
+      "rule": "R4",
+      "title": "@types/node outdated",
+      "detail": "20.19.43 → wanted 20.19.43 → latest 26.4.1",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-types-react",
+      "rule": "R4",
+      "title": "@types/react outdated",
+      "detail": "18.3.31 → wanted 18.3.31 → latest 19.2.18",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-types-react-dom",
+      "rule": "R4",
+      "title": "@types/react-dom outdated",
+      "detail": "18.3.7 → wanted 18.3.7 → latest 19.2.5",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-vitejs-plugin-react",
+      "rule": "R4",
+      "title": "@vitejs/plugin-react outdated",
+      "detail": "4.7.0 → wanted 4.7.0 → latest 6.1.1",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-adm-zip",
+      "rule": "R4",
+      "title": "adm-zip outdated",
+      "detail": "0.5.18 → wanted 0.5.18 → latest 0.6.0",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-argon2",
+      "rule": "R4",
+      "title": "argon2 outdated",
+      "detail": "0.44.0 → wanted 0.44.0 → latest 0.45.1",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-better-sqlite3",
+      "rule": "R4",
+      "title": "better-sqlite3 outdated",
+      "detail": "12.11.1 → wanted 12.11.1 → latest 13.0.3",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-knip",
+      "rule": "R4",
+      "title": "knip outdated",
+      "detail": "6.32.3 → wanted 6.34.0 → latest 6.34.0",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-nodemailer",
+      "rule": "R4",
+      "title": "nodemailer outdated",
+      "detail": "9.0.3 → wanted 9.1.1 → latest 9.1.1",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-pixi-js",
+      "rule": "R4",
+      "title": "pixi.js outdated",
+      "detail": "8.19.0 → wanted 8.20.1 → latest 8.20.1",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-react",
+      "rule": "R4",
+      "title": "react outdated",
+      "detail": "18.3.1 → wanted 18.3.1 → latest 19.2.8",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-react-dom",
+      "rule": "R4",
+      "title": "react-dom outdated",
+      "detail": "18.3.1 → wanted 18.3.1 → latest 19.2.8",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-tsx",
+      "rule": "R4",
+      "title": "tsx outdated",
+      "detail": "4.22.4 → wanted 4.23.13 → latest 4.23.13",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-typescript",
+      "rule": "R4",
+      "title": "typescript outdated",
+      "detail": "5.9.3 → wanted 5.9.3 → latest 7.0.2",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-vite",
+      "rule": "R4",
+      "title": "vite outdated",
+      "detail": "5.4.21 → wanted 5.4.21 → latest 8.2.2",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-vitest",
+      "rule": "R4",
+      "title": "vitest outdated",
+      "detail": "2.1.9 → wanted 2.1.9 → latest 4.1.11",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-ws",
+      "rule": "R4",
+      "title": "ws outdated",
+      "detail": "8.21.0 → wanted 8.21.3 → latest 8.21.3",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r4-outdated-zod",
+      "rule": "R4",
+      "title": "zod outdated",
+      "detail": "3.25.76 → wanted 3.25.76 → latest 4.5.4",
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "R4:audit",
+      "rule": "R4",
+      "title": "13 npm audit advisories",
+      "detail": "critical 1, high 7, moderate 5, low 0",
+      "severity": "now",
+      "decision": "act",
+      "new": true
+    },
+    {
+      "id": "r4-audit-adm-zip",
+      "rule": "R4",
+      "title": "adm-zip: high advisory",
+      "detail": "direct dependency: true",
+      "severity": "now",
+      "decision": "act",
+      "new": true
+    },
+    {
+      "id": "r4-audit-browserslist",
+      "rule": "R4",
+      "title": "browserslist: high advisory",
+      "detail": "direct dependency: false",
+      "severity": "now",
+      "decision": "act",
+      "new": true
+    },
+    {
+      "id": "r4-audit-fast-uri",
+      "rule": "R4",
+      "title": "fast-uri: high advisory",
+      "detail": "direct dependency: false",
+      "severity": "now",
+      "decision": "act",
+      "new": true
+    },
+    {
+      "id": "r4-audit-ip-address",
+      "rule": "R4",
+      "title": "ip-address: high advisory",
+      "detail": "direct dependency: false",
+      "severity": "now",
+      "decision": "act",
+      "new": true
+    },
+    {
+      "id": "r4-audit-nanoid",
+      "rule": "R4",
+      "title": "nanoid: high advisory",
+      "detail": "direct dependency: false",
+      "severity": "now",
+      "decision": "act",
+      "new": true
+    },
+    {
+      "id": "r4-audit-postcss",
+      "rule": "R4",
+      "title": "postcss: high advisory",
+      "detail": "direct dependency: false",
+      "severity": "now",
+      "decision": "act",
+      "new": true
+    },
+    {
+      "id": "r4-audit-vite",
+      "rule": "R4",
+      "title": "vite: high advisory",
+      "detail": "direct dependency: true",
+      "severity": "now",
+      "decision": "act",
+      "new": true
+    },
+    {
+      "id": "r4-audit-vitest",
+      "rule": "R4",
+      "title": "vitest: critical advisory",
+      "detail": "direct dependency: true",
+      "severity": "now",
+      "decision": "act",
+      "new": true
+    },
+    {
+      "id": "r8-packages-engine-src-effects-context-ts-236",
+      "rule": "R8",
+      "title": "SIMPLIFIED stand-in (the live-bug suspect list)",
+      "detail": "*  nothing is sealable. (Was SIMPLIFIED auto-first-slot until 2026-07-08, m4.) */",
+      "file": "packages/engine/src/effects/context.ts",
+      "line": 236,
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r8-packages-engine-src-effects-evocation-ts-28",
+      "rule": "R8",
+      "title": "SIMPLIFIED stand-in (the live-bug suspect list)",
+      "detail": "register(\"EVO-006\", (c) => c.returnVComponentsFromDiscard(2)); // Stoke (exp-9 rework; was Kindle burn) — SIMPLIFIED: auto-picks most-recent V-providers, no pla",
+      "file": "packages/engine/src/effects/evocation.ts",
+      "line": 28,
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r8-packages-engine-test-interactions-test-ts-825",
+      "rule": "R8",
+      "title": "SIMPLIFIED stand-in (the live-bug suspect list)",
+      "detail": "describe(\"reflect-by-actual-damage + redirect (the retired SIMPLIFIED reaction family)\", () => {",
+      "file": "packages/engine/test/interactions.test.ts",
+      "line": 825,
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    },
+    {
+      "id": "r8-packages-engine-test-interactions-test-ts-893",
+      "rule": "R8",
+      "title": "SIMPLIFIED stand-in (the live-bug suspect list)",
+      "detail": "describe(\"trigger-window traps + riders (the remaining SIMPLIFIED family)\", () => {",
+      "file": "packages/engine/test/interactions.test.ts",
+      "line": 893,
+      "severity": "next",
+      "decision": "schedule",
+      "new": true
+    }
+  ],
+  "decisions": {}
+}
