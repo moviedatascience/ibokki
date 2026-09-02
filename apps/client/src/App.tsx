@@ -18,7 +18,7 @@ type Screen = "home" | "match" | "builder";
 
 export function App() {
   const auth = useAuth();
-  const { cards, state, error, leaveLocalMatch, act, newGame, online } = useMatch();
+  const { cards, state, error, leaveLocalMatch, act, newGame, localAvailable, online } = useMatch();
   const [screen, setScreen] = useState<Screen>("home");
   const [deckData, setDeckData] = useState<DeckListResponse | null>(null);
   const [builderDeck, setBuilderDeck] = useState<Deck | null>(null);
@@ -51,7 +51,7 @@ export function App() {
   }, []);
   const cardName = useCallback((defId: string) => cards[defId]?.name ?? defId, [cards]);
   const startGame = useCallback(
-    (s0: School, s1: School, m: "bot" | "agent") => {
+    async (s0: School, s1: School, m: "bot" | "agent") => {
       // Remember the matchup so a later local Rematch replays THIS game, not the
       // side-panel defaults. Centralized here so no entry point can forget it.
       setP0(s0);
@@ -60,8 +60,10 @@ export function App() {
       setSummaryDismissed(false);
       setPinnedDef(null);
       setBrowseDiscard(null);
-      setScreen("match");
-      return newGame(s0, s1, m);
+      // Land on the board only once the server actually started the game — flipping
+      // first strands the user on the kept previous match when /api/new fails
+      // (issue #32; `error` renders on Home, where a failed start now leaves them).
+      if (await newGame(s0, s1, m)) setScreen("match");
     },
     [newGame],
   );
@@ -121,7 +123,7 @@ export function App() {
           deckData={deckData}
           online={online}
           error={error}
-          hasLocalMatch={state !== null}
+          hasLocalMatch={localAvailable}
           onPlayBot={(s0, s1) => void startGame(s0, s1, "bot")}
           onResume={() => setScreen("match")}
           onEditDeck={(deck) => {

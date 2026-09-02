@@ -30,7 +30,13 @@ export interface UseMatch {
    *  failure can't re-surface an error on the Home screen. (Online uses `online.leave`.) */
   leaveLocalMatch: () => void;
   act: (index: number) => Promise<void>;
-  newGame: (p0: School, p1: School, mode: "bot" | "agent") => Promise<void>;
+  /** Start a fresh local game; false = the request failed (`error` is set). */
+  newGame: (p0: School, p1: School, mode: "bot" | "agent") => Promise<boolean>;
+  /** True once the local play server has answered a state fetch. In production
+   *  there is no local server (the probe 404s by design), so this stays false —
+   *  the dev-only panel must gate on THIS, not on `state`, which online frames
+   *  also set and which is deliberately kept after leaving a match (issue #32). */
+  localAvailable: boolean;
   online: OnlineApi;
 }
 
@@ -58,6 +64,7 @@ export function useMatch(): UseMatch {
   const [state, setState] = useState<MatchState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localAvailable, setLocalAvailable] = useState(false);
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>("idle");
   const [code, setCode] = useState<string | null>(null);
   const [opponentConnected, setOpponentConnected] = useState(false);
@@ -107,6 +114,7 @@ export function useMatch(): UseMatch {
       .then((s) => {
         setState(s);
         setError(null);
+        setLocalAvailable(true);
         schedulePoll(s);
       })
       .catch((e) => {
@@ -260,9 +268,12 @@ export function useMatch(): UseMatch {
         const s = await api.newGame(p0, p1, mode);
         setState(s);
         setError(null);
+        setLocalAvailable(true);
         schedulePoll(s);
+        return true;
       } catch (e) {
         setError(errMsg(e));
+        return false;
       } finally {
         setBusy(false);
       }
@@ -302,5 +313,5 @@ export function useMatch(): UseMatch {
     (window as unknown as Record<string, unknown>).__ibokki = { state, act, online };
   });
 
-  return { cards, state, busy, error, leaveLocalMatch, act, newGame, online };
+  return { cards, state, busy, error, leaveLocalMatch, act, newGame, localAvailable, online };
 }
