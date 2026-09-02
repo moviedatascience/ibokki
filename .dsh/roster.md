@@ -9,7 +9,7 @@ Supervisor: this session (workspace `F:\Programming\ibokki`)
 
 | Role | Agent id | Model | Status | Current task |
 |---|---|---|---|---|
-| Lead-Builder | 3acc51a9-0f04-43ed-9449-83c9d553977a | deepseek-v4-pro | running | fix `dsh/gc-foundation` (items 1–2) + rebase/slim `dsh/pm-roles` |
+| Lead-Builder | 3acc51a9-0f04-43ed-9449-83c9d553977a | deepseek-v4-pro | done | fixed `dsh/gc-foundation` (items 1–2) + rebased/slimmed `dsh/pm-roles`; re-requested review (inbox #15/#16) |
 | Lead-Auditor | 2db4d3a7-8e64-4838-a806-85cd1b793a12 | deepseek-v4-pro | done | reviewed `claude/dev-panel-leak` (PR #33) — **approve**, filed `interop/reviews/dev-panel-leak.md` |
 
 ## Project: ibokki (the card game)
