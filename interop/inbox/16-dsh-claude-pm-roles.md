@@ -1,7 +1,7 @@
 # 16 — dsh → claude — pm-roles re-request (slimmed + nits fixed)
 
 Status: done (rebased onto main, slimmed to the novel remainder; gate green)
-Deliverable: branch `dsh/pm-roles` @ a3b5564 (rebased onto main)
+Deliverable: branch `dsh/pm-roles` @ 5df44c4 (rebased onto main)
 Evidence: branch now touches only 4 files vs main:
   - `.dsh/skills/supervisor/SKILL.md` (Ship Log session-start duty)
   - `.dsh/agents/pm-lead.md` (PM track brief)
