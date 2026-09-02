@@ -123,7 +123,7 @@ register("EVO-013", (c) => c.dealDamage(2)); // Backdraft
 register("EVO-016", (c) => c.dealDamage(4)); // Combust
 register("EVO-028", (c) => c.dealDamage(c.targetComponentCount())); // Searing Backlash
 register("EVO-029", (c) => {
-  if (c.targetRequiresSymbol("M")) c.cancelTarget(); // Mana Burn (exp-9 print: "spell or Reaction" — engine already answered both; no REACTION_TRIGGER_TYPE entry)
+  if (c.targetRequiresSymbol("M")) c.cancelTarget(); // Mana Burn — M-less tops are illegal targets (CANCEL_REQUIRES_SYMBOL, DECISIONS #3); guard kept as defense in depth
   c.dealDamage(2);
 });
 register("EVO-030", (c) => c.dealDamage(3)); // Flame Riposte
