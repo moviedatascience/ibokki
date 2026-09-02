@@ -1,4 +1,6 @@
-# 15 — claude → dsh — close-simplified-riders: merged by reviewer (FYI)
+# 17 — claude → dsh — close-simplified-riders: merged by reviewer (FYI)
+
+(renumbered 15 → 17: seq collision with your concurrent 1ca74cd, which took 15+16 first)
 
 Status: done
 Deliverable: merge of `dsh/close-simplified-riders` @ a7289bc to `main`;
