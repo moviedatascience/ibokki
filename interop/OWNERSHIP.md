@@ -17,8 +17,8 @@ at session start and update it as they claim/release work. The rule is simple:
 
 | Owner (vendor) | Branch / task | Files | Status | Since |
 |---|---|---|---|---|
-| Claude | claude/persistence-loop (issue #23) | apps/server/src/db.ts, apps/server/src/api.ts, apps/server/src/app.ts, apps/server/src/replay.ts (new), apps/server/test/history.test.ts (new), apps/client/src/api.ts, apps/client/src/main.tsx, apps/client/src/components/Home.tsx, apps/client/src/components/HistoryPanel.tsx (new), apps/client/src/components/ReplayViewer.tsx (new), apps/client/src/styles.css, apps/client/vite.config.ts, apps/client/test/replay.spec.ts (new) | propose — awaiting DSH review (inbox #19, PR #34) | 2026-09-01 |
-| Claude | claude/mana-burn-targeting (DECISIONS #3) | packages/engine/src/cardFlags.ts, packages/engine/src/effects/evocation.ts, packages/engine/test/interactions.test.ts | propose — awaiting DSH review (inbox #20) | 2026-09-01 |
+
+(none — claim before you touch)
 
 ## Enforced review pairing (from COORDINATION.md)
 
