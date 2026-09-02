@@ -59,9 +59,18 @@ export interface MatchRow {
   actions: string;
   /** JSON {winner, endReason, forfeit} once finished; NULL = live (rehydrated on boot). */
   result: string | null;
+  /** HP the game was created with; NULL = the engine default (and rows predating the column). */
+  starting_hp: number | null;
   started_at: number;
   updated_at: number;
   ended_at: number | null;
+}
+
+/** One seat's per-user tally of finished, non-abandoned matches. */
+export interface WinLoss {
+  wins: number;
+  losses: number;
+  draws: number;
 }
 
 export type TokenPurpose = "verify" | "reset";
@@ -156,6 +165,26 @@ export class Db {
     } catch {
       /* column already exists */
     }
+    // Additive migration for databases created before per-row starting HP (replay fidelity).
+    try {
+      this.db.exec("ALTER TABLE matches ADD COLUMN starting_hp INTEGER");
+    } catch {
+      /* column already exists */
+    }
+    // Replay share links: one token per (match, seat) — the replay renders that seat's
+    // view. Deliberate exception to the hash-only token rule above: the unguessable
+    // link IS the credential, "copy link" must show the same URL twice, and the seats
+    // JSON beside it already stores plaintext rejoin tokens — hashing buys nothing here.
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS replay_shares (
+        id INTEGER PRIMARY KEY,
+        match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+        seat INTEGER NOT NULL CHECK (seat IN (0, 1)),
+        token TEXT NOT NULL UNIQUE,
+        created_at INTEGER NOT NULL,
+        UNIQUE (match_id, seat)
+      );
+    `);
     this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_oidc_sub ON users(oidc_sub) WHERE oidc_sub IS NOT NULL");
   }
 
@@ -294,11 +323,11 @@ export class Db {
 
   // ---- matches (persistence: live rooms survive a restart; finished rows are history) ----
 
-  createMatch(code: string, seed: number, seatsJson: string, bot: boolean, botLevel: string | null = null): number {
+  createMatch(code: string, seed: number, seatsJson: string, bot: boolean, botLevel: string | null = null, startingHp: number | null = null): number {
     const now = Date.now();
     const info = this.db
-      .prepare("INSERT INTO matches (code, seed, seats, bot, bot_level, started_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .run(code, seed, seatsJson, bot ? 1 : 0, bot ? botLevel : null, now, now);
+      .prepare("INSERT INTO matches (code, seed, seats, bot, bot_level, starting_hp, started_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+      .run(code, seed, seatsJson, bot ? 1 : 0, bot ? botLevel : null, startingHp, now, now);
     return Number(info.lastInsertRowid);
   }
 
@@ -321,6 +350,99 @@ export class Db {
     this.db
       .prepare("UPDATE matches SET result = ?, ended_at = ? WHERE result IS NULL AND updated_at < ?")
       .run(JSON.stringify({ winner: null, endReason: "abandoned", forfeit: null }), Date.now(), cutoff);
+  }
+
+  // ---- match history / replay shares ----
+
+  matchById(id: number): MatchRow | undefined {
+    return this.db.prepare("SELECT * FROM matches WHERE id = ?").get(id) as MatchRow | undefined;
+  }
+
+  /** Where this user was seated (result rows are played matches, not spectated ones). */
+  private static readonly SEATED =
+    "(json_extract(seats, '$[0].userId') = @uid OR json_extract(seats, '$[1].userId') = @uid)";
+
+  /**
+   * The user's finished matches, newest first. Abandoned rows (server sweeps, dead
+   * rooms — nobody played those to an end) are bookkeeping, not history.
+   */
+  matchesForUser(userId: number, limit = 50): MatchRow[] {
+    return this.db
+      .prepare(
+        `SELECT * FROM matches
+         WHERE result IS NOT NULL
+           AND json_extract(result, '$.endReason') IS NOT 'abandoned'
+           AND ${Db.SEATED}
+         ORDER BY ended_at DESC, id DESC LIMIT @limit`,
+      )
+      .all({ uid: userId, limit }) as MatchRow[];
+  }
+
+  /**
+   * Lifetime W-L-D over the same rows `matchesForUser` counts, split solo (vs bot)
+   * vs PvP. Counted per SEAT additively, so a user who joined their own room from a
+   * second tab scores that match as one win AND one loss — self-consistent, unlike
+   * resolving one seat (which silently drops the other seat's outcome). `IS` is
+   * null-safe: guest/bot seats have no userId key (json_extract → NULL) and never match.
+   */
+  recordForUser(userId: number): { pvp: WinLoss; solo: WinLoss } {
+    const rows = this.db
+      .prepare(
+        `SELECT bot,
+                SUM((s0 IS @uid AND w IS 0) + (s1 IS @uid AND w IS 1)) AS wins,
+                SUM((s0 IS @uid AND w IS 1) + (s1 IS @uid AND w IS 0)) AS losses,
+                SUM((w IS NULL) * ((s0 IS @uid) + (s1 IS @uid))) AS draws
+         FROM (
+           SELECT bot,
+                  json_extract(result, '$.winner') AS w,
+                  json_extract(seats, '$[0].userId') AS s0,
+                  json_extract(seats, '$[1].userId') AS s1
+           FROM matches
+           WHERE result IS NOT NULL
+             AND json_extract(result, '$.endReason') IS NOT 'abandoned'
+             AND ${Db.SEATED}
+         )
+         GROUP BY bot`,
+      )
+      .all({ uid: userId }) as { bot: number; wins: number; losses: number; draws: number }[];
+    const empty = (): WinLoss => ({ wins: 0, losses: 0, draws: 0 });
+    const out = { pvp: empty(), solo: empty() };
+    for (const r of rows) out[r.bot ? "solo" : "pvp"] = { wins: r.wins, losses: r.losses, draws: r.draws };
+    return out;
+  }
+
+  /**
+   * The share token for one seat's view of a match, minted on first request. Stored
+   * raw (unlike session tokens): the unguessable link IS the credential, and the
+   * share button must be able to show the same URL again.
+   */
+  getOrCreateShare(matchId: number, seat: 0 | 1): string {
+    const existing = this.db
+      .prepare("SELECT token FROM replay_shares WHERE match_id = ? AND seat = ?")
+      .get(matchId, seat) as { token: string } | undefined;
+    if (existing) return existing.token;
+    const token = newToken();
+    this.db
+      .prepare("INSERT INTO replay_shares (match_id, seat, token, created_at) VALUES (?, ?, ?, ?)")
+      .run(matchId, seat, token, Date.now());
+    return token;
+  }
+
+  /** Existing share token for one seat of a match, if any (no minting). */
+  shareTokenFor(matchId: number, seat: 0 | 1): string | null {
+    const row = this.db
+      .prepare("SELECT token FROM replay_shares WHERE match_id = ? AND seat = ?")
+      .get(matchId, seat) as { token: string } | undefined;
+    return row?.token ?? null;
+  }
+
+  matchByShareToken(token: string): { row: MatchRow; seat: 0 | 1 } | undefined {
+    const found = this.db
+      .prepare("SELECT m.*, s.seat AS share_seat FROM replay_shares s JOIN matches m ON m.id = s.match_id WHERE s.token = ?")
+      .get(token) as (MatchRow & { share_seat: 0 | 1 }) | undefined;
+    if (!found) return undefined;
+    const { share_seat, ...row } = found;
+    return { row: row as MatchRow, seat: share_seat };
   }
 
   // ---- errors (production monitoring — see monitor.ts) ----
