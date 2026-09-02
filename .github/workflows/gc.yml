@@ -1,0 +1,76 @@
+# Weekly garbage-collection run. Report-only: it never blocks a build or a PR.
+# It writes interop/gc/gc-<date>.md + gc-state.json, uploads them as an artifact,
+# and opens/updates ONE rolling GitHub issue only when there are NEW actionable
+# findings (or any `now`), so a standing `next` baseline does not re-notify weekly.
+name: gc
+
+on:
+  schedule:
+    - cron: "0 8 * * 1" # Mondays 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  gc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run GC
+        id: gc
+        run: npm run gc -- --since 30 --fail-on new
+        continue-on-error: true
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gc-report
+          path: interop/gc/
+          if-no-files-found: warn
+
+      - name: Notify on new actionable findings
+        if: steps.gc.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs');
+            const statePath = 'interop/gc/gc-state.json';
+            if (!fs.existsSync(statePath)) {
+              core.warning('gc-state.json missing — GC crashed before writing; see run logs.');
+              return;
+            }
+            const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+            const now = state.findings.filter((f) => f.severity === 'now').length;
+            const next = state.findings.filter((f) => f.severity === 'next').length;
+            const fresh = state.findings.filter((f) => f.new && f.severity !== 'ignore').length;
+            const date = state.generatedAt.slice(0, 10);
+            const title = `GC report — ${date} (${fresh} new actionable)`;
+            const body = [
+              `Weekly garbage-collection run: **${fresh} new actionable** findings (${now} now, ${next} next).`,
+              '',
+              'The full report is attached to this run as the `gc-report` artifact, or run `npm run gc` locally to regenerate it into `interop/gc/`.',
+              '',
+              'Triage each finding as `act` / `schedule` / `ignore:<reason>` per `GC.md`.',
+            ].join('\n');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const { data: issues } = await github.rest.issues.listForRepo({ owner, repo, state: 'open', per_page: 100 });
+            const existing = issues.find((i) => !i.pull_request && i.title.startsWith('GC report —'));
+            if (existing) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: existing.number, body });
+              core.notice(`Commented on issue #${existing.number}`);
+            } else {
+              await github.rest.issues.create({ owner, repo, title, body });
+              core.notice('Created GC issue');
+            }

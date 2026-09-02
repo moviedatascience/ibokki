@@ -1,0 +1,11 @@
+{
+  "name": "@ibokki/gc",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Scheduled garbage-collection report for Ibokki: dead code (knip), marker aging, dependency staleness (npm outdated/audit), and artifact accretion, written to interop/gc/<date>.md.",
+  "main": "./src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  }
+}

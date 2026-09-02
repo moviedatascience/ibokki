@@ -1,0 +1,8 @@
+{
+  "ignore": [
+    "**/*.test.ts",
+    "**/test/**",
+    "**/dist/**",
+    "apps/client/**"
+  ]
+}

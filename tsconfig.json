@@ -13,6 +13,7 @@
     "packages/*/src/**/*.ts",
     "packages/*/test/**/*.ts",
     "tools/*/src/**/*.ts",
+    "tools/*/test/**/*.ts",
     "apps/*/src/**/*.ts",
     "vitest.config.ts"
   ],

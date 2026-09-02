@@ -26,6 +26,12 @@ Thumbs.db
 # sim output
 sim-reports/
 
+# gc report output — the dated reports are regenerated each run, but gc-state.json
+# is the tracked durable record (decisions + previous findings) so the weekly CI
+# run can delta against last time and honour ignore decisions
+interop/gc/*
+!interop/gc/gc-state.json
+
 # server database (SQLite + WAL sidecars) — root data/ only; package data
 # (e.g. packages/sim/data/cast-priors.json) is version-controlled
 /data/
