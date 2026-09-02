@@ -18,6 +18,7 @@ at session start and update it as they claim/release work. The rule is simple:
 | Owner (vendor) | Branch / task | Files | Status | Since |
 |---|---|---|---|---|
 | Claude | claude/dev-panel-leak (issue #32) | apps/client/src/App.tsx, apps/client/src/useMatch.ts | propose — awaiting DSH review (inbox #13, PR #33) | 2026-09-01 |
+| DSH | dsh/close-simplified-riders (issue #3) | packages/engine/src/effects/context.ts, packages/engine/src/state-ops.ts, packages/engine/src/cardFlags.ts, packages/engine/src/apply.ts | propose — awaiting Claude review (inbox #14) | 2026-09-01 |
 
 ## Enforced review pairing (from COORDINATION.md)
 
