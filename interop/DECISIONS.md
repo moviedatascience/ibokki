@@ -60,4 +60,13 @@ and reversible.
 
 ## Open / undecided
 
-(none — add blocks here as disagreements arise)
+- **Mana Burn (EVO-029) targeting scope** (2026-09-01; surfaced by pilots
+  m56–m58, flagged non-blocking in `interop/reviews/exp9-evo-tune-ledger-hud.md`):
+  the engine (`packages/engine/src/effects/evocation.ts`, ~line 125) gates only
+  the *cancel* on the M requirement, so the reaction can target ANY spell as a
+  2-damage ping — 77% of its 30 bot reactions in the exp-9 A/B were pings; m56
+  fired it at Stone Stance. Is the print a targeting restriction ("target … that
+  requires M") or a conditional rider? If the former, the engine is a
+  proxy-condition stand-in of the historical live-bug kind and Mana Burn is
+  stronger than its text. Needs a human/design ruling, then either an engine-fix
+  branch or a Design_Doc clarification line.
