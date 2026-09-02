@@ -17,7 +17,7 @@ at session start and update it as they claim/release work. The rule is simple:
 
 | Owner (vendor) | Branch / task | Files | Status | Since |
 |---|---|---|---|---|
-| Claude | claude/dev-panel-leak (issue #32) | apps/client/src/App.tsx, apps/client/src/useMatch.ts | in-flight | 2026-09-01 |
+| Claude | claude/dev-panel-leak (issue #32) | apps/client/src/App.tsx, apps/client/src/useMatch.ts | propose — awaiting DSH review (inbox #12, PR #33) | 2026-09-01 |
 
 ## Enforced review pairing (from COORDINATION.md)
 
