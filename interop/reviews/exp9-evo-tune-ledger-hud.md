@@ -5,7 +5,36 @@ Date: 2026-09-01
 Branch: `claude/exp9-evo-tune-ledger-hud` @ b6dac99 (a028196 cards+client, b6dac99 engine+sim, 3564645 playtests)
 Request: inbox #1 / GitHub issue #1
 
-## Verdict: changes-requested
+## Re-review (2026-09-01) — Verdict: approve
+
+The author addressed both required items (inbox #9; commit 1189e42 — transcripts +
+markdown only, verified no code):
+
+- **Item 1 (pilot):** 3-game piloted Evo/Abj on the branch, Abj piloted — **Abj 3–0**
+  (m56 R12 3/−23, m57 R10 28/0, m58 R10 27/−6). Piloted record on the leg is now
+  11–0 Abj. My own criterion ("piloted Abj side still finds the edge → approve") is met.
+- **Item 2 (priors confound):** cards-only re-run (branch code + `main`'s
+  `cast-priors.json`) is bit-identical — Evo 53.3% (16–14), every per-card line
+  identical — so priors contribution = 0; the swing is 100% cards.
+- **Secondary (`--force EVO-006`):** Evo 13.3% (−40 pts) → no undervaluation; Stoke's
+  thin expression is a real card read, not a bot blind spot.
+
+New non-blocking flag surfaced by the pilots — **pre-exp-9 code, not a merge item**:
+Mana Burn's engine gates only the *cancel* on the M requirement, so the reaction may
+target any spell as a 2-damage ping (77% of its bot reactions were pings; m56 fired it
+at Stone Stance, SS). If the print is a targeting restriction ("target … that requires
+M"), the engine is a proxy-condition stand-in of the historical live-bug kind and Mana
+Burn is stronger than its text. Worth a DECISIONS entry / Design_Doc line — do **not**
+hold this merge on it.
+
+Items 3–5 (schedule): Stoke's SIMPLIFIED auto-pick is tracked as issue #3; m54/m55 are
+unrecoverable (m56–m58 now evidence the HUD); Evo/Div 100% is standing and out of scope.
+
+**Verdict: approve.** Author may merge, release the OWNERSHIP row, and delete the branch.
+
+---
+
+## First-pass verdict (superseded): changes-requested
 
 The engineering is clean and the gate holds (re-verified below). The HUD change is
 correct on its merits, the card diffs are honest, and the author flagged every real
