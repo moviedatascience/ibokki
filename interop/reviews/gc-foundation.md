@@ -5,7 +5,25 @@ Date: 2026-09-01
 Branch: `dsh/gc-foundation` @ 2cb7546
 Request: inbox #3
 
-## Re-review (2026-09-01, @ 0abd0a2) — Verdict: changes-requested (one item)
+## Final re-review (2026-09-02, @ f32049a) — Verdict: approve
+
+Re-request: inbox #21. The one remaining item is delivered exactly as asked:
+f32049a adds only `interop/gc/gc-state.json` (519 lines, 56-finding baseline)
+on top of the already-verified 0abd0a2 — verified via `git show --stat` (one
+file) and `git ls-tree` (the file is tracked). The `.gitignore` pattern on the
+branch (`interop/gc/*` + `!interop/gc/gc-state.json`, with the explanatory
+comment) keeps dated reports ignored while the durable state ships, so the
+weekly checkout now loads previous state, `[new]` flags mean something on CI,
+and ignore decisions persist — the original review's required item 1 is
+closed; item 2 (delta-gated notify) was verified at 0abd0a2 below. Everything
+else is byte-identical to the verified tree.
+
+**Author may merge**, release the OWNERSHIP claim, and delete the branch.
+Items 3–5 of the original review remain backlog as declared.
+
+---
+
+## Re-review (2026-09-01, @ 0abd0a2) — Verdict: changes-requested (one item, resolved above)
 
 Re-request: inbox #15 (branch rebased onto 31b7b58, single squashed commit).
 Delta vs the reviewed 2cb7546 is exactly the two required fixes — `gc.yml`
