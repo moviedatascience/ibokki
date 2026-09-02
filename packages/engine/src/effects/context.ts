@@ -20,7 +20,6 @@ import {
   wardShielded,
   destroyAllWards,
   discardRandom,
-  discardTopBySymbols,
   discardWholeHand,
   drawN,
   drawThenBankWorst,
@@ -31,10 +30,8 @@ import {
   shuffleDiscardIntoDeck,
   shuffleHandIntoDeck,
   sumOngoing,
-  symbolCount,
   topCardToBottom,
   tutorBestToTop,
-  tutorComponents,
   type WardFlags,
 } from "../state-ops.ts";
 import { shuffleInPlace } from "../rng.ts";
@@ -74,8 +71,6 @@ export interface EffectContext {
   opponentDraws(n: number): number;
   discardSelfRandom(n: number): number;
   discardSelfHand(): number;
-  /** Discard the highest-symbol card in hand; returns its symbol count (auto, non-interactive). */
-  discardSelfHighestSymbol(): number;
   /** Pause for the controller to pick a hand card to discard; the opponent then
    *  takes 1 damage per component symbol on it (Wild Surge, interactive). */
   requestDiscardForDamage(): void;
@@ -121,7 +116,6 @@ export interface EffectContext {
 
   // ---- Divination: search / recursion / tempo ----
   drawUntil(target: number): number;
-  tutorComponentsToHand(n: number): number;
   /** Pause for the controller to search their deck: matching cards are staged
    *  as choices, picks are revealed to hand, then the deck shuffles. `optional`
    *  = "up to N" (pass ends early). Recharge/Seek/Premeditate/Grand Design. */
@@ -157,7 +151,6 @@ export interface EffectContext {
   /** Calculated Draw: search the WHOLE deck for any card to hand (order of the
    *  rest preserved — no shuffle), then draw `drawAfter` more. */
   requestTutorAnyThenDraw(drawAfter: number): void;
-  returnComponentsFromDiscard(n: number): number;
   /** Return up to n V-providing components from own discard to hand (Stoke). */
   returnVComponentsFromDiscard(n: number): number;
   returnAllComponentsFromDiscard(): number;
@@ -392,11 +385,6 @@ export function makeContext(
     },
     discardSelfHand() {
       return discardWholeHand(state, selfId, events);
-    },
-    discardSelfHighestSymbol() {
-      const removed = discardTopBySymbols(state, selfId, 1, events);
-      const card = removed[0];
-      return card ? symbolCount(card.defId) : 0;
     },
     discardOpponentRandomComponent(n) {
       if (sumOngoing(opponent, "cannotBeForcedToDiscard") > 0) return 0; // Iron Will
@@ -735,12 +723,6 @@ export function makeContext(
       const drawn = drawN(state, selfId, need, events);
       if (drawn > 0) events.push({ type: "drew", player: selfId, count: drawn });
       return drawn;
-    },
-    tutorComponentsToHand(n) {
-      return tutorComponents(state, selfId, n, events);
-    },
-    returnComponentsFromDiscard(n) {
-      return returnFromDiscard(state, selfId, n, events, (defId) => isComponentDefId(defId));
     },
     returnVComponentsFromDiscard(n) {
       return returnFromDiscard(state, selfId, n, events, (defId) => {

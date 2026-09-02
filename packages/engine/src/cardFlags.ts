@@ -42,8 +42,11 @@ export interface AttachTrap {
 /** Fire when the OPPONENT attaches a component to a prepared spell. */
 export const ATTACH_TRAPS: Readonly<Record<string, AttachTrap>> = {
   "EVO-015": { onlyM: true, fire: { damage: 2 } }, // Volatile Bolt
-  // Mana Drain — printed "you may": auto-fired for now (an interrupt window on the
-  // opponent's turn is future work; declining an armed Drain is almost never right).
+  // Mana Drain — printed "you may": auto-fired. ACCEPTED for 1.0 (issue #3): the
+  // armed trap is face-up (components are revealed), so the opponent can bait it,
+  // and holding it for a bigger target is a corner case next to "bounce the attach".
+  // The hidden decision (decline / save-for-later) is deferred with an interrupt
+  // window on the opponent's turn; auto-fire never costs the owner a card.
   "ABJ-009": { onlyM: false, fire: { bounce: true } },
 };
 
