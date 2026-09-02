@@ -149,7 +149,13 @@ function resumeAfterChoice(state: GameState, events: GameEvent[]): void {
   }
 }
 
-/** End-of-turn hand cap: discard lowest-value cards down to MAX_HAND_SIZE. */
+/**
+ * End-of-turn hand cap: discard down to MAX_HAND_SIZE. ACCEPTED for 1.0 (issue #3):
+ * which cards to keep is a real player decision, but this is a core rule (not a card
+ * effect — no card text promises the player this pick), and auto-discarding the lowest
+ * `sculptValue` keeps bots and replays deterministic. A real UI should surface the
+ * choice; it is not a hidden card rider.
+ */
 function enforceHandCap(state: GameState, id: PlayerId, events: GameEvent[]): void {
   const player = state.players[id];
   let count = 0;

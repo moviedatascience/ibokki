@@ -311,22 +311,6 @@ export function discardRandom(
   return count;
 }
 
-/** Discard the n highest-symbol cards from a player's hand (auto-resolved choice). */
-export function discardTopBySymbols(state: GameState, id: PlayerId, n: number, events: GameEvent[]): CardInstance[] {
-  const player = state.players[id];
-  const ranked = [...player.hand].sort((a, b) => symbolCount(b.defId) - symbolCount(a.defId));
-  const chosen = ranked.slice(0, n);
-  for (const c of chosen) {
-    const idx = player.hand.findIndex((h) => h.iid === c.iid);
-    if (idx >= 0) {
-      player.discard.push(player.hand[idx]!);
-      player.hand.splice(idx, 1);
-    }
-  }
-  if (chosen.length > 0) events.push({ type: "discarded", player: id, count: chosen.length });
-  return chosen;
-}
-
 /** Return up to n cards from the discard pile to hand (most-recent first), optionally filtered. */
 export function returnFromDiscard(
   state: GameState,
@@ -351,24 +335,6 @@ export function returnFromDiscard(
     count++;
   }
   if (count > 0) events.push({ type: "recovered", player: id, count });
-  return count;
-}
-
-/** Tutor: move up to n components from the resource deck to hand, then shuffle. */
-export function tutorComponents(state: GameState, id: PlayerId, n: number, events: GameEvent[]): number {
-  const player = state.players[id];
-  let count = 0;
-  for (let i = 0; i < n; i++) {
-    const idx = player.resourceDeck.findIndex((c) => getComponent(c.defId) !== undefined);
-    if (idx < 0) break;
-    player.hand.push(player.resourceDeck[idx]!);
-    player.resourceDeck.splice(idx, 1);
-    count++;
-  }
-  if (count > 0) {
-    state.rngState = shuffleInPlace(player.resourceDeck, state.rngState);
-    events.push({ type: "searched", player: id, count });
-  }
   return count;
 }
 
