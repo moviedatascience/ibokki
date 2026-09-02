@@ -77,14 +77,17 @@ export const REACTION_TRIGGER_TYPE: Readonly<Record<string, "spell" | "reaction"
   "DIV-035": "spell", // Spellbind
 };
 
-/** Riderless conditional cancels ("Cancel target spell that requires …"): a
- *  non-qualifying target is a deterministic whiff, so the cast isn't offered
- *  (same feel-bad guard as trainerHasEffect; piloted m12 saw the greedy bot
- *  burn Counterbind's SM into an M-less stack). Mana Burn is NOT listed — its
- *  2-damage rider lands whether or not the cancel condition holds. */
+/** Conditional cancels gated on the target's cost ("… that requires …"): the
+ *  requirement is a TARGETING RESTRICTION, so a non-qualifying top is an
+ *  illegal target and the cast isn't offered (same guard family as
+ *  trainerHasEffect; piloted m12 saw the greedy bot burn Counterbind's SM
+ *  into an M-less stack). Mana Burn joined per DECISIONS #3 (2026-09-01):
+ *  its 2-damage rider does NOT license M-less targets — pre-ruling it pinged
+ *  any spell for 2 (77% of its exp-9 bot reactions were pings). */
 export const CANCEL_REQUIRES_SYMBOL: Readonly<Record<string, "V" | "S" | "M">> = {
   "ABJ-015": "M", // Counterbind
   "ABJ-016": "S", // Break Form
+  "EVO-029": "M", // Mana Burn (DECISIONS #3 — restriction, not a conditional rider)
 };
 
 /** Ledger-family casts (2026-08-13) additionally spend the caster's lifetime

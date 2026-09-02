@@ -708,6 +708,28 @@ describe("printed reaction triggers gate the window (piloted m10/m12 findings)",
     const vsMSpell = windowOn("DIV-001", "CMP-M", ["ABJ-015", "CMP-S", "CMP-M"]);
     expect(legalActions(vsMSpell, 0).some((a) => a.type === "castReaction")).toBe(true);
   });
+
+  it("Mana Burn's M-requirement is a targeting restriction (DECISIONS #3): refused vs an M-less cast, offered vs an M cast", () => {
+    const vsSpark = windowOn("EVO-001", "CMP-V", ["EVO-029", "CMP-V", "CMP-M"]);
+    expect(legalActions(vsSpark, 0).some((a) => a.type === "castReaction")).toBe(false);
+    expect(() => apply(vsSpark, { type: "castReaction", preparedIndex: 0 })).toThrow(/trigger/);
+    const vsMSpell = windowOn("DIV-001", "CMP-M", ["EVO-029", "CMP-V", "CMP-M"]);
+    expect(legalActions(vsMSpell, 0).some((a) => a.type === "castReaction")).toBe(true);
+  });
+
+  it("Mana Burn vs Reactions (exp-9 print): offered on an M-costing Reaction, refused on an M-less one", () => {
+    // Offered: P0 answers DIV-001 with Counterbind (SM) — P1's Mana Burn may answer it.
+    let s = windowOn("DIV-001", "CMP-M", ["ABJ-015", "CMP-S", "CMP-M"]);
+    s.players[1].prepared.push(prep("EVO-029", "CMP-V", "CMP-M"));
+    s = apply(s, { type: "castReaction", preparedIndex: 0 }).state; // Counterbind tops
+    expect(legalActions(s, 1).some((a) => a.type === "castReaction")).toBe(true);
+    // Refused: same shape but the top is Backdraft (V — M-less).
+    let t = windowOn("DIV-001", "CMP-M", ["EVO-013", "CMP-V"]);
+    t.players[1].prepared.push(prep("EVO-029", "CMP-V", "CMP-M"));
+    t = apply(t, { type: "castReaction", preparedIndex: 0 }).state; // Backdraft tops
+    expect(legalActions(t, 1).some((a) => a.type === "castReaction")).toBe(false);
+    expect(() => apply(t, { type: "castReaction", preparedIndex: 1 })).toThrow(/trigger/);
+  });
 });
 
 describe("round leader alternates (ruling 2026-07-03)", () => {
