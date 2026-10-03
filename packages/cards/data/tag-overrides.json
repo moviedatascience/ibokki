@@ -1,0 +1,4 @@
+{
+  "$note": "Author overrides for the engine-derived card tags (tools/derive-tags). Each entry: { add?: tag[], remove?: tag[], why: string }. Use only when the static read of a card's effect is misleading (e.g. a conditional branch that is effectively never taken). The derive test rejects unknown tags, unknown cards and missing reasons. Re-run `npm run derive-tags` after editing.",
+  "cards": {}
+}

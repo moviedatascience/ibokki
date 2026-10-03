@@ -1,0 +1,11 @@
+{
+  "name": "@ibokki/derive-tags",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Derives per-card effect tags from the engine's effect registrations + cardFlags into packages/cards/data/tags.json. Zero runtime deps.",
+  "main": "./src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  }
+}

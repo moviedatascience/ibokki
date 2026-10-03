@@ -166,7 +166,7 @@ server.tool(
       const c = getCard(id);
       if (!c) return text(`No card ${id}.`);
       return text(
-        `${c.name} [${c.id}] — ${c.school} ${c.type}${c.level ? ` L${c.level}` : ""}${c.costText ? ` cost ${c.costText}` : ""}\n${c.text}`,
+        `${c.name} [${c.id}] — ${c.school} ${c.type}${c.level ? ` L${c.level}` : ""}${c.costText ? ` cost ${c.costText}` : ""}\n${c.text}\ntags: ${c.tags.join(", ")}`,
       );
     }
     const list = CARDS.filter((c) => (!school || c.school === school) && (!type || c.type === type));

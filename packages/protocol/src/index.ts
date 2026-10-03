@@ -42,16 +42,18 @@ export interface CardInfo {
   level: number | null;
   cost: string | null;
   text: string;
+  /** Effect tags from @ibokki/cards CARD_TAGS; empty for components. */
+  tags: string[];
 }
 
 export function buildCardCatalog(): Record<string, CardInfo> {
   const catalog: Record<string, CardInfo> = {};
   for (const c of CARDS) {
-    catalog[c.id] = { name: c.name, school: c.school, type: c.type, level: c.level, cost: c.costText, text: c.text };
+    catalog[c.id] = { name: c.name, school: c.school, type: c.type, level: c.level, cost: c.costText, text: c.text, tags: c.tags };
   }
   for (const c of COMPONENTS) {
     const sym = "V".repeat(c.symbols.V) + "S".repeat(c.symbols.S) + "M".repeat(c.symbols.M);
-    catalog[c.id] = { name: c.name, school: "Component", type: "Component", level: null, cost: sym, text: `Resource component — provides ${sym}.` };
+    catalog[c.id] = { name: c.name, school: "Component", type: "Component", level: null, cost: sym, text: `Resource component — provides ${sym}.`, tags: [] };
   }
   return catalog;
 }

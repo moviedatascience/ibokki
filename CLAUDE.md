@@ -33,7 +33,8 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 | `npm run playtest -- new\|show\|act\|note\|auto\|finish\|log` | file-persisted playtest CLI |
 | `npm run mcp` | MCP playtest server (long-running; RESTART it after engine changes — it holds stale code) |
 | `npm run play` / `npm run online` / `npm run client` | local board / PvP server / Vite dev |
-| `npm run import-cards` | xlsx → cards.json (run after any xlsx edit) |
+| `npm run import-cards` | xlsx → cards.json, then derives tags.json (run after any xlsx edit) |
+| `npm run derive-tags` | engine effects + cardFlags → `packages/cards/data/tags.json` (run after ANY edit in `packages/engine/src/effects/` or `cardFlags.ts`; the derive test fails when stale) |
 | `npm run build:client` | vite build → apps/client/dist |
 
 ## Environment quirks
@@ -48,6 +49,12 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
   build strings in variables first); ArrayList-of-arrays flattens.
 - **Playwright specs failing mysteriously?** Stale dev servers on 5173/7777/7788 —
   `reuseExistingServer: true` reuses OLD code. Kill them.
+- **Card tags (2026-10-03, issue #36):** every card carries `tags` (closed vocabulary `CARD_TAGS` in
+  `packages/cards/src/types.ts`), DERIVED from the engine by `tools/derive-tags` (static scan of each
+  `register()` body + cardFlags) so the icons on a card face can never disagree with the engine. A new
+  `EffectContext` primitive must be added to `PRIMITIVE_TAGS` or `READ_ONLY` in
+  `tools/derive-tags/src/primitives.ts` or the test fails. Author corrections go in
+  `packages/cards/data/tag-overrides.json` (with a `why`), never by hand-editing `tags.json`.
 - New `PlayerState`/`StackItem` fields must also be added to the hand-built literals in
   `packages/engine/test/effects.test.ts` and `interactions.test.ts`.
 

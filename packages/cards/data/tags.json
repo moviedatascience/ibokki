@@ -1,0 +1,591 @@
+{
+  "ABJ-001": [
+    "cleanse",
+    "ward"
+  ],
+  "ABJ-002": [
+    "ward"
+  ],
+  "ABJ-003": [
+    "damage",
+    "ward"
+  ],
+  "ABJ-004": [
+    "immune"
+  ],
+  "ABJ-005": [
+    "prevent"
+  ],
+  "ABJ-006": [
+    "prevent"
+  ],
+  "ABJ-007": [
+    "prevent"
+  ],
+  "ABJ-008": [
+    "draw",
+    "prevent"
+  ],
+  "ABJ-009": [
+    "disrupt",
+    "trap"
+  ],
+  "ABJ-010": [
+    "seal"
+  ],
+  "ABJ-011": [
+    "heal",
+    "prevent"
+  ],
+  "ABJ-012": [
+    "ward"
+  ],
+  "ABJ-013": [
+    "cancel",
+    "disrupt",
+    "opponent-draws"
+  ],
+  "ABJ-014": [
+    "cancel",
+    "tempo"
+  ],
+  "ABJ-015": [
+    "cancel"
+  ],
+  "ABJ-016": [
+    "cancel"
+  ],
+  "ABJ-017": [
+    "lock"
+  ],
+  "ABJ-018": [
+    "lock"
+  ],
+  "ABJ-019": [
+    "ward"
+  ],
+  "ABJ-020": [
+    "ward"
+  ],
+  "ABJ-021": [
+    "prevent",
+    "ward-sacrifice"
+  ],
+  "ABJ-022": [
+    "prevent",
+    "ward"
+  ],
+  "ABJ-023": [
+    "cancel",
+    "lock"
+  ],
+  "ABJ-024": [
+    "heal",
+    "prevent"
+  ],
+  "ABJ-025": [
+    "ward"
+  ],
+  "ABJ-026": [
+    "cancel",
+    "damage"
+  ],
+  "ABJ-027": [
+    "ward"
+  ],
+  "ABJ-028": [
+    "cancel",
+    "disrupt",
+    "opponent-draws"
+  ],
+  "ABJ-029": [
+    "ward"
+  ],
+  "ABJ-030": [
+    "seal"
+  ],
+  "ABJ-031": [
+    "damage",
+    "ward-sacrifice"
+  ],
+  "ABJ-032": [
+    "damage",
+    "ledger"
+  ],
+  "ABJ-033": [
+    "damage"
+  ],
+  "ABJ-034": [
+    "lock"
+  ],
+  "ABJ-035": [
+    "damage"
+  ],
+  "ABJ-036": [
+    "damage",
+    "ward-sacrifice"
+  ],
+  "ABJ-037": [
+    "cancel",
+    "damage"
+  ],
+  "ABJ-038": [
+    "damage",
+    "ward-break"
+  ],
+  "ABJ-039": [
+    "lock",
+    "prevent"
+  ],
+  "ABJ-040": [
+    "ward"
+  ],
+  "ABJ-041": [
+    "cancel",
+    "lock"
+  ],
+  "ABJ-042": [
+    "damage"
+  ],
+  "ABJ-043": [
+    "damage"
+  ],
+  "ABJ-044": [
+    "cancel",
+    "damage"
+  ],
+  "ABJ-045": [
+    "damage",
+    "ward-break",
+    "ward-sacrifice"
+  ],
+  "ABJ-046": [
+    "ledger",
+    "ward"
+  ],
+  "ABJ-047": [
+    "cancel",
+    "ledger"
+  ],
+  "ABJ-048": [
+    "heal",
+    "ledger"
+  ],
+  "DIV-001": [
+    "draw"
+  ],
+  "DIV-002": [
+    "prevent",
+    "scry"
+  ],
+  "DIV-003": [
+    "cleanse",
+    "scry"
+  ],
+  "DIV-004": [
+    "prophecy",
+    "ward-break"
+  ],
+  "DIV-005": [
+    "draw"
+  ],
+  "DIV-006": [
+    "recover"
+  ],
+  "DIV-007": [
+    "scry",
+    "ward-break"
+  ],
+  "DIV-008": [
+    "disrupt",
+    "reveal"
+  ],
+  "DIV-009": [
+    "ward-break"
+  ],
+  "DIV-010": [
+    "draw",
+    "scry"
+  ],
+  "DIV-011": [
+    "damage",
+    "reveal"
+  ],
+  "DIV-012": [
+    "prophecy"
+  ],
+  "DIV-014": [
+    "damage",
+    "draw"
+  ],
+  "DIV-015": [
+    "recover"
+  ],
+  "DIV-016": [
+    "scry"
+  ],
+  "DIV-017": [
+    "draw",
+    "reveal"
+  ],
+  "DIV-018": [
+    "discard",
+    "draw"
+  ],
+  "DIV-019": [
+    "draw",
+    "ward-break"
+  ],
+  "DIV-020": [
+    "prophecy"
+  ],
+  "DIV-021": [
+    "draw",
+    "scry"
+  ],
+  "DIV-022": [
+    "scry"
+  ],
+  "DIV-023": [
+    "prophecy",
+    "scry"
+  ],
+  "DIV-024": [
+    "cancel",
+    "disrupt"
+  ],
+  "DIV-025": [
+    "draw"
+  ],
+  "DIV-026": [
+    "redirect"
+  ],
+  "DIV-027": [
+    "recast"
+  ],
+  "DIV-028": [
+    "draw",
+    "recover"
+  ],
+  "DIV-029": [
+    "draw",
+    "scry"
+  ],
+  "DIV-030": [
+    "scry"
+  ],
+  "DIV-031": [
+    "draw",
+    "reveal"
+  ],
+  "DIV-032": [
+    "prophecy"
+  ],
+  "DIV-033": [
+    "scry"
+  ],
+  "DIV-034": [
+    "draw"
+  ],
+  "DIV-035": [
+    "cancel",
+    "seal"
+  ],
+  "DIV-036": [
+    "cancel",
+    "disrupt"
+  ],
+  "DIV-037": [
+    "recast"
+  ],
+  "DIV-038": [
+    "damage",
+    "draw"
+  ],
+  "DIV-039": [
+    "disrupt",
+    "reveal"
+  ],
+  "DIV-040": [
+    "draw",
+    "immune"
+  ],
+  "DIV-041": [
+    "recover"
+  ],
+  "DIV-042": [
+    "scry"
+  ],
+  "DIV-043": [
+    "prophecy"
+  ],
+  "DIV-044": [
+    "draw",
+    "recover"
+  ],
+  "DIV-045": [
+    "recast",
+    "tempo"
+  ],
+  "EVO-001": [
+    "damage"
+  ],
+  "EVO-002": [
+    "damage",
+    "discard"
+  ],
+  "EVO-003": [
+    "burn",
+    "damage"
+  ],
+  "EVO-004": [
+    "damage",
+    "disrupt"
+  ],
+  "EVO-005": [
+    "buff"
+  ],
+  "EVO-006": [
+    "recover"
+  ],
+  "EVO-007": [
+    "damage",
+    "discard"
+  ],
+  "EVO-008": [
+    "damage",
+    "self-damage"
+  ],
+  "EVO-009": [
+    "damage",
+    "draw"
+  ],
+  "EVO-010": [
+    "damage",
+    "ward-break"
+  ],
+  "EVO-011": [
+    "damage"
+  ],
+  "EVO-012": [
+    "damage",
+    "immune"
+  ],
+  "EVO-013": [
+    "damage"
+  ],
+  "EVO-014": [
+    "damage",
+    "trap"
+  ],
+  "EVO-015": [
+    "damage",
+    "trap"
+  ],
+  "EVO-016": [
+    "damage"
+  ],
+  "EVO-017": [
+    "damage"
+  ],
+  "EVO-018": [
+    "damage",
+    "immune"
+  ],
+  "EVO-019": [
+    "burn",
+    "damage"
+  ],
+  "EVO-020": [
+    "damage",
+    "ward-break"
+  ],
+  "EVO-021": [
+    "damage",
+    "discard"
+  ],
+  "EVO-022": [
+    "burn"
+  ],
+  "EVO-023": [
+    "buff",
+    "self-damage"
+  ],
+  "EVO-024": [
+    "damage",
+    "draw"
+  ],
+  "EVO-025": [
+    "damage"
+  ],
+  "EVO-026": [
+    "damage",
+    "lock"
+  ],
+  "EVO-027": [
+    "damage"
+  ],
+  "EVO-028": [
+    "damage"
+  ],
+  "EVO-029": [
+    "cancel",
+    "damage"
+  ],
+  "EVO-030": [
+    "damage"
+  ],
+  "EVO-031": [
+    "damage"
+  ],
+  "EVO-032": [
+    "damage"
+  ],
+  "EVO-033": [
+    "damage",
+    "ward-break"
+  ],
+  "EVO-034": [
+    "damage",
+    "discard"
+  ],
+  "EVO-035": [
+    "damage",
+    "immune"
+  ],
+  "EVO-036": [
+    "burn"
+  ],
+  "EVO-037": [
+    "damage"
+  ],
+  "EVO-038": [
+    "damage",
+    "draw"
+  ],
+  "EVO-039": [
+    "damage",
+    "self-damage"
+  ],
+  "EVO-040": [
+    "damage",
+    "ward-break"
+  ],
+  "EVO-041": [
+    "lock"
+  ],
+  "EVO-042": [
+    "damage"
+  ],
+  "EVO-043": [
+    "reflect"
+  ],
+  "EVO-044": [
+    "damage"
+  ],
+  "EVO-045": [
+    "damage",
+    "immune"
+  ],
+  "EVO-046": [
+    "buff",
+    "burn",
+    "damage"
+  ],
+  "EVO-047": [
+    "reflect"
+  ],
+  "GAM-001": [
+    "draw",
+    "scry"
+  ],
+  "GAM-002": [
+    "discard",
+    "draw"
+  ],
+  "GAM-003": [
+    "discard",
+    "scry"
+  ],
+  "GAM-004": [
+    "scry"
+  ],
+  "GAM-005": [
+    "recover"
+  ],
+  "GAM-006": [
+    "scry"
+  ],
+  "GAM-007": [
+    "tempo"
+  ],
+  "GAM-008": [
+    "self-damage",
+    "tempo"
+  ],
+  "GAM-009": [
+    "heal"
+  ],
+  "GAM-010": [
+    "buff",
+    "self-damage"
+  ],
+  "GAM-011": [
+    "ward"
+  ],
+  "GAM-012": [
+    "ward-break"
+  ],
+  "GAM-013": [
+    "cleanse",
+    "heal"
+  ],
+  "GAM-014": [
+    "immune"
+  ],
+  "GAM-015": [
+    "immune"
+  ],
+  "GAM-016": [
+    "recover"
+  ],
+  "GAM-017": [
+    "lock"
+  ],
+  "GAM-018": [
+    "lock"
+  ],
+  "GAM-019": [
+    "prophecy"
+  ],
+  "GAM-020": [
+    "disrupt",
+    "reveal"
+  ],
+  "ITM-001": [
+    "scry"
+  ],
+  "ITM-002": [
+    "scry"
+  ],
+  "ITM-003": [
+    "draw",
+    "scry"
+  ],
+  "ITM-004": [
+    "discard",
+    "draw"
+  ],
+  "ITM-005": [
+    "tempo"
+  ],
+  "ITM-006": [
+    "recover"
+  ],
+  "ITM-007": [
+    "buff"
+  ],
+  "ITM-008": [
+    "ward"
+  ]
+}

@@ -15,6 +15,8 @@ export interface CardInfo {
   level: number | null;
   cost: string | null; // symbol string like "VV", "SM", ...
   text: string;
+  /** Effect tags (what the card does) — drives the icon strip. */
+  tags?: string[];
 }
 export type CardCatalog = Record<string, CardInfo>;
 

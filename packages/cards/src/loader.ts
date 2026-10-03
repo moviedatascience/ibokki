@@ -5,10 +5,13 @@
  * resolves identically on client, server, and sim.
  */
 import rawCards from "../data/cards.json";
-import type { CardDef, CardType, School } from "./types.ts";
+import rawTags from "../data/tags.json";
+import { CARD_TAGS, type CardDef, type CardTag, type CardType, type School } from "./types.ts";
 
 const SCHOOLS: ReadonlySet<string> = new Set<School>(["Abjuration", "Evocation", "Divination", "Neutral"]);
 const TYPES: ReadonlySet<string> = new Set<CardType>(["Spell", "Reaction", "Item", "Gambit"]);
+const TAGS: ReadonlySet<string> = new Set<CardTag>(CARD_TAGS);
+const TAG_MAP = rawTags as Record<string, string[]>;
 
 /** Validate the raw JSON into typed CardDefs, throwing on any malformed entry. */
 function validateCards(data: unknown): CardDef[] {
@@ -22,6 +25,10 @@ function validateCards(data: unknown): CardDef[] {
     if (!SCHOOLS.has(card.school)) throw new Error(`cards.json: ${id} has invalid school "${card.school}"`);
     if (!TYPES.has(card.type)) throw new Error(`cards.json: ${id} has invalid type "${card.type}"`);
     if (typeof card.text !== "string") throw new Error(`cards.json: ${id} is missing effect text`);
+    const tags = TAG_MAP[id];
+    if (!Array.isArray(tags) || tags.length === 0) throw new Error(`tags.json: ${id} has no effect tags — run npm run derive-tags`);
+    for (const t of tags) if (!TAGS.has(t)) throw new Error(`tags.json: ${id} has unknown tag "${t}"`);
+    card.tags = tags as CardTag[];
     const isTrainer = card.type === "Item" || card.type === "Gambit";
     if (isTrainer) {
       if (card.level !== null || card.cost !== null) throw new Error(`cards.json: trainer ${id} must have null level/cost`);

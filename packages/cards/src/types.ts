@@ -13,6 +13,45 @@ export interface Cost {
   M: number;
 }
 
+/**
+ * Effect tags — what a card DOES, derived from the engine's effect registrations
+ * by `npm run derive-tags` (tools/derive-tags) and stored in data/tags.json so the
+ * icons on a card face can never disagree with the engine. Engine-facing and
+ * precise; the player-facing keyword/icon vocabulary is a projection of these.
+ */
+export const CARD_TAGS = [
+  "damage", // deals damage to the opponent
+  "self-damage", // costs the caster HP
+  "reflect", // mirrors the target spell's damage back
+  "burn", // adds or amplifies Burn on the opponent
+  "cleanse", // removes the caster's Burn
+  "ward", // creates, grows or protects the caster's Wards
+  "ward-break", // damages, halves, destroys or unravels opponent Wards / ongoing effects
+  "ward-sacrifice", // destroys the caster's own Wards for value
+  "prophecy", // inscribes a delayed doom
+  "seal", // seals a prepared spell
+  "cancel", // cancels / uncasts spells on the stack
+  "redirect", // turns a spell on its caster
+  "prevent", // reduces or prevents incoming damage
+  "immune", // makes something uncounterable, untargetable or unreducible
+  "draw", // the caster draws
+  "opponent-draws", // the opponent draws (a cost)
+  "discard", // the caster discards
+  "disrupt", // strips, bounces or discards the opponent's cards / components
+  "recover", // returns components or cards from the discard
+  "scry", // looks at / orders / searches the caster's deck
+  "reveal", // shows the opponent's hand
+  "lock", // restricts or taxes the opponent's casts / reactions / draws
+  "buff", // raises the caster's spell damage
+  "tempo", // extra casts / attaches / component tricks
+  "heal", // restores the caster's HP
+  "recast", // casts a copy of another spell
+  "ledger", // reads or spends the prevention bank
+  "trap", // fires automatically on its printed trigger while prepared
+] as const;
+
+export type CardTag = (typeof CARD_TAGS)[number];
+
 /** A designed card from the spreadsheet (spell, reaction, item, or gambit). */
 export interface CardDef {
   id: string;
@@ -27,6 +66,8 @@ export interface CardDef {
   cost: Cost | null;
   /** Effect text (rules text to be implemented by the effect engine). */
   text: string;
+  /** Effect tags (see CARD_TAGS) — attached by the loader from data/tags.json. */
+  tags: CardTag[];
   role?: string;
   comment?: string;
 }
