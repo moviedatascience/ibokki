@@ -1,3 +1,5 @@
+> **RETIRED 2026-10-03.** The two-vendor protocol (DeepSeek Harness ↔ Claude) is no longer in use: no change requires a cross-vendor review, no ownership claim is required, and the inbox is closed. Kept for history. The plan of record is `ROADMAP.md`; `interop/DECISIONS.md` remains the live design-decision log.
+
 # Cross-vendor collaboration — Claude Code ↔ DeepSeek Harness
 
 This file is the contract for how the two AI "vendors" working on Ibokki

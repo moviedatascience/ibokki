@@ -1,5 +1,7 @@
 # Ibokki — UI & Art Polish Plan
 
+> **Status 2026-10-03:** this audit is now a reference, not a backlog. Its items were split into granular GitHub issues on board #2 under the workstreams in `ROADMAP.md`; file:line anchors are from the 2026-07-09 tree and may have moved.
+
 *Produced 2026-07-09 from a full-journey audit of the client (entry → match → post-game),
 the art pipeline state, and the working-tree delta. Companion docs: `ROADMAP.md`
 (macro roadmap — replaced `PROJECT_PLAN.md`, 2026-08-12), `art/STYLE_BIBLE.md`

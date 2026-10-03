@@ -134,37 +134,23 @@ replay; clients rejoin with their stored seat tokens. Client is built with
 `IBOKKI_BASE=/play/`; nginx strips the prefix. Build-version handshake: GIT_SHA baked into
 bundle + server; mismatch shows a refresh banner.
 
-## DeepSeek Harness multi-agent org (`.dsh/`)
+## Planning & workflow (2026-10-03)
 
-The repo also runs a DSH-native multi-agent org alongside this Claude setup —
-see `.dsh/README.md` for the full playbook. In short: a supervisor session
-(lead preset) spawns two lead agents (Builder/Auditor) → project leads → ICs as
-continuable subagents; messaging is parent↔child only; the supervisor relays
-cross-reviews and restarts dead agents per `.dsh/agents/handoff.md`. Live state
-lives in `.dsh/roster.md`; presets are synced to `~/.dsh/.agent-presets` by
-`.dsh/sync-presets.ps1`. Keep `.dsh/` conventions consistent with this file:
-playtest pilots run on cheap models, the pilot-gap doctrine and the `npm run
-typecheck && npm test` gate apply to DSH agents exactly as to Claude ones.
+Solo dev + Claude, no second vendor. The cross-vendor review pairing with the DeepSeek
+Harness org (`interop/`, `.dsh/`) was RETIRED on 2026-10-03: no change waits on an
+external review, `interop/OWNERSHIP.md` claims are not required, and `.dsh/` is
+dormant history. `interop/DECISIONS.md` stays as the design decision log — keep
+appending numbered decisions there.
 
-## Cross-vendor collaboration (Claude ↔ DeepSeek Harness)
-
-Claude (here) and the DeepSeek Harness org (`.dsh/`) are two vendors on ONE repo.
-They never talk in real time; they coordinate through **git + `interop/`**, and
-the human routes. Full protocol: `interop/COORDINATION.md`.
-
-Start-of-session duty (every time): read `interop/COORDINATION.md`,
-`interop/OWNERSHIP.md`, `interop/DECISIONS.md`, and drain `interop/inbox/`.
-
-Conventions that bind this side:
-- **Branch-per-task:** one change = one branch `claude/<slug>`; run the gate
-  (`npm run typecheck && npm test`) on the branch before requesting review; merge
-  to `main` only after the opposite vendor approves.
-- **Enforced pairing:** your builder output is reviewed by **DeepSeek
-  Lead-Auditor**; you review **DeepSeek Lead-Builder** output (auditor hat — file
-  `interop/reviews/<slug>.md`). Self-review is not a verdict.
-- **Decisions:** disagreements resolve in `interop/DECISIONS.md`; cite the number.
-- One repo, one truth: `F:\Programming\ibokki` — but do branch work from your OWN
-  worktree (DECISIONS #2): `git worktree add F:\Programming\ibokki-<name> <branch>`,
-  `npm ci` there once, remove it when the branch lands. The repo-home tree stays
-  on `main`; other agents (DSH, sibling Claude sessions) share it — never
-  `git add -A` there, never switch its branch while anyone has uncommitted work.
+- **Plan of record:** `ROADMAP.md` — the holistic 1.0 map: eight workstreams, each with a
+  player-facing goal, its open issues, and the user decisions that gate it.
+- **Board:** GitHub Projects #2 "Ibokki" (repo `moviedatascience/ibokki`, milestone 1.0).
+  Every issue carries a `Workstream` field (the eight above) + `Priority` (P0 ships 1.0,
+  P1 should ship, P2 cut candidate). Status is Todo / In Progress / Done — "In Review"
+  is unused. Issues are granular (one PR-sized change each, with a checklist and a
+  done criterion); if an issue grows an epic, split it.
+- **Branching:** work on `main` for small changes; branch (`claude/<slug>`) for anything
+  multi-session. Gate before every commit: `npm run typecheck && npm test` (+ client tsc
+  when the client changed). Push to main = live deploy (CI gates on tests).
+- The user is the art director and the design authority: card wording, icon vocabulary,
+  art picks, and balance verdicts are their calls; Claude proposes with evidence.
