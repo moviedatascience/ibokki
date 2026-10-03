@@ -169,7 +169,7 @@ export function App() {
         <div className="stage">
           <div className="boardwrap">
             <Board state={state} cards={cards} onAction={act} onHover={setHoverDef} onStatusHover={setStatusHover} onSelection={setSelectionActive} onInspect={setPinnedDef} onBrowseDiscard={setBrowseDiscard} onReady={onReady} />
-            <Prompt state={state} onAction={act} cardName={cardName} />
+            <Prompt state={state} cards={cards} onAction={act} cardName={cardName} onHover={setHoverDef} />
             <SpellbookTray state={state} cards={cards} onAction={act} onHover={setHoverDef} onInspect={setPinnedDef} />
             {browseDiscard !== null && state && (
               <DiscardBrowser side={browseDiscard} state={state} cards={cards} onClose={() => setBrowseDiscard(null)} onHover={setHoverDef} onInspect={setPinnedDef} />

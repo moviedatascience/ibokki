@@ -349,3 +349,15 @@ b.kw {
   color: var(--kw, inherit); font-weight: 700; cursor: help;
   border-bottom: 1px dotted color-mix(in srgb, var(--kw, currentColor) 55%, transparent);
 }
+
+/* ---- prompt chips + builder preview (card legibility #41/#42) ---- */
+.prompt .choice { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.prompt .choice .kwstrip { margin: 0 0 0 2px; }
+.prompt .subreason { color: var(--mute); }
+.pickcard .kwstrip { margin: 2px 0 0; }
+.buildercol.preview { max-width: 250px; min-width: 210px; }
+.pvname { font-family: var(--font-card); font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.pvmeta { font-size: 11px; color: var(--mute); margin: 3px 0 8px; }
+.pvtext { font-family: var(--font-card); font-size: 12.5px; line-height: 1.35; }
+.pvpin { margin-top: 10px; font-size: 11px; }
+.stepper .pickname { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }

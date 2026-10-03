@@ -7,6 +7,7 @@
 import { useMemo, useState } from "react";
 import { api, ApiError, type CardCatalog, type Deck, type DeckError, type DeckRules } from "../api.ts";
 import { Pips, SchoolCrest, TypeIcon } from "./Pips.tsx";
+import { KeywordStrip, RulesText } from "./RulesText.tsx";
 
 interface Props {
   cards: CardCatalog;
@@ -35,6 +36,11 @@ export function DeckBuilder({ cards, rules, initial, onSaved, onClose }: Props) 
   const [errors, setErrors] = useState<DeckError[]>([]);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Preview column: hover shows a card, "Pin" keeps it (touch: tap the name to pin).
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [pinnedId, setPinnedId] = useState<string | null>(null);
+  const previewId = pinnedId ?? hoverId;
+  const preview = previewId ? cards[previewId] : undefined;
 
   const spells = useMemo(
     () =>
@@ -143,17 +149,50 @@ export function DeckBuilder({ cards, rules, initial, onSaved, onClose }: Props) 
                 key={id}
                 className={`pickcard s-${c.school.toLowerCase()}${spellbook.has(id) ? " picked" : ""}`}
                 onClick={() => toggleSpell(id)}
-                title={c.text}
+                onMouseEnter={() => setHoverId(id)}
+                onMouseLeave={() => setHoverId(null)}
                 data-testid={`pick-${id}`}
               >
-                <span className="pickname">{c.name}</span>
+                <span className="pickname">
+                  <SchoolCrest school={c.school} size={11} /> {c.name}
+                </span>
                 <span className="pickmeta">
                   {c.level ? `L${c.level} · ` : ""}
                   {c.cost ? <Pips cost={c.cost} /> : "—"} · {c.type}
                 </span>
+                <KeywordStrip tags={c.tags} label={false} size={10} />
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="buildercol preview" data-testid="builder-preview">
+          <h3>Card</h3>
+          {preview ? (
+            <>
+              <div className="pvname">
+                <SchoolCrest school={preview.school} /> {preview.name}
+                {(preview.type === "Item" || preview.type === "Gambit") && <TypeIcon type={preview.type} />}
+              </div>
+              <div className="pvmeta">
+                {preview.cost && (
+                  <>
+                    <Pips cost={preview.cost} /> ·{" "}
+                  </>
+                )}
+                {[preview.level ? `L${preview.level}` : null, preview.type].filter(Boolean).join(" · ")}
+              </div>
+              <div className="pvtext">
+                <KeywordStrip tags={preview.tags} />
+                <RulesText text={preview.text} />
+              </div>
+              <button className="pvpin" onClick={() => setPinnedId(pinnedId ? null : previewId)}>
+                {pinnedId ? "Unpin" : "Pin"}
+              </button>
+            </>
+          ) : (
+            <div className="hint">Hover a card to read it here; Pin keeps it while you browse.</div>
+          )}
         </div>
 
         <div className="buildercol resources">
@@ -175,8 +214,8 @@ export function DeckBuilder({ cards, rules, initial, onSaved, onClose }: Props) 
           <h3>Trainers</h3>
           {trainers.map(([id, c]) => (
             <div className="stepper" key={id}>
-              <span className="pickname" title={c.text}>
-                <TypeIcon type={c.type} /> {c.name}
+              <span className="pickname" onMouseEnter={() => setHoverId(id)} onMouseLeave={() => setHoverId(null)} onClick={() => setPinnedId(id)}>
+                <TypeIcon type={c.type} /> {c.name} <KeywordStrip tags={c.tags} label={false} size={10} />
               </span>
               <span className="stepbtns">
                 <button onClick={() => bump(id, -1)}>−</button>
