@@ -412,8 +412,8 @@ export class PixiBoard {
   private face(defId: string): CardFace {
     const c = this.cards[defId];
     return c
-      ? { name: c.name, school: c.school, type: c.type, level: c.level, cost: c.cost }
-      : { name: defId, school: "Neutral", type: "?", level: null, cost: null };
+      ? { name: c.name, school: c.school, type: c.type, level: c.level, cost: c.cost, tags: c.tags }
+      : { name: defId, school: "Neutral", type: "?", level: null, cost: null, tags: [] };
   }
 
   /** Tick the countdown labels between server frames (server deadlines are truth; this only displays). */

@@ -1,5 +1,6 @@
 import { Assets, Sprite, Texture } from "pixi.js";
 import { BASE } from "../api.ts";
+import { KEYWORD_GLYPHS } from "../keywords.ts";
 
 /**
  * Woodcut glyph textures (art/glyphs — approved set, shipped white so Pixi's
@@ -29,6 +30,16 @@ export async function loadIcons(): Promise<void> {
       tex.set("cardback", (await Assets.load(`${BASE}art/cardback-small.svg`)) as Texture);
     })(),
   );
+  // Keyword glyphs (card-face icon strip): the vocabulary names glyphs that may not be
+  // drawn yet, so each loads on its own and a miss just leaves the abbreviation fallback.
+  for (const n of KEYWORD_GLYPHS) {
+    if ((ICONS as string[]).includes(n) || tex.has(n)) continue;
+    jobs.push(
+      Assets.load(`${BASE}art/icons/${n}.svg`)
+        .then((t) => void tex.set(n, t as Texture))
+        .catch(() => undefined),
+    );
+  }
   await Promise.all(jobs);
 }
 
@@ -37,7 +48,7 @@ export function cardbackTexture(): Texture | null {
 }
 
 /** A sized, tinted glyph sprite — or null if assets never loaded (caller falls back to text). */
-export function icon(name: IconName, size: number, tint?: number): Sprite | null {
+export function icon(name: IconName | string, size: number, tint?: number): Sprite | null {
   const t = tex.get(name);
   if (!t) return null;
   const sp = new Sprite(t);

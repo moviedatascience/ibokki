@@ -256,6 +256,45 @@ between both risks "bricking" (drawing V cards when you need M cards).
 
 ---
 
+## Keywords & Icons (PROPOSED 2026-10-03 — sign-off pending)
+
+Cards must teach themselves: a player who knows the keywords can read any card in one
+pass, and the icons on a card face say at a glance what it does. The vocabulary is data
+(`packages/cards/data/keywords.json`), and it is kept honest by construction — every
+card's icons come from **tags derived from the engine's effect code**
+(`npm run derive-tags` → `tags.json`), never from hand-authored metadata, so a card
+cannot show an icon for something the engine does not do.
+
+| Keyword | Means | Engine tags |
+|---|---|---|
+| **Damage** | Deals damage to the opponent; Wards soak first | damage, reflect |
+| **Burn** | Markers that deal 1 each at the start of the burned wizard's turn | burn |
+| **Ward** | Creates or grows a Ward that absorbs damage before HP | ward |
+| **Unravel** | Damages, halves or destroys the opponent's Wards / ongoing effects | ward-break |
+| **Prophecy** | Inscribes a doom that fires after its fuse; a soaking Ward shatters | prophecy |
+| **Seal** | A sealed prepared spell cannot be cast until the seal lifts | seal |
+| **Cancel** | Stops a spell on the stack, or turns it on its caster | cancel, redirect |
+| **Prevent** | Reduces or blocks damage, or grants immunity to Reactions; banks the ledger | prevent, immune |
+| **Draw** | Draws from the Resource Deck | draw |
+| **Discard** | You discard from your own hand | discard |
+| **Cost** | Costs you extra: HP, one of your Wards, or a card for the opponent | self-damage, ward-sacrifice, opponent-draws |
+| **Disrupt** | Strips, bounces or discards the opponent's components / cards | disrupt |
+| **Recover** | Returns cards from the discard, or recasts a cast spell | recover, recast |
+| **Scry** | Looks at, reorders or searches your deck | scry |
+| **Reveal** | Shows you the opponent's hand | reveal |
+| **Lock** | Restricts or taxes the opponent's casts, Reactions or draws | lock |
+| **Empower** | More spell damage, extra casts/attaches, component tricks | buff, tempo |
+| **Heal** | Restores HP or removes your own Burn | heal, cleanse |
+| **Ledger** | Reads or spends the damage you have prevented this match | ledger |
+| **Trap** | Fires on its own when its trigger happens while prepared and fueled | trap |
+
+Rules for the text (the rewrite pass, issue #38): one sentence where possible, in the
+order *[timing] → keyword + amount → target → rider*; "cancel" never "negate"; durations
+are only "this turn", "this round" or "until the start of your next turn"; reminder text
+lives in the vocabulary, not on the card.
+
+---
+
 ## Design Notes
 
 Part of the fun of a D&D campaign is the idea of building toward a late game that is

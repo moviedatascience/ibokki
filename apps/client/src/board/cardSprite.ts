@@ -1,6 +1,7 @@
 import { Container, Graphics, Sprite, Text } from "pixi.js";
 import { PIP_TINT, cardbackTexture, icon } from "./icons.ts";
 import { cardArtTexture, coverCrop } from "./cardArt.ts";
+import { keywordsFor, tintNumber } from "../keywords.ts";
 
 /**
  * A neutral placeholder card: rounded-rect body, a school-tinted title band, name / type+level /
@@ -44,6 +45,8 @@ export interface CardFace {
   type: string;
   level: number | null;
   cost: string | null;
+  /** Engine-derived effect tags (catalog `tags`) — rendered as the keyword icon strip. */
+  tags?: string[];
 }
 
 export class CardVisual {
@@ -60,6 +63,7 @@ export class CardVisual {
   private nameT: Text;
   private metaT: Text;
   private costC = new Container();
+  private tagC = new Container(); // keyword icon strip (right edge of the art window)
   private attC = new Container();
   private back = new Container();
   private hlKind: Highlight = "none";
@@ -107,7 +111,7 @@ export class CardVisual {
     // attC sits above `back` so attached-component chips stay visible on face-down cards
     // (the opponent's attachments are public information). sealC likewise — a Runic Seal
     // on a face-down spell is public.
-    this.root.addChild(this.body, this.artC, this.band, this.edgeG, this.nameT, this.metaT, this.costC, this.back, this.attC, this.sealC, this.stampC, this.hl);
+    this.root.addChild(this.body, this.artC, this.band, this.edgeG, this.nameT, this.metaT, this.costC, this.tagC, this.back, this.attC, this.sealC, this.stampC, this.hl);
     this.setHighlight("none");
   }
 
@@ -140,7 +144,8 @@ export class CardVisual {
   }
 
   setFace(f: CardFace, defId?: string | null): void {
-    const key = `${defId ?? ""}|${f.school}|${f.name}|${f.type}|${f.level ?? ""}|${f.cost ?? ""}`;
+    const tags = f.tags ?? [];
+    const key = `${defId ?? ""}|${f.school}|${f.name}|${f.type}|${f.level ?? ""}|${f.cost ?? ""}|${tags.join(",")}`;
     if (key !== this.faceKey) {
       this.faceKey = key;
       this.drawBody(SCHOOL_COLOR[f.school] ?? SCHOOL_COLOR.Neutral!);
@@ -149,8 +154,46 @@ export class CardVisual {
       const lvl = f.level ? `L${f.level}` : f.type === "Item" || f.type === "Gambit" ? "Trainer" : "";
       this.metaT.text = [f.type, lvl].filter(Boolean).join(" · ");
       this.drawCost(f.cost ?? "");
+      this.drawTags(tags);
     }
     this.setFaceDown(false);
+  }
+
+  /**
+   * Keyword icon strip: what the card DOES, readable at hand size without the rail.
+   * A column down the right edge of the art window (the bottom corners belong to the
+   * attached-component chips and the cost pips). Glyph per keyword, tinted; the
+   * keyword's abbreviation while its glyph is unshipped. Max 4 — the vocabulary test
+   * guarantees no card needs more.
+   */
+  private drawTags(tags: string[]): void {
+    for (const c of this.tagC.removeChildren()) c.destroy({ children: true });
+    const ks = keywordsFor(tags).slice(0, 4);
+    if (ks.length === 0) return;
+    const size = 13;
+    const gap = 3;
+    const pad = 2;
+    const total = ks.length * (size + gap) - gap;
+    const g = new Graphics();
+    g.roundRect(0, 0, size + pad * 2, total + pad * 2, 4).fill({ color: 0x0e1218, alpha: 0.78 });
+    this.tagC.addChild(g);
+    ks.forEach((k, i) => {
+      const y = pad + i * (size + gap);
+      const sp = icon(k.glyph, size, tintNumber(k.tint));
+      if (sp) {
+        sp.position.set(pad, y);
+        this.tagC.addChild(sp);
+      } else {
+        const t = new Text({
+          text: k.abbr.slice(0, 2),
+          style: { fill: tintNumber(k.tint), fontSize: 7, fontFamily: "ui-monospace, monospace", fontWeight: "800" },
+        });
+        t.anchor.set(0.5);
+        t.position.set(pad + size / 2, y + size / 2);
+        this.tagC.addChild(t);
+      }
+    });
+    this.tagC.position.set(this.w - (size + pad * 2) - 3, 23);
   }
 
   /** Illustration window between the title band and the meta line ("swap the body fill
@@ -199,7 +242,7 @@ export class CardVisual {
 
   setFaceDown(down: boolean): void {
     this.back.visible = down;
-    this.body.visible = this.artC.visible = this.band.visible = this.nameT.visible = this.metaT.visible = this.costC.visible = !down;
+    this.body.visible = this.artC.visible = this.band.visible = this.nameT.visible = this.metaT.visible = this.costC.visible = this.tagC.visible = !down;
   }
 
   /** Show attached component symbols (e.g. ["V","SM"]) as small pip chips; [] clears them. */

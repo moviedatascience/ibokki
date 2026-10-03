@@ -1,6 +1,7 @@
 /** @ibokki/cards — the card data catalog for Ibokki. */
 export * from "./types.ts";
 export * from "./components.ts";
+export * from "./keywords.ts";
 
 import type { CardDef, School } from "./types.ts";
 import { CARDS } from "./loader.ts";

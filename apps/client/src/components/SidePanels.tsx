@@ -3,6 +3,7 @@ import { BASE, type CardCatalog, type MatchState, type School } from "../api.ts"
 import type { OnlineApi } from "../useMatch.ts";
 import { LogLines } from "./LogLines.tsx";
 import { Pips, SchoolCrest, TypeIcon } from "./Pips.tsx";
+import { KeywordStrip, RulesText } from "./RulesText.tsx";
 
 const SCHOOLS: School[] = ["Evocation", "Abjuration", "Divination"];
 
@@ -170,7 +171,10 @@ export function SidePanels({ state, cards, hoverDef, statusHover, pinnedDef, onU
               {[c.level ? `L${c.level}` : null, c.type].filter(Boolean).join(" · ")}
               {(c.type === "Item" || c.type === "Gambit") && <> <TypeIcon type={c.type} /></>}
             </div>
-            <div className="dtext">{c.text}</div>
+            <div className="dtext">
+              <KeywordStrip tags={c.tags} />
+              <RulesText text={c.text} />
+            </div>
           </>
         ) : (
           <div className="hint">Hover a card to inspect it — click a card with no action to pin it here.</div>

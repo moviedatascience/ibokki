@@ -334,3 +334,18 @@ button:disabled { opacity: .4; cursor: default; }
 .replaybar { gap: 10px; }
 .replaybar input[type="range"] { width: min(420px, 38vw); accent-color: var(--act); }
 .replaybar .rpos { font-variant-numeric: tabular-nums; color: var(--mute); font-size: 12px; }
+
+/* ---- keyword vocabulary (card legibility): chips + bold terms with reminder tooltips ---- */
+.kwstrip { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+.kwchip {
+  display: inline-flex; align-items: center; gap: 3px; padding: 1px 5px; border-radius: 4px;
+  font-family: system-ui, sans-serif; font-size: 10px; line-height: 14px; color: var(--kw); cursor: help;
+  background: color-mix(in srgb, var(--kw) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--kw) 35%, transparent);
+}
+.kwabbr { font-family: ui-monospace, monospace; font-size: 8px; font-weight: 800; letter-spacing: .5px; }
+.kwlabel { font-weight: 600; }
+b.kw {
+  color: var(--kw, inherit); font-weight: 700; cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--kw, currentColor) 55%, transparent);
+}
