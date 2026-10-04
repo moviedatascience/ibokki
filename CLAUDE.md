@@ -34,6 +34,7 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 | `npm run mcp` | MCP playtest server (long-running; RESTART it after engine changes — it holds stale code) |
 | `npm run play` / `npm run online` / `npm run client` | local board / PvP server / Vite dev |
 | `npm run import-cards` | xlsx → cards.json, then derives tags.json (run after any xlsx edit) |
+| `npm run retext -- <pass.json>` | rewrite card Effect text in the xlsx from a `{texts:{id:text}}` map (pass files live in `packages/cards/data/rewrites/`); then `npm run import-cards`. Text must say what the engine does — log any text↔engine gap in a playtests parity file |
 | `npm run derive-tags` | engine effects + cardFlags → `packages/cards/data/tags.json` (run after ANY edit in `packages/engine/src/effects/` or `cardFlags.ts`; the derive test fails when stale) |
 | `npm run build:client` | vite build → apps/client/dist |
 
@@ -41,7 +42,8 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 
 - **Node 20 lives at `C:\Program Files\nodejs` and is NOT on PATH** in the shell tools.
   PowerShell: `$env:Path = "C:\Program Files\nodejs;" + $env:Path` first.
-- **Editing the xlsx:** adm-zip FAILS on this file (zip descriptor quirk). Use PowerShell
+- **Editing card text:** use `npm run retext` (above), not hand edits. For OTHER xlsx cells:
+  adm-zip FAILS on this file (zip descriptor quirk). Use PowerShell
   .NET `ZipArchive` in Update mode on `xl/sharedStrings.xml`. Anchor replacements to whole
   cell strings (`>text<`) — substrings collide across cards — and note apostrophes are
   sometimes `&apos;` entities (match both). Then `npm run import-cards`.

@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "import-cards": "tsx tools/import-cards/src/index.ts && tsx tools/derive-tags/src/index.ts",
+    "retext": "tsx tools/import-cards/src/retext.ts",
     "derive-tags": "tsx tools/derive-tags/src/index.ts",
     "sim": "tsx packages/sim/src/cli.ts",
     "derive-priors": "tsx packages/sim/src/derivePriors.ts",

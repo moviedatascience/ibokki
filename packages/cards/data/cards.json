@@ -11,7 +11,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Add 2 HP to a Ward you control. If you control no Ward, create one with 2 HP instead. Then remove 1 Burn marker from yourself.",
+    "text": "A Ward you control gains 2 HP (create a 2 HP Ward if you have none). Remove 1 Burn from yourself.",
     "comment": "Good early-game Ward sustain. Rewards players who already established a Ward on a prior turn."
   },
   {
@@ -26,7 +26,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Create a Ward with 1 HP. If this Ward is destroyed this round, draw 2 cards.",
+    "text": "Create a Ward with 1 HP. If it is destroyed this round, draw 2 cards.",
     "comment": "Lightweight Ward that cycles on destruction — encourages opponent to attack it and rewards the Abjuration player for taking hits."
   },
   {
@@ -41,7 +41,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Each Ward you control gains 1 HP. If you control a Ward, deal 1 damage.",
+    "text": "Each Ward you control gains 1 HP. If you control a Ward, deal 1 damage to your opponent.",
     "comment": "Scales with Ward density. Weak early but synergizes with multi-Ward strategies at higher levels."
   },
   {
@@ -56,7 +56,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Until the start of your next turn, you cannot be targeted by spells that have only 1 component attached.",
+    "text": "Until the start of your next turn, spells with only 1 component attached cannot target you.",
     "comment": "Punishes opponents who haven't fully loaded their spells. Creates counterplay window pressure."
   },
   {
@@ -71,7 +71,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Until the end of the round, spell damage dealt to you is reduced by 2.",
+    "text": "This round, spell damage dealt to you is reduced by 2.",
     "comment": "Round-long -2 to incoming spell damage - the anti-cantrip tax. Charges Reckoning while it blunts aggro; near-irrelevant against big single hits."
   },
   {
@@ -86,7 +86,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "The next spell your opponent casts this turn deals 1 less damage.",
+    "text": "Target spell deals 1 less damage.",
     "comment": "Simple but versatile. Pairs with other damage-prevention Reactions to stack reduction."
   },
   {
@@ -101,7 +101,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Prevent 1 damage. If you have a Ward in play, prevent 2 damage instead.",
+    "text": "Target spell deals 1 less damage, or 2 less if you control a Ward.",
     "comment": "Rewards proactive Ward setup. A tempo puzzle for the opponent: destroy the Ward first or risk extra mitigation."
   },
   {
@@ -116,7 +116,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Prevent 1 damage. Draw 1 card from your Component Deck.",
+    "text": "Target spell deals 1 less damage. Draw 1 card.",
     "comment": "Rare card draw for Abjuration. Small upside turns a pure-prevention Reaction into a slight tempo gain."
   },
   {
@@ -131,7 +131,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "When your opponent attaches a component to a prepared spell, you may discard this card to immediately remove that component and return it to their hand.",
+    "text": "Trap: when your opponent attaches a component to a prepared spell, return that component to their hand.",
     "comment": "High disruption ceiling — delays a spell by a full turn. Telegraphed once face-up, so opponent can play around it."
   },
   {
@@ -146,7 +146,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Place a Seal counter on target prepared spell. That spell cannot be cast this round.",
+    "text": "Seal target prepared spell your opponent controls: it cannot be cast this round.",
     "comment": "Strong soft-lock. Costs 2 S symbols at Level 1, which makes it a premium Level 1 opener."
   },
   {
@@ -161,7 +161,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Prevent all damage from one spell that targets you. Gain HP equal to half the prevented damage, rounded down.",
+    "text": "Prevent all damage from target spell. Heal half the damage prevented, rounded down.",
     "comment": "Full prevention with a heal attached — turns the opponent's single biggest hit into HP for you. A strong reactive swing."
   },
   {
@@ -176,7 +176,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Create a Ward with 3 HP. When this Ward prevents damage, deal 1 damage to your opponent.",
+    "text": "Create a Ward with 3 HP. Whenever it absorbs damage, deal 1 damage to your opponent.",
     "comment": "Turns defense into slow chip damage. Synergizes with anything that buffs Ward HP (Fortify / Ward Pulse)."
   },
   {
@@ -191,7 +191,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Remove all components from target prepared spell. Your opponent draws 1 card.",
+    "text": "Remove all components from target spell; if it no longer meets its cost, cancel it. Your opponent draws 1 card.",
     "comment": "Strips a nearly-ready spell back to zero. The draw softens the hit but opponent loses tempo and the surprise factor."
   },
   {
@@ -251,7 +251,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Until the start of your next turn, your opponent cannot play Reaction spells.",
+    "text": "Until the start of your next turn, your opponent cannot play Reactions.",
     "comment": "Offensive play for a defensive deck — punch your own spells through without fear of a Reaction. High-value surprise."
   },
   {
@@ -266,7 +266,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Until the end of the round, your opponent's Reaction spells cost 1 additional S component to play.",
+    "text": "This round, your opponent's Reactions cost 1 additional component to play.",
     "comment": "Soft-taxes Reactions rather than banning them. Particularly brutal against opposing Abjuration mirrors."
   },
   {
@@ -281,7 +281,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Create a Ward with 2 HP. While this Ward is active, you cannot be targeted by Level 1 spells.",
+    "text": "Create a Ward with 2 HP. While it stands, Level 1 spells cannot target you.",
     "comment": "Provides blanket immunity to the entire early-game toolbox. Pressures opponent to commit higher-level spells to break through."
   },
   {
@@ -296,7 +296,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Create a Ward with 3 HP. While active, the first time each round your opponent casts a spell, draw 1 card.",
+    "text": "Create a Ward with 3 HP. While it stands, the first time each round your opponent casts a spell, draw 1 card.",
     "comment": "Off-color cost (VS) signals it's a cross-school hybrid. Rewards sitting on the Ward — persistent card advantage as long as it lives."
   },
   {
@@ -311,7 +311,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Sacrifice one of your Wards. Negate all damage from target spell.",
+    "text": "Sacrifice one of your Wards. Prevent all damage from target spell.",
     "comment": "Converts an expendable Ward into a full cancel. Great with low-HP Wards like Arcane Shell that are about to break anyway."
   },
   {
@@ -326,7 +326,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "Create a Ward with 6 HP. While active, reduce all damage dealt to you by 1 (minimum 0).",
+    "text": "Create a Ward with 6 HP. This round, damage dealt to you is reduced by 1.",
     "comment": "Mid-level defensive anchor. The passive reduction stacks with Dampen and other prevention effects for near-immunity turns."
   },
   {
@@ -341,7 +341,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "Cancel target spell. Your opponent cannot cast additional spells this turn.",
+    "text": "Cancel target spell. Your opponent cannot cast more spells this turn.",
     "comment": "The heavyweight Reaction payoff. Costs a full round of S-component investment but ends an opponent's offensive turn entirely."
   },
   {
@@ -356,7 +356,7 @@
       "S": 2,
       "M": 1
     },
-    "text": "Until the end of the round, each time a spell would deal damage to you, gain that HP instead (maximum 5 HP gained this way).",
+    "text": "This round, spell damage that would hit you heals you instead (up to 5 HP).",
     "comment": "Reverses an all-in offensive turn into a healing windfall. Costs SSM to balance — opponents who read it can pivot, making it a bluffing tool."
   },
   {
@@ -371,7 +371,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "Until the end of the round, your opponent must target your Wards before targeting you directly. All your Wards gain 2 HP.",
+    "text": "Each Ward you control gains 2 HP.",
     "comment": "Combines forced targeting with a Ward buff — either opponent grinds through buffed Wards or wastes their turn."
   },
   {
@@ -386,7 +386,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Cancel target spell. Deal 2 damage to your opponent for each component attached to the cancelled spell.",
+    "text": "Cancel target spell. Deal 2 damage to your opponent for each component attached to it.",
     "comment": "Punishes fully loaded spells most — a 3-component VSM spell results in 6 damage on cancel. Off-color V cost signals aggression."
   },
   {
@@ -401,7 +401,7 @@
       "S": 2,
       "M": 1
     },
-    "text": "Create a Ward with 5 HP. When this Ward is destroyed, immediately create a replacement Ward with 2 HP.",
+    "text": "Create a Ward with 5 HP. When it is destroyed, create a Ward with 2 HP.",
     "comment": "Double-life Ward. The replacement is weak enough to be cleared but forces the opponent to commit two removal actions."
   },
   {
@@ -416,7 +416,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "Remove all components from ALL of your opponent's prepared spells. They draw 1 card for each spell affected.",
+    "text": "Strip every component from your opponent's prepared spells; cancel target spell if it no longer meets its cost. They draw 1 card per spell stripped.",
     "comment": "Nuclear disruption. Opponent draws cards, which softens the blow and prevents feel-bad moments, but they lose all setup simultaneously."
   },
   {
@@ -431,7 +431,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "Create a Ward with 4 HP. Wards you control cannot be targeted or destroyed by your opponent this round.",
+    "text": "Create a Ward with 4 HP. This round, your opponent cannot target or destroy your Wards.",
     "comment": "Protects your Ward infrastructure from removal effects. Forces the opponent to grind through your Wards the hard way."
   },
   {
@@ -446,7 +446,7 @@
       "S": 2,
       "M": 1
     },
-    "text": "Choose a prepared spell your opponent controls. Exile it face-down until the end of the round. At end of round, return it to prepared spells face-up.",
+    "text": "Seal target prepared spell your opponent controls: it cannot be cast this round.",
     "comment": "Temporarily removes a threat without destroying it — stalls their gameplan for a full round. Flavor: the spell is locked in magical shadow."
   },
   {
@@ -461,7 +461,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "Destroy one of your Wards. Deal damage equal to that Ward's current HP to your opponent.",
+    "text": "Destroy one of your Wards. Deal damage equal to its remaining HP to your opponent.",
     "comment": "The core damage finisher for a Ward-heavy game. Converts a large late-game Ward (Aegis Eternal, Ritual Ward, Ward Eternal) into a direct damage burst. Rewards players who built Ward HP up with Fortify and Ward Pulse earlier."
   },
   {
@@ -476,7 +476,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Deal damage to your opponent equal to half the total damage you have prevented this match, rounded up. Damage your Wards absorb counts as prevented.",
+    "text": "Deal damage to your opponent equal to half your ledger, rounded up.",
     "comment": "Rewards a patient defensive game — the more attacks you've weathered and mitigated, the harder this hits. Pairs naturally with Absorb and other prevention effects to set up a large burst in the same round."
   },
   {
@@ -491,7 +491,7 @@
       "S": 2,
       "M": 1
     },
-    "text": "Deal 3 damage to your opponent for each Reaction spell you have played this round.",
+    "text": "Deal 3 damage to your opponent for each Reaction you have played this round.",
     "comment": "Turns a reactive turn into an offensive payoff — a player who has played 3 Reactions this round deals 9 damage. The SSM cost mirrors Inversion Field, reading the M component as the 'calculation and timing' cost."
   },
   {
@@ -506,7 +506,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "Until the end of the round, each time your opponent plays a Reaction, they take 3 damage.",
+    "text": "This round, whenever your opponent plays a Reaction, they take 3 damage.",
     "comment": "Punishes a reactive opponent: every Reaction they play costs them 3 HP. Forces a dilemma — keep reacting and bleed out, or sit on their cards and let your spells through."
   },
   {
@@ -521,7 +521,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "Deal 5 damage to your opponent. If you have a Ward in play, deal 7 damage instead.",
+    "text": "Deal 5 damage to your opponent, or 7 if you control a Ward.",
     "comment": "Simple and readable. The Ward bonus is modest enough that it isn't mandatory but rewards having one up. A pure damage card with a defensive condition — feels like Abjuration without being mechanical about it."
   },
   {
@@ -536,7 +536,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Sacrifice all your Wards. Deal 2 damage to your opponent for each HP those Wards had combined.",
+    "text": "Sacrifice all your Wards. Deal 2 damage to your opponent for each HP they had.",
     "comment": "High-risk, high-reward. A player sitting on Aegis Eternal (6 HP), Ritual Ward (5 HP), and a Reflective Ward (3 HP) could deal 28 damage in one cast. The SSV cost signals this is a deliberate off-school spike — you're converting your entire defensive position into a kill shot."
   },
   {
@@ -551,7 +551,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "When a spell deals damage to you, cancel it and deal double that spell's damage to your opponent instead.",
+    "text": "Cancel target spell. Deal twice the damage it would have dealt to your opponent.",
     "comment": "A damage-reflection Reaction that doesn't just mirror an incoming hit — it doubles it. The full SSS cost makes it compete with Total Negation for the same slot: a safe cancel versus a risky double-damage gamble."
   },
   {
@@ -566,7 +566,7 @@
       "S": 2,
       "M": 1
     },
-    "text": "Deal 4 damage to your opponent. If they have a Ward in play, destroy it and deal 4 additional damage instead.",
+    "text": "Deal 4 damage to your opponent. If they control a Ward, destroy it and deal 8 damage instead.",
     "comment": "Anti-Ward finisher for the mirror matchup. Removes the opponent's protection AND punishes them for having had it. Strong in any matchup where the opponent runs Wards, negligible bonus against Evocation."
   },
   {
@@ -581,7 +581,7 @@
       "S": 4,
       "M": 0
     },
-    "text": "Until the end of this round, you cannot be damaged by spells. Your opponent cannot play Reactions.",
+    "text": "This round, spells cannot damage you and your opponent cannot play Reactions.",
     "comment": "Full immunity. Requires two SS dual-component cards to satisfy the 2-card cap. Reserved for Level 15+ late-game dominance."
   },
   {
@@ -596,7 +596,7 @@
       "S": 3,
       "M": 1
     },
-    "text": "Create a Ward with 10 HP. This Ward cannot be destroyed or targeted by your opponent's effects. When this Ward is destroyed by damage, you gain 5 HP.",
+    "text": "Create a Ward with 10 HP that your opponent cannot target or destroy. When it breaks, heal 5.",
     "comment": "The ultimate Ward. Needs SSM + S or SS + SM component pairing. Aspirational card players build toward — rarely seen but devastating."
   },
   {
@@ -611,7 +611,7 @@
       "S": 4,
       "M": 0
     },
-    "text": "Cancel all spells currently on the stack. Neither player may cast spells or play Reactions until the start of your next turn.",
+    "text": "Cancel every spell on the stack. Your opponent cannot cast spells this turn or play Reactions until the start of your next turn.",
     "comment": "Board-reset Reaction. Wipes the entire stack, not just one spell. For epic late-game stalebreaks. A true Archmage moment."
   },
   {
@@ -641,7 +641,7 @@
       "S": 3,
       "M": 1
     },
-    "text": "Deal 4 damage to your opponent for each round that has passed in this match.",
+    "text": "Deal 4 damage to your opponent for each round of this match so far.",
     "comment": "Late-game bomb that rewards survival over time. In a round 7-8 game this deals 28-32 damage — enough to close from nearly full HP. The SSSM cost mirrors Ward Eternal, putting both at the same premium. A player has to choose which Level 4 bomb to build their deck toward."
   },
   {
@@ -656,7 +656,7 @@
       "S": 4,
       "M": 0
     },
-    "text": "Cancel all spells currently being cast by your opponent. Deal 3 damage for each spell cancelled this way.",
+    "text": "Cancel every spell your opponent has on the stack. Deal 3 damage to them for each spell cancelled.",
     "comment": "Offensive version of Archmage's Seal. Where Archmage's Seal stops everything and freezes the game, Null Burst stops everything and punishes it. If your opponent has 3 spells on the stack this hits for 9. Rewards understanding when your opponent is likely to stack multiple casts."
   },
   {
@@ -671,7 +671,7 @@
       "S": 4,
       "M": 0
     },
-    "text": "Destroy all Wards in play (yours and your opponent's). Deal 3 damage to your opponent for each Ward destroyed this way.",
+    "text": "Destroy every Ward on both sides. Deal 3 damage to your opponent for each Ward destroyed.",
     "comment": "Board wipe for the Ward layer. Destroys everything — including your own — and deals 3 per Ward. Creates a dramatic reset moment late in the game and rewards whoever had more Wards built up. The self-destruction cost prevents it from being purely one-sided."
   },
   {
@@ -686,7 +686,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Spend up to 4 of the damage you have prevented this match. Create a Ward with HP equal to the amount spent.",
+    "text": "Spend up to 4 from your ledger. Create a Ward with HP equal to the amount spent.",
     "comment": "Ledger family (2026-08-13). Spends the Reckoning bank for tempo - every point spent is a point the late nuke loses. Gives prevention a use against doom decks that never touch wards."
   },
   {
@@ -701,7 +701,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Spend 6 of the damage you have prevented this match: cancel target spell. Castable only while you have at least 6 prevented.",
+    "text": "Spend 6 from your ledger to cancel target spell. Castable only with 6 or more banked.",
     "comment": "Ledger family. A cancel funded by the bank instead of scarce attached fuel - the extra answer per round Abjuration lacked against multi-doom turns."
   },
   {
@@ -716,7 +716,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Spend up to 6 of the damage you have prevented this match. Heal half the amount spent, rounded down.",
+    "text": "Spend up to 6 from your ledger. Heal half the amount spent, rounded down.",
     "comment": "Ledger family. Sustain option - trades future Reckoning payload for present HP."
   },
   {
@@ -746,7 +746,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 3 damage to your opponent. Discard 1 random card from your hand.",
+    "text": "Deal 3 damage to your opponent. Discard 1 random card.",
     "comment": "Premium 1V damage that burns a card to push damage through — captures the school's identity of spending resources faster than recovery."
   },
   {
@@ -761,7 +761,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 1 damage. Place 1 Burn marker on your opponent. (At the start of each of your opponent's turns, each Burn marker on them deals 1 damage; then one Burn marker is removed.)",
+    "text": "Deal 1 damage to your opponent and give them 1 Burn.",
     "comment": "First Burn card establishes the keyword. DoT is Evocation's answer to Abjuration's slow defensive game — it ticks while the opponent is busy building Wards."
   },
   {
@@ -776,7 +776,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 1 damage. Your opponent discards 1 random component card from their hand."
+    "text": "Deal 1 damage to your opponent. They discard 1 random component."
   },
   {
     "id": "EVO-005",
@@ -790,7 +790,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Until the end of the round, your damaging spells deal +1 damage."
+    "text": "This round, your damaging spells deal +1 damage."
   },
   {
     "id": "EVO-006",
@@ -804,7 +804,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Return up to two Verbal-providing component cards from your discard pile to your hand."
+    "text": "Return up to 2 Verbal-providing components from your discard pile to your hand."
   },
   {
     "id": "EVO-007",
@@ -818,7 +818,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Discard 1 card from your hand. Deal 1 damage to your opponent for each component symbol on the discarded card.",
+    "text": "Discard 1 card. Deal 1 damage to your opponent for each symbol on it.",
     "comment": "Rewards decks that lean into multi-symbol cards. A discarded VSM tri-component deals 3 damage for a single V cast."
   },
   {
@@ -847,7 +847,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Deal 2 damage. Draw 1 card from your Resource Deck.",
+    "text": "Deal 2 damage to your opponent. Draw 1 card.",
     "comment": "The signature Evocation/Divination splash card. Costs the dual to discourage pure Evo decks from running it for free card advantage."
   },
   {
@@ -862,7 +862,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 1 damage to your opponent. Deal 2 additional damage to a target Ward they control."
+    "text": "Deal 1 damage to your opponent and 2 damage to a Ward they control."
   },
   {
     "id": "EVO-011",
@@ -890,7 +890,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 3 damage. This spell cannot be the target of Reactions.",
+    "text": "Deal 3 damage to your opponent. Reactions cannot target this spell.",
     "comment": "Direct counterplay to Phase Shift and other Reaction-based removal — Evocation's tax on Abjuration's reaction-heavy gameplan."
   },
   {
@@ -919,7 +919,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "When a spell or effect prevents or reduces damage you would deal, deal 2 damage to your opponent.",
+    "text": "Trap: when your opponent prevents or reduces damage you deal, deal 2 damage to them.",
     "comment": "Punishes Echo Shield and Dampen specifically. Recovers tempo when the opponent successfully blunts your offense."
   },
   {
@@ -934,7 +934,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "When your opponent attaches a Material (M) component card to a prepared spell, deal 2 damage to them.",
+    "text": "Trap: when your opponent attaches a Material (M) component to a prepared spell, deal 2 damage to them.",
     "comment": "The Divination hate-piece. Reinforces the rock-paper-scissors triangle: Evocation should beat pure Divination strategies."
   },
   {
@@ -993,7 +993,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 3 damage. Place 2 Burn markers on your opponent."
+    "text": "Deal 3 damage to your opponent and give them 2 Burn."
   },
   {
     "id": "EVO-020",
@@ -1007,7 +1007,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 2 damage divided as you choose among your opponent and any Wards they control (minimum 1 damage to each chosen target). Up to three targets total.",
+    "text": "Deal 2 damage to your opponent. If they control a Ward, 1 of that damage hits the Ward instead.",
     "comment": "Multi-target answer to Ward stacking. Lets Evocation chip through a Ritual Ward + Aegis Eternal board without overcommitting on a single spell."
   },
   {
@@ -1022,7 +1022,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Discard your hand. Deal 2 damage to your opponent for each card discarded this way.",
+    "text": "Discard your hand. Deal 2 damage to your opponent for each card discarded.",
     "comment": "The all-in turn. Pairs naturally with hand-fixing Items or a freshly drawn 5-card opening hand."
   },
   {
@@ -1037,7 +1037,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Place 3 Burn markers on your opponent. Until the end of the round, Burn markers on your opponent also trigger at the start of your turns.",
+    "text": "Give your opponent 3 Burn. This round, their Burn also triggers at the start of your turns.",
     "comment": "Doubles the Burn tick rate for the round. The Burn-archetype payoff at L2."
   },
   {
@@ -1052,7 +1052,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Until the end of the round, your damaging spells deal +2 damage. You take 1 damage at the start of each of your turns this round.",
+    "text": "This round, your damaging spells deal +2 damage and you take 1 damage at the start of each of your turns.",
     "comment": "Self-damage to power up — the school's design pillar in card form."
   },
   {
@@ -1067,7 +1067,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Deal 4 damage. Draw 1 card.",
+    "text": "Deal 4 damage to your opponent. Draw 1 card.",
     "comment": "L2 V/M splash. Evo/Div decks get sticky tempo here."
   },
   {
@@ -1082,7 +1082,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 1 damage to your opponent for each component card attached to their prepared spells.",
+    "text": "Deal 1 damage to your opponent for each component attached to their prepared spells.",
     "comment": "Punishes the opponent for stockpiling — strong against players setting up a big Ritual Ward or Sanctum."
   },
   {
@@ -1097,7 +1097,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Deal 3 damage. Until the end of the round, your opponent's Reaction spells cost 1 additional component to play.",
+    "text": "Deal 3 damage to your opponent. This round, their Reactions cost 1 additional component to play.",
     "comment": "Anti-Abjuration tax card. A successful cast makes every subsequent Reaction one component more painful."
   },
   {
@@ -1112,7 +1112,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 2 damage. Deal 1 additional damage for each Burn marker on your opponent.",
+    "text": "Deal 2 damage to your opponent, plus 1 for each Burn on them.",
     "comment": "Burn-archetype finisher at L2. Wildfire + Maelstrom is the natural combo line."
   },
   {
@@ -1127,7 +1127,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "When your opponent casts a spell, deal damage to them equal to the number of components attached to that spell. The spell still resolves.",
+    "text": "When your opponent casts a spell, deal damage to them equal to its attached components. The spell still resolves.",
     "comment": "Scales with the opponent's biggest plays. A VVV cast invites a 3-damage backlash; a VVM cast the same."
   },
   {
@@ -1142,7 +1142,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Cancel target spell or Reaction that requires a Material (M) component. Deal 2 damage to your opponent.",
+    "text": "Cancel target spell that requires a Material (M) component. Deal 2 damage to your opponent.",
     "comment": "The Evocation parallel to Counterbind — same anti-school role but with damage tacked on rather than pure denial."
   },
   {
@@ -1157,7 +1157,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "When a spell deals damage to you, deal 3 damage to your opponent."
+    "text": "Deal 3 damage to your opponent. The spell still resolves."
   },
   {
     "id": "EVO-031",
@@ -1201,7 +1201,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 4 damage to your opponent. Then deal 2 damage to each Ward they control.",
+    "text": "Deal 4 damage to your opponent, then 2 damage to each Ward they control.",
     "comment": "Sweeps a Ward-heavy board while still pressuring HP. The hard answer to a stacked Abjuration setup."
   },
   {
@@ -1216,7 +1216,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Discard your entire hand. Deal 2 damage to your opponent for each card discarded this way.",
+    "text": "Discard your hand. Deal 2 damage to your opponent for each card discarded.",
     "comment": "L3 version of Detonate. With a full hand this is 8-10 damage — the kind of all-in turn the doc describes as the school's core fantasy."
   },
   {
@@ -1231,7 +1231,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 5 damage. This spell cannot be cancelled, redirected, or reduced.",
+    "text": "Deal 5 damage to your opponent. This spell cannot be cancelled, redirected or reduced.",
     "comment": "Hard counter to Abjuration's denial suite. Once cast it WILL resolve — the opponent's only recourse is Wards."
   },
   {
@@ -1246,7 +1246,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Place 4 Burn markers on your opponent. Until the end of the round, each Burn marker on them deals an additional 1 damage when it triggers.",
+    "text": "Give your opponent 4 Burn. This round, each of their Burn deals 1 additional damage when it triggers.",
     "comment": "Top-end Burn payoff. With Wildfire already in play this turn dials damage to absurd levels — the Burn-archetype's haymaker."
   },
   {
@@ -1261,7 +1261,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 3 damage. Deal an additional 2 damage for each Reaction your opponent has cast this round.",
+    "text": "Deal 3 damage to your opponent, plus 2 for each Reaction they have cast this round.",
     "comment": "Punishes Abjuration directly. The longer they protected themselves the harder this hits."
   },
   {
@@ -1276,7 +1276,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Deal 4 damage. Draw 2 cards.",
+    "text": "Deal 4 damage to your opponent. Draw 2 cards.",
     "comment": "L3 V/M premium. Evo/Div decks chain Cataclysm into a follow-up cast next turn."
   },
   {
@@ -1306,7 +1306,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Destroy all Wards your opponent controls. Deal damage to your opponent equal to the total HP of Wards destroyed this way.",
+    "text": "Destroy all of your opponent's Wards. Deal damage to them equal to the HP those Wards had.",
     "comment": "The Ward-Collapse-mirrored spell. Inverts Abjuration's own win condition: instead of converting your Wards to damage you convert THEIRS."
   },
   {
@@ -1321,7 +1321,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "Until the end of the round, each time your opponent plays a Reaction, deal 3 damage to them.",
+    "text": "This round, whenever your opponent plays a Reaction, deal 3 damage to them.",
     "comment": "Lock-out card for the Abjuration matchup. Once this is on the table the opponent must decide whether defending is even worth it."
   },
   {
@@ -1336,7 +1336,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "When your opponent casts a spell, deal damage equal to twice that spell's level. The spell still resolves.",
+    "text": "When your opponent casts a spell, deal damage to them equal to twice its level. The spell still resolves.",
     "comment": "Scales 2/4/6/8 against L1/L2/L3/L4 spells. Designed to make casting big spells against you feel awful."
   },
   {
@@ -1351,7 +1351,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "When a spell deals damage to you, deal that damage doubled to your opponent."
+    "text": "When target spell deals damage to you, deal twice that damage to your opponent."
   },
   {
     "id": "EVO-044",
@@ -1365,7 +1365,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "When your opponent casts a spell or Reaction, deal 6 damage to them. The opponent's card still resolves."
+    "text": "When your opponent casts a spell or Reaction, deal 6 damage to them. It still resolves."
   },
   {
     "id": "EVO-045",
@@ -1379,7 +1379,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 12 damage to your opponent. This spell cannot be cancelled, prevented, redirected, or reduced.",
+    "text": "Deal 12 damage to your opponent. This spell cannot be cancelled, prevented, redirected or reduced.",
     "comment": "The signature finisher. Mirrors Absolute Defense in scope but inverted: where Absolute Defense ends a round in stalemate Apocalypse just ends the game."
   },
   {
@@ -1394,7 +1394,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Deal 6 damage. Until the end of the round, your damaging spells deal +2 damage and your Burn markers deal double damage.",
+    "text": "Deal 6 damage to your opponent. This round, your damaging spells deal +2 damage and your Burn deals double.",
     "comment": "L4 setup card for an Evo/Div deck that wants to chain spells in the same round. Best when there are still spell slots left to capitalize on."
   },
   {
@@ -1409,7 +1409,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "When you take damage from an opponent's spell, deal that damage tripled back to your opponent.",
+    "text": "When target spell deals damage to you, deal three times that damage to your opponent.",
     "comment": "The school's lone L4 Reaction. A 5-damage Fireball into Reckoning is 15 damage back — the threat of this card sitting face-down is itself the deterrent."
   },
   {
@@ -1424,7 +1424,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Draw 2 cards from your Resource Deck.",
+    "text": "Draw 2 cards.",
     "comment": "The school's baseline cantrip and clean reference point: 1 M for 1 card. The consistency engine every Divination deck is built around."
   },
   {
@@ -1439,7 +1439,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Look at the top 3 cards of your Resource Deck. Put one into your hand and the rest back on top in any order. Until the end of the round, spell damage dealt to you is reduced by 1.",
+    "text": "Look at the top 3 cards of your deck; take 1, put the rest back on top. This round, spell damage dealt to you is reduced by 1.",
     "comment": "Selection plus the foreseen-blow flinch - a round-long -1 against chip damage. The seer's early answer to cantrip aggro."
   },
   {
@@ -1454,7 +1454,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Look at the top 2 cards of your Resource Deck. Put one into your hand and the other on the bottom. Then remove 1 Burn marker from yourself.",
+    "text": "Look at the top 2 cards of your deck; take 1, put the other on the bottom. Remove 1 Burn from yourself.",
     "comment": "Cheap filtering that also shrugs off a Burn you saw coming. The rider is a pure Evocation tax - dead by design against burn-less schools."
   },
   {
@@ -1469,7 +1469,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Prophecy - at the start of your opponent's second turn from now, destroy their largest Ward.",
+    "text": "Prophecy (2 turns): destroy your opponent's largest Ward.",
     "comment": "Rewards a heavily tuned M deck — the more Material you run, the more often this draws. Quietly punishes greedy multi-school splashes."
   },
   {
@@ -1484,7 +1484,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Draw 2 cards. If either is a multi-symbol component card, draw a third.",
+    "text": "Draw 2 cards. If either is a multi-symbol component, draw a third.",
     "comment": "Pays off the dual- and tri-component cards Divination leans on to hit off-color costs. A tuned deck turns this into a two-for-one."
   },
   {
@@ -1499,7 +1499,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Return target component card from your discard pile to your hand.",
+    "text": "Return a component from your discard pile to your hand.",
     "comment": "The signature Divination recursion piece named in the design doc. Recycles spent components so the deck effectively never runs dry — the core of out-resourcing a slow Abjuration opponent."
   },
   {
@@ -1514,7 +1514,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Deal 2 damage to your opponent's weakest Ward. Look at the top 2 cards of your Resource Deck and put them back in any order.",
+    "text": "Deal 2 damage to your opponent's weakest Ward. Look at the top 2 cards of your deck and put them back in any order.",
     "comment": "Pick a component back up to re-aim it at a different spell. Pure tempo — undoes a misread or frees a piece for a better line."
   },
   {
@@ -1529,7 +1529,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Look at the component cards in your opponent's hand. Choose one; they discard it.",
+    "text": "Look at the components in your opponent's hand. They discard one of your choice.",
     "comment": "Targeted fuel denial - the seer cuts the thread the next turn hangs by. Attached components are safe, so attach-first play dodges it."
   },
   {
@@ -1559,7 +1559,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Draw 1 card, then put one card from your hand on top of your Resource Deck.",
+    "text": "Draw 1 card, then put a card from your hand on top of your deck.",
     "comment": "Loots without losing cards. Stashes a situational piece for later while digging toward what you need now."
   },
   {
@@ -1574,7 +1574,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Look at your opponent's hand. Deal 2 damage.",
+    "text": "Deal 2 damage to your opponent. Look at their hand.",
     "comment": "Cheap information. Against a reactive Abjuration deck, knowing which counters they hold lets you sequence safely around them."
   },
   {
@@ -1589,7 +1589,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Prophecy - at the start of your opponent's second turn from now, deal 2 damage to them.",
+    "text": "Prophecy (2 turns): deal 2 damage to your opponent.",
     "comment": "The L1 starter doom - gives the prophecy identity a presence in rounds 1-4 before the L2+ dooms unlock (m12 finding). Restored to 2-in-2 (m3 finding): at 3 the guaranteed clock outpaced Abjuration's entire wall economy."
   },
   {
@@ -1604,7 +1604,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "When your opponent casts a spell, draw 1 card and deal 1 damage to them.",
+    "text": "When your opponent casts a spell, draw 1 card and deal 1 damage to them. The spell still resolves.",
     "comment": "You saw it coming. A Reaction that stops nothing — it simply converts the opponent's tempo into your card advantage."
   },
   {
@@ -1619,7 +1619,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Return up to 2 component cards from your discard pile to your hand.",
+    "text": "Return up to 2 components from your discard pile to your hand.",
     "comment": "Scales the recursion plan. Two pieces back from the discard in one cast is how Divination refuels mid-grind."
   },
   {
@@ -1634,7 +1634,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Search your Resource Deck for a component card, reveal it, add it to your hand, then shuffle.",
+    "text": "Search your deck for a component and put it into your hand, then shuffle.",
     "comment": "Consistency incarnate — fetch the exact symbol or dual you're missing. The tutor that lets Divination always have the right piece."
   },
   {
@@ -1649,7 +1649,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Look at your opponent's hand, then draw 1 card.",
+    "text": "Look at your opponent's hand. Draw 1 card.",
     "comment": "Information with a card attached — the value-positive upgrade of Foretell. Reads their plan and pays you for looking."
   },
   {
@@ -1664,7 +1664,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Discard any number of cards, then draw that many cards.",
+    "text": "Discard any number of cards, then draw that many.",
     "comment": "Mass filtering. Trade a fistful of off-color bricks for fresh cards without losing card economy."
   },
   {
@@ -1694,7 +1694,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Prophecy - at the start of your opponent's second turn from now, deal 4 damage to them.",
+    "text": "Prophecy (2 turns): deal 4 damage to your opponent.",
     "comment": "The prophecy workhorse - a 4-damage doom on a 2-turn fuse. Announced pressure the opponent must plan around."
   },
   {
@@ -1709,7 +1709,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Draw 2 cards, then put one card from your hand on top of your Resource Deck.",
+    "text": "Draw 2 cards, then put a card from your hand on top of your deck.",
     "comment": "Net card advantage with a setup rider. Bank a situational piece on top for next turn while pulling ahead now."
   },
   {
@@ -1724,7 +1724,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Look at the top 5 cards of your Resource Deck and put them back in any order.",
+    "text": "Look at the top 5 cards of your deck and put them back in any order.",
     "comment": "Stacks your next several turns perfectly. Unflashy, but in a grind it is how Divination guarantees it never bricks."
   },
   {
@@ -1739,7 +1739,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Look at the top 3 cards of your Resource Deck and put them back in any order. Prophecy - at the start of your opponent's next turn, deal 2 damage to them.",
+    "text": "Look at the top 3 cards of your deck and put them back in any order. Prophecy (1 turn): deal 2 damage to your opponent.",
     "comment": "Scry and doom in one - sculpts your next draws while a short-fuse prophecy lands next turn."
   },
   {
@@ -1754,7 +1754,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "When your opponent casts a spell, return target component attached to it to their hand. If the spell no longer meets its cost, cancel it.",
+    "text": "Return a component attached to target spell to its owner's hand. If the spell no longer meets its cost, cancel it.",
     "comment": "Divination's answer to the stack: not a wall, but a scalpel. Pull one symbol and a greedy, exactly-met spell fizzles itself."
   },
   {
@@ -1769,7 +1769,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "When your opponent casts a spell, look at their hand and draw 1 card.",
+    "text": "When your opponent casts a spell, draw 1 card. The spell still resolves.",
     "comment": "The reactive value engine. Every cast they make tells you their hand and hands you a card."
   },
   {
@@ -1784,7 +1784,7 @@
       "S": 1,
       "M": 1
     },
-    "text": "Change the target of target spell to another legal target of your choice.",
+    "text": "Redirect target spell: it hits its caster instead.",
     "comment": "Off-color MS splash signaling Abjuration tech. Send the opponent's removal or burn into a Ward — or somewhere harmless. The classic Divination gotcha."
   },
   {
@@ -1799,7 +1799,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "Choose a Level 1 spell in your discard pile. Cast a copy of it this turn without paying its cost.",
+    "text": "Cast a copy of a Level 1 spell you have already cast this round, without paying its cost.",
     "comment": "The Evo/Div splash payoff — recast a spent Level 1 spell from your own discard for free. Patches Divination's thin damage with borrowed offense."
   },
   {
@@ -1814,7 +1814,7 @@
       "S": 0,
       "M": 3
     },
-    "text": "Shuffle your discard pile into your Resource Deck, then draw 2 cards.",
+    "text": "Shuffle your discard pile into your deck, then draw 2 cards.",
     "comment": "A free reshuffle - resets your deck WITHOUT the exhaustion damage a forced recycle costs, then draws 2. Anti-exhaustion tech."
   },
   {
@@ -1829,7 +1829,7 @@
       "S": 0,
       "M": 3
     },
-    "text": "Search your Resource Deck for any card and put it on top, then draw 3 cards.",
+    "text": "Search your deck for any card and put it into your hand, then draw 2 cards.",
     "comment": "The payoff tutor: arrange the perfect topdeck, then bury yourself in cards. Card advantage on this scale is how Divination overpowers a defensive opponent."
   },
   {
@@ -1844,7 +1844,7 @@
       "S": 0,
       "M": 3
     },
-    "text": "Look at the top 5 cards of your Resource Deck, take 2 into your hand, and put the rest back on top in any order.",
+    "text": "Look at the top 5 cards of your deck; take 2, put the rest back on top in any order.",
     "comment": "Deep selection plus advantage. Loads your hand and stacks the deck behind it in a single cast."
   },
   {
@@ -1859,7 +1859,7 @@
       "S": 0,
       "M": 3
     },
-    "text": "Look at your opponent's hand and the top 3 cards of their Resource Deck, then draw 2 cards.",
+    "text": "Look at your opponent's hand and the top 3 cards of their deck. Draw 2 cards.",
     "comment": "The information bomb. Total read on their next several turns while you pull two cards ahead — the precision school at full power."
   },
   {
@@ -1874,7 +1874,7 @@
       "S": 0,
       "M": 3
     },
-    "text": "Prophecy - at the start of your opponent's third turn from now, deal 7 damage to them.",
+    "text": "Prophecy (3 turns): deal 7 damage to your opponent.",
     "comment": "The mid-game doom - 7 damage on a 3-turn fuse; cast early and every one of their turns becomes a countdown."
   },
   {
@@ -1889,7 +1889,7 @@
       "S": 0,
       "M": 3
     },
-    "text": "Search your Resource Deck for up to 2 component cards, reveal them, add them to your hand, then shuffle.",
+    "text": "Search your deck for up to 2 components and put them into your hand, then shuffle.",
     "comment": "Double tutor — assemble both halves of an off-color cost at once. The setup that makes a Level 4 turn a certainty rather than a hope."
   },
   {
@@ -1904,7 +1904,7 @@
       "S": 0,
       "M": 3
     },
-    "text": "Draw cards until you have 7 cards in your hand.",
+    "text": "Draw until you have 7 cards in hand.",
     "comment": "Catch-up card advantage. The further behind on cards you are, the bigger it hits — swings a topdeck war hard in your favor."
   },
   {
@@ -1919,7 +1919,7 @@
       "S": 0,
       "M": 3
     },
-    "text": "When your opponent casts a spell, place a Seal counter on it. It does not resolve and returns to their prepared spells face-down; it cannot be cast again this round.",
+    "text": "Cancel target spell. It returns to its owner's prepared spells sealed: it cannot be cast again this round.",
     "comment": "Borrows Abjuration's Seal counter to lock a threat down for the round. Keeps their components attached but denies the cast — pure tempo theft."
   },
   {
@@ -1934,7 +1934,7 @@
       "S": 0,
       "M": 3
     },
-    "text": "Return target spell that is being cast to its owner's prepared spells face-down. Return all components attached to it to their owner's hand.",
+    "text": "Cancel target spell and return its components to its owner's hand. The spell returns to their prepared spells unspent.",
     "comment": "Not a counter — a do-over you force on the opponent. They keep the cards but lose the turn and the surprise. Divination's heaviest piece of stack interaction."
   },
   {
@@ -1949,7 +1949,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Choose a Level 1 or 2 spell in any discard pile. Cast a copy of it this turn without paying its cost.",
+    "text": "Cast a copy of a Level 1 or 2 spell either player has cast this round, without paying its cost.",
     "comment": "Off-color MMV. Recur any spent spell — yours or theirs. The Evo/Div splash that finally gives a manipulation deck a real kill turn."
   },
   {
@@ -1964,7 +1964,7 @@
       "S": 0,
       "M": 2
     },
-    "text": "Draw 2 cards. Deal 1 damage to your opponent for each card in your hand above five.",
+    "text": "Draw 2 cards. Deal 1 damage to your opponent for each card in your hand beyond 5.",
     "comment": "Divination's one concession to a clock: it only rewards the overflowing hand the deck naturally builds, and it costs off-color V. Still far too slow to race Evocation."
   },
   {
@@ -1979,7 +1979,7 @@
       "S": 1,
       "M": 2
     },
-    "text": "Look at your opponent's hand and choose a card. They discard it.",
+    "text": "Look at your opponent's hand. They discard a card of your choice.",
     "comment": "Off-color MMS hand attack. Rips the specific counter or bomb you spotted with Foretell out of their plan before they can use it."
   },
   {
@@ -1994,7 +1994,7 @@
       "S": 0,
       "M": 4
     },
-    "text": "Draw 4 cards. Your spells cannot be countered or redirected this turn.",
+    "text": "Draw 4 cards. This turn, your spells cannot be cancelled or redirected.",
     "comment": "The archmage's card-advantage engine. Draws into a kill and slams the door on the opponent's Reactions in the same breath."
   },
   {
@@ -2009,7 +2009,7 @@
       "S": 0,
       "M": 4
     },
-    "text": "Return all component cards from your discard pile to your hand.",
+    "text": "Return every component from your discard pile to your hand.",
     "comment": "Empties the discard back into your hand. After a long grind this is a dozen-plus cards at once — the ultimate refuel and the recursion school's signature."
   },
   {
@@ -2024,7 +2024,7 @@
       "S": 0,
       "M": 4
     },
-    "text": "Search your Resource Deck for up to 3 cards, reveal them, add them to your hand, then shuffle.",
+    "text": "Search your deck for up to 3 cards and put them into your hand, then shuffle.",
     "comment": "Assemble any combination you want in one cast. Total control over what comes next — the aspirational Divination payoff."
   },
   {
@@ -2039,7 +2039,7 @@
       "S": 0,
       "M": 4
     },
-    "text": "Prophecy - at the start of your opponent's third turn from now, deal 9 damage to them.",
+    "text": "Prophecy (3 turns): deal 9 damage to your opponent.",
     "comment": "The prophecy haymaker - 9 unwardable damage in 3 turns. Answer it at cast time or race it."
   },
   {
@@ -2054,7 +2054,7 @@
       "S": 0,
       "M": 4
     },
-    "text": "Each player shuffles their hand and discard pile into their Resource Deck, then draws 5 cards.",
+    "text": "Each player shuffles their hand and discard pile into their deck, then draws 5 cards.",
     "comment": "Symmetric on paper, lopsided in practice — you fire it when your deck is thin and your plan is set, resetting the grind entirely on your terms."
   },
   {
@@ -2069,7 +2069,7 @@
       "S": 0,
       "M": 3
     },
-    "text": "Cast a copy of target spell in any discard pile this turn without paying its cost. You may cast one additional spell this turn.",
+    "text": "Cast a copy of any spell cast this round, without paying its cost. You may cast 1 additional spell this turn.",
     "comment": "Off-color MMMV ultimate. Recur the biggest spell either player has cast and chain it into another — the Evo/Div deck's explosive finish."
   },
   {
@@ -2080,7 +2080,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Look at the top 2 cards of your Resource Deck. Put one into your hand and the other back on top.",
+    "text": "Look at the top 2 cards of your deck; take 1, put the other back on top.",
     "role": "Complement — Any (consistency)",
     "comment": "Card-neutral selection — no advantage, so it's safe at unlimited. Smooths every draw without accelerating you."
   },
@@ -2092,7 +2092,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Reveal the top card of your Resource Deck. If it is a component card, put it into your hand; otherwise, put it on the bottom.",
+    "text": "Look at the top card of your deck: a component goes to your hand, anything else to the bottom.",
     "role": "Complement — Any",
     "comment": "Digs only for components and whiffs in trainer-heavy hands, which self-limits how many you'd run."
   },
@@ -2104,7 +2104,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Draw a card, then put a card from your hand on top of your Resource Deck.",
+    "text": "Draw 1 card, then put a card from your hand on top of your deck.",
     "role": "Complement — Any",
     "comment": "Card-neutral loot that banks a situational card for next turn. Pure smoothing, no card gain."
   },
@@ -2116,7 +2116,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Discard a card, then draw a card.",
+    "text": "Discard 1 card, then draw 1 card.",
     "role": "Complement — Any (anti-flood)",
     "comment": "Turns a brick into a fresh card with no net advantage — fair to run in any quantity."
   },
@@ -2128,7 +2128,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Choose a basic (single-symbol) component card in your hand. Until end of turn, treat it as a different basic component of your choice.",
+    "text": "Choose a basic component in your hand. Until end of turn, treat it as a basic component of another symbol.",
     "role": "Complement — Any (color-fixing)",
     "comment": "Fixes color but not count, so it helps splashes hit off-color symbols without trivially building doubles. Only reshapes a card you already hold."
   },
@@ -2140,7 +2140,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Return target component card from your discard pile to the top of your Resource Deck.",
+    "text": "Return a component from your discard pile to the top of your deck.",
     "role": "Complement — Any (recursion)",
     "comment": "Deliberately slower than Divination's Recover (top of deck, not hand) so it complements that school instead of replacing it."
   },
@@ -2176,7 +2176,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Draw 2 cards, then put a card from your hand on top of your Resource Deck.",
+    "text": "Draw 2 cards, then put a card from your hand on top of your deck.",
     "role": "Complement — Any (draw)",
     "comment": "Net +1 with a bank — the workhorse draw. The one-Gambit-per-turn cap is the main brake on free card advantage."
   },
@@ -2200,7 +2200,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Discard a card, then search your Resource Deck for any one card, reveal it, add it to your hand, and shuffle.",
+    "text": "Discard 1 card, then search your deck for any card and put it into your hand; shuffle.",
     "role": "Complement — Any (consistency)",
     "comment": "Universal tutor; the discard cost plus one-per-turn keep it honest. The enabler that lets splash decks find their off-color piece."
   },
@@ -2212,7 +2212,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Search your Resource Deck for a same-symbol dual component (VV, SS, or MM), reveal it, add it to your hand, and shuffle.",
+    "text": "Search your deck for a same-symbol dual component (VV, SS or MM) and put it into your hand, then shuffle.",
     "role": "Complement — Any (ramp)",
     "comment": "Tutors the doubles that pay for L3/L4 costs — the clean way to make high-level ramp consistent without touching the 2-card cap."
   },
@@ -2224,7 +2224,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Return target component card from your discard pile to your hand.",
+    "text": "Return a component from your discard pile to your hand.",
     "role": "Complement — Any (recursion)",
     "comment": "One component back, once per turn — slower than Divination's spell recursion, so it supports the plan rather than owning it."
   },
@@ -2236,7 +2236,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Look at the top 4 cards of your Resource Deck and put them back on top in any order.",
+    "text": "Look at the top 4 cards of your deck and put them back in any order.",
     "role": "Complement — Any (anti-brick)",
     "comment": "Deep deck sculpting with no card gain. One-per-turn keeps it below Divination's Index."
   },
@@ -2248,7 +2248,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Reveal the top card of your Resource Deck. If it is a component card, attach it to one of your prepared spells; otherwise, put it into your hand.",
+    "text": "Look at the top card of your deck: a component attaches to one of your prepared spells, anything else goes to your hand.",
     "role": "Complement — Any (ramp / tempo)",
     "comment": "A bonus attachment beyond your one-per-turn limit, but off the top of the deck — ramp with built-in variance."
   },
@@ -2260,7 +2260,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Take 2 damage. This turn, you may cast 1 additional spell, provided you have a free spell slot and its components are already attached.",
+    "text": "Take 2 damage. This turn you may cast 1 additional spell, if you have a free slot and its components are attached.",
     "role": "Complement — Combo / aggro",
     "comment": "Extra cast is the biggest tempo swing here — gated by needing a second spell pre-assembled and a free slot. The highest-variance trainer; playtest before printing many."
   },
@@ -2272,7 +2272,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Gain 5 HP.",
+    "text": "Heal 5.",
     "role": "Counter — Evocation / aggro",
     "comment": "The anti-aggro stabilizer. One-per-turn stops burst healing, and it's dead against control, so it's a tech include, not a staple."
   },
@@ -2284,7 +2284,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Lose 2 HP. The next spell you cast this turn deals +3 damage.",
+    "text": "Take 2 damage. The next spell you cast this turn deals +3 damage.",
     "role": "Complement — Evocation / aggro",
     "comment": "Risk-for-reward, on theme for the burn school. Self-damage plus one-per-turn keep the lethal-turn push in check."
   },
@@ -2320,7 +2320,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Remove all Burn markers from yourself, then gain 1 HP for each marker removed this way.",
+    "text": "Remove all Burn from yourself. Heal 1 for each Burn removed.",
     "role": "Counter — Evocation / Burn",
     "comment": "Pure anti-Burn tech, useless outside that matchup. The lifegain rider rewards letting Burn stack before you clear it."
   },
@@ -2332,7 +2332,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Until the start of your next turn, your spells cannot be canceled or redirected by your opponent.",
+    "text": "Until the start of your next turn, your spells cannot be cancelled or redirected.",
     "role": "Counter — Abjuration (reactive)",
     "comment": "Pushes a key spell through a wall of counters — the aggro and combo answer to a control deck."
   },
@@ -2344,7 +2344,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Until the start of your next turn, your opponent cannot make you discard cards or remove cards from your hand or prepared spells.",
+    "text": "Until the start of your next turn, your opponent cannot make you discard or strip your cards or components.",
     "role": "Counter — Divination (hand attack)",
     "comment": "Shields a planned turn from hand-stripping like Mind Theft or Interrupt. Narrow and proactive."
   },
@@ -2356,7 +2356,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Shuffle your discard pile into your Resource Deck.",
+    "text": "Shuffle your discard pile into your deck.",
     "role": "Counter - Divination (prophecy / exhaustion)",
     "comment": "Anti-exhaustion tech - a free recycle that dodges the escalating reshuffle damage. Dead against a fast clock."
   },
@@ -2368,7 +2368,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Until the start of your next turn, your opponent cannot draw cards except their normal draw at the start of their turn.",
+    "text": "Until the start of your next turn, your opponent cannot draw cards beyond their normal turn draw.",
     "role": "Counter — Divination (draw engine)",
     "comment": "Shuts off the card-advantage turn. Useless against aggro, premium against a draw-heavy deck."
   },
@@ -2380,7 +2380,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Until the start of your next turn, each time your opponent plays a Reaction spell, they lose 2 HP.",
+    "text": "Until the start of your next turn, whenever your opponent plays a Reaction, they take 2 damage.",
     "role": "Counter — Abjuration (reactive)",
     "comment": "A free, splashable version of Evocation's reaction-punishers; dead against a deck that isn't holding up Reactions."
   },
@@ -2392,7 +2392,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Prophecy - at the start of your opponent's second turn from now, deal 2 damage to them.",
+    "text": "Prophecy (2 turns): deal 2 damage to your opponent.",
     "role": "Complement - Prophecy",
     "comment": "A free time-bomb for any deck - 2 damage on a 2-turn fuse. Modest alone; stacked copies build a schedule of dooms."
   },
@@ -2404,7 +2404,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Look at your opponent's hand. You may choose a component card in it; that card's owner puts it on top of their Resource Deck.",
+    "text": "Look at your opponent's hand. You may put a component from it on top of their deck.",
     "role": "Counter — Any (tempo / info)",
     "comment": "Soft disruption: bounce a key piece for a tempo hit (they redraw it, so it's not a two-for-one) and read their hand."
   }
