@@ -22,8 +22,8 @@ Tracked as #72. Everything marked "gated" below waits on these.
 
 1. **PixelLab arena + champion animation:** in (restart concepts with a new generation
    lever) or out (the felt drop-in #62 is the 1.0 board; #15 moves to post-1.0).
-2. **Audio:** none, or a minimal cue set (cast / damage / turn / win) plus the settings
-   toggle (#71).
+2. **Audio:** DECIDED 2026-10-03 — none in 1.0; a minimal cue set + settings toggle is
+   targeted for the 1.5 milestone.
 3. **Balance freeze thresholds:** per leg, the bot-level edge and piloted result that
    count as "ship" — written into the release-balance doc (#6).
 
@@ -111,7 +111,7 @@ The user is the art director: every batch is an `/art` session they run and judg
 - #68 P1 Keyboard basics + reduced motion
 - #69 P1 Minimum-viable responsive
 - #70 P1 Deck builder validation UX
-- #71 P2 Settings surface — **gated** on decision 2 for the audio toggle
+- #71 P2 Settings surface (motion, log verbosity; audio toggle arrives with 1.5)
 
 ### 8. Release
 

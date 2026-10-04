@@ -1,5 +1,5 @@
 {
-  "$note": "PROPOSED 2026-10-03 (issue #37) — awaiting the design authority's sign-off. The player-facing keyword vocabulary: each keyword projects one or more engine tags (CARD_TAGS, derived into tags.json) onto one glyph + one reminder line. Every tag must belong to exactly one keyword (the cards test enforces it). `glyph` names an SVG in art/glyphs; while a glyph is unshipped the client falls back to `abbr`. `terms` are the words RulesText bolds in card text.",
+  "$note": "ADOPTED 2026-10-03 (issue #37, DECISIONS log). The player-facing keyword vocabulary: each keyword projects one or more engine tags (CARD_TAGS, derived into tags.json) onto one glyph + one reminder line. Every tag must belong to exactly one keyword (the cards test enforces it). `glyph` names an SVG in art/glyphs; while a glyph is unshipped the client falls back to `abbr`. `terms` are the words RulesText bolds in card text.",
   "keywords": [
     {
       "id": "damage",
@@ -7,8 +7,13 @@
       "glyph": "damage",
       "abbr": "DMG",
       "tint": "#e0533d",
-      "tags": ["damage", "reflect"],
-      "terms": ["damage"],
+      "tags": [
+        "damage",
+        "reflect"
+      ],
+      "terms": [
+        "damage"
+      ],
       "reminder": "Deals damage to your opponent. Wards soak it first; what gets through hits HP."
     },
     {
@@ -17,8 +22,12 @@
       "glyph": "burn",
       "abbr": "BRN",
       "tint": "#ff8b3d",
-      "tags": ["burn"],
-      "terms": ["burn"],
+      "tags": [
+        "burn"
+      ],
+      "terms": [
+        "burn"
+      ],
       "reminder": "Burn markers each deal 1 damage at the start of the burned wizard's turn."
     },
     {
@@ -27,8 +36,13 @@
       "glyph": "ward",
       "abbr": "WRD",
       "tint": "#4a90e2",
-      "tags": ["ward"],
-      "terms": ["ward", "wards"],
+      "tags": [
+        "ward"
+      ],
+      "terms": [
+        "ward",
+        "wards"
+      ],
       "reminder": "A Ward absorbs damage before it reaches your HP and breaks when its HP runs out."
     },
     {
@@ -37,8 +51,14 @@
       "glyph": "unravel",
       "abbr": "UNR",
       "tint": "#a070e0",
-      "tags": ["ward-break"],
-      "terms": [],
+      "tags": [
+        "ward-break"
+      ],
+      "terms": [
+        "largest ward",
+        "weakest ward",
+        "loses half its hp"
+      ],
       "reminder": "Damages, halves or destroys the opponent's Wards or ongoing effects."
     },
     {
@@ -47,8 +67,12 @@
       "glyph": "prophecy",
       "abbr": "PRO",
       "tint": "#c9a0f0",
-      "tags": ["prophecy"],
-      "terms": ["prophecy", "prophesy", "doom"],
+      "tags": [
+        "prophecy"
+      ],
+      "terms": [
+        "prophecy"
+      ],
       "reminder": "Inscribes a doom that fires at the start of the opponent's turn once its fuse runs out. A Ward that soaks it shatters afterward."
     },
     {
@@ -57,8 +81,13 @@
       "glyph": "seal",
       "abbr": "SEL",
       "tint": "#c9a0f0",
-      "tags": ["seal"],
-      "terms": ["seal", "sealed"],
+      "tags": [
+        "seal"
+      ],
+      "terms": [
+        "seal",
+        "sealed"
+      ],
       "reminder": "A sealed prepared spell cannot be cast until the seal lifts."
     },
     {
@@ -67,8 +96,18 @@
       "glyph": "cancelled",
       "abbr": "CNL",
       "tint": "#ff5050",
-      "tags": ["cancel", "redirect"],
-      "terms": ["cancel", "cancels", "canceled", "cancelled", "negate", "redirect", "redirected"],
+      "tags": [
+        "cancel",
+        "redirect"
+      ],
+      "terms": [
+        "cancel",
+        "cancels",
+        "cancelled",
+        "cancelling",
+        "redirect",
+        "redirected"
+      ],
       "reminder": "Stops a spell on the stack from resolving, or turns it back on its caster."
     },
     {
@@ -77,8 +116,22 @@
       "glyph": "prevent",
       "abbr": "PRV",
       "tint": "#5bc8c0",
-      "tags": ["prevent", "immune"],
-      "terms": ["prevent", "prevents", "prevented", "reduce", "reduced", "cannot be countered", "cannot be the target"],
+      "tags": [
+        "prevent",
+        "immune"
+      ],
+      "terms": [
+        "prevent",
+        "prevents",
+        "prevented",
+        "reduced by",
+        "less damage",
+        "cannot target",
+        "cannot damage you",
+        "cannot be reduced",
+        "cannot be cancelled",
+        "reactions cannot target"
+      ],
       "reminder": "Reduces or blocks incoming damage, or makes something immune to Reactions. Prevented damage is banked in your ledger."
     },
     {
@@ -87,8 +140,14 @@
       "glyph": "draw",
       "abbr": "DRW",
       "tint": "#b98cf0",
-      "tags": ["draw"],
-      "terms": ["draw", "draws"],
+      "tags": [
+        "draw"
+      ],
+      "terms": [
+        "draw",
+        "draws",
+        "draw until"
+      ],
       "reminder": "Draws from your Resource Deck."
     },
     {
@@ -97,8 +156,14 @@
       "glyph": "discard",
       "abbr": "DSC",
       "tint": "#9aa0ad",
-      "tags": ["discard"],
-      "terms": ["discard", "discards"],
+      "tags": [
+        "discard"
+      ],
+      "terms": [
+        "discard",
+        "discards",
+        "discarded"
+      ],
       "reminder": "You discard from your own hand."
     },
     {
@@ -107,8 +172,18 @@
       "glyph": "cost",
       "abbr": "CST",
       "tint": "#ff8b8b",
-      "tags": ["self-damage", "ward-sacrifice", "opponent-draws"],
-      "terms": ["sacrifice", "take 1 damage", "take 2 damage", "take 3 damage"],
+      "tags": [
+        "self-damage",
+        "ward-sacrifice",
+        "opponent-draws"
+      ],
+      "terms": [
+        "sacrifice",
+        "take 1 damage",
+        "take 2 damage",
+        "take 3 damage",
+        "your opponent draws"
+      ],
       "reminder": "Costs you something extra: your own HP, one of your Wards, or a card for your opponent."
     },
     {
@@ -117,8 +192,16 @@
       "glyph": "disrupt",
       "abbr": "DIS",
       "tint": "#f0b352",
-      "tags": ["disrupt"],
-      "terms": [],
+      "tags": [
+        "disrupt"
+      ],
+      "terms": [
+        "strip",
+        "they discard",
+        "to their hand",
+        "to its owner's hand",
+        "on top of their deck"
+      ],
       "reminder": "Strips, bounces or discards the opponent's components or cards."
     },
     {
@@ -127,8 +210,14 @@
       "glyph": "recover",
       "abbr": "RCV",
       "tint": "#5bc8c0",
-      "tags": ["recover", "recast"],
-      "terms": ["return", "returns", "recover"],
+      "tags": [
+        "recover",
+        "recast"
+      ],
+      "terms": [
+        "from your discard pile",
+        "cast a copy"
+      ],
       "reminder": "Returns cards from the discard, or recasts a spell that was already cast."
     },
     {
@@ -137,8 +226,15 @@
       "glyph": "scry",
       "abbr": "SCR",
       "tint": "#b98cf0",
-      "tags": ["scry"],
-      "terms": ["look at the top", "search", "reorder", "put them back"],
+      "tags": [
+        "scry"
+      ],
+      "terms": [
+        "look at the top",
+        "search your deck",
+        "put them back",
+        "top card of your deck"
+      ],
       "reminder": "Looks at, reorders or searches your Resource Deck."
     },
     {
@@ -147,8 +243,14 @@
       "glyph": "eye",
       "abbr": "REV",
       "tint": "#b98cf0",
-      "tags": ["reveal"],
-      "terms": ["reveal", "reveals", "look at your opponent's hand"],
+      "tags": [
+        "reveal"
+      ],
+      "terms": [
+        "look at your opponent's hand",
+        "look at their hand",
+        "look at the components in your opponent's hand"
+      ],
       "reminder": "Shows you the opponent's hand."
     },
     {
@@ -157,8 +259,15 @@
       "glyph": "lock",
       "abbr": "LCK",
       "tint": "#caa46a",
-      "tags": ["lock"],
-      "terms": ["cannot cast", "cannot play", "cannot draw", "cannot react"],
+      "tags": [
+        "lock"
+      ],
+      "terms": [
+        "cannot play reactions",
+        "cannot cast",
+        "cannot draw",
+        "cost 1 additional"
+      ],
       "reminder": "Restricts or taxes the opponent's casts, Reactions or draws."
     },
     {
@@ -167,8 +276,18 @@
       "glyph": "empower",
       "abbr": "EMP",
       "tint": "#f0b352",
-      "tags": ["buff", "tempo"],
-      "terms": ["additional spell", "extra", "+1 damage", "+2 damage", "+3 damage"],
+      "tags": [
+        "buff",
+        "tempo"
+      ],
+      "terms": [
+        "additional spell",
+        "+1 damage",
+        "+2 damage",
+        "+3 damage",
+        "deals double",
+        "immediately attach"
+      ],
       "reminder": "More spell damage, an extra cast or attach, or a component trick."
     },
     {
@@ -177,8 +296,16 @@
       "glyph": "hp",
       "abbr": "HEA",
       "tint": "#8ce99a",
-      "tags": ["heal", "cleanse"],
-      "terms": ["heal", "heals", "gain hp", "remove 1 burn", "remove all burn"],
+      "tags": [
+        "heal",
+        "cleanse"
+      ],
+      "terms": [
+        "heal",
+        "heals",
+        "remove 1 burn",
+        "remove all burn"
+      ],
       "reminder": "Restores your HP or removes your own Burn."
     },
     {
@@ -187,8 +314,12 @@
       "glyph": "ledger",
       "abbr": "LDG",
       "tint": "#5bc8c0",
-      "tags": ["ledger"],
-      "terms": ["prevented this match"],
+      "tags": [
+        "ledger"
+      ],
+      "terms": [
+        "ledger"
+      ],
       "reminder": "Reads or spends the damage you have prevented this match."
     },
     {
@@ -197,8 +328,12 @@
       "glyph": "trap",
       "abbr": "TRP",
       "tint": "#ffd36b",
-      "tags": ["trap"],
-      "terms": [],
+      "tags": [
+        "trap"
+      ],
+      "terms": [
+        "trap"
+      ],
       "reminder": "Fires on its own when its trigger happens while this Reaction is prepared and fueled."
     }
   ]

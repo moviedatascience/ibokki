@@ -256,7 +256,7 @@ between both risks "bricking" (drawing V cards when you need M cards).
 
 ---
 
-## Keywords & Icons (PROPOSED 2026-10-03 — sign-off pending)
+## Keywords & Icons (adopted 2026-10-03)
 
 Cards must teach themselves: a player who knows the keywords can read any card in one
 pass, and the icons on a card face say at a glance what it does. The vocabulary is data

@@ -79,6 +79,28 @@ and reversible.
 
 ---
 
+## DECISIONS #4 — keyword vocabulary adopted (2026-10-03)
+
+- **What:** the 20-keyword player-facing vocabulary in `packages/cards/data/keywords.json`
+  (projecting the 28 engine-derived tags; Design_Doc "Keywords & Icons") is the language
+  cards are written in and the icon set the card face shows. Card text (#38) and the
+  keyword glyph art (#43) follow it; changes go through the JSON + the cards test.
+- **Who:** the user (design authority), on Claude's proposal. No party conceded.
+- **Reversible:** by editing the JSON; the derive/keyword tests keep tags, keywords and
+  card faces consistent.
+
+---
+
+## DECISIONS #5 — audio is not in 1.0; target 1.5 (2026-10-03)
+
+- **What:** 1.0 ships with no audio. A minimal cue set (cast / damage / turn / win) plus
+  the settings toggle is scheduled for the 1.5 milestone. #71 (settings surface) drops
+  its audio toggle; #72 keeps only the arena and balance-threshold decisions open.
+- **Who:** the user. No party conceded.
+- **Reversible:** only by a later numbered decision.
+
+---
+
 ## Open / undecided
 
 (none — add blocks here as disagreements arise)
