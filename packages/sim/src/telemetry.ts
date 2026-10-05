@@ -102,7 +102,7 @@ export class CardStatsCollector {
   /** Expression audit (blind-spot plan 1a, 2026-07-29): surface the cards the
    *  bots are NOT expressing, so valuation gaps find us instead of hiding in a
    *  40-row table. "Slotted but mute" = prepped in most games, almost never
-   *  cast (the Stone Stance / Reckoning / Cut-the-Thread signature). "Never
+   *  cast (the Ash Mantle / Reckoning / Cut-the-Thread signature). "Never
    *  seen" = in a spellbook, castable at this matchup's level ceiling, yet
    *  never prepped/cast/played (the Omen signature — id-order prep starvation).
    *  A flag means CHECK VALUATION, not "the card is dead" — five ledger

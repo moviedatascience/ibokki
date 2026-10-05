@@ -152,7 +152,7 @@ describe("solo match: history, W-L record, share, deterministic replay", () => {
     // Play a solo bot match to a natural end (the session cookie rides the WS handshake).
     const a = new TestClient(srv.wsUrl, alice.cookie);
     await a.open();
-    a.send({ t: "create", deck: { preset: "Riptide" }, bot: true });
+    a.send({ t: "create", deck: { preset: "Ashlight" }, bot: true });
     await until(() => a.latest !== null, "bot room created");
     await playRandom([a], rand, () => false);
     expect(a.latest!.gameOver).toBe(true);
@@ -189,7 +189,7 @@ describe("solo match: history, W-L record, share, deterministic replay", () => {
     const anon = new Http(srv.base);
     const meta = await anon.call("GET", `/api/replays/${token}`);
     expect(meta.status).toBe(200);
-    expect(meta.json.decks[0]).toBe("Riptide");
+    expect(meta.json.decks[0]).toBe("Ashlight");
     expect(meta.json.bot).toBe(true);
     expect(meta.json.result.winner).toBe(live.winner);
     expect(meta.text).not.toContain("alice");
@@ -303,7 +303,7 @@ describe("PvP forfeit: out-of-band endings in history and replay meta", () => {
     await until(() => c.lobby !== null, "room created");
     const d = new TestClient(srv.wsUrl, dave.cookie);
     await d.open();
-    d.send({ t: "join", code: c.lobby!.code, deck: { preset: "Bastion" } });
+    d.send({ t: "join", code: c.lobby!.code, deck: { preset: "Crucible" } });
     await until(() => c.latest !== null && d.latest !== null, "both seated");
 
     let acted = 0;

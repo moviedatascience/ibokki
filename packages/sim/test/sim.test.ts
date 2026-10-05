@@ -74,7 +74,7 @@ describe("HeuristicBot reaction timing", () => {
     expect(action.type).toBe("castReaction");
   });
 
-  it("holds a 2-card cancel (Phase Shift) against a Spark — a losing trade", () => {
+  it("holds a 2-card cancel (Snuff) against a Spark — a losing trade", () => {
     const action = new HeuristicBot(1).chooseAction(windowView("EVO-001", 30, ["ABJ-014"]), legalFor(1));
     expect(action.type).toBe("pass");
   });
@@ -86,7 +86,7 @@ describe("HeuristicBot reaction timing", () => {
 
   it("with both ready, fires the CHEAPEST sufficient reaction", () => {
     const action = new HeuristicBot(1).chooseAction(windowView("EVO-017", 30, ["ABJ-014", "ABJ-007"]), legalFor(2));
-    expect(action).toEqual({ type: "castReaction", preparedIndex: 1 }); // Echo Shield (S), not Phase Shift (SS)
+    expect(action).toEqual({ type: "castReaction", preparedIndex: 1 }); // Firebrick (S), not Snuff (SS)
   });
 
   it("desperation: at low HP it fires even a losing trade at a cantrip", () => {

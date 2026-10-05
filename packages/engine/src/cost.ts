@@ -40,7 +40,7 @@ export function meetsCost(cost: Cost, provided: Cost): boolean {
   return provided.V >= cost.V && provided.S >= cost.S && provided.M >= cost.M;
 }
 
-/** Reduce a cost's S requirement by `discount`, never below a 1-component minimum (Stone Stance). */
+/** Reduce a cost's S requirement by `discount`, never below a 1-component minimum (Ash Mantle). */
 export function discountCostS(cost: Cost, discount: number): Cost {
   if (discount <= 0) return cost;
   let s = Math.max(0, cost.S - discount);
@@ -48,7 +48,7 @@ export function discountCostS(cost: Cost, discount: number): Cost {
   return { V: cost.V, S: s, M: cost.M };
 }
 
-/** A Reaction's effective cost: your Stone Stance discount, then the opponent's S-tax (Aetheric Lock). */
+/** A Reaction's effective cost: your Ash Mantle discount, then the opponent's S-tax (Stifling Heat). */
 export function reactionCost(base: Cost, discountS: number, taxS: number): Cost {
   const c = discountCostS(base, discountS);
   return { V: c.V, S: c.S + Math.max(0, taxS), M: c.M };

@@ -95,7 +95,7 @@ export class HeuristicBot implements Agent {
 
     // Reaction timing: a Reaction's fuel cost real cards, so make the trade pay.
     // Fire the CHEAPEST ready reaction whose card cost the threat's value beats
-    // (a 1-S Echo Shield happily eats a 2-damage Spark; an SS cancel holds for
+    // (a 1-S Firebrick happily eats a 2-damage Spark; an SS cancel holds for
     // bigger spells). When desperate (low HP), fire anything at anything.
     const reactions = legal.filter((a) => a.type === "castReaction");
     if (reactions.length > 0 && top) {

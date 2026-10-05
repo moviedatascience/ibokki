@@ -114,7 +114,7 @@ export function measureCastPayoff(snapshot: GameState, defId: string): { payoff:
 
   // Measure PRIOR-FREE: with the live table active, cards that already have a
   // prior inflate their own `before` and deflate to ~0 — the generator would
-  // feed back on its own output (the first run's Omen/Foretell bug).
+  // feed back on its own output (the first run's Omen/Lantern Glare bug).
   _overridePrepThreat({});
   try {
     const before = evaluateState(s, 0);

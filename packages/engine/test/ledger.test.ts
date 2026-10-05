@@ -1,5 +1,5 @@
 /**
- * Ledger family (2026-08-13): Warding Tithe / Sealed Verdict / Restoring Rune
+ * Ledger family (2026-08-13): Banked Coals / Furnace Verdict / Hearth's Warmth
  * spend the lifetime prevention total that Reckoning reads — the first (and
  * only) decrementers of damagePreventedTotal. These tests pin the spend
  * semantics, the sub-minimum whiff guards, and that Reckoning reads whatever
@@ -87,20 +87,20 @@ function cast(id: string, setup?: (s: GameState) => void): GameState {
 }
 
 describe("ledger family — spending the Reckoning bank", () => {
-  it("Warding Tithe spends up to 4 and builds a ward that big", () => {
+  it("Banked Coals spends up to 4 and builds a ward that big", () => {
     const s = cast("ABJ-046", (st) => (st.players[0].damagePreventedTotal = 10));
     expect(s.players[0].wards).toHaveLength(1);
     expect(s.players[0].wards[0]!.hp).toBe(4);
     expect(s.players[0].damagePreventedTotal).toBe(6);
   });
 
-  it("Warding Tithe with a small bank spends what exists", () => {
+  it("Banked Coals with a small bank spends what exists", () => {
     const s = cast("ABJ-046", (st) => (st.players[0].damagePreventedTotal = 3));
     expect(s.players[0].wards[0]!.hp).toBe(3);
     expect(s.players[0].damagePreventedTotal).toBe(0);
   });
 
-  it("Restoring Rune heals half of what it spends, rounded down", () => {
+  it("Hearth's Warmth heals half of what it spends, rounded down", () => {
     const s = cast("ABJ-048", (st) => {
       st.players[0].hp = 20;
       st.players[0].damagePreventedTotal = 5;
@@ -130,7 +130,7 @@ describe("ledger family — spending the Reckoning bank", () => {
     expect(legalActions(s, 0).some((a) => a.type === "cast")).toBe(true);
   });
 
-  it("Sealed Verdict needs bank 6: gated in the window, cancels and spends when live", () => {
+  it("Furnace Verdict needs bank 6: gated in the window, cancels and spends when live", () => {
     const mk = (bank: number): GameState => {
       const s = blankState();
       s.players[0].level = 10; // past Verdict's L2 tier gate

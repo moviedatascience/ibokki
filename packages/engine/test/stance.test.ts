@@ -18,7 +18,7 @@ describe("experiment 1 card changes", () => {
     expect(state.players[0].hp).toBe(29);
   });
 
-  it("Stone Stance grants round-long -2 that zeroes cantrips (exp-1h)", () => {
+  it("Ash Mantle grants round-long -2 that zeroes cantrips (exp-1h)", () => {
     const state = fresh();
     run(state, 0, "ABJ-005");
     expect(state.players[0].ongoing).toContainEqual(

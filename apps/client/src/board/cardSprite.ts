@@ -109,7 +109,7 @@ export class CardVisual {
     this.stampC.visible = false;
     this.sealC.visible = false;
     // attC sits above `back` so attached-component chips stay visible on face-down cards
-    // (the opponent's attachments are public information). sealC likewise — a Runic Seal
+    // (the opponent's attachments are public information). sealC likewise — a Iron Brand
     // on a face-down spell is public.
     this.root.addChild(this.body, this.artC, this.band, this.edgeG, this.nameT, this.metaT, this.costC, this.tagC, this.back, this.attC, this.sealC, this.stampC, this.hl);
     this.setHighlight("none");
@@ -296,7 +296,7 @@ export class CardVisual {
     this.stampC.visible = on;
   }
 
-  /** Sealed banner: the spell can't be cast until the seal lifts (Runic Seal & co).
+  /** Sealed banner: the spell can't be cast until the seal lifts (Iron Brand & co).
    *  Wax-seal glyph + label (approved 2026-07-09); text-only when assets failed. */
   setSealed(on: boolean): void {
     // Built lazily on first seal; the container is the single source of truth for

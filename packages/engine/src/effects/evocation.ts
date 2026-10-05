@@ -37,7 +37,7 @@ register("EVO-009", (c) => {
   c.draw(1);
 });
 register("EVO-010", (c) => {
-  c.dealDamage(1); // Crackle
+  c.dealDamage(1); // Cinder Snap
   c.damageOneOpponentWard(2);
 });
 register("EVO-011", (c) => c.dealDamage(5)); // Inferno Lance (exp-9: 4->5)
@@ -45,7 +45,7 @@ register("EVO-012", (c) => c.dealDamage(3)); // Hex Bolt (reaction-immunity via 
 
 // ---- Level 2 ----
 register("EVO-017", (c) => c.dealDamage(6)); // Fireball (exp-9: 5->6)
-register("EVO-018", (c) => c.dealDamage(4)); // Lightning Bolt (min-1 floor via cardFlags.MIN_DAMAGE)
+register("EVO-018", (c) => c.dealDamage(4)); // White Flame (min-1 floor via cardFlags.MIN_DAMAGE)
 register("EVO-019", (c) => {
   c.dealDamage(3); // Inferno
   c.addBurnToOpponent(2);
@@ -80,12 +80,12 @@ register("EVO-026", (c) => {
   c.dealDamage(3); // Concussive Blast
   c.addReactionTax(1);
 });
-register("EVO-027", (c) => c.dealDamage(2 + c.opponentBurn())); // Maelstrom
+register("EVO-027", (c) => c.dealDamage(2 + c.opponentBurn())); // Flashover
 
 // ---- Level 3 ----
 register("EVO-032", (c) => c.dealDamage(7)); // Meteor
 register("EVO-033", (c) => {
-  c.dealDamage(4); // Chain Lightning
+  c.dealDamage(4); // Spreading Blaze
   c.damageEachOpponentWard(2);
 });
 register("EVO-034", (c) => {
@@ -97,13 +97,13 @@ register("EVO-036", (c) => {
   c.addBurnToOpponent(4); // Conflagration — each Burn marker deals +1 when it triggers this round
   c.addBurnAmplifier(1);
 });
-register("EVO-037", (c) => c.dealDamage(3 + 2 * c.opponentReactionsThisRound())); // Elemental Wrath
+register("EVO-037", (c) => c.dealDamage(3 + 2 * c.opponentReactionsThisRound())); // Blazing Wrath
 register("EVO-038", (c) => {
   c.dealDamage(4); // Cataclysm
   c.draw(2);
 });
 register("EVO-039", (c) => {
-  c.takeSelfDamage(3); // Voltaic Overload
+  c.takeSelfDamage(3); // Immolation
   c.dealDamage(8);
 });
 register("EVO-040", (c) => {
@@ -131,7 +131,7 @@ register("EVO-031", (c) => c.dealDamage(3)); // Combustive Counter
 register("EVO-042", (c) => c.dealDamage(2 * c.targetLevel())); // Annihilation Strike ("twice that spell's LEVEL" — printed text, not debt)
 register("EVO-043", (c) => c.reflectActualOntoTarget(2)); // Final Riposte — "that damage doubled"
 register("EVO-044", (c) => c.dealDamage(6)); // Cinder Storm
-register("EVO-047", (c) => c.reflectActualOntoTarget(3)); // Pyromancer's Reckoning — "that damage tripled"
+register("EVO-047", (c) => c.reflectActualOntoTarget(3)); // Pyromancer's Retort — "that damage tripled"
 
 // ---- Level 4 ----
 register("EVO-045", (c) => c.dealDamage(12)); // Apocalypse (unpreventable via cardFlags.UNPREVENTABLE — bypasses reduction + Inversion; wards still soak)

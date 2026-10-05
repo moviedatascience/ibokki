@@ -55,7 +55,7 @@ interface Desired {
   edge: EdgeSide;
   /** Cancelled ✕ stamp. */
   stamp: boolean;
-  /** Sealed banner (prepared spell locked by Runic Seal & co). */
+  /** Sealed banner (prepared spell locked by Iron Brand & co). */
   sealed: boolean;
   onTap: (() => void) | null;
   spawn: Pt | null; // enter-from position for new sprites

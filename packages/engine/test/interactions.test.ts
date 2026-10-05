@@ -186,10 +186,10 @@ describe("Overclock (GAM-008) — one extra cast this turn (playtest m9 regressi
   });
 });
 
-describe("Runic Seal (ABJ-010) interactive target through the full stack (m4 fix)", () => {
+describe("Iron Brand (ABJ-010) interactive target through the full stack (m4 fix)", () => {
   it("resolving the seal pauses for the CASTER, whose pick locks the chosen slot", () => {
     const s = blankState();
-    // P0 has Runic Seal (cost SS) prepared and fueled.
+    // P0 has Iron Brand (cost SS) prepared and fueled.
     s.players[0].prepared = [
       { spell: inst("ABJ-010"), faceDown: true, attached: [inst("CMP-S"), inst("CMP-S")], cast: false, sealed: false },
     ];
@@ -322,7 +322,7 @@ describe("Battle Trance buffs ONE spell, THIS turn (GAM-010) — live-match regr
     expect(s.players[1].hp).toBe(30 - (1 + 1 + 3)); // 25 — Trance consumed here
     expect(s.players[0].nextSpellBonus).toBe(0);
 
-    castAndResolve(s, "EVO-009", events); // Battery, base 2 — the fatal 6 from the match log
+    castAndResolve(s, "EVO-009", events); // Kindling, base 2 — the fatal 6 from the match log
     expect(s.players[1].hp).toBe(25 - (2 + 1)); // 22 — Catalyst only, NO stale +3
   });
 
@@ -365,21 +365,21 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     return apply(s, { type: "choose", iid: c.iid }).state;
   };
 
-  it("Omen (DIV-012): inscribes the L1 starter doom — 2 damage on a 2-turn fuse, no pause", () => {
+  it("Smoke Omen (DIV-012): inscribes the L1 starter doom — 2 damage on a 2-turn fuse, no pause", () => {
     const { state } = play("DIV-012", () => {});
     expect(state.players[1].prophecies).toEqual([{ amount: 2, turnsLeft: 2, pierce: false, defId: "DIV-012" }]);
     expect(state.pendingChoice).toBeNull();
     expect(state.players[1].hp).toBe(30); // nothing until the fuse runs out
   });
 
-  it("Seek (DIV-016): components only — trainers in the deck are not offered", () => {
+  it("Moth to Flame (DIV-016): components only — trainers in the deck are not offered", () => {
     const { state } = play("DIV-016", (s) => {
       s.players[0].resourceDeck = [inst("CMP-V"), inst("GAM-001"), inst("CMP-MM")];
     });
     expect(state.pendingChoice!.candidates.map((c) => c.defId).sort()).toEqual(["CMP-MM", "CMP-V"]);
   });
 
-  it("Premeditate (DIV-033): 'up to 2' — Done ends the choice after one pick", () => {
+  it("Gather Kindling (DIV-033): 'up to 2' — Done ends the choice after one pick", () => {
     const { state } = play("DIV-033", (s) => {
       s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-M"].map(inst);
     });
@@ -392,14 +392,14 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(s.players[0].resourceDeck).toHaveLength(2); // leftovers returned + shuffled
   });
 
-  it("Grand Design (DIV-042): 'any card' — trainers are searchable too", () => {
+  it("Lamplighter (DIV-042): 'any card' — trainers are searchable too", () => {
     const { state } = play("DIV-042", (s) => {
       s.players[0].resourceDeck = [inst("CMP-V"), inst("GAM-001")];
     });
     expect(state.pendingChoice!.candidates.map((c) => c.defId).sort()).toEqual(["CMP-V", "GAM-001"]);
   });
 
-  it("Index (DIV-022): the player orders the top five — first pick ends topmost", () => {
+  it("Smoke Reading (DIV-022): the player orders the top five — first pick ends topmost", () => {
     const { state } = play("DIV-022", (s) => {
       s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-M", "CMP-VV", "CMP-SS", "CMP-MM"].map(inst);
     });
@@ -430,7 +430,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(picked.players[1].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-VV"]); // top = end
   });
 
-  it("Far Sight (DIV-023): inscribes a short-fuse doom and stages a SELF-scry of the top 3", () => {
+  it("Short Wick (DIV-023): inscribes a short-fuse doom and stages a SELF-scry of the top 3", () => {
     const { state } = play("DIV-023", (s) => {
       // top = end of array: own top 3 are CMP-S, CMP-M, CMP-VV (VV topmost)
       s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-M", "CMP-VV"].map(inst);
@@ -446,7 +446,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(s.players[0].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V", "CMP-S", "CMP-VV", "CMP-M"]);
   });
 
-  it("Foretell (DIV-011): reveals the opponent's hand — nothing pickable, nothing moves", () => {
+  it("Lantern Glare (DIV-011): reveals the opponent's hand — nothing pickable, nothing moves", () => {
     const { state } = play("DIV-011", (s) => {
       s.players[1].hand = [inst("CMP-V"), inst("GAM-001")];
     });
@@ -461,7 +461,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(after.players[1].hand).toHaveLength(2); // untouched
   });
 
-  it("Perfect Information (DIV-031): reveals hand AND their top 3 without moving them", () => {
+  it("Everything Illuminated (DIV-031): reveals hand AND their top 3 without moving them", () => {
     const { state } = play("DIV-031", (s) => {
       s.players[0].resourceDeck = [inst("CMP-V"), inst("CMP-V"), inst("CMP-V")]; // fuel the draw 2
       s.players[1].hand = [inst("GAM-001")];
@@ -475,7 +475,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(after.players[1].hand).toHaveLength(1);
   });
 
-  it("Alchemy (DIV-018): discard ANY NUMBER of your choice, then draw that many", () => {
+  it("Feed the Fire (DIV-018): discard ANY NUMBER of your choice, then draw that many", () => {
     const { state } = play("DIV-018", (s) => {
       s.players[0].hand = ["CMP-V", "CMP-S", "CMP-M"].map(inst);
       s.players[0].resourceDeck = [inst("CMP-VV"), inst("CMP-SS")]; // top = SS
@@ -490,7 +490,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(s.players[0].hand.map((c) => c.defId)).toEqual(["CMP-S", "CMP-SS", "CMP-VV"]); // drew exactly 2
   });
 
-  it("Mind Theft (DIV-039): the CASTER picks which card the opponent discards", () => {
+  it("Burn the Letter (DIV-039): the CASTER picks which card the opponent discards", () => {
     const { state } = play("DIV-039", (s) => {
       s.players[1].hand = ["CMP-VV", "GAM-001", "CMP-M"].map(inst);
     });
@@ -501,7 +501,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(after.players[1].hand.map((c) => c.defId)).toEqual(["CMP-VV", "CMP-M"]);
   });
 
-  it("Mind Theft vs Iron Will: no choice, no discard", () => {
+  it("Burn the Letter vs Iron Will: no choice, no discard", () => {
     const { state } = play("DIV-039", (s) => {
       s.players[1].hand = [inst("CMP-VV")];
       s.players[1].ongoing.push({ id: 1, owner: 1, kind: "cannotBeForcedToDiscard", value: 1, expiry: "endOfRound" });
@@ -523,7 +523,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(after.players[0].discard.map((c) => c.defId)).toEqual(["GAM-001", "CMP-VV"]);
   });
 
-  it("Calculated Draw (DIV-029): pick ANY deck card; the rest keep their order, then draw 2", () => {
+  it("Lamp in the Dark (DIV-029): pick ANY deck card; the rest keep their order, then draw 2", () => {
     const { state } = play("DIV-029", (s) => {
       s.players[0].resourceDeck = ["CMP-V", "CMP-S", "CMP-M", "CMP-VV"].map(inst); // top = VV
     });
@@ -535,7 +535,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(after.players[0].resourceDeck.map((c) => c.defId)).toEqual(["CMP-V"]);
   });
 
-  it("Reclaim (DIV-015): return UP TO 2 discard components of your choice to hand", () => {
+  it("From the Ashes (DIV-015): return UP TO 2 discard components of your choice to hand", () => {
     const { state } = play("DIV-015", (s) => {
       s.players[0].discard = ["CMP-V", "GAM-001", "CMP-SS", "CMP-M"].map(inst);
     });
@@ -549,7 +549,7 @@ describe("auto-resolve conversions (2026-07 sweep)", () => {
     expect(s.players[0].discard.map((c) => c.defId)).toEqual(["CMP-V", "GAM-001", "CMP-M"]);
   });
 
-  it("Calculated Draw with an empty deck: just the draws (exhaustion path)", () => {
+  it("Lamp in the Dark with an empty deck: just the draws (exhaustion path)", () => {
     const { state } = play("DIV-029", (s) => {
       s.players[0].resourceDeck = [];
       s.players[0].discard = [inst("CMP-V")]; // reshuffle fodder
@@ -701,7 +701,7 @@ describe("printed reaction triggers gate the window (piloted m10/m12 findings)",
     expect(() => apply(s, { type: "castReaction", preparedIndex: 1 })).not.toThrow();
   });
 
-  it("Counterbind is whiff-guarded: refused vs an M-less cast, offered vs an M cast", () => {
+  it("Char the Reagent is whiff-guarded: refused vs an M-less cast, offered vs an M cast", () => {
     const vsSpark = windowOn("EVO-001", "CMP-V", ["ABJ-015", "CMP-S", "CMP-M"]);
     expect(legalActions(vsSpark, 0).some((a) => a.type === "castReaction")).toBe(false);
     expect(() => apply(vsSpark, { type: "castReaction", preparedIndex: 0 })).toThrow(/trigger/);
@@ -718,10 +718,10 @@ describe("printed reaction triggers gate the window (piloted m10/m12 findings)",
   });
 
   it("Mana Burn vs Reactions (exp-9 print): offered on an M-costing Reaction, refused on an M-less one", () => {
-    // Offered: P0 answers DIV-001 with Counterbind (SM) — P1's Mana Burn may answer it.
+    // Offered: P0 answers DIV-001 with Char the Reagent (SM) — P1's Mana Burn may answer it.
     let s = windowOn("DIV-001", "CMP-M", ["ABJ-015", "CMP-S", "CMP-M"]);
     s.players[1].prepared.push(prep("EVO-029", "CMP-V", "CMP-M"));
-    s = apply(s, { type: "castReaction", preparedIndex: 0 }).state; // Counterbind tops
+    s = apply(s, { type: "castReaction", preparedIndex: 0 }).state; // Char the Reagent tops
     expect(legalActions(s, 1).some((a) => a.type === "castReaction")).toBe(true);
     // Refused: same shape but the top is Backdraft (V — M-less).
     let t = windowOn("DIV-001", "CMP-M", ["EVO-013", "CMP-V"]);
@@ -752,7 +752,7 @@ describe("round leader alternates (ruling 2026-07-03)", () => {
 });
 
 describe("Divination early-game buffs (2026-07-04)", () => {
-  it("Foretell (DIV-011) deals 2", () => {
+  it("Lantern Glare (DIV-011) deals 2", () => {
     const s = blankState();
     const events: GameEvent[] = [];
     const card = inst("DIV-011");
@@ -760,7 +760,7 @@ describe("Divination early-game buffs (2026-07-04)", () => {
     expect(s.players[1].hp).toBe(28);
   });
 
-  it("Anticipate (DIV-014) draws 1 and stings for 1", () => {
+  it("Flicker (DIV-014) draws 1 and stings for 1", () => {
     const s = blankState();
     s.players[0].resourceDeck = [inst("CMP-M")];
     const events: GameEvent[] = [];
@@ -876,13 +876,13 @@ describe("reflect-by-actual-damage + redirect (the retired SIMPLIFIED reaction f
     expect(s.players[0].hp).toBe(30 - 6); // 3 doubled
   });
 
-  it("Pyromancer's Reckoning triples the actual damage", () => {
+  it("Pyromancer's Retort triples the actual damage", () => {
     const { s } = fireballWithReaction("EVO-047");
     expect(s.players[1].hp).toBe(30 - 6);
     expect(s.players[0].hp).toBe(30 - 18);
   });
 
-  it("Retributive Strike cancels and reflects the PREDICTED damage doubled", () => {
+  it("Anvil's Answer cancels and reflects the PREDICTED damage doubled", () => {
     const { s, events } = fireballWithReaction("ABJ-037", (st) => {
       st.players[0].ongoing.push({ id: 1, owner: 0, kind: "damageBuff", value: 1, expiry: "endOfRound" });
     });
@@ -930,7 +930,7 @@ describe("trigger-window traps + riders (the remaining SIMPLIFIED family)", () =
     expect(r.state.players[0].prepared[1]!.attached).toHaveLength(0);
   });
 
-  it("Mana Drain fires on the opponent's attach and bounces the component", () => {
+  it("Spark Arrester fires on the opponent's attach and bounces the component", () => {
     const s = blankState();
     s.players[0].prepared = [{ spell: inst("EVO-017"), faceDown: false, attached: [], cast: false, sealed: false }];
     const comp = inst("CMP-V");
@@ -969,7 +969,7 @@ describe("trigger-window traps + riders (the remaining SIMPLIFIED family)", () =
     expect(s.players[1].hp).toBe(20 + 3); // floor(6/2)
   });
 
-  it("Phase Shift cancels and grants an instant-speed attach; passing forfeits it", () => {
+  it("Snuff cancels and grants an instant-speed attach; passing forfeits it", () => {
     const s = blankState();
     s.players[0].level = 10;
     s.players[0].prepared = [{ spell: inst("EVO-017"), faceDown: false, attached: [inst("CMP-VV")], cast: false, sealed: false }];
@@ -982,9 +982,9 @@ describe("trigger-window traps + riders (the remaining SIMPLIFIED family)", () =
     ];
     let r = apply(s, { type: "cast", preparedIndex: 0 });
     r = apply(r.state, { type: "pass" }); // P0 lets it proceed
-    r = apply(r.state, { type: "castReaction", preparedIndex: 0 }); // P1: Phase Shift
+    r = apply(r.state, { type: "castReaction", preparedIndex: 0 }); // P1: Snuff
     r = apply(r.state, { type: "pass" }); // P0
-    r = apply(r.state, { type: "pass" }); // P1 → Phase Shift resolves: cancel + grant
+    r = apply(r.state, { type: "pass" }); // P1 → Snuff resolves: cancel + grant
     expect(r.state.players[1].freeAttach).toBe(1);
     r = apply(r.state, { type: "pass" }); // P0 passes over the dead Fireball → priority P1
     const atWindow = r.state;
@@ -1034,7 +1034,7 @@ describe("trigger-window traps + riders (the remaining SIMPLIFIED family)", () =
     expect(attachedSymbols(rp.state.players[0], rp.state.players[0].prepared[0]!)).toEqual({ V: 1, S: 0, M: 0 });
   });
 
-  it("Apocalypse bypasses ongoing reduction and Inversion Field; wards still soak", () => {
+  it("Apocalypse bypasses ongoing reduction and Salamander's Skin; wards still soak", () => {
     const s = blankState();
     s.players[0].level = 20; // L4 spell — clear the cast-level gate
     s.players[0].prepared = [{ spell: inst("EVO-045"), faceDown: false, attached: [], cast: false, sealed: false }];

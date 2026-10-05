@@ -147,8 +147,8 @@ describe("online server", () => {
 
     // Both viewers see themselves as "you" (relative ids) with their own deck label
     // first (legacy `school` fields resolve to that school's archetype preset).
-    expect(a.latest!.schools).toEqual(["Emberworks", "Bastion"]);
-    expect(b.latest!.schools).toEqual(["Bastion", "Emberworks"]);
+    expect(a.latest!.schools).toEqual(["Emberworks", "Crucible"]);
+    expect(b.latest!.schools).toEqual(["Crucible", "Emberworks"]);
 
     // Poll-based drive loop (a waitFor race would leave dangling timeout rejections).
     const until = async (pred: () => boolean, label: string, timeoutMs = 10_000) => {

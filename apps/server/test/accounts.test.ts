@@ -135,7 +135,7 @@ describe("decks", () => {
   it("lists presets without login; saving requires login", async () => {
     const anon = new Client();
     const list = await anon.call("GET", "/api/decks");
-    expect(list.json.presets.map((p: { name: string }) => p.name).sort()).toEqual(["Bastion", "Emberworks", "Riptide"]);
+    expect(list.json.presets.map((p: { name: string }) => p.name).sort()).toEqual(["Ashlight", "Crucible", "Emberworks"]);
     expect(list.json.decks).toEqual([]);
     expect((await anon.call("POST", "/api/decks", customDeck())).status).toBe(401);
   });
@@ -192,11 +192,11 @@ describe("decks", () => {
     await wait(() => code !== "");
 
     await opened(wsB);
-    wsB.send(JSON.stringify({ t: "join", code, deck: { preset: "Bastion" } }));
+    wsB.send(JSON.stringify({ t: "join", code, deck: { preset: "Crucible" } }));
     await wait(() => frames.length > 0);
 
     expect(frames[0].error).toBeUndefined();
-    expect(frames[0].schools).toEqual(["Alice Burn", "Bastion"]);
+    expect(frames[0].schools).toEqual(["Alice Burn", "Crucible"]);
     wsA.close();
     wsB.close();
   });

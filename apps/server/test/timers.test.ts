@@ -65,7 +65,7 @@ describe("turn clocks", () => {
     a.send({ t: "create", deck: { preset: "Emberworks" } });
     await until(() => a.lobby !== null, "room created");
     await b.open();
-    b.send({ t: "join", code: a.lobby!.code, deck: { preset: "Bastion" } });
+    b.send({ t: "join", code: a.lobby!.code, deck: { preset: "Crucible" } });
     await until(() => a.latest !== null && b.latest !== null, "both seated with frames");
 
     // Prepare is simultaneous: both viewers see their own clock running.
@@ -92,7 +92,7 @@ describe("turn clocks", () => {
     // Solo bot rooms run no clocks — a learning game is never lost to a timer.
     const c = new TestClient(srv.url);
     await c.open();
-    c.send({ t: "create", deck: { preset: "Riptide" }, bot: true });
+    c.send({ t: "create", deck: { preset: "Ashlight" }, bot: true });
     await until(() => c.latest !== null, "bot room first frame");
     expect(c.latest!.clock).toBeUndefined();
     c.close();

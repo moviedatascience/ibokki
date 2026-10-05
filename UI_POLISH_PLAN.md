@@ -73,7 +73,7 @@ work by product impact and readiness.
 |---|---|---|
 | **Home hero, OG image (1200×630), victory/defeat banners (~1120×400), venue bgs** | No upscaler in the ComfyUI workflow (native ~1MP) | Generate at 1024×512 and art-direct the composition now; re-finish when upscaling exists. Dark low-contrast hero may be acceptable at native res |
 | **Avatars / bot personas (128×128)** | No matting/background-removal step; halo-free matte is a QA gate | Berenice solo portrait already reserved for cropping; a dark-vignette square crop (no transparency) fits the plate today |
-| **Deck cover art** (Emberworks/Bastion/Riptide) | Asset is easy (Cover register); the consumer is a custom deck-picker UI that doesn't exist (native `<select>` can't host images) | Ship crest + school-color rows first (§2.2), covers when the picker lands |
+| **Deck cover art** (Emberworks/Crucible/Ashlight) | Asset is easy (Cover register); the consumer is a custom deck-picker UI that doesn't exist (native `<select>` can't host images) | Ship crest + school-color rows first (§2.2), covers when the picker lands |
 | **Tier 2–3 card illustrations** (~119) + `__alt` variants | Only bandwidth — same pipeline as Tier 1 | After Tier 1 proves the loop |
 | **FX textures** (glow/burst/seal stamps) | Low urgency; bible §11 exempts board FX from the glow ban but requires the ink language | `flashPlate`/`flashStack`, `HL_STYLE` |
 
@@ -149,8 +149,9 @@ presentation + small protocol additions.
    for a new player with no opponent and it's currently the third button in the online
    panel (`Home.tsx:169-172`).
 2. **[L] Bot personas from the cast canon**: Grandmother Cinder (Evo/Emberworks),
-   Berenice the Adamant (Abj/Bastion), Vess of the Undertow (Div/Riptide) — names on the
-   nameplate/log/summary instead of "Opponent · Bastion", portrait on the plate when
+   Berenice the Adamant (Abj/Crucible), the Lamp's archmage (Div/Ashlight; unnamed —
+   Vess of the Undertow is reserved for the Water element, DECISIONS #6) — names on the
+   nameplate/log/summary instead of "Opponent · Crucible", portrait on the plate when
    avatars land (ART: 1c avatars; cast references already canon in `chosen.json`).
    Cheap path: `botPersona` field in the created/state payload (`app.ts:479-483`).
 3. **[S] Hide PvP chrome in solo**: room code, "Opponent: connected", seed in log line,

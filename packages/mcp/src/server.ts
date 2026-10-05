@@ -24,7 +24,7 @@ const server = new McpServer({ name: "ibokki-playtest", version: "0.1.0" });
 
 server.tool(
   "new_match",
-  "Start a new Ibokki match between two schools. `controls` picks which side(s) you (Claude) play: \"0\", \"1\", \"both\", or \"pvp\" (two separately-sighted pilots share the match: every act/match_state call then REQUIRES a `seat`, views are redacted per seat, autoplay is disabled). `deck1`/`deck2` optionally override a side's deck: a preset name (Emberworks/Bastion/Riptide) or a JSON DeckDefinition {name?, spellbook, resourceDeck} validated against the construction rules. `bot` picks the strength of the non-controlled side (default heuristic; greedy is much stronger, search strongest but ~1s/move; unused in pvp). Returns the opening position and your numbered legal actions.",
+  "Start a new Ibokki match between two schools. `controls` picks which side(s) you (Claude) play: \"0\", \"1\", \"both\", or \"pvp\" (two separately-sighted pilots share the match: every act/match_state call then REQUIRES a `seat`, views are redacted per seat, autoplay is disabled). `deck1`/`deck2` optionally override a side's deck: a preset name (Emberworks/Crucible/Ashlight) or a JSON DeckDefinition {name?, spellbook, resourceDeck} validated against the construction rules. `bot` picks the strength of the non-controlled side (default heuristic; greedy is much stronger, search strongest but ~1s/move; unused in pvp). Returns the opening position and your numbered legal actions.",
   {
     school1: SCHOOL.describe("Player 0's school"),
     school2: SCHOOL.describe("Player 1's school"),

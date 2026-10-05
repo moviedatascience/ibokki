@@ -121,13 +121,13 @@ describe("Evocation effects", () => {
     expect(state.players[1].hp).toBe(30 - 7); // 6 + 1 buff
   });
 
-  it("Voltaic Overload (EVO-039) costs 3 self HP to deal 8", () => {
+  it("Immolation (EVO-039) costs 3 self HP to deal 8", () => {
     const { state } = cast("EVO-039");
     expect(state.players[0].hp).toBe(27);
     expect(state.players[1].hp).toBe(22);
   });
 
-  it("Maelstrom (EVO-027) scales with the opponent's Burn", () => {
+  it("Flashover (EVO-027) scales with the opponent's Burn", () => {
     const { state } = cast("EVO-027", (s) => {
       s.players[1].burn = 3;
     });
@@ -153,7 +153,7 @@ describe("Evocation effects", () => {
     expect(state.players[1].hp).toBe(30 - 5);
   });
 
-  it("Chain Lightning (EVO-033) deals 4 (ward-soaked) then 2 to each remaining ward", () => {
+  it("Spreading Blaze (EVO-033) deals 4 (ward-soaked) then 2 to each remaining ward", () => {
     const { state } = cast("EVO-033", (s) => {
       s.players[1].wards = [
         { wid: 1, hp: 2 },
@@ -178,7 +178,7 @@ describe("Evocation effects", () => {
 });
 
 describe("Divination effects", () => {
-  it("Insight (DIV-001) draws two cards (2026-07 buff)", () => {
+  it("Lamplight (DIV-001) draws two cards (2026-07 buff)", () => {
     const { state } = cast("DIV-001", (s) => {
       s.players[0].resourceDeck = [inst("CMP-M"), inst("CMP-M"), inst("CMP-M")];
     });
@@ -186,7 +186,7 @@ describe("Divination effects", () => {
     expect(state.players[0].resourceDeck).toHaveLength(1);
   });
 
-  it("Premonition (DIV-005) draws two, plus a third if either is multi-symbol", () => {
+  it("Scent of Smoke (DIV-005) draws two, plus a third if either is multi-symbol", () => {
     const hit = cast("DIV-005", (s) => {
       s.players[0].resourceDeck = [inst("CMP-M"), inst("CMP-VV"), inst("CMP-V")]; // top two: V, VV
     });
@@ -198,14 +198,14 @@ describe("Divination effects", () => {
     expect(miss.state.players[0].hand).toHaveLength(2); // singles only — no bonus
   });
 
-  it("Foreclosure (DIV-020) inscribes a 4-damage doom on a 2-turn fuse (soakable since exp-8)", () => {
+  it("Slow Match (DIV-020) inscribes a 4-damage doom on a 2-turn fuse (soakable since exp-8)", () => {
     const { state, events } = cast("DIV-020", () => {});
     expect(state.players[1].prophecies).toEqual([{ amount: 4, turnsLeft: 2, pierce: false, defId: "DIV-020" }]);
     expect(events.some((e) => e.type === "prophecyCreated" && e.target === 1 && e.amount === 4 && e.turns === 2)).toBe(true);
     expect(state.players[1].hp).toBe(30); // nothing happens until the fuse runs out
   });
 
-  it("Recover (DIV-006) pauses for the player to pick the discard component", () => {
+  it("Sift the Ashes (DIV-006) pauses for the player to pick the discard component", () => {
     const { state } = cast("DIV-006", (s) => {
       s.players[0].discard = [inst("CMP-M")];
     });
@@ -216,7 +216,7 @@ describe("Divination effects", () => {
     expect(next.players[0].discard).toHaveLength(0);
   });
 
-  it("Unbind (DIV-019) destroys an opponent ward and draws", () => {
+  it("Burn Through (DIV-019) destroys an opponent ward and draws", () => {
     const { state } = cast("DIV-019", (s) => {
       s.players[1].wards = [{ wid: 1, hp: 3 }];
       s.players[0].resourceDeck = [inst("CMP-M")];
@@ -225,7 +225,7 @@ describe("Divination effects", () => {
     expect(state.players[0].hand).toHaveLength(1);
   });
 
-  it("Fortress (ABJ-029) shields ALL own wards for the round — no permanent flags (exp-8d fix)", () => {
+  it("Forgewall (ABJ-029) shields ALL own wards for the round — no permanent flags (exp-8d fix)", () => {
     const { state } = cast("ABJ-029", (s) => {
       s.players[0].wards = [{ wid: 900, hp: 8 }];
     });
@@ -245,7 +245,7 @@ describe("Divination effects", () => {
 
   // ---- exp-8 unraveling suite ----
 
-  it("Prophecy of Collapse (DIV-004) inscribes a ward-collapse doom on a 2-turn fuse", () => {
+  it("Omen of Ash (DIV-004) inscribes a ward-collapse doom on a 2-turn fuse", () => {
     const { state, events } = cast("DIV-004", () => {});
     expect(state.players[1].prophecies).toEqual([
       { amount: 0, turnsLeft: 2, pierce: false, payload: "collapseLargestWard", defId: "DIV-004" },
@@ -253,7 +253,7 @@ describe("Divination effects", () => {
     expect(events.some((e) => e.type === "prophecyCreated" && e.target === 1)).toBe(true);
   });
 
-  it("Unravel (DIV-007) chips the WEAKEST opponent ward and offers the scry", () => {
+  it("Scorch the Seam (DIV-007) chips the WEAKEST opponent ward and offers the scry", () => {
     const { state } = cast("DIV-007", (s) => {
       s.players[1].wards = [{ wid: 1, hp: 5 }, { wid: 2, hp: 2 }];
       s.players[0].resourceDeck = [inst("CMP-M"), inst("CMP-S")];
@@ -262,7 +262,7 @@ describe("Divination effects", () => {
     expect(state.pendingChoice).toBeTruthy(); // the scry-2 reorder
   });
 
-  it("Flaw in the Weave (DIV-009) halves the LARGEST opponent ward rounding up, and whiffs safely on none", () => {
+  it("Heat Fracture (DIV-009) halves the LARGEST opponent ward rounding up, and whiffs safely on none", () => {
     const { state } = cast("DIV-009", (s) => {
       s.players[1].wards = [{ wid: 1, hp: 3 }, { wid: 2, hp: 9 }];
     });
@@ -273,7 +273,7 @@ describe("Divination effects", () => {
 });
 
 describe("Abjuration effects", () => {
-  it("Fortify (ABJ-001) creates a 2 HP ward when you have none (1→2 in exp-1b, 2026-07-27)", () => {
+  it("Temper (ABJ-001) creates a 2 HP ward when you have none (1→2 in exp-1b, 2026-07-27)", () => {
     const { state } = cast("ABJ-001");
     expect(state.players[0].wards.map((w) => w.hp)).toEqual([2]);
   });
@@ -289,14 +289,14 @@ describe("Abjuration effects", () => {
     expect(clean.state.players[0].burn).toBe(0); // no underflow with no burn
   });
 
-  it("Fortify (ABJ-001) adds 2 HP to an existing ward", () => {
+  it("Temper (ABJ-001) adds 2 HP to an existing ward", () => {
     const { state } = cast("ABJ-001", (s) => {
       s.players[0].wards = [{ wid: 1, hp: 3 }];
     });
     expect(state.players[0].wards.map((w) => w.hp)).toEqual([5]);
   });
 
-  it("Aegis Eternal (ABJ-022) makes a 6 HP ward, reduces incoming damage by 1, and the ward soaks the rest", () => {
+  it("Hearth Eternal (ABJ-022) makes a 6 HP ward, reduces incoming damage by 1, and the ward soaks the rest", () => {
     const state = blankState();
     const events: GameEvent[] = [];
     const aegis = inst("ABJ-022");
@@ -321,7 +321,7 @@ describe("Abjuration effects", () => {
     expect(state.players[0].hp).toBe(26);
   });
 
-  it("Ward Collapse (ABJ-031) converts your largest ward into damage", () => {
+  it("Tap the Furnace (ABJ-031) converts your largest ward into damage", () => {
     const { state } = cast("ABJ-031", (s) => {
       s.players[0].wards = [{ wid: 1, hp: 4 }];
     });
@@ -329,7 +329,7 @@ describe("Abjuration effects", () => {
     expect(state.players[1].hp).toBe(26);
   });
 
-  it("Banishing Bolt (ABJ-035) deals 5, or 7 with a ward", () => {
+  it("Branding Iron (ABJ-035) deals 5, or 7 with a ward", () => {
     expect(cast("ABJ-035").state.players[1].hp).toBe(25);
     const withWard = cast("ABJ-035", (s) => {
       s.players[0].wards = [{ wid: 1, hp: 2 }];
@@ -337,7 +337,7 @@ describe("Abjuration effects", () => {
     expect(withWard.state.players[1].hp).toBe(23);
   });
 
-  it("Runic Seal (ABJ-010) stages a target choice; the caster picks the slot to seal", () => {
+  it("Iron Brand (ABJ-010) stages a target choice; the caster picks the slot to seal", () => {
     // Two uncast opponent spells + one already-cast one (not a legal target).
     const { state } = cast("ABJ-010", (s) => {
       s.players[1].prepared = [
@@ -365,7 +365,7 @@ describe("Abjuration effects", () => {
     expect(after.pendingChoice).toBeNull();
   });
 
-  it("Runic Seal (ABJ-010) is a no-op with nothing sealable (all cast/sealed)", () => {
+  it("Iron Brand (ABJ-010) is a no-op with nothing sealable (all cast/sealed)", () => {
     const { state } = cast("ABJ-010", (s) => {
       s.players[1].prepared = [
         { spell: inst("EVO-001"), faceDown: true, attached: [], cast: true, sealed: false },
@@ -375,7 +375,7 @@ describe("Abjuration effects", () => {
     expect(state.pendingChoice).toBeNull();
   });
 
-  it("Runic Seal shows a face-UP spell by its real defId (nothing hidden to hide)", () => {
+  it("Iron Brand shows a face-UP spell by its real defId (nothing hidden to hide)", () => {
     const { state } = cast("ABJ-010", (s) => {
       s.players[1].prepared = [
         { spell: inst("EVO-017"), faceDown: false, attached: [], cast: false, sealed: false },
@@ -443,20 +443,20 @@ function runReaction(
 }
 
 describe("Reactions", () => {
-  it("Counterbind (ABJ-015) cancels a Material spell but not a Verbal one", () => {
+  it("Char the Reagent (ABJ-015) cancels a Material spell but not a Verbal one", () => {
     expect(runReaction("ABJ-015", "DIV-001").targetItem.cancelled).toBe(true); // DIV-001 costs M
     expect(runReaction("ABJ-015", "EVO-017").targetItem.cancelled).toBe(false); // Fireball costs V
   });
 
-  it("Break Form (ABJ-016) cancels a Somatic spell", () => {
+  it("Scalding Grip (ABJ-016) cancels a Somatic spell", () => {
     expect(runReaction("ABJ-016", "ABJ-022").targetItem.cancelled).toBe(true); // costs SSS
   });
 
-  it("Dampen (ABJ-006) reduces the target spell's damage", () => {
+  it("Bank Down (ABJ-006) reduces the target spell's damage", () => {
     expect(runReaction("ABJ-006", "EVO-017").targetItem.damageReduction).toBe(1);
   });
 
-  it("Abjure the Wicked (ABJ-026) cancels and punishes per component", () => {
+  it("Hammerfall (ABJ-026) cancels and punishes per component", () => {
     const { state, targetItem } = runReaction("ABJ-026", "EVO-017", { targetAttached: ["CMP-VV"] });
     expect(targetItem.cancelled).toBe(true);
     expect(state.players[1].hp).toBe(28); // 2 damage x 1 component
@@ -659,7 +659,7 @@ describe("Deck recycling with exhaustion", () => {
   });
 });
 
-describe("Reaction fueling from hand, Aegis, Stone Stance", () => {
+describe("Reaction fueling from hand, Aegis, Ash Mantle", () => {
   const prepared = (defId: string, attached: string[] = []) => ({
     spell: inst(defId),
     faceDown: false,
@@ -729,7 +729,7 @@ describe("Reaction fueling from hand, Aegis, Stone Stance", () => {
     expect(discountCostS({ V: 0, S: 1, M: 1 }, 1)).toEqual({ V: 0, S: 0, M: 1 }); // SM -> M
   });
 
-  it("Stone Stance lets an SS Reaction go off with one ATTACHED S, and is consumed", () => {
+  it("Ash Mantle lets an SS Reaction go off with one ATTACHED S, and is consumed", () => {
     const state = blankState();
     state.players[0].level = 5; // unlocks L2 Reactions (Interrupt is SS)
     state.players[0].ongoing.push({
@@ -739,7 +739,7 @@ describe("Reaction fueling from hand, Aegis, Stone Stance", () => {
       value: 1,
       expiry: "endOfRound",
     });
-    state.players[0].prepared = [prepared("ABJ-013", ["CMP-S"])]; // Interrupt (SS) with one S attached
+    state.players[0].prepared = [prepared("ABJ-013", ["CMP-S"])]; // Douse (SS) with one S attached
     state.players[1].prepared = [prepared("EVO-001", ["CMP-V"])];
     state.activePlayer = 1;
     state.priorityPlayer = 1;
@@ -747,7 +747,7 @@ describe("Reaction fueling from hand, Aegis, Stone Stance", () => {
     s = apply(s, { type: "pass" }).state; // caster keeps priority after casting; pass to open the reaction window
 
     const react = findReaction(s);
-    expect(react, "Interrupt should be castable with one attached S under Stone Stance").toBeTruthy();
+    expect(react, "Interrupt should be castable with one attached S under Ash Mantle").toBeTruthy();
 
     s = apply(s, react!).state;
     expect(s.players[0].ongoing.some((o) => o.kind === "reactionDiscountS")).toBe(false); // consumed
@@ -755,7 +755,7 @@ describe("Reaction fueling from hand, Aegis, Stone Stance", () => {
 });
 
 describe("Divination deck sculpting", () => {
-  it("Foresight (DIV-002) reveals the top 3 for an interactive take-one choice", () => {
+  it("Read the Flame (DIV-002) reveals the top 3 for an interactive take-one choice", () => {
     const { state } = cast("DIV-002", (s) => {
       s.players[0].resourceDeck = [inst("CMP-V"), inst("CMP-MM"), inst("CMP-S")];
     });
@@ -764,7 +764,7 @@ describe("Divination deck sculpting", () => {
     expect(state.pendingChoice!.candidates.map((c) => c.defId).sort()).toEqual(["CMP-MM", "CMP-S", "CMP-V"]);
   });
 
-  it("Cut the Thread (DIV-008) stages a components-only discard choice from the opponent's hand", () => {
+  it("Char the Page (DIV-008) stages a components-only discard choice from the opponent's hand", () => {
     const { state } = cast("DIV-008", (s) => {
       s.players[1].hand = [inst("CMP-V"), inst("GAM-001"), inst("CMP-MM")];
     });
@@ -773,7 +773,7 @@ describe("Divination deck sculpting", () => {
     expect(state.pendingChoice!.candidates.map((c) => c.defId).sort()).toEqual(["CMP-MM", "CMP-V"]); // GAM-001 hidden
   });
 
-  it("Cut the Thread (DIV-008) is a no-op when the opponent holds no components", () => {
+  it("Char the Page (DIV-008) is a no-op when the opponent holds no components", () => {
     const { state, events } = cast("DIV-008", (s) => {
       s.players[1].hand = [inst("GAM-001")];
     });
@@ -785,7 +785,7 @@ describe("Divination deck sculpting", () => {
   // (The old Augury filter test retired with exp-8: DIV-004 is now Prophecy of
   // Collapse — covered in the Divination describe above and the doom suite.)
 
-  it("Index (DIV-022) pauses for the PLAYER to order the top 5 (no card gain)", () => {
+  it("Smoke Reading (DIV-022) pauses for the PLAYER to order the top 5 (no card gain)", () => {
     // Interactive since the 2026-07 sweep; the full ordering flow is covered
     // in interactions.test.ts.
     const { state } = cast("DIV-022", (s) => {
@@ -802,7 +802,7 @@ describe("Divination deck sculpting", () => {
     expect(state.players[0].hand).toHaveLength(0); // pure sculpt, no draw
   });
 
-  it("Quick Study (DIV-021) draws 2, then requests a bank-to-top choice", () => {
+  it("Tallow Study (DIV-021) draws 2, then requests a bank-to-top choice", () => {
     const { state } = cast("DIV-021", (s) => {
       s.players[0].resourceDeck = [inst("CMP-V"), inst("CMP-S"), inst("CMP-MM")];
       s.players[0].hand = [];
@@ -863,7 +863,7 @@ describe("Triggers, replacements, and immunity flags", () => {
     expect(state.players[0].hp).toBe(29); // 1 overflow past the 1-HP ward
   });
 
-  it("Arcane Shell (ABJ-002) draw rider is round-scoped: it lapses at round end (live-bug m4)", () => {
+  it("Cinder Crust (ABJ-002) draw rider is round-scoped: it lapses at round end (live-bug m4)", () => {
     const state = blankState();
     state.players[0].resourceDeck = [inst("CMP-V"), inst("CMP-S"), inst("CMP-M")];
     getEffect("ABJ-002")!(makeContext(state, 0, inst("ABJ-002"), []), inst("ABJ-002"));
@@ -882,7 +882,7 @@ describe("Triggers, replacements, and immunity flags", () => {
     expect(state.players[0].hand.length).toBe(handBefore); // no draw
   });
 
-  it("Reflective Ward chips the attacker when it absorbs", () => {
+  it("Searing Ward chips the attacker when it absorbs", () => {
     const state = blankState();
     state.players[0].wards = [{ wid: 1, hp: 3, reflectOnPrevent: 1 }];
     const events: GameEvent[] = [];
@@ -891,7 +891,7 @@ describe("Triggers, replacements, and immunity flags", () => {
     expect(state.players[1].hp).toBe(29); // reflected 1 to the attacker
   });
 
-  it("Inversion Field converts incoming damage into healing, capped per round", () => {
+  it("Salamander's Skin converts incoming damage into healing, capped per round", () => {
     const state = blankState();
     state.players[0].hp = 20;
     state.players[0].ongoing = [{ id: 1, owner: 0, kind: "damageToHeal", value: 5, expiry: "endOfRound" }];
@@ -905,7 +905,7 @@ describe("Triggers, replacements, and immunity flags", () => {
     const state = blankState();
     state.players[0].turnsTakenThisRound = 1;
     state.players[0].prepared = [
-      { spell: inst("EVO-009"), faceDown: true, attached: [], cast: false, sealed: false }, // Battery, cost VM (L1)
+      { spell: inst("EVO-009"), faceDown: true, attached: [], cast: false, sealed: false }, // Kindling, cost VM (L1)
     ];
     state.players[0].hand = [inst("CMP-V")];
     state.players[0].ongoing = [{ id: 1, owner: 0, kind: "attuneBonus", value: 1, expiry: "endOfRound" }];

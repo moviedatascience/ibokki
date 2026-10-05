@@ -105,7 +105,7 @@ function labels(match: Match): [string, string] {
 
 /**
  * Resolve a side's deck: no spec = the school's archetype preset; a preset name
- * ("Emberworks"/"Bastion"/"Riptide") = that preset; otherwise a JSON
+ * ("Emberworks"/"Crucible"/"Ashlight") = that preset; otherwise a JSON
  * DeckDefinition {name?, spellbook, resourceDeck} validated against the real
  * construction rules. Throws with a readable message on a bad spec.
  */
@@ -117,7 +117,7 @@ export function resolveDeck(school: School, spec?: string): { deck: DeckList; la
   try {
     parsed = JSON.parse(spec);
   } catch {
-    throw new Error(`deck "${spec}" is neither a preset name nor valid JSON. Presets: Emberworks, Bastion, Riptide.`);
+    throw new Error(`deck "${spec}" is neither a preset name nor valid JSON. Presets: Emberworks, Crucible, Ashlight.`);
   }
   const p = parsed as Partial<DeckDefinition>;
   if (!Array.isArray(p.spellbook) || !Array.isArray(p.resourceDeck)) {

@@ -222,12 +222,18 @@ something in the world, never an isolated figure on blank ground (art director,
   with arrows and rubble stopped mid-air against it (seed 1017935556; solo portrait for
   avatar crops: seed 530981142). Her weariness is the weariness of a wall that has held
   everything so far.
-- **Divination — Vess of the Undertow.** Robes that hang dripping wet though the ground
-  is dry; eyes pale as sea-glass; a cord of woven kelp hung with stoppered vials; moths
-  at the waterline. Canonical scene: bowed over a black tide pool formed among fallen
-  out-of-date star charts in a ruined observatory, water streaming from them into the
-  pool, a violet current of fate in the water (seed 686338496). Iconography: tide pools,
-  kelp and vials, the sea arriving where it shouldn't (the *Riptide* current).
+- **Divination — the Lamp's archmage (UNNAMED; 2026-10-05, DECISIONS #6).** The Fire
+  Lamp's seer is a new character, to be designed with the art director: an augur who
+  reads by flame — candle-guttering, the shape of smoke, cold ash in a hearth — moths
+  in the sleeves, a censer or taper, and the Divination tone rule intact (§9: unsettles;
+  inevitability; being read to from your own diary). No canonical scene yet.
+- **Vess of the Undertow — RESERVED for the Water element.** Robes that hang dripping
+  wet though the ground is dry; eyes pale as sea-glass; a cord of woven kelp hung with
+  stoppered vials; moths at the waterline. Canonical scene: bowed over a black tide pool
+  formed among fallen out-of-date star charts in a ruined observatory, water streaming
+  from them into the pool, a violet current of fate in the water (seed 686338496). She is
+  a finished, signed-off design and the first Water cast member; she is no longer the
+  Fire Divination archmage and must not appear on Fire-set surfaces.
 
 ## 8. World canon (CANON — set by the art director, 2026-07-07)
 
@@ -460,8 +466,10 @@ IPAdapter reference conditioning — decision AFTER the probe session.
 - **Abjuration:** wards of translucent stone and interlocking geometric barriers, cobalt
   blue as the only vivid color, seals, keystones and poised gesturing hands, weight and
   patience
-- **Divination:** omens and out-of-date star charts, tide pools, hourglasses and moths,
-  dim violet as the only vivid color, veiled eyes and smoked lenses, fate already written
+- **Divination:** omens read in flame and smoke, candles and lamps, cold ash, out-of-date
+  star charts, hourglasses and moths, dim violet as the only vivid color, veiled eyes and
+  smoked lenses, fate already written (text canon 2026-10-05: the Lamp is Fire; the
+  tide-pool / water motifs belong to Vess and the Water element)
 - **Trainer / neutral (ITM, GAM, and neutral surfaces):** a wizard's mundane apparatus —
   tomes, pouches, chalk, charms, lenses — rendered with scholarly affection, gold-leaf
   as the only vivid color, motifs of study, wager and preparation

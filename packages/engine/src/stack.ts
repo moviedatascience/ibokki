@@ -63,7 +63,7 @@ export function pushToStack(
     player.slotsUsedThisRound++;
     player.spellsCastThisRound++;
     events.push({ type: "cast", player: controller, preparedIndex, spellDefId: item.defId });
-    // First-cast-each-round ward trigger (Sentinel Rune): the opponent's ward owner draws.
+    // First-cast-each-round ward trigger (Watchfire): the opponent's ward owner draws.
     if (player.spellsCastThisRound === 1 && opponent.wards.some((w) => w.firstOppCastDraw)) {
       const drawn = drawN(state, opponent.id, 1, events);
       if (drawn > 0) events.push({ type: "drew", player: opponent.id, count: drawn });
@@ -102,7 +102,7 @@ export function resolveTop(state: GameState, events: GameEvent[]): void {
       // Fallback for not-yet-implemented spells: deal level (minus any prevention).
       dealDamageToPlayer(state, targetId, Math.max(0, item.level - item.damageReduction), events);
     }
-    // Reflect-by-actual (Final Riposte / Pyromancer's Reckoning): the Reaction resolved
+    // Reflect-by-actual (Final Riposte / Pyromancer's Retort): the Reaction resolved
     // earlier and left a multiplier; mirror the damage this spell ACTUALLY dealt its
     // victim (post-buff, post-ward-soak "damage" events) back onto the caster.
     if (item.reflectFactor && item.reflectFactor > 0 && state.phase !== "gameover") {

@@ -30,7 +30,7 @@ function coverageLine(): string {
   return `Effects implemented: ${spellsDone}/${SPELLS.length} spells, ${trainersDone}/${TRAINERS.length} trainers`;
 }
 
-/** A deck spec: a preset name (Emberworks/Bastion/Riptide) or a path to a deck JSON file. */
+/** A deck spec: a preset name (Emberworks/Crucible/Ashlight) or a path to a deck JSON file. */
 function resolveDeckSpec(spec: string): { deck: PlayerConfig; label: string } {
   const preset = presetDeck(spec);
   if (preset) return { deck: preset, label: preset.name };

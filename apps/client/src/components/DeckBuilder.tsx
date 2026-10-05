@@ -185,6 +185,7 @@ export function DeckBuilder({ cards, rules, initial, onSaved, onClose }: Props) 
               <div className="pvtext">
                 <KeywordStrip tags={preview.tags} />
                 <RulesText text={preview.text} />
+                {preview.flavor && <div className="flavor">{preview.flavor}</div>}
               </div>
               <button className="pvpin" onClick={() => setPinnedId(pinnedId ? null : previewId)}>
                 {pinnedId ? "Unpin" : "Pin"}

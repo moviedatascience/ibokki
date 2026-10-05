@@ -101,6 +101,29 @@ and reversible.
 
 ---
 
+## DECISIONS #6 — elements are the horizontal axis; 1.0 is all Fire (2026-10-05)
+
+- **What:** progression is horizontal by **element** (type). Every element ships the
+  same three schools (Evocation = aggro, Abjuration = protection, Divination =
+  utility), so the triangle is measured per element. 1.0 ships one element, Fire, and
+  all three existing decks are Fire: Evocation = the Blaze (unchanged), Abjuration =
+  the Forge, Divination = the Lamp. Implemented as text + data only: `element` and
+  `flavor` fields on every card (xlsx columns, importer, loader, protocol catalog,
+  client detail surfaces), 99 card renames (48 Abjuration, 44 Divination, 8 Evocation
+  lightning-out; "Reckoning" now names exactly one card; the two names that collided
+  with the Unravel keyword are gone), presets Emberworks / **Crucible** / **Ashlight**
+  (legacy names Bastion / Riptide still resolve), a flavor line on every school card,
+  and the Design Doc "Elements, Schools & Affinity" section with the type-chart
+  principles. Vess of the Undertow is reserved for the Water release; the Lamp's
+  archmage is a new, unnamed character (text only). No mechanics changed; no
+  element hooks or type chart are built; palette and art direction are owned by the
+  visual-redesign track and untouched here.
+- **Who:** the user (design authority), on Claude's proposal (`ELEMENTS_PLAN.md`).
+- **Reversible:** names and flavor through a retext pass; the element field is
+  additive.
+
+---
+
 ## Open / undecided
 
 (none — add blocks here as disagreements arise)

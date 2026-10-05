@@ -2,7 +2,7 @@
  * School ↔ woodcut-crest glyph (eye = Divination, bow = Evocation, key = Abjuration —
  * the approved art/glyphs set), plus the preset-deck → school mapping.
  *
- * Online match frames label a seat by its DECK name ("Emberworks"/"Bastion"/"Riptide"),
+ * Online match frames label a seat by its DECK name ("Emberworks"/"Crucible"/"Ashlight"),
  * not its school, so any crest lookup on a seat label must resolve the school first.
  * Local (vs-bot) frames already carry the school name directly. A custom online deck
  * usually resolves to no school → `schoolOf` returns null and callers render no crest.
@@ -38,6 +38,9 @@ export const SCHOOL_TINT: Record<string, number> = {
 
 const PRESET_SCHOOL: Record<string, string> = {
   Emberworks: "Evocation",
+  Crucible: "Abjuration",
+  Ashlight: "Divination",
+  // Pre-2026-10-05 preset names, still present in persisted match history.
   Bastion: "Abjuration",
   Riptide: "Divination",
 };

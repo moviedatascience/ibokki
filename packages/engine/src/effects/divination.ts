@@ -10,7 +10,7 @@
  * that fire at the start of the opponent's Nth turn — counter the setup or eat the
  * payload. Exp-2 (2026-07-28): ALL dooms pierce (exhaustion-style; wards/reduction
  * never touch them) — before, only Oblivion did and Abj soaked the rest of the clock.
- * Recast-from-discard (Borrowed Spell/Power, Convergence) is a documented SPEC
+ * Recast-from-discard (Afterglow/Power, Convergence) is a documented SPEC
  * ADAPTATION — cast spells return to `prepared`, never to discard, so these recast
  * an already-cast prepared spell instead.
  */
@@ -18,12 +18,12 @@ import { register } from "./registry.ts";
 import { componentSymbols } from "./context.ts";
 
 // ---- Level 1 ----
-register("DIV-001", (c) => c.draw(2)); // Insight (1→2: draw-1-for-M was strictly dominated by Foresight/Divine; balance 2026-07-03)
+register("DIV-001", (c) => c.draw(2)); // Lamplight (1→2: draw-1-for-M was strictly dominated by Foresight/Divine; balance 2026-07-03)
 // Foresight / Divine — the L1 info row grew teeth (exp-4, 2026-07-29). Vs Evo the
 // row was 0-cast across the whole balance series, and exp-3b measured WHY the fix
-// isn't damage: once the bot could express Omen/Foretell, Div's +10 chip/game moved
+// isn't damage: once the bot could express Omen/Lantern Glare, Div's +10 chip/game moved
 // the Evo edge by ZERO games (still 30–0, round 5.2). The lever is TIME — games end
-// exactly as Foreclosure would come online — so the row defends: Foresight carries
+// exactly as Slow Match would come online — so the row defends: Foresight carries
 // the foreseen-blow flinch (round-long -1 spell damage, Stone Stance's little
 // sibling), Divine shrugs off a Burn (the Fortify precedent: a pure Evo-tax that is
 // formally dead vs burn-less schools, so the won Div–Abj edge can't deepen on it).
@@ -31,13 +31,13 @@ register("DIV-001", (c) => c.draw(2)); // Insight (1→2: draw-1-for-M was stric
 // 29–1 → 30–0 as the bigger flinch blunted Abj's raw kit — the exp-1c revert
 // pattern exactly. The Evo–Div wall does not fall to rate notches; it needs a
 // wincon/defense that functions inside 5 rounds.)
-register("DIV-002", (c) => { c.addDamageReductionThisRound(1); c.requestTakeFromTop(3, 1, "top"); }); // Foresight (look 3, choose 1, rest on top)
-register("DIV-003", (c) => { c.removeOwnBurn(1); c.requestTakeFromTop(2, 1, "bottom"); }); // Divine (look 2, choose 1, other to bottom)
+register("DIV-002", (c) => { c.addDamageReductionThisRound(1); c.requestTakeFromTop(3, 1, "top"); }); // Read the Flame (look 3, choose 1, rest on top)
+register("DIV-003", (c) => { c.removeOwnBurn(1); c.requestTakeFromTop(2, 1, "bottom"); }); // Pinch the Wick (look 2, choose 1, other to bottom)
 // Exp-8 unraveling suite (2026-08-17): the pierce revert's replacement — Div's
 // edge vs the wall is dismantling it through play, not damage immunity. All
 // three live in the old telemetry-dead L1 utility row. Targets are PRINTED
 // (largest/weakest) and match the auto-pick, so text and behavior can't diverge.
-register("DIV-004", (c) => c.prophesyWardCollapse(2)); // Prophecy of Collapse — an announced Unbind; spend the ward or lose it
+register("DIV-004", (c) => c.prophesyWardCollapse(2)); // Omen of Ash — an announced Unbind; spend the ward or lose it
 register("DIV-005", (c) => {
   // Premonition — draw 2; if either is a multi-symbol component, draw a third.
   // (Bumped alongside Insight 1→2 so its gamble ceiling stays above the flat draw.)
@@ -46,12 +46,12 @@ register("DIV-005", (c) => {
   const drawn = c.self.hand.slice(before);
   if (drawn.some((d) => componentSymbols(d.defId) >= 2)) c.draw(1);
 });
-register("DIV-006", (c) => c.requestReturnDiscardComponentsToHand(1)); // Recover — YOU pick the component
+register("DIV-006", (c) => c.requestReturnDiscardComponentsToHand(1)); // Sift the Ashes — YOU pick the component
 register("DIV-007", (c) => {
   c.damageOpponentWeakestWard(2); // Unravel — chip the small-ward swarm (Fortify 2s, Tithe ≤4s)
   c.requestOrderTopOfDeck(2); // scry floor so the card is never fully dead vs wardless boards
 });
-// Cut the Thread [DIV-008] — second rework (exp-7, 2026-07-29). History: Scry
+// Char the Page [DIV-008] — second rework (exp-7, 2026-07-29). History: Scry
 // Glyph (bottom their top card) was never prepped or cast all series; exp-6's
 // Hasten (tick the soonest doom) was slotted but correctly never cast — since
 // exp-2 dooms are inevitable anyway, so 1 turn of acceleration prices at ~0.3
@@ -61,55 +61,55 @@ register("DIV-007", (c) => {
 // cut the thread their next turn hangs by. Attached components are safe —
 // attach-first play dodges it, which is the counterplay texture.
 register("DIV-008", (c) => c.requestOpponentDiscardChoice(true));
-register("DIV-009", (c) => c.halveOpponentLargestWard()); // Flaw in the Weave — the proportional battery answer
-register("DIV-010", (c) => { c.draw(1); c.requestBankToDeckTop(1); }); // Mind's Eye (draw 1, choose 1 to bank on top)
-register("DIV-011", (c) => { c.dealDamage(2); c.requestRevealOpponentHand(); }); // Foretell — the "intel" half is real now
+register("DIV-009", (c) => c.halveOpponentLargestWard()); // Heat Fracture — the proportional battery answer
+register("DIV-010", (c) => { c.draw(1); c.requestBankToDeckTop(1); }); // Candle's Eye (draw 1, choose 1 to bank on top)
+register("DIV-011", (c) => { c.dealDamage(2); c.requestRevealOpponentHand(); }); // Lantern Glare — the "intel" half is real now
 // Omen — the L1 starter doom (m12 finding: L2+ dooms left rounds 1-4 empty). Back to the
 // original 2-in-2 spec (m3 finding): at 3 the guaranteed every-round clock outpaced
 // Abjuration's entire wall economy — Div>Abj went from knife-edge to a structural bleed.
-// vs Foretell (2 NOW plus intel, same cost): the doom's value is that it is announced,
+// vs Lantern Glare (2 NOW plus intel, same cost): the doom's value is that it is announced,
 // re-preparable pressure the opponent must schedule around, not the raw number.
 register("DIV-012", (c) => c.prophesy(2, 2));
 // DIV-013 Quicken RETIRED — redundant now that attaching is unlimited per turn.
 
 // ---- Level 2 ----
-register("DIV-015", (c) => c.requestReturnDiscardComponentsToHand(2, true)); // Reclaim — up to 2, your picks
-register("DIV-016", (c) => c.requestSearchDeck({ filter: "component", takeN: 1, reason: "Search: take a component to hand" })); // Seek
-register("DIV-017", (c) => { c.draw(1); c.requestRevealOpponentHand(); }); // Foreknowledge — see their hand, draw 1
-register("DIV-018", (c) => c.requestDiscardThenDraw()); // Alchemy — YOU pick which (and how many) to churn
+register("DIV-015", (c) => c.requestReturnDiscardComponentsToHand(2, true)); // From the Ashes — up to 2, your picks
+register("DIV-016", (c) => c.requestSearchDeck({ filter: "component", takeN: 1, reason: "Search: take a component to hand" })); // Moth to Flame
+register("DIV-017", (c) => { c.draw(1); c.requestRevealOpponentHand(); }); // Read by Firelight — see their hand, draw 1
+register("DIV-018", (c) => c.requestDiscardThenDraw()); // Feed the Fire — YOU pick which (and how many) to churn
 register("DIV-019", (c) => {
   if (c.opponentHasWard()) c.destroyOneOpponentWard(); // Unbind — destroy a Ward or an ongoing effect
   else c.destroyOneOpponentOngoing();
   c.draw(1);
 });
-register("DIV-020", (c) => c.prophesy(4, 2)); // Foreclosure — the debt comes due in 2 turns
-register("DIV-021", (c) => { c.draw(2); c.requestBankToDeckTop(1); }); // Quick Study (draw 2, choose 1 to bank on top)
-register("DIV-022", (c) => c.requestOrderTopOfDeck(5)); // Index — interactive reorder
-register("DIV-023", (c) => { c.prophesy(2, 1); c.requestOrderTopOfDeck(3); }); // Far Sight — self-scry 3 + short-fuse doom
+register("DIV-020", (c) => c.prophesy(4, 2)); // Slow Match — the debt comes due in 2 turns
+register("DIV-021", (c) => { c.draw(2); c.requestBankToDeckTop(1); }); // Tallow Study (draw 2, choose 1 to bank on top)
+register("DIV-022", (c) => c.requestOrderTopOfDeck(5)); // Smoke Reading — interactive reorder
+register("DIV-023", (c) => { c.prophesy(2, 1); c.requestOrderTopOfDeck(3); }); // Short Wick — self-scry 3 + short-fuse doom
 
 // ---- Level 3 ----
 // Recast cards: the doc says "a spell in your discard," but cast spells return to
 // `prepared` (never discard) in this engine — so we recast an already-cast prepared
 // spell instead (documented adaptation of the spec mismatch).
-register("DIV-027", (c) => c.recastPreparedSpell(1, false)); // Borrowed Spell (own L1)
+register("DIV-027", (c) => c.recastPreparedSpell(1, false)); // Afterglow (own L1)
 register("DIV-028", (c) => {
-  c.shuffleOwnDiscardIntoDeck(); // Echoes of the Past
+  c.shuffleOwnDiscardIntoDeck(); // Rekindle
   c.draw(2);
 });
-// Calculated Draw: "search any card to top, then draw 3" ≡ pick any card to hand
+// Lamp in the Dark: "search any card to top, then draw 3" ≡ pick any card to hand
 // (rest keep their order — sculpted tops survive, no shuffle), then draw 2 more.
 register("DIV-029", (c) => c.requestTutorAnyThenDraw(2));
-register("DIV-030", (c) => c.requestTakeFromTop(5, 2, "top")); // Manipulate Fate (look 5, choose 2, rest on top)
-register("DIV-031", (c) => { c.draw(2); c.requestRevealOpponentHand(3); }); // Perfect Information — hand + their top 3, draw 2
-register("DIV-032", (c) => c.prophesy(7, 3)); // Entropy — inevitable decay on a 3-turn fuse
-register("DIV-033", (c) => c.requestSearchDeck({ filter: "component", takeN: 2, optional: true, reason: "Search: take up to 2 components to hand" })); // Premeditate
-register("DIV-034", (c) => c.drawUntil(7)); // Convergent Future
-register("DIV-037", (c) => c.recastPreparedSpell(2, true)); // Borrowed Power (any L1-2, either side)
+register("DIV-030", (c) => c.requestTakeFromTop(5, 2, "top")); // Augury of Embers (look 5, choose 2, rest on top)
+register("DIV-031", (c) => { c.draw(2); c.requestRevealOpponentHand(3); }); // Everything Illuminated — hand + their top 3, draw 2
+register("DIV-032", (c) => c.prophesy(7, 3)); // The Pyre — inevitable decay on a 3-turn fuse
+register("DIV-033", (c) => c.requestSearchDeck({ filter: "component", takeN: 2, optional: true, reason: "Search: take up to 2 components to hand" })); // Gather Kindling
+register("DIV-034", (c) => c.drawUntil(7)); // Bonfire Vigil
+register("DIV-037", (c) => c.recastPreparedSpell(2, true)); // Catch the Flame (any L1-2, either side)
 register("DIV-038", (c) => {
-  c.draw(2); // Foretold Strike
+  c.draw(2); // Overfed Lamp
   c.dealRawDamage(Math.max(0, c.self.hand.length - 5));
 });
-register("DIV-039", (c) => c.requestOpponentDiscardChoice()); // Mind Theft — the caster picks the discard
+register("DIV-039", (c) => c.requestOpponentDiscardChoice()); // Burn the Letter — the caster picks the discard
 
 // ---- Reactions ----
 register("DIV-014", (c) => {
@@ -120,10 +120,10 @@ register("DIV-024", (c) => {
   c.returnOneTargetComponent(); // Counter-Plan
   if (!c.targetMeetsCost()) c.cancelTarget();
 });
-register("DIV-025", (c) => c.draw(1)); // Read the Signs (info + draw)
-register("DIV-026", (c) => c.redirectTarget()); // Misdirection — the spell turns on its own caster
+register("DIV-025", (c) => c.draw(1)); // Read the Sparks (info + draw)
+register("DIV-026", (c) => c.redirectTarget()); // Flame Mirror — the spell turns on its own caster
 register("DIV-035", (c) => {
-  c.cancelTarget(); // Spellbind
+  c.cancelTarget(); // Smother
   c.sealTargetPrepared();
 });
 register("DIV-036", (c) => {
@@ -137,10 +137,10 @@ register("DIV-040", (c) => {
   c.makeMySpellsUncounterable(); // Omniscience — your spells can't be countered/redirected this turn
   c.draw(4);
 });
-register("DIV-041", (c) => c.returnAllComponentsFromDiscard()); // Eternal Return
-register("DIV-042", (c) => c.requestSearchDeck({ filter: "any", takeN: 3, optional: true, reason: "Search: take up to 3 cards to hand" })); // Grand Design
-register("DIV-043", (c) => c.prophesy(9, 3)); // Oblivion — the L4 doom (soakable since exp-8; immunity clause removed from card)
-register("DIV-044", (c) => c.reshuffleEverythingAndDraw(5)); // Time Spiral
+register("DIV-041", (c) => c.returnAllComponentsFromDiscard()); // Rise from Ash
+register("DIV-042", (c) => c.requestSearchDeck({ filter: "any", takeN: 3, optional: true, reason: "Search: take up to 3 cards to hand" })); // Lamplighter
+register("DIV-043", (c) => c.prophesy(9, 3)); // Last Light — the L4 doom (soakable since exp-8; immunity clause removed from card)
+register("DIV-044", (c) => c.reshuffleEverythingAndDraw(5)); // Ash Fall
 register("DIV-045", (c) => {
   c.recastPreparedSpell(4, true); // Convergence — recur the biggest spell and take an extra cast
   c.grantExtraCast();

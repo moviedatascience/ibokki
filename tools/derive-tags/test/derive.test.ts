@@ -45,11 +45,11 @@ describe("derive-tags", () => {
   it("reads known cards the way their effects are written", () => {
     expect(result.tags["EVO-001"]).toEqual(["damage"]); // Spark
     expect(result.tags["EVO-003"]).toEqual(["burn", "damage"]); // Burning Hands
-    expect(result.tags["ABJ-002"]).toEqual(["ward"]); // Arcane Shell
-    expect(result.tags["ABJ-014"]).toEqual(["cancel", "tempo"]); // Phase Shift
-    expect(result.tags["DIV-012"]).toEqual(["prophecy"]); // Omen
+    expect(result.tags["ABJ-002"]).toEqual(["ward"]); // Cinder Crust
+    expect(result.tags["ABJ-014"]).toEqual(["cancel", "tempo"]); // Snuff
+    expect(result.tags["DIV-012"]).toEqual(["prophecy"]); // Smoke Omen
     expect(result.tags["EVO-035"]).toContain("immune"); // Unstoppable Bolt — cardFlags rider
-    expect(result.tags["ABJ-009"]).toEqual(["disrupt", "trap"]); // Mana Drain — bounce trap, no registry entry
+    expect(result.tags["ABJ-009"]).toEqual(["disrupt", "trap"]); // Spark Arrester — bounce trap, no registry entry
     expect(result.tags["EVO-014"]).toEqual(["damage", "trap"]); // Searing Riposte — prevent trap
   });
 

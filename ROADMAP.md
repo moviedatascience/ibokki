@@ -132,7 +132,9 @@ The user is the art director: every batch is an `/art` session they run and judg
 
 exp-9 merged (#1) · SIMPLIFIED audit (#3) · robustness epic on main (#7) · six anchor
 illustrations filed (#13) · "Play vs bot" featured (#18) · error monitoring (#22) ·
-persistence loop: history / replays / W-L (#23) · bot-school bug (#32).
+persistence loop: history / replays / W-L (#23) · bot-school bug (#32) · Fire
+reorientation + element scaffolding, 99 card renames, presets Emberworks / Crucible /
+Ashlight (DECISIONS #6, 2026-10-05; `ELEMENTS_PLAN.md`).
 
 ## Deferred past 1.0 (decisions on record)
 

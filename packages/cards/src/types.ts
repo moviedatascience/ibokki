@@ -2,6 +2,14 @@
 
 export type School = "Abjuration" | "Evocation" | "Divination" | "Neutral";
 
+/**
+ * Elements are the game's horizontal axis (ELEMENTS_PLAN.md, 2026-10-05): every element
+ * ships the same three schools. 1.0 is Fire only; the type chart between elements is a
+ * post-1.0 system. Neutral trainers have no element.
+ */
+export type Element = "Fire";
+export const ELEMENTS: readonly Element[] = ["Fire"];
+
 export type CardType = "Spell" | "Reaction" | "Item" | "Gambit";
 
 export type Sym = "V" | "S" | "M";
@@ -57,6 +65,8 @@ export interface CardDef {
   id: string;
   name: string;
   school: School;
+  /** The card's element (type); null for Neutral trainers. */
+  element: Element | null;
   type: CardType;
   /** Spell level (1-4) for spells/reactions; null for trainers. */
   level: number | null;
@@ -66,6 +76,8 @@ export interface CardDef {
   cost: Cost | null;
   /** Effect text (rules text to be implemented by the effect engine). */
   text: string;
+  /** One-line player-facing flavor text, in the world's voice (spellbook / detail surfaces only). */
+  flavor?: string;
   /** Effect tags (see CARD_TAGS) — attached by the loader from data/tags.json. */
   tags: CardTag[];
   role?: string;

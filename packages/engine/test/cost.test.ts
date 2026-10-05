@@ -4,7 +4,7 @@ import { combinedSymbols, meetsCost, reactionCost } from "../src/cost.ts";
 
 // Pins written to dispose the m46/m48 pilot reports of "inconsistent" component
 // funding (exp-8d wave, 2026-08-18). Code review found one designed asymmetry —
-// Stone Stance discounts REACTION S-costs only — and no path where a dual fails
+// Ash Mantle discounts REACTION S-costs only — and no path where a dual fails
 // to supply a symbol it contains. These pins make the answer permanent.
 describe("component funding math (m46/m48 repro — disposed as designed behavior)", () => {
   it("a dual pays any single symbol it contains (SM pays an M cost)", () => {

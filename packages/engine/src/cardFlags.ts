@@ -17,14 +17,14 @@ export const UNSTOPPABLE: ReadonlySet<string> = new Set([
 ]);
 
 /** "Cannot be prevented": this spell's damage also bypasses ongoing damage
- *  reduction and Inversion Field (wards still soak — soak isn't "prevention"). */
+ *  reduction and Salamander's Skin (wards still soak — soak isn't "prevention"). */
 export const UNPREVENTABLE: ReadonlySet<string> = new Set([
   "EVO-045", // Apocalypse
 ]);
 
 /** This spell's damage cannot be reduced below the given floor. */
 export const MIN_DAMAGE: Readonly<Record<string, number>> = {
-  "EVO-018": 1, // Lightning Bolt
+  "EVO-018": 1, // White Flame
 };
 
 /**
@@ -42,7 +42,7 @@ export interface AttachTrap {
 /** Fire when the OPPONENT attaches a component to a prepared spell. */
 export const ATTACH_TRAPS: Readonly<Record<string, AttachTrap>> = {
   "EVO-015": { onlyM: true, fire: { damage: 2 } }, // Volatile Bolt
-  // Mana Drain — printed "you may": auto-fired. ACCEPTED for 1.0 (issue #3): the
+  // Spark Arrester — printed "you may": auto-fired. ACCEPTED for 1.0 (issue #3): the
   // armed trap is face-up (components are revealed), so the opponent can bait it,
   // and holding it for a bigger target is a corner case next to "bounce the attach".
   // The hidden decision (decline / save-for-later) is deferred with an interrupt
@@ -71,10 +71,10 @@ export const REACTION_TRIGGER_TYPE: Readonly<Record<string, "spell" | "reaction"
   "EVO-028": "spell", // Searing Backlash
   "EVO-031": "reaction", // Combustive Counter
   "EVO-042": "spell", // Annihilation Strike
-  "DIV-014": "spell", // Anticipate
-  "DIV-024": "spell", // Counter-Plan
-  "DIV-025": "spell", // Read the Signs
-  "DIV-035": "spell", // Spellbind
+  "DIV-014": "spell", // Flicker
+  "DIV-024": "spell", // Pull the Fuel
+  "DIV-025": "spell", // Read the Sparks
+  "DIV-035": "spell", // Smother
 };
 
 /** Conditional cancels gated on the target's cost ("… that requires …"): the
@@ -85,8 +85,8 @@ export const REACTION_TRIGGER_TYPE: Readonly<Record<string, "spell" | "reaction"
  *  its 2-damage rider does NOT license M-less targets — pre-ruling it pinged
  *  any spell for 2 (77% of its exp-9 bot reactions were pings). */
 export const CANCEL_REQUIRES_SYMBOL: Readonly<Record<string, "V" | "S" | "M">> = {
-  "ABJ-015": "M", // Counterbind
-  "ABJ-016": "S", // Break Form
+  "ABJ-015": "M", // Char the Reagent
+  "ABJ-016": "S", // Scalding Grip
   "EVO-029": "M", // Mana Burn (DECISIONS #3 — restriction, not a conditional rider)
 };
 
@@ -95,13 +95,13 @@ export const CANCEL_REQUIRES_SYMBOL: Readonly<Record<string, "V" | "S" | "M">> =
  *  deterministic whiff, so legalActions doesn't offer it and apply refuses —
  *  the same guard family as trainerHasEffect / CANCEL_REQUIRES_SYMBOL. */
 export const LEDGER_MIN: Readonly<Record<string, number>> = {
-  "ABJ-046": 1, // Warding Tithe — any bank makes a ward
-  "ABJ-047": 6, // Sealed Verdict — printed "at least 6 prevented"
-  "ABJ-048": 2, // Restoring Rune — spending 2 heals 1
+  "ABJ-046": 1, // Banked Coals — any bank makes a ward
+  "ABJ-047": 6, // Furnace Verdict — printed "at least 6 prevented"
+  "ABJ-048": 2, // Hearth's Warmth — spending 2 heals 1
 };
 
 /**
- * Spells whose effect casts a copy of another spell (Borrowed Spell / Borrowed
+ * Spells whose effect casts a copy of another spell (Afterglow / Borrowed
  * Power / Convergence). They are never THEMSELVES eligible recast targets: a
  * copy-spell copying a copy-spell recurses without bound — DIV-045 picking
  * itself as "the biggest cast spell" blew the call stack in a live balance run

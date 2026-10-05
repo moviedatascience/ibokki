@@ -24,7 +24,7 @@ const messages = (d: DeckDefinition) => validateDeck(d).errors.map((e) => e.mess
 
 describe("preset decks", () => {
   it("ship exactly the three named archetypes, all legal", () => {
-    expect(PRESET_DECKS.map((d) => d.name).sort()).toEqual(["Bastion", "Emberworks", "Riptide"]);
+    expect(PRESET_DECKS.map((d) => d.name).sort()).toEqual(["Ashlight", "Crucible", "Emberworks"]);
     for (const preset of PRESET_DECKS) {
       const v = validateDeck(preset);
       expect(v.errors, preset.name).toEqual([]);

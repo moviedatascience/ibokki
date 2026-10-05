@@ -1,14 +1,20 @@
 /**
- * Rewrite card Effect text in ibokki_spell_cards.xlsx from a JSON map.
+ * Rewrite card cells in ibokki_spell_cards.xlsx from a JSON pass file.
  *
  *   npm run retext -- packages/cards/data/rewrites/<pass>.json
  *   npm run import-cards            # then regenerate cards.json + tags.json
  *
+ * A pass maps card ids to new cell values, one map per column:
+ *   { "texts": {id: effect}, "names": {id: name}, "flavors": {id: flavor}, "elements": {id: element} }
+ * Columns that a sheet does not have yet (Flavor / Element, added 2026-10-05) are
+ * created: a header cell is appended to row 1 and the new cells go at the end of
+ * each written row, so the sheet's dimension grows to the right.
+ *
  * Why a tool: the spreadsheet stays the authoring source, but editing it by hand
  * (or through adm-zip, which chokes on this file's zip descriptors) is where
  * past passes lost time. This reads the archive with our own unzip, appends ONE
- * new shared string per rewritten card and repoints that card's Effect cell at
- * it — never editing an existing shared string, since identical texts are shared
+ * new shared string per written value and repoints that card's cell at it —
+ * never editing an existing shared string, since identical texts are shared
  * between cells — then writes a fresh, standard ZIP. A `.bak` of the previous
  * file is kept beside it.
  */
@@ -21,9 +27,15 @@ import { parseSharedStrings, unzip } from "./xlsx.ts";
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const XLSX_PATH = resolve(REPO_ROOT, "ibokki_spell_cards.xlsx");
 
-interface Pass {
-  texts: Record<string, string>;
-}
+/** Pass-file key → spreadsheet header (matched case-insensitively). */
+export const PASS_COLUMNS: Record<string, string> = {
+  texts: "Effect",
+  names: "Name",
+  flavors: "Flavor",
+  elements: "Element",
+};
+
+export type Pass = Partial<Record<keyof typeof PASS_COLUMNS, Record<string, string>>>;
 
 function xmlEscape(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -102,7 +114,15 @@ export function zip(entries: Map<string, Buffer>): Buffer {
   return Buffer.concat([...locals, cd, eocd]);
 }
 
-export function applyPass(xlsx: Buffer, texts: Record<string, string>): { out: Buffer; applied: string[]; missing: string[] } {
+export interface PassResult {
+  out: Buffer;
+  /** `${column}:${id}` for every cell written. */
+  applied: string[];
+  /** `${column}:${id}` for every requested cell whose card row was not found. */
+  missing: string[];
+}
+
+export function applyPass(xlsx: Buffer, pass: Pass): PassResult {
   const entries = unzip(xlsx);
   const ssName = "xl/sharedStrings.xml";
   let ssXml = entries.get(ssName)?.toString("utf8");
@@ -119,12 +139,17 @@ export function applyPass(xlsx: Buffer, texts: Record<string, string>): { out: B
     return idx;
   };
 
+  // Keys starting with "$" (e.g. "$note") are documentation, not columns.
+  const columns = (Object.keys(pass) as (keyof Pass)[]).filter((k) => !k.startsWith("$") && pass[k] && Object.keys(pass[k]!).length > 0);
+  for (const k of columns) if (!PASS_COLUMNS[k]) throw new Error(`unknown pass key "${k}" (expected ${Object.keys(PASS_COLUMNS).join("/")})`);
+
   const applied: string[] = [];
-  const pending = new Set(Object.keys(texts));
+  const pending = new Set<string>();
+  for (const k of columns) for (const id of Object.keys(pass[k]!)) pending.add(`${PASS_COLUMNS[k]}:${id}`);
+
   for (const [name, buf] of entries) {
     if (!/^xl\/worksheets\/sheet\d+\.xml$/.test(name)) continue;
     let xml = buf.toString("utf8");
-    // Locate the header row's "Card ID" and "Effect" columns.
     const cells = [...xml.matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)];
     const cellText = (attrs: string, inner: string | undefined): string => {
       if (!inner) return "";
@@ -136,34 +161,76 @@ export function applyPass(xlsx: Buffer, texts: Record<string, string>): { out: B
       const v = /<v\b[^>]*>([\s\S]*?)<\/v>/.exec(inner)?.[1] ?? "";
       return type === "s" ? (shared[parseInt(v, 10)] ?? "") : v;
     };
-    let idCol = -1;
-    let effectCol = -1;
+
+    // Header row: column index by lowercased header, plus the rightmost used column.
+    const headerCol = new Map<string, number>();
+    let headerStyle = "";
+    let maxCol = -1;
     for (const m of cells) {
       const ref = /\br="([A-Z]+)(\d+)"/.exec(m[1] ?? "");
-      if (!ref || ref[2] !== "1") continue;
+      if (!ref) continue;
+      const c = colIndex(ref[1]!);
+      if (c > maxCol) maxCol = c;
+      if (ref[2] !== "1") continue;
       const t = cellText(m[1] ?? "", m[2]).trim().toLowerCase();
-      if (t === "card id") idCol = colIndex(ref[1]!);
-      if (t === "effect") effectCol = colIndex(ref[1]!);
+      if (t) headerCol.set(t, c);
+      if (t === "name") headerStyle = /\bs="(\d+)"/.exec(m[1] ?? "")?.[1] ?? "";
     }
-    if (idCol < 0 || effectCol < 0) continue;
-    const rowsById = new Map<string, number>();
+    const idCol = headerCol.get("card id");
+    if (idCol === undefined) continue;
+    const textStyle = (() => {
+      const effectCol = headerCol.get("effect");
+      if (effectCol === undefined) return "";
+      const m = cells.find((c) => new RegExp(`\\br="${colLetters(effectCol)}2"`).test(c[1] ?? ""));
+      return /\bs="(\d+)"/.exec(m?.[1] ?? "")?.[1] ?? "";
+    })();
+
+    const rowOfId = new Map<string, number>();
     for (const m of cells) {
       const ref = /\br="([A-Z]+)(\d+)"/.exec(m[1] ?? "");
       if (!ref || colIndex(ref[1]!) !== idCol) continue;
       const id = cellText(m[1] ?? "", m[2]).trim();
-      if (texts[id] !== undefined) rowsById.set(id, parseInt(ref[2]!, 10));
+      if (id) rowOfId.set(id, parseInt(ref[2]!, 10));
     }
-    for (const [id, row] of rowsById) {
-      const ref = `${colLetters(effectCol)}${row}`;
-      const idx = addShared(texts[id]!);
-      const cellRe = new RegExp(`<c\\b([^>]*?\\br="${ref}"[^>]*?)(?:/>|>([\\s\\S]*?)</c>)`);
-      const m = cellRe.exec(xml);
-      if (!m) throw new Error(`${id}: Effect cell ${ref} not found`);
-      const attrs = (m[1] ?? "").replace(/\s+t="[^"]*"/, "") + ` t="s"`;
-      xml = xml.replace(m[0], `<c${attrs}><v>${idx}</v></c>`);
-      applied.push(id);
-      pending.delete(id);
+
+    const styleAttr = (s: string) => (s ? ` s="${s}"` : "");
+    const appendToRow = (row: number, cell: string): void => {
+      const rowRe = new RegExp(`(<row\\b[^>]*\\br="${row}"[^>]*>[\\s\\S]*?)(</row>)`);
+      const m = rowRe.exec(xml);
+      if (!m) throw new Error(`${name}: row ${row} not found`);
+      xml = xml.replace(m[0], `${m[1]}${cell}${m[2]}`);
+    };
+
+    for (const k of columns) {
+      const header = PASS_COLUMNS[k]!;
+      const values = pass[k]!;
+      const ids = Object.keys(values).filter((id) => rowOfId.has(id));
+      if (ids.length === 0) continue;
+      let col = headerCol.get(header.toLowerCase());
+      if (col === undefined) {
+        // New column: header cell at the right edge, and every written row grows a cell.
+        col = ++maxCol;
+        headerCol.set(header.toLowerCase(), col);
+        appendToRow(1, `<c r="${colLetters(col)}1"${styleAttr(headerStyle)} t="s"><v>${addShared(header)}</v></c>`);
+      }
+      for (const id of ids) {
+        const row = rowOfId.get(id)!;
+        const ref = `${colLetters(col)}${row}`;
+        const idx = addShared(values[id]!);
+        const cellRe = new RegExp(`<c\\b([^>]*?\\br="${ref}"[^>]*?)(?:/>|>([\\s\\S]*?)</c>)`);
+        const m = cellRe.exec(xml);
+        if (m) {
+          const attrs = (m[1] ?? "").replace(/\s+t="[^"]*"/, "") + ` t="s"`;
+          xml = xml.replace(m[0], `<c${attrs}><v>${idx}</v></c>`);
+        } else {
+          appendToRow(row, `<c r="${ref}"${styleAttr(textStyle)} t="s"><v>${idx}</v></c>`);
+        }
+        applied.push(`${header}:${id}`);
+        pending.delete(`${header}:${id}`);
+      }
     }
+    // Keep the sheet's declared extent honest after adding columns.
+    xml = xml.replace(/<dimension ref="([A-Z]+)1:[A-Z]+(\d+)"\/>/, (_, a, r) => `<dimension ref="${a}1:${colLetters(maxCol)}${r}"/>`);
     entries.set(name, Buffer.from(xml, "utf8"));
   }
   if (added.length) {
@@ -182,11 +249,17 @@ function main(): void {
   if (!passPath) throw new Error("usage: retext <pass.json>");
   const pass = JSON.parse(readFileSync(resolve(REPO_ROOT, passPath), "utf8")) as Pass;
   const xlsx = readFileSync(XLSX_PATH);
-  const { out, applied, missing } = applyPass(xlsx, pass.texts);
-  if (missing.length) throw new Error(`cards not found in the spreadsheet: ${missing.join(", ")}`);
+  const { out, applied, missing } = applyPass(xlsx, pass);
+  if (missing.length) throw new Error(`cells not found in the spreadsheet: ${missing.join(", ")}`);
   copyFileSync(XLSX_PATH, XLSX_PATH + ".bak");
   writeFileSync(XLSX_PATH, out);
-  console.log(`Rewrote ${applied.length} Effect cells in ${XLSX_PATH} (previous copy at .bak). Now run: npm run import-cards`);
+  const byCol = new Map<string, number>();
+  for (const a of applied) {
+    const col = a.split(":")[0]!;
+    byCol.set(col, (byCol.get(col) ?? 0) + 1);
+  }
+  const summary = [...byCol].map(([c, n]) => `${n} ${c}`).join(", ");
+  console.log(`Rewrote ${summary} cells in ${XLSX_PATH} (previous copy at .bak). Now run: npm run import-cards`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

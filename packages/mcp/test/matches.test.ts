@@ -70,11 +70,11 @@ describe("MCP match loop", () => {
 
   it("resolves decks: default, preset name, custom JSON, and rejects bad specs", () => {
     expect(resolveDeck("Evocation").label).toBe("Evocation");
-    expect(resolveDeck("Evocation", "Bastion").label).toBe("Bastion");
+    expect(resolveDeck("Evocation", "Crucible").label).toBe("Crucible");
 
-    const custom = { ...presetDeck("Riptide")!, name: "My Riptide" };
+    const custom = { ...presetDeck("Ashlight")!, name: "My Ashlight" };
     const r = resolveDeck("Divination", JSON.stringify(custom));
-    expect(r.label).toBe("My Riptide");
+    expect(r.label).toBe("My Ashlight");
     expect(r.deck.resourceDeck).toHaveLength(40);
 
     expect(() => resolveDeck("Evocation", "NoSuchPreset")).toThrow(/preset name/);
@@ -83,9 +83,9 @@ describe("MCP match loop", () => {
   });
 
   it("plays a match with an overridden deck and labels it by deck name", () => {
-    const m = createMatch("Evocation", "Abjuration", 11, "0", "Emberworks", "Bastion");
-    expect(m.labels).toEqual(["Emberworks", "Bastion"]);
-    expect(m.transcript[0]).toContain("Emberworks (P0) vs Bastion (P1)");
+    const m = createMatch("Evocation", "Abjuration", 11, "0", "Emberworks", "Crucible");
+    expect(m.labels).toEqual(["Emberworks", "Crucible"]);
+    expect(m.transcript[0]).toContain("Emberworks (P0) vs Crucible (P1)");
     act(m, 0);
     expect(m.state.phase).not.toBe("gameover");
   });

@@ -46,11 +46,11 @@ clutter; deep skill expression.
   it**: any Ward a prophecy's damage soaks into is destroyed outright afterward, its
   remaining HP lost (and never credited to the ledger). Blocking a doom is always
   possible and never free — an exactly-sized Ward is the clean block, an oversized
-  battery a costly one. Protected Wards (Sanctum-class) do not shatter.
+  battery a costly one. Protected Wards (Forgewall-class) do not shatter.
   The cast itself uses the stack:
   a prophecy can be countered as it is cast, but once it resolves the doom is locked in.
   Divination's edge against a wall of Wards is not immunity but **unraveling** — the
-  school dismantles protections (Unbind and the L1 unraveling suite) so its scheduled
+  school dismantles protections (Burn Through and the L1 unraveling suite) so its scheduled
   damage lands on flesh. (History: the 2026-07-28 exp-2 rework made ALL dooms pierce
   Wards outright; exp-8, 2026-08-17, reverted it — a damage type exempt from the
   defender's entire mechanic proved to be a bye, not a matchup. The 2026-07-05 identity
@@ -88,7 +88,7 @@ To minimize sprawl while maximizing complexity, components use a multi-symbol mo
 - **Ongoing Effects:** Some Spells, Items, and Gambits leave a lasting effect in play — a
   buff, a tax, or a Ward that persists for a stated duration, tracked with a marker.
   Ongoing Effects and Wards are the only persistent objects on the board, and
-  dispel-style cards (such as Unbind and Dispelling Powder) remove them. There is no
+  dispel-style cards (such as Burn Through and Dispelling Powder) remove them. There is no
   separate "Enchantment" card type; that role is filled by Gambits and the Ongoing
   Effects they leave behind.
 
@@ -218,32 +218,58 @@ Below is a table outlining the potential level curve:
 
 ---
 
-## Magic Schools & Affinity
+## Elements, Schools & Affinity
 
-While any Wizard can learn any spell, magical disciplines require specific component
-concentrations. To cast high-level spells consistently, Wizards must tune their Resource
-Deck to match their Spell Deck.
+Every spell has an **element** (its type) and a **school** (its role). The two axes are
+independent by design: every element ships the same three schools, so a new element is
+a release of three new decks that play by the triangle below.
+
+**Elements.** 1.0 ships one element, **Fire** — all three current decks are Fire. The
+element is the layer that will interact across decks once a second element exists
+(type advantages, in the spirit of a type chart); that chart is a post-1.0 system and
+nothing in 1.0 keys on it. Trainers (Items and Gambits) are element-neutral and shared.
+Card ids from the Fire set keep their `ABJ-/EVO-/DIV-###` form; later sets carry the
+element in the id (`WTR-EVO-001`), so the current ids never move.
+
+**Schools.** While any Wizard can learn any spell, magical disciplines require specific
+component concentrations. To cast high-level spells consistently, Wizards must tune their
+Resource Deck to match their Spell Deck.
 
 **The "Soft Constraint" Rule:** There are no hard restrictions on mixing schools. A Wizard
-may prepare Fireball (Evocation) and Recover (Divination). However, Fireball requires
-heavy Verbal (V) components, while Recover requires Material (M) components. A deck split
-between both risks "bricking" (drawing V cards when you need M cards).
+may prepare Fireball (Evocation) and Sift the Ashes (Divination). However, Fireball
+requires heavy Verbal (V) components, while Sift the Ashes requires Material (M)
+components. A deck split between both risks "bricking" (drawing V cards when you need M
+cards).
 
-**Core Schools (Prototype Phase):**
+**The three schools, under Fire:**
 
-- **Evocation (The School of Energy)** — Primary Component: Verbal (V). Playstyle:
-  Aggressive, High Burst, Fast. Spends components aggressively to push damage through,
-  often burning resources faster than a Wizard can recover them.
-- **Abjuration (The School of Protection)** — Primary Component: Somatic (S). Playstyle:
-  Defensive, Reactive, Control. Holds components in reserve to react on the opponent's
-  turn, trading card efficiency for disruption and board protection.
-- **Divination (The School of Manipulation)** — Primary Component: Material (M).
-  Playstyle: Tempo, Utility, Precision. Searches and recycles its Resource Deck to ensure
-  it always has the right piece at the right time, prioritizing consistency over raw power.
-  Its kill is **Prophecy**: delayed dooms announced in advance that arrive on schedule —
-  the seer has already seen how you die. Delayed damage is intrinsically slower than
-  Evocation's burst (preserving Evo > Div) but arrives on a schedule no Ward can absorb —
-  the fortress must answer the cast or race the clock (pressuring Abjuration).
+- **Evocation (The Blaze)** — Primary Component: Verbal (V). Playstyle: Aggressive, High
+  Burst, Fast. Fire as appetite: detonation, Burn, spoken flame-runes. Spends components
+  aggressively to push damage through, often burning resources faster than a Wizard can
+  recover them. Preset deck: *Emberworks*.
+- **Abjuration (The Forge)** — Primary Component: Somatic (S). Playstyle: Defensive,
+  Reactive, Control. Fire as the thing that tempers: kilns, banked coals, crucibles, cold
+  iron. Wards are fired clay and tempered steel; the prevention **ledger** is heat banked in
+  the furnace, spent later as a wall, a cancel, a heal — or struck with as Reckoning. Holds
+  components in reserve to react on the opponent's turn, trading card efficiency for
+  disruption and board protection. Preset deck: *Crucible*.
+- **Divination (The Lamp)** — Primary Component: Material (M). Playstyle: Tempo, Utility,
+  Precision. Fire as the thing you read by: augury in flame and smoke, candles and wicks,
+  moths, ash. Reads the Resource Deck by firelight so it always has the right piece at the
+  right time; recursion is sifting the ashes; cancel is smothering. Its kill is
+  **Prophecy**: a fuse lit now that burns down on schedule — the seer has already seen
+  how you die. Delayed damage is intrinsically slower than Evocation's burst (preserving
+  Evo > Div) but arrives on a schedule the fortress must answer or race (pressuring
+  Abjuration). Preset deck: *Ashlight*.
+
+**Horizontal progression (post-1.0).** The release unit is one element: three school
+sets of roughly the current size (~45 spells each), optionally with element-specific
+trainers, measured as its own triangle and against the elements before it. Principles
+the type chart must respect, recorded now so the Fire cards survive it: advantage is
+additive and keyword-mediated (never a damage multiplier — HP is 30 and the top end is
+already 12); every element owns exactly one status keyword (Fire's is **Burn**); and no
+rule may treat "the three schools" as the whole card pool. Whether a spellbook may mix
+elements is decided with the second element, not before.
 
 ---
 

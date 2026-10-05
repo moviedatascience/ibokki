@@ -55,7 +55,7 @@ function dualId(a: Sym, b: Sym): string {
  * trainer pool's Role data. ~17% of the deck — well under the doc's ≤⅓ guideline.
  */
 const ARCHETYPE_TRAINERS: Record<Exclude<School, "Neutral">, string[]> = {
-  // "Emberworks" — aggro/burn: damage amps, an extra cast, ramp to VV nukes, anti-ward tech.
+  // "Emberworks" (the Blaze) — aggro/burn: damage amps, an extra cast, ramp to VV nukes, anti-ward tech.
   Evocation: [
     "ITM-007", // Empowered Chalk (+1 damage)
     "GAM-010", // Battle Trance (+3 damage burst)
@@ -65,7 +65,7 @@ const ARCHETYPE_TRAINERS: Record<Exclude<School, "Neutral">, string[]> = {
     "GAM-001", // Arcane Study (draw)
     "ITM-001", // Scrying Lens (consistency)
   ],
-  // "Bastion" — wards/control: burn cleanse, lifegain, ward pumps. The anti-aggro package.
+  // "Crucible" (the Forge) — wards/control: burn cleanse, lifegain, ward pumps. The anti-aggro package.
   Abjuration: [
     "GAM-013", // Quenching Salts (remove ALL burn + heal per marker) x2 — the burn answer
     "GAM-013",
@@ -75,7 +75,7 @@ const ARCHETYPE_TRAINERS: Record<Exclude<School, "Neutral">, string[]> = {
     "GAM-011", // Aegis Charm (3HP Ward from nowhere)
     "GAM-001", // Arcane Study (draw)
   ],
-  // "Riptide" — tempo/prophecy: inscribe delayed dooms, protect your own exhaustion clock.
+  // "Ashlight" (the Lamp) — tempo/prophecy: inscribe delayed dooms, protect your own exhaustion clock.
   Divination: [
     "GAM-019", // Saboteur's Kit (prophecy 2-in-2) x2 — planted time-bombs
     "GAM-019",
@@ -124,11 +124,21 @@ export function deckFor(school: Exclude<School, "Neutral">): DeckList {
   return { spellbook: spellbookFor(school), resourceDeck: resourceDeckFor(school) };
 }
 
-/** The archetype names players saw in playtests, keyed for lobby/deck-picker use. */
+/**
+ * The archetype names players see in the lobby / deck picker. All three are Fire
+ * (ELEMENTS_PLAN.md, 2026-10-05): Emberworks = the Blaze (Evocation), Crucible = the
+ * Forge (Abjuration), Ashlight = the Lamp (Divination).
+ */
 export const PRESET_SCHOOLS: Record<string, Exclude<School, "Neutral">> = {
   Emberworks: "Evocation",
-  Bastion: "Abjuration",
-  Riptide: "Divination",
+  Crucible: "Abjuration",
+  Ashlight: "Divination",
+};
+
+/** Pre-2026-10-05 preset names (persisted match history, old clients) → current names. */
+export const LEGACY_PRESET_NAMES: Record<string, string> = {
+  Bastion: "Crucible",
+  Riptide: "Ashlight",
 };
 
 /** The locked preset decks, in the same DeckDefinition shape as user decks. */
@@ -137,9 +147,10 @@ export const PRESET_DECKS: DeckDefinition[] = Object.entries(PRESET_SCHOOLS).map
   ...deckFor(school),
 }));
 
-/** A preset by name, or undefined. */
+/** A preset by name (legacy names accepted), or undefined. */
 export function presetDeck(name: string): DeckDefinition | undefined {
-  return PRESET_DECKS.find((d) => d.name === name);
+  const current = LEGACY_PRESET_NAMES[name] ?? name;
+  return PRESET_DECKS.find((d) => d.name === current);
 }
 
 // Presets must always satisfy the construction rules users are held to.

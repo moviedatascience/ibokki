@@ -159,10 +159,10 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
       actions.push({ type: "retractCast" });
     }
     // Reaction window: cast a prepared Reaction in response (no slot needed), unless the
-    // opponent has locked your Reactions (Arcane Anchor / Absolute Defense). Like any
+    // opponent has locked your Reactions (Furnace Roar / Cold Iron). Like any
     // spell, its cost must ALREADY be attached — holding components in reserve means
     // attaching them to your Reactions on your own turns, not paying from hand mid-window.
-    // Stone Stance discounts the cost; the opponent's Aetheric Lock taxes it.
+    // Ash Mantle discounts the cost; the opponent's Stifling Heat taxes it.
     // Reactions answer the OPPONENT'S cast on top of the stack only (ruling 2026-07-08) —
     // never your own spell, and never your own reaction: a second reaction of yours waits
     // for the first to resolve, when the opponent's spell surfaces again.
@@ -174,14 +174,14 @@ export function legalActions(state: GameState, playerId: PlayerId): Action[] {
         if (prep.cast || prep.sealed) continue;
         const def = getCard(prep.spell.defId);
         if (!def || !def.cost || def.type !== "Reaction") continue;
-        // Trap reactions (Volatile Bolt, Mana Drain, Searing Riposte) fire
+        // Trap reactions (Volatile Bolt, Spark Arrester, Searing Riposte) fire
         // automatically on their trigger — never cast from a reaction window.
         if (TRAP_REACTIONS.has(prep.spell.defId)) continue;
         // Printed-trigger gate: "plays a Reaction" cards only answer Reactions,
         // "casts a spell" cards only spells; riderless conditional cancels need
         // a target they can actually cancel.
         if (!reactionAnswersTop(prep.spell.defId, top)) continue;
-        // Ledger-family whiff guard (Sealed Verdict): needs the bank to spend.
+        // Ledger-family whiff guard (Furnace Verdict): needs the bank to spend.
         if ((LEDGER_MIN[prep.spell.defId] ?? 0) > (p.damagePreventedTotal ?? 0)) continue;
         if ((def.level ?? 1) > tier.maxSpellLevel) continue;
         const cost = reactionCost(def.cost, discount, tax);

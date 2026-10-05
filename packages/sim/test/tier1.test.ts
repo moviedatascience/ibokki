@@ -90,7 +90,7 @@ describe("tier-1 bot behavior valves (2026-08-13)", () => {
     expect(gainDone).toBeLessThan(gainLive * 0.5); // sweep-bound fuel ≈ dead weight
   });
 
-  it("ward-battery convertibility (tier 2): a prepared Ward Collapse makes ward HP payload", () => {
+  it("ward-battery convertibility (tier 2): a prepared Tap the Furnace makes ward HP payload", () => {
     const s = structuredClone(quietMainSpot(31));
     s.players[0].level = 10; // past ABJ-031's L3 tier gate
     s.players[1].level = 10;
@@ -108,7 +108,7 @@ describe("tier-1 bot behavior valves (2026-08-13)", () => {
     // the battery payload term. Compare against an equal-level non-battery prep.
     const withGeneric = structuredClone(s);
     withGeneric.players[0].prepared.push({
-      spell: { iid: 555021, defId: "ABJ-022" }, // Aegis Eternal, also L3 SSS
+      spell: { iid: 555021, defId: "ABJ-022" }, // Hearth Eternal, also L3 SSS
       faceDown: true,
       attached: [],
       cast: false,
@@ -124,11 +124,11 @@ describe("tier-1 bot behavior valves (2026-08-13)", () => {
 
   it("doom-aware option value: an armed cancel is worth more against live prophecy preps", () => {
     const s = structuredClone(quietMainSpot(31));
-    // Phase Shift is L2 — the armed term requires castable, so lift the level
+    // Snuff is L2 — the armed term requires castable, so lift the level
     // past its tier gate (both sides, to keep the state coherent).
     s.players[0].level = 10;
     s.players[1].level = 10;
-    // Arm a cancel reaction for P0 (Phase Shift SS, fully fueled).
+    // Arm a cancel reaction for P0 (Snuff SS, fully fueled).
     s.players[0].prepared.push({
       spell: { iid: 555003, defId: "ABJ-014" },
       faceDown: true,
@@ -195,6 +195,6 @@ describe("wave-C prep valves (resource-deck audit 2026-08-13)", () => {
 
   it("Divine's prior is demoted below the casts-when-slotted alternatives", () => {
     expect(castPriorValue("DIV-003")).toBeLessThanOrEqual(0.2); // 57 preps / 0 casts measured
-    expect(castPriorValue("DIV-011")).toBeGreaterThan(castPriorValue("DIV-003")); // Foretell actually casts
+    expect(castPriorValue("DIV-011")).toBeGreaterThan(castPriorValue("DIV-003")); // Lantern Glare actually casts
   });
 });

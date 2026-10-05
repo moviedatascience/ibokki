@@ -110,7 +110,7 @@ describe("match persistence across restarts", () => {
     a.send({ t: "create", deck: { preset: "Emberworks" } });
     await until(() => a.lobby !== null, "room created");
     await b.open();
-    b.send({ t: "join", code: a.lobby!.code, deck: { preset: "Bastion" } });
+    b.send({ t: "join", code: a.lobby!.code, deck: { preset: "Crucible" } });
     await until(() => a.latest !== null && b.latest !== null, "both seated with frames");
 
     // Play a meaningful chunk of the match, then stop mid-game.
@@ -182,7 +182,7 @@ describe("match persistence across restarts", () => {
 
     const a = new TestClient(srvA.url);
     await a.open();
-    a.send({ t: "create", deck: { preset: "Riptide" }, bot: true });
+    a.send({ t: "create", deck: { preset: "Ashlight" }, bot: true });
     await until(() => a.latest !== null, "bot room created + first frame");
     let acted = 0;
     await playRandom([a], rand, () => ++acted > 10);

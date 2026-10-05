@@ -58,13 +58,13 @@ function armedTrapFires(owner: PlayerState, prep: PreparedSpell, events: GameEve
 }
 
 /**
- * Attach-trap Reactions (Volatile Bolt, Mana Drain): while prepared face-down and
+ * Attach-trap Reactions (Volatile Bolt, Spark Arrester): while prepared face-down and
  * fueled, they fire AUTOMATICALLY when the opponent attaches — no reaction window,
  * no stack. The trap spends itself, then stings or bounces the attached component.
  */
 function fireAttachTraps(state: GameState, attacher: PlayerId, card: CardInstance, targetPrep: PreparedSpell, events: GameEvent[]): void {
   const owner = state.players[otherPlayer(attacher)];
-  if (sumOngoing(state.players[attacher], "reactionsLocked") > 0) return; // Arcane Anchor etc. silence traps too
+  if (sumOngoing(state.players[attacher], "reactionsLocked") > 0) return; // Furnace Roar etc. silence traps too
   const hasM = (getComponent(card.defId)?.symbols.M ?? 0) > 0;
   for (const prep of owner.prepared) {
     const trap = ATTACH_TRAPS[prep.spell.defId];
@@ -133,7 +133,7 @@ function finishPendingChoice(state: GameState, events: GameEvent[]): void {
   if (pc.mode === "discardThenDraw" && (pc.picked?.length ?? 0) > 0) {
     drawN(state, pc.player, pc.picked!.length, events);
   }
-  // Calculated Draw: the follow-up draws happen once the deck is whole again.
+  // Lamp in the Dark: the follow-up draws happen once the deck is whole again.
   if (pc.drawAfter) drawN(state, pc.player, pc.drawAfter, events);
   state.pendingChoice = null;
   resumeAfterChoice(state, events);
@@ -312,7 +312,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
         preparedIndex: action.preparedIndex,
         componentDefId: card.defId,
       });
-      // An armed opposing attach-trap (Volatile Bolt, Mana Drain) fires on this attach.
+      // An armed opposing attach-trap (Volatile Bolt, Spark Arrester) fires on this attach.
       fireAttachTraps(state, me, card, prep, events);
 
       // Attune: the next component you attach counts as +1 of the symbol the spell still needs.
@@ -418,7 +418,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
         throw new Error("Not enough prevented damage in your ledger");
 
       // Like any cast, a Reaction's cost must ALREADY be attached (no hand payment).
-      // Stone Stance discounts the S cost of your first Reaction; Aetheric Lock taxes it.
+      // Ash Mantle discounts the S cost of your first Reaction; Stifling Heat taxes it.
       const cost = reactionCost(
         def.cost,
         sumOngoing(p, "reactionDiscountS"),
@@ -524,7 +524,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
           break;
         }
         case "millFromTop": {
-          // Far Sight: the pick was staged off the OPPONENT'S deck top; discard it.
+          // Short Wick: the pick was staged off the OPPONENT'S deck top; discard it.
           const owner = state.players[otherPlayer(pc.player)];
           owner.discard.push(card);
           events.push({ type: "milled", player: owner.id, count: 1 });
@@ -542,7 +542,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
           break;
         }
         case "discardFromOpponentHand": {
-          // Mind Theft: the pick is in the OPPONENT'S hand; it goes to their discard.
+          // Burn the Letter: the pick is in the OPPONENT'S hand; it goes to their discard.
           const owner = state.players[otherPlayer(pc.player)];
           const hidx = owner.hand.findIndex((c) => c.iid === card.iid);
           if (hidx >= 0) owner.hand.splice(hidx, 1);
@@ -565,7 +565,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
           break;
         }
         case "sealPrepared": {
-          // Runic/Penumbral Seal: the pick is an OPPONENT'S prepared spell, addressed
+          // Runic/Welded Shut: the pick is an OPPONENT'S prepared spell, addressed
           // by its instance id (face-down candidates carry FACEDOWN-<slot> descriptors
           // so the pick never reveals the identity). Seal it for the round.
           const owner = state.players[otherPlayer(pc.player)];

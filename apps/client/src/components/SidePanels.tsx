@@ -174,6 +174,7 @@ export function SidePanels({ state, cards, hoverDef, statusHover, pinnedDef, onU
             <div className="dtext">
               <KeywordStrip tags={c.tags} />
               <RulesText text={c.text} />
+              {c.flavor && <div className="flavor">{c.flavor}</div>}
             </div>
           </>
         ) : (

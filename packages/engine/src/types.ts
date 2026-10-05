@@ -17,7 +17,7 @@ export interface PreparedSpell {
   attached: CardInstance[];
   /** Already cast this round (returned face-up to the prepared area). */
   cast: boolean;
-  /** Sealed spells cannot be cast this round (Runic Seal / Penumbral Seal). */
+  /** Sealed spells cannot be cast this round (Iron Brand / Welded Shut). */
   sealed: boolean;
   /** Phantom symbols counted toward this spell's cost (Attune); additive-only. */
   bonus?: Cost;
@@ -29,15 +29,15 @@ export interface Ward {
   hp: number;
   /** Fires when this ward is destroyed: refill cards / spawn a replacement / heal. */
   onDestroy?: "draw2" | "replace2" | "heal5";
-  /** The rider lapses at round end (Arcane Shell: "destroyed THIS ROUND" — live-bug m4). */
+  /** The rider lapses at round end (Cinder Crust: "destroyed THIS ROUND" — live-bug m4). */
   onDestroyExpires?: boolean;
-  /** When this ward absorbs damage, deal this much to the opponent (Reflective Ward). */
+  /** When this ward absorbs damage, deal this much to the opponent (Searing Ward). */
   reflectOnPrevent?: number;
-  /** Cannot be targeted or destroyed by opponent *effects* (still absorbs combat damage) (Fortress/Ward Eternal). */
+  /** Cannot be targeted or destroyed by opponent *effects* (still absorbs combat damage) (Fortress/The Adamant). */
   protected?: boolean;
-  /** While this ward lives, its owner can't be targeted by Level 1 spells (Stonewarden). */
+  /** While this ward lives, its owner can't be targeted by Level 1 spells (Kilnwarden). */
   level1Immunity?: boolean;
-  /** The first time each round the opponent casts a spell, this ward's owner draws (Sentinel Rune). */
+  /** The first time each round the opponent casts a spell, this ward's owner draws (Watchfire). */
   firstOppCastDraw?: boolean;
 }
 
@@ -51,14 +51,14 @@ export type OngoingKind =
   | "burnDoubleDamage" // your Burn markers deal +value each tick this round (Conflagration/Phoenix)
   | "burnAlsoTicksOwnTurn" // your opponent's Burn also ticks at the start of YOUR turns (Wildfire)
   | "untargetableBySingle" // can't be targeted by spells with only 1 component attached (Aegis)
-  | "reactionDiscountS" // your next Reaction costs value fewer S (min 1 component) (Stone Stance)
-  | "reactionsLocked" // YOUR opponent cannot play Reactions while you own this (Arcane Anchor/Absolute Defense)
+  | "reactionDiscountS" // your next Reaction costs value fewer S (min 1 component) (Ash Mantle)
+  | "reactionsLocked" // YOUR opponent cannot play Reactions while you own this (Furnace Roar/Cold Iron)
   | "spellsUncounterable" // your spells can't be cancelled/redirected/reduced by the opponent (Resolve/Omniscience)
-  | "damageToHeal" // incoming spell damage heals you instead, up to value total this round (Inversion Field)
+  | "damageToHeal" // incoming spell damage heals you instead, up to value total this round (Salamander's Skin)
   | "cannotBeForcedToDiscard" // the opponent can't make you discard or strip your hand/prepared (Iron Will)
   | "drawLock" // YOUR opponent can't draw via effects (only their normal turn-draw) (Mana Sickness)
   | "attuneBonus" // your next attached component counts as +1 needed symbol (Attune)
-  | "damageReduction" // reduce incoming damage by value (Aegis Eternal, Absolute Defense)
+  | "damageReduction" // reduce incoming damage by value (Hearth Eternal, Cold Iron)
   | "wardsProtected"; // ALL your wards: opponent can't target/destroy/shatter them this round (Fortress)
 
 /** A lasting effect tracked with a marker until its expiry (design doc: "Ongoing Effects"). */
@@ -141,7 +141,7 @@ export interface PlayerState {
   slotsUsedThisRound: number;
   /** Non-Reaction spells this player has cast this round (read by first-cast triggers). */
   spellsCastThisRound: number;
-  /** HP healed by damage-to-heal replacement this round (caps Inversion Field). */
+  /** HP healed by damage-to-heal replacement this round (caps Salamander's Skin). */
   damageHealedThisRound: number;
   /** Turns this player has begun in the current round (gates the per-turn draw). */
   turnsTakenThisRound: number;
@@ -156,7 +156,7 @@ export interface PlayerState {
    *  Empowered Chalk). Consumed into StackItem.damageBonus at cast; expires at
    *  the next turn boundary. */
   nextSpellBonus: number;
-  /** Set by Total Negation: this player may not cast more spells until their next turn. */
+  /** Set by Dead Fire: this player may not cast more spells until their next turn. */
   noCastThisTurn: boolean;
 }
 
@@ -183,7 +183,7 @@ export interface StackItem {
   /** Dealt back to this item's controller after it resolves (reflection). */
   reflect: number;
   /** Multiplier on the damage this spell ACTUALLY deals its victim, mirrored back onto
-   *  its caster after resolution (Final Riposte ×2, Pyromancer's Reckoning ×3). */
+   *  its caster after resolution (Final Riposte ×2, Pyromancer's Retort ×3). */
   reflectFactor?: number;
   /** Misdirection: this spell has been turned on its own caster — every opponent-facing
    *  primitive in its effect targets the controller instead when it resolves. */
@@ -192,11 +192,11 @@ export interface StackItem {
   healHalfPreventedTo?: PlayerId;
   /** Cannot be cancelled / redirected / reduced by Reactions (Unstoppable Bolt, Apocalypse, Resolve, Omniscience). */
   unstoppable: boolean;
-  /** "Cannot be prevented": damage bypasses ongoing reduction + Inversion Field (Apocalypse). */
+  /** "Cannot be prevented": damage bypasses ongoing reduction + Salamander's Skin (Apocalypse). */
   unpreventable?: boolean;
   /** Cannot be the target of Reactions (Hex Bolt). */
   reactionProof: boolean;
-  /** This item's damage can't be reduced below this floor (Lightning Bolt). */
+  /** This item's damage can't be reduced below this floor (White Flame). */
   minDamage: number;
   /** One-shot bonus consumed from the caster's nextSpellBonus at cast time. */
   damageBonus: number;
@@ -231,20 +231,20 @@ export interface PendingChoice {
    *  "bounceToOwnersDeckTop": candidates are the OPPONENT'S hand (revealed to
    *   the chooser); the pick goes on top of its owner's deck (Disarm).
    *  "millFromTop": candidates are staged off the OPPONENT'S deck top; the pick
-   *   goes to their discard, leftovers return on top in order (Far Sight).
+   *   goes to their discard, leftovers return on top in order (Short Wick).
    *  "reveal": pure information — candidates are shown to the chooser (nothing is
-   *   pickable, nothing moves); pass = Done (Foretell / Foreknowledge / Perfect Info).
+   *   pickable, nothing moves); pass = Done (Lantern Glare / Read by Firelight / Perfect Info).
    *  "discardThenDraw": pick ANY NUMBER of hand cards to discard, then draw that
    *   many when the choice ends (Alchemy).
    *  "discardFromOpponentHand": candidates are the OPPONENT'S hand (revealed to
-   *   the chooser); the pick goes to its owner's discard (Mind Theft).
+   *   the chooser); the pick goes to its owner's discard (Burn the Letter).
    *  "discardToDeckTop": candidates are components in YOUR discard; the pick goes
    *   on top of your Resource Deck (Mnemonic Charm).
    *  "discardToHand": candidates are components in YOUR discard; picks return to
    *   your hand (Recover / Salvage / Reclaim).
    *  "sealPrepared": candidates are the OPPONENT'S uncast, unsealed prepared spells;
    *   face-down ones are shown as FACEDOWN-<slot> descriptors (sealing targets a
-   *   slot, it does NOT reveal); the pick is sealed for the round (Runic/Penumbral Seal).
+   *   slot, it does NOT reveal); the pick is sealed for the round (Runic/Welded Shut).
    *  "treatAsComponent": candidates are the basic components in YOUR hand; pick the one
    *   Transmuter's Stone will transmute (a symbol choice follows).
    *  "treatAsSymbol": candidates are synthetic CMP-X descriptors for the other two basic
@@ -281,7 +281,7 @@ export interface PendingChoice {
   optional?: boolean;
   /** orderToTop / discardThenDraw: picks accumulate here until the choice completes. */
   picked?: CardInstance[];
-  /** Draw this many cards for the chooser once the choice completes (Calculated Draw). */
+  /** Draw this many cards for the chooser once the choice completes (Lamp in the Dark). */
   drawAfter?: number;
   /** treatAsSymbol: the hand component (iid + printed defId) chosen in the first step. */
   carryIid?: number;

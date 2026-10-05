@@ -11,10 +11,14 @@ export type Side = 0 | 1;
 export interface CardInfo {
   name: string;
   school: string; // School | "Component" | "Neutral"
+  /** Element (type): "Fire" for school cards, null for trainers/components. */
+  element?: string | null;
   type: string;
   level: number | null;
   cost: string | null; // symbol string like "VV", "SM", ...
   text: string;
+  /** One-line flavor text (school cards only). */
+  flavor?: string;
   /** Effect tags (what the card does) — drives the icon strip. */
   tags?: string[];
 }

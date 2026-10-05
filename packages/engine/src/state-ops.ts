@@ -98,7 +98,7 @@ export function dealDamageToPlayer(
   }
   if (dealt <= 0) return;
 
-  // Inversion Field: convert incoming damage into healing, up to a per-round cap.
+  // Salamander's Skin: convert incoming damage into healing, up to a per-round cap.
   const healCap = opts?.unpreventable ? 0 : sumOngoing(target, "damageToHeal");
   if (healCap > 0) {
     const healed = Math.min(Math.max(0, healCap - target.damageHealedThisRound), dealt);

@@ -16,6 +16,9 @@ const XLSX_PATH = resolve(REPO_ROOT, "ibokki_spell_cards.xlsx");
 const OUT_PATH = resolve(REPO_ROOT, "packages/cards/data/cards.json");
 
 type School = "Abjuration" | "Evocation" | "Divination" | "Neutral";
+/** Elements (types). 1.0 ships Fire only; later sets add their own (ELEMENTS_PLAN.md). */
+type Element = "Fire";
+const ELEMENTS: ReadonlySet<string> = new Set<Element>(["Fire"]);
 type CardType = "Spell" | "Reaction" | "Item" | "Gambit";
 
 interface Cost {
@@ -28,11 +31,15 @@ interface CardDef {
   id: string;
   name: string;
   school: School;
+  /** The card's element (type); null for Neutral trainers. */
+  element: Element | null;
   type: CardType;
   level: number | null;
   costText: string | null;
   cost: Cost | null;
   text: string;
+  /** Player-facing flavor line (optional). */
+  flavor?: string;
   role?: string;
   comment?: string;
 }
@@ -86,6 +93,8 @@ function main(): void {
     const lvlC = cols["lvl"];
     const costC = cols["cost"];
     const effectC = cols["effect"];
+    const elementC = cols["element"];
+    const flavorC = cols["flavor"];
     const roleC = cols["role"];
     const commentC = cols["comment"];
 
@@ -98,17 +107,28 @@ function main(): void {
       const costText = cell(row, costC);
       const role = cell(row, roleC);
       const comment = cell(row, commentC);
+      const flavor = cell(row, flavorC);
+      const school = (cell(row, schoolC) || "Neutral") as School;
+      // Every school card belongs to exactly one element; Neutral trainers belong to none.
+      const elementText = cell(row, elementC);
+      let element: Element | null = null;
+      if (school !== "Neutral") {
+        if (!ELEMENTS.has(elementText)) throw new Error(`${id}: Element "${elementText}" is not one of ${[...ELEMENTS].join("/")}`);
+        element = elementText as Element;
+      }
 
       const card: CardDef = {
         id,
         name: cell(row, nameC),
-        school: (cell(row, schoolC) || "Neutral") as School,
+        school,
+        element,
         type: cell(row, typeC) as CardType,
         level: lvlText ? Number(lvlText) : null,
         costText: costText || null,
         cost: parseCost(costText),
         text: cell(row, effectC),
       };
+      if (flavor) card.flavor = flavor;
       if (role) card.role = role;
       if (comment) card.comment = comment;
 

@@ -34,14 +34,18 @@ import { describeAction } from "@ibokki/sim";
 // Static card catalog
 // ---------------------------------------------------------------------------
 
-/** Static card info for the UI: id -> { name, school, type, level, cost, text }. */
+/** Static card info for the UI: id -> { name, school, element, type, level, cost, text, flavor }. */
 export interface CardInfo {
   name: string;
   school: string;
+  /** Element (type) — "Fire" for every school card; null for trainers and components. */
+  element: string | null;
   type: string;
   level: number | null;
   cost: string | null;
   text: string;
+  /** One-line flavor text (school cards only). */
+  flavor?: string;
   /** Effect tags from @ibokki/cards CARD_TAGS; empty for components. */
   tags: string[];
 }
@@ -49,11 +53,12 @@ export interface CardInfo {
 export function buildCardCatalog(): Record<string, CardInfo> {
   const catalog: Record<string, CardInfo> = {};
   for (const c of CARDS) {
-    catalog[c.id] = { name: c.name, school: c.school, type: c.type, level: c.level, cost: c.costText, text: c.text, tags: c.tags };
+    catalog[c.id] = { name: c.name, school: c.school, element: c.element, type: c.type, level: c.level, cost: c.costText, text: c.text, tags: c.tags };
+    if (c.flavor) catalog[c.id]!.flavor = c.flavor;
   }
   for (const c of COMPONENTS) {
     const sym = "V".repeat(c.symbols.V) + "S".repeat(c.symbols.S) + "M".repeat(c.symbols.M);
-    catalog[c.id] = { name: c.name, school: "Component", type: "Component", level: null, cost: sym, text: `Resource component — provides ${sym}.`, tags: [] };
+    catalog[c.id] = { name: c.name, school: "Component", element: null, type: "Component", level: null, cost: sym, text: `Resource component — provides ${sym}.`, tags: [] };
   }
   return catalog;
 }
@@ -286,8 +291,8 @@ export type SchoolName = "Evocation" | "Abjuration" | "Divination";
 export const SCHOOLS: SchoolName[] = ["Evocation", "Abjuration", "Divination"];
 
 /**
- * Which deck a player brings to a match: a named preset (Emberworks/Bastion/
- * Riptide) or one of their saved decks by id (requires the session cookie the
+ * Which deck a player brings to a match: a named preset (Emberworks/Crucible/
+ * Ashlight) or one of their saved decks by id (requires the session cookie the
  * WS handshake carries). `school` is the legacy pre-deck field — it maps to
  * that school's archetype preset.
  */

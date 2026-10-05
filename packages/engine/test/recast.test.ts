@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { createGame, deckFor, getEffect, makeContext, type CardInstance, type GameEvent } from "../src/index.ts";
 
 /**
- * Regression: copy-spells must never copy copy-spells. DIV-045 (Convergence,
+ * Regression: copy-spells must never copy copy-spells. DIV-045 (Flashpoint,
  * L4) picking ITSELF as "the biggest cast spell" recursed until stack overflow
- * in a live balance run (2026-07-27); DIV-027 (Borrowed Spell) self-picks the
+ * in a live balance run (2026-07-27); DIV-027 (Afterglow) self-picks the
  * same way among L1s.
  */
 describe("recast effects cannot recurse", () => {
@@ -28,7 +28,7 @@ describe("recast effects cannot recurse", () => {
     expect(() => fn(makeContext(state, 0, card, events), card)).not.toThrow();
   });
 
-  it("Borrowed Spell with only itself cast does not blow the stack", () => {
+  it("Afterglow with only itself cast does not blow the stack", () => {
     const state = stateWithCastSpell("DIV-027");
     const card: CardInstance = { iid: 9002, defId: "DIV-027" };
     const events: GameEvent[] = [];

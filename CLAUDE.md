@@ -2,6 +2,10 @@
 
 Ibokki is a 1v1 stack-based wizard dueling card game: V/S/M components, LIFO stack with
 Reactions, round→level ramp (1–21), Evocation/Abjuration/Divination school triangle.
+Every card has an **element** (the horizontal-progression axis, `ELEMENTS_PLAN.md`,
+DECISIONS #6): 1.0 is Fire only — Evocation = the Blaze, Abjuration = the Forge,
+Divination = the Lamp; presets Emberworks / Crucible / Ashlight. School = role,
+element = type; never hard-code "the three schools" as the whole card pool.
 `Design_Doc.md` is the rules source of truth; cards are authored in `ibokki_spell_cards.xlsx`
 and imported to `packages/cards/data/cards.json` (canonical, version-controlled).
 
@@ -34,7 +38,7 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 | `npm run mcp` | MCP playtest server (long-running; RESTART it after engine changes — it holds stale code) |
 | `npm run play` / `npm run online` / `npm run client` | local board / PvP server / Vite dev |
 | `npm run import-cards` | xlsx → cards.json, then derives tags.json (run after any xlsx edit) |
-| `npm run retext -- <pass.json>` | rewrite card Effect text in the xlsx from a `{texts:{id:text}}` map (pass files live in `packages/cards/data/rewrites/`); then `npm run import-cards`. Text must say what the engine does — log any text↔engine gap in a playtests parity file |
+| `npm run retext -- <pass.json>` | rewrite card cells in the xlsx from a pass map — `{texts, names, flavors, elements}`, each `{id: value}` (pass files live in `packages/cards/data/rewrites/`; missing columns are created); then `npm run import-cards`. Text must say what the engine does — log any text↔engine gap in a playtests parity file |
 | `npm run derive-tags` | engine effects + cardFlags → `packages/cards/data/tags.json` (run after ANY edit in `packages/engine/src/effects/` or `cardFlags.ts`; the derive test fails when stale) |
 | `npm run build:client` | vite build → apps/client/dist |
 
@@ -42,7 +46,7 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 
 - **Node 20 lives at `C:\Program Files\nodejs` and is NOT on PATH** in the shell tools.
   PowerShell: `$env:Path = "C:\Program Files\nodejs;" + $env:Path` first.
-- **Editing card text:** use `npm run retext` (above), not hand edits. For OTHER xlsx cells:
+- **Editing card text / names / flavor / element:** use `npm run retext` (above), not hand edits. For OTHER xlsx cells:
   adm-zip FAILS on this file (zip descriptor quirk). Use PowerShell
   .NET `ZipArchive` in Update mode on `xl/sharedStrings.xml`. Anchor replacements to whole
   cell strings (`>text<`) — substrings collide across cards — and note apostrophes are

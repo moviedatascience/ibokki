@@ -4,7 +4,7 @@
  * card definitions read close to their rules text:
  *
  *   register("EVO-017", (c) => c.dealDamage(5));            // Fireball
- *   register("EVO-009", (c) => { c.dealDamage(2); c.draw(1); }); // Battery
+ *   register("EVO-009", (c) => { c.dealDamage(2); c.draw(1); }); // Kindling
  */
 import { getCard, getComponent, type Sym } from "@ibokki/cards";
 import { RECAST_SPELLS } from "../cardFlags.ts";
@@ -83,7 +83,7 @@ export interface EffectContext {
    *  pierce. `pierce: true` is honored for a future printed-immunity card; no
    *  current card passes it. */
   prophesy(amount: number, turns: number, pierce?: boolean): void;
-  /** Inscribe a ward-collapse doom on the opponent (exp-8, Prophecy of Collapse):
+  /** Inscribe a ward-collapse doom on the opponent (exp-8, Omen of Ash):
    *  when the fuse hits zero, their largest unprotected Ward is destroyed. An
    *  announced Unbind — the counterplay is to spend or shrink the ward first. */
   prophesyWardCollapse(turns: number): void;
@@ -118,7 +118,7 @@ export interface EffectContext {
   drawUntil(target: number): number;
   /** Pause for the controller to search their deck: matching cards are staged
    *  as choices, picks are revealed to hand, then the deck shuffles. `optional`
-   *  = "up to N" (pass ends early). Recharge/Seek/Premeditate/Grand Design. */
+   *  = "up to N" (pass ends early). Recharge/Seek/Gather Kindling/Lamplighter. */
   requestSearchDeck(opts: { filter: "any" | "component" | "sameSymbolDual"; takeN: number; optional?: boolean; reason: string }): void;
   /** Pause to look at the top N and put them back ON TOP in any order — the
    *  first pick ends up topmost (Index / Premonition Charm). */
@@ -131,15 +131,15 @@ export interface EffectContext {
   /** Disarm: reveal the opponent's hand; MAY pick one component → owner's deck top. */
   requestBounceOpponentComponent(): void;
   /** Pure information: reveal the opponent's hand (plus their top `alsoTopN` deck
-   *  cards) to the caster; nothing moves, Done dismisses (Foretell / Perfect Info). */
+   *  cards) to the caster; nothing moves, Done dismisses (Lantern Glare / Perfect Info). */
   requestRevealOpponentHand(alsoTopN?: number): void;
   /** Alchemy: pick ANY NUMBER of hand cards to discard, then draw that many. */
   requestDiscardThenDraw(): void;
   /** Transmuter's Stone: pick a basic (single-symbol) hand component, then the symbol
    *  to treat it as until end of turn (two chained choices). */
   requestTreatAsComponent(): void;
-  /** Mind Theft: see the opponent's hand and CHOOSE the card they discard. */
-  /** Mind Theft (any card) / Cut the Thread (`componentsOnly` — the chooser is
+  /** Burn the Letter: see the opponent's hand and CHOOSE the card they discard. */
+  /** Burn the Letter (any card) / Char the Page (`componentsOnly` — the chooser is
    *  shown ONLY the components, not the whole hand): the caster picks what the
    *  opponent discards. No-op if no eligible card, or under Iron Will. */
   requestOpponentDiscardChoice(componentsOnly?: boolean): void;
@@ -148,7 +148,7 @@ export interface EffectContext {
   /** Recover / Salvage / Reclaim: pick `n` components in your discard → hand.
    *  `optional` = "up to n" (Done may end early). */
   requestReturnDiscardComponentsToHand(n: number, optional?: boolean): void;
-  /** Calculated Draw: search the WHOLE deck for any card to hand (order of the
+  /** Lamp in the Dark: search the WHOLE deck for any card to hand (order of the
    *  rest preserved — no shuffle), then draw `drawAfter` more. */
   requestTutorAnyThenDraw(drawAfter: number): void;
   /** Return up to n V-providing components from own discard to hand (Stoke). */
@@ -156,7 +156,7 @@ export interface EffectContext {
   returnAllComponentsFromDiscard(): number;
   shuffleOwnDiscardIntoDeck(): number;
   opponentShuffleHandIntoDeck(): number;
-  /** Time Spiral: both players shuffle hand + discard into deck and draw n. */
+  /** Ash Fall: both players shuffle hand + discard into deck and draw n. */
   reshuffleEverythingAndDraw(n: number): void;
   /** Grant one extra component attachment this turn (Quicken). */
   grantExtraAttach(): void;
@@ -176,19 +176,19 @@ export interface EffectContext {
   addBurnAmplifier(amount: number): void;
   /** Your opponent's Burn also ticks at the start of your turns this round (Wildfire). */
   addBurnAlsoTicksOwnTurn(): void;
-  /** Your opponent can't play Reactions until your next turn (Arcane Anchor). */
+  /** Your opponent can't play Reactions until your next turn (Furnace Roar). */
   lockOpponentReactionsUntilMyNextTurn(): void;
-  /** Your opponent can't play Reactions for the rest of the round (Absolute Defense). */
+  /** Your opponent can't play Reactions for the rest of the round (Cold Iron). */
   lockOpponentReactionsThisRound(): void;
-  /** Your opponent can't cast more spells this turn (Total Negation). */
+  /** Your opponent can't cast more spells this turn (Dead Fire). */
   lockOpponentCastsThisTurn(): void;
   /** Your spells can't be cancelled/redirected/reduced until your next turn (Resolve/Omniscience). */
   makeMySpellsUncounterable(): void;
-  /** Convert incoming damage into healing this round, up to `max` HP total (Inversion Field). */
+  /** Convert incoming damage into healing this round, up to `max` HP total (Salamander's Skin). */
   addDamageToHeal(max: number): void;
   /** Until the start of your next turn, you can't be targeted by 1-component spells (Aegis). */
   addUntargetableBySingle(): void;
-  /** Your first Reaction this round costs `amount` fewer S (min 1 component) (Stone Stance). */
+  /** Your first Reaction this round costs `amount` fewer S (min 1 component) (Ash Mantle). */
   addReactionDiscountS(amount: number): void;
 
   // ---- wards ----
@@ -198,7 +198,7 @@ export interface EffectContext {
   damageOneOpponentWard(amount: number): void;
   /** Exp-8 (Unravel): damage the opponent's LOWEST-HP unprotected ward — the printed pick. */
   damageOpponentWeakestWard(amount: number): void;
-  /** Exp-8 (Flaw in the Weave): the opponent's largest unprotected ward loses ceil(hp/2). */
+  /** Exp-8 (Heat Fracture): the opponent's largest unprotected ward loses ceil(hp/2). */
   halveOpponentLargestWard(): void;
   damageEachOpponentWard(amount: number): void;
   /** Destroy all opponent wards; returns the total HP destroyed. */
@@ -211,11 +211,11 @@ export interface EffectContext {
   /** Add HP to one ward you control, or create one with createHp if you have none (Fortify). */
   buffOneOwnWardOrCreate(addHp: number, createHp: number): void;
   buffAllOwnWards(amount: number): void;
-  /** Destroy your largest ward; returns its HP (Ward Collapse). */
+  /** Destroy your largest ward; returns its HP (Tap the Furnace). */
   destroyOwnLargestWard(): number;
   /** Destroy all your wards; returns their total HP (Overcharge). */
   destroyAllOwnWards(): number;
-  /** Destroy every ward on the board; returns how many were destroyed (Collapse the Veil). */
+  /** Destroy every ward on the board; returns how many were destroyed (Shatter the Kilns). */
   destroyAllWardsEverywhere(): number;
   addDamageReductionThisRound(amount: number): void;
   /** Fortress (exp-8d fix): ALL your wards are untargetable/undestroyable/
@@ -225,7 +225,7 @@ export interface EffectContext {
   /** Lifetime prevention this match (Reckoning's match window). */
   damagePreventedTotal(): number;
   /** Spend up to `max` from the lifetime prevention ledger (the ledger family,
-   *  2026-08-13: Warding Tithe / Sealed Verdict / Restoring Rune). Returns the
+   *  2026-08-13: Banked Coals / Furnace Verdict / Hearth's Warmth). Returns the
    *  amount actually spent. The ONLY decrementer of damagePreventedTotal —
    *  Reckoning reads whatever remains, so every point spent here is a point
    *  the late nuke loses. */
@@ -262,7 +262,7 @@ export interface EffectContext {
   /** Target's controller takes `amount` after the target spell resolves (reflection). */
   reflectOntoTarget(amount: number): void;
   /** Mirror `factor`× the damage the target spell ACTUALLY deals its victim back onto its
-   *  caster after it resolves (Final Riposte / Pyromancer's Reckoning). */
+   *  caster after it resolves (Final Riposte / Pyromancer's Retort). */
   reflectActualOntoTarget(factor: number): void;
   /** Turn the target spell on its own caster (Misdirection). */
   redirectTarget(): void;
@@ -279,13 +279,13 @@ export interface EffectContext {
   targetMeetsCost(): boolean;
   /** Mark the target spell castable again this round (Rewind). */
   uncastTarget(): void;
-  /** Seal the target spell so it can't be cast again this round (Spellbind). */
+  /** Seal the target spell so it can't be cast again this round (Smother). */
   sealTargetPrepared(): void;
-  /** Cancel every item remaining on the stack (Archmage's Seal). */
+  /** Cancel every item remaining on the stack (Grand Quench). */
   cancelEntireStack(): void;
-  /** Cancel every opponent spell on the stack; returns how many (Null Burst). */
+  /** Cancel every opponent spell on the stack; returns how many (Flashquench). */
   cancelOpponentStackSpells(): number;
-  /** Strip components off all opponent prepared spells; returns spells affected (Unraveling). */
+  /** Strip components off all opponent prepared spells; returns spells affected (Scatter the Coals). */
   stripAllOpponentPreparedComponents(): number;
   /** Destroy one of the opponent's ongoing effects; true if one was removed (Unbind/Dispelling Powder). */
   destroyOneOpponentOngoing(): boolean;
@@ -356,7 +356,7 @@ export function makeContext(
     dealDamage(amount) {
       const base = amount + sumOngoing(self, "damageBuff") + (item ? item.damageBonus : 0);
       let dmg = applyItemReduction(base);
-      if (item && item.minDamage > 0) dmg = Math.max(dmg, Math.min(base, item.minDamage)); // Lightning Bolt
+      if (item && item.minDamage > 0) dmg = Math.max(dmg, Math.min(base, item.minDamage)); // White Flame
       dealDamageToPlayer(state, opponentId, dmg, events, { unpreventable: !!item?.unpreventable });
     },
     dealRawDamage(amount) {

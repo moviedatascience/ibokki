@@ -15,10 +15,10 @@ describe("auto-derived cast priors (blind-spot plan workstream 2)", () => {
   });
 
   it("prices the doom row sanely (re-based for the exp-8 soakable world)", () => {
-    // Pre-exp-8 pins were Omen ≥1.4 / Foretell ≥1.2 against the exp-3b hand
+    // Pre-exp-8 pins were Omen ≥1.4 / Lantern Glare ≥1.2 against the exp-3b hand
     // values (1.7/1.6) — measured when every doom pierced. Post-revert a
     // 2-damage SOAKABLE doom honestly derives lower (1.1): it can be blocked.
-    // Foreclosure conversely gains shatter payoff where snapshots have wards
+    // Slow Match conversely gains shatter payoff where snapshots have wards
     // (clamped at 2.0). These pins guard the generator's direction, not the
     // old world's numbers.
     expect(priors["DIV-012"]).toBeGreaterThanOrEqual(1.0);
