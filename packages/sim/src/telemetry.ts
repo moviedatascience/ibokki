@@ -19,6 +19,11 @@ export interface CardAgg {
   gamesUsed: number;
   /** ...and that player won. gamesWon/gamesUsed = win rate when used. */
   gamesWon: number;
+  /** HP damage this card's effect dealt to the OTHER wizard (post-reduction, post-soak),
+   *  attributed through the engine's event causes (`GameEvent.src`, issue #80). */
+  damageDealt: number;
+  /** Damage soaked by wards this card created — the Abjuration number win rates hide. */
+  wardSoaked: number;
 }
 
 const emptyAgg = (): CardAgg => ({
@@ -30,12 +35,16 @@ const emptyAgg = (): CardAgg => ({
   cancels: 0,
   gamesUsed: 0,
   gamesWon: 0,
+  damageDealt: 0,
+  wardSoaked: 0,
 });
 
 export class CardStatsCollector {
   private agg = new Map<string, CardAgg>();
   /** defId -> players who used it in the game currently being ingested. */
   private current = new Map<string, Set<PlayerId>>();
+  /** wid -> the card whose effect created that ward (this game), for soak credit. */
+  private wardMaker = new Map<number, string>();
   games = 0;
 
   private bump(defId: string): CardAgg {
@@ -74,6 +83,23 @@ export class CardStatsCollector {
         case "spellCancelled":
           this.bump(e.spellDefId).cancels++;
           break;
+        case "damage": {
+          // Credit the causing card when the victim is the other wizard (self-damage
+          // costs and exhaustion are not "damage dealt").
+          const src = e.src;
+          if (src && "defId" in src && src.defId && e.target !== src.player) this.bump(src.defId).damageDealt += e.amount;
+          break;
+        }
+        case "wardCreated": {
+          const src = e.src;
+          if (src && "defId" in src && src.defId) this.wardMaker.set(e.wid, src.defId);
+          break;
+        }
+        case "wardDamaged": {
+          const maker = this.wardMaker.get(e.wid);
+          if (maker) this.bump(maker).wardSoaked += e.amount;
+          break;
+        }
       }
     }
   }
@@ -89,6 +115,7 @@ export class CardStatsCollector {
       }
     }
     this.current.clear();
+    this.wardMaker.clear();
   }
 
   toJSON(): Record<string, CardAgg & { name: string }> {
@@ -144,19 +171,25 @@ export class CardStatsCollector {
         return wy - wx || x.defId.localeCompare(y.defId);
       });
     const lines = [
-      "card                                  prep  cast react train  res% canc%  used  WR-used",
-      "--------------------------------------------------------------------------------------",
+      "card                                  prep  cast react train  res% canc%  used  WR-used   dmg/use soak/use",
+      "-----------------------------------------------------------------------------------------------------------",
     ];
+    const per = (num: number, den: number): string => (den > 0 ? (num / den).toFixed(1) : "—");
     for (const { defId, name, a } of rows) {
       const uses = a.casts + a.reactionCasts;
+      const plays = uses + a.trainerPlays;
       lines.push(
         `${(name + " [" + defId + "]").padEnd(38)}` +
           `${String(a.prepares).padStart(5)} ${String(a.casts).padStart(5)} ${String(a.reactionCasts).padStart(5)} ${String(a.trainerPlays).padStart(5)}` +
           ` ${pct(a.resolves, uses).padStart(5)} ${pct(a.cancels, uses).padStart(5)}` +
-          ` ${String(a.gamesUsed).padStart(5)}  ${pct(a.gamesWon, a.gamesUsed).padStart(7)}`,
+          ` ${String(a.gamesUsed).padStart(5)}  ${pct(a.gamesWon, a.gamesUsed).padStart(7)}` +
+          `   ${per(a.damageDealt, plays).padStart(7)} ${per(a.wardSoaked, plays).padStart(8)}`,
       );
     }
-    lines.push(`(${this.games} games; WR-used = win rate of the player who cast/played the card that game)`);
+    lines.push(
+      `(${this.games} games; WR-used = win rate of the player who cast/played the card that game; ` +
+        `dmg/use = HP damage dealt to the opponent per play, soak/use = damage absorbed by wards this card made, per play — both via event causes)`,
+    );
     return lines.join("\n");
   }
 }

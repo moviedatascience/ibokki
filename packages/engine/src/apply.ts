@@ -5,7 +5,7 @@ import { ATTACH_TRAPS, LEDGER_MIN, PREVENT_TRAPS, reactionAnswersTop, trainerHas
 import { replacementLimit, tierForLevel } from "./levels.ts";
 import { beginTurn, completePrepare, endRoundAndLevelUp, MAX_HAND_SIZE, ROUND_TURN_LIMIT } from "./mechanics.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
-import { dealDamageToPlayer, drawN, sculptValue, shuffleHandIntoDeck, sumOngoing, symbolCount } from "./state-ops.ts";
+import { dealDamageToPlayer, drawN, sculptValue, shuffleHandIntoDeck, stampSource, sumOngoing, symbolCount } from "./state-ops.ts";
 import { shuffleInPlace } from "./rng.ts";
 import { pushToStack, resolveTop, topOpposingStackItem } from "./stack.ts";
 import {
@@ -72,6 +72,7 @@ function fireAttachTraps(state: GameState, attacher: PlayerId, card: CardInstanc
     if (trap.onlyM && !hasM) continue;
     // A bounce trap needs the component still attached (an earlier trap may have taken it).
     if ("bounce" in trap.fire && !targetPrep.attached.some((c) => c.iid === card.iid)) continue;
+    const at = events.length;
     if (!armedTrapFires(owner, prep, events)) continue;
     if ("damage" in trap.fire) {
       dealDamageToPlayer(state, attacher, trap.fire.damage + sumOngoing(owner, "damageBuff"), events);
@@ -84,6 +85,7 @@ function fireAttachTraps(state: GameState, attacher: PlayerId, card: CardInstanc
       }
     }
     events.push({ type: "spellResolved", controller: owner.id, spellDefId: prep.spell.defId });
+    stampSource(events, at, { kind: "trap", defId: prep.spell.defId, player: owner.id });
   }
 }
 
@@ -103,9 +105,11 @@ function firePreventTraps(state: GameState, before: [number, number], events: Ga
     for (const prep of owner.prepared) {
       const dmg = PREVENT_TRAPS[prep.spell.defId];
       if (dmg === undefined) continue;
+      const at = events.length;
       if (!armedTrapFires(owner, prep, events)) continue;
       dealDamageToPlayer(state, preventer, dmg + sumOngoing(owner, "damageBuff"), events);
       events.push({ type: "spellResolved", controller: owner.id, spellDefId: prep.spell.defId });
+      stampSource(events, at, { kind: "trap", defId: prep.spell.defId, player: owner.id });
       // dealDamageToPlayer can end the game (TS's narrowing doesn't know that).
       if ((state.phase as string) === "gameover") return;
     }
@@ -209,7 +213,9 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
   if (state.pendingChoice && action.type !== "choose") {
     // "Up to N" / "you may" choices end early on pass ("Done").
     if (action.type === "pass" && state.pendingChoice.optional && me === state.pendingChoice.player) {
+      const pc = state.pendingChoice;
       finishPendingChoice(state, events);
+      stampSource(events, 0, { kind: "choice", defId: pc.sourceDefId ?? null, player: pc.player });
       return { state, events };
     }
     throw new Error("Resolve the pending choice first");
@@ -449,8 +455,10 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
 
       p.hand.splice(handIdx, 1);
       events.push({ type: "trainerPlayed", player: me, defId: card.defId });
+      const effectBase = events.length;
       const effect = getEffect(card.defId);
       if (effect) effect(makeContext(state, me, card, events), card);
+      stampSource(events, effectBase, { kind: "trainer", defId: card.defId, player: me });
       p.discard.push(card);
       if (def.type === "Gambit") p.gambitPlayedThisTurn = true;
       break;
@@ -465,6 +473,8 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
       if (pc.eligibleIids && !pc.eligibleIids.includes(action.iid)) {
         throw new Error("That card cannot be chosen (shown for information only)");
       }
+      // Everything this pick causes is the paused card's doing (see PendingChoice.sourceDefId).
+      const choiceSrc = { kind: "choice", defId: pc.sourceDefId ?? null, player: pc.player } as const;
       const card = pc.candidates.splice(cidx, 1)[0]!;
       switch (pc.mode) {
         case "takeToHand":
@@ -497,6 +507,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
           if (p.resourceDeck.length === 0) {
             state.pendingChoice = null;
             resumeAfterChoice(state, events);
+            stampSource(events, 0, choiceSrc);
             return { state, events };
           }
           state.pendingChoice = {
@@ -507,8 +518,10 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
             picksRemaining: 1,
             leftover: "top",
             shuffleAfter: true,
+            sourceDefId: pc.sourceDefId,
           };
           events.push({ type: "choicePending", player: me, reason: "search" });
+          stampSource(events, 0, choiceSrc);
           return { state, events }; // the follow-up choice replaces this one
         }
         case "orderToTop":
@@ -589,8 +602,10 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
             leftover: "top",
             carryIid: card.iid,
             carryDefId: card.defId,
+            sourceDefId: pc.sourceDefId,
           };
           events.push({ type: "choicePending", player: me, reason: "transmute" });
+          stampSource(events, 0, choiceSrc);
           return { state, events }; // the follow-up choice replaces this one
         }
         case "treatAsSymbol": {
@@ -606,6 +621,7 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
       if (pc.picksRemaining <= 0 || pc.candidates.length === 0) {
         finishPendingChoice(state, events); // hand priority back; round may end if slots were exhausted
       }
+      stampSource(events, 0, choiceSrc);
       break;
     }
 

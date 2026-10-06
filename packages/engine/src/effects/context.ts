@@ -422,6 +422,7 @@ export function makeContext(
         return;
       }
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason,
         mode: "takeToHand",
@@ -439,6 +440,7 @@ export function makeContext(
       if (look === 0) return;
       const staged = deck.splice(deck.length - look, look); // top `look` (top = end)
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: `Put these ${look} back on top — your FIRST pick ends up topmost`,
         mode: "orderToTop",
@@ -461,6 +463,7 @@ export function makeContext(
         return;
       }
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: "Take one Material (M) component — the rest go to the bottom",
         mode: "takeToHand",
@@ -478,6 +481,7 @@ export function makeContext(
         return;
       }
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: "Discard a card — then search your deck for any one card",
         mode: "discardForSearch",
@@ -491,6 +495,7 @@ export function makeContext(
       if (opponent.hand.length === 0) return; // nothing to look at
       const components = opponent.hand.filter((c) => isComponentDefId(c.defId));
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: "Opponent's hand — you MAY put one component on top of their deck",
         mode: "bounceToOwnersDeckTop",
@@ -508,6 +513,7 @@ export function makeContext(
       const candidates = [...opponent.hand, ...top]; // aliases — nothing moves
       if (candidates.length === 0) return;
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason:
           alsoTopN > 0
@@ -525,6 +531,7 @@ export function makeContext(
     requestDiscardThenDraw() {
       if (self.hand.length === 0) return;
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: "Discard any number of cards — you draw that many when done",
         mode: "discardThenDraw",
@@ -543,6 +550,7 @@ export function makeContext(
       });
       if (basics.length === 0) return; // legalActions gates this via trainerHasEffect
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: "Transmute which basic component (until end of turn)?",
         mode: "treatAsComponent",
@@ -559,6 +567,7 @@ export function makeContext(
       if (candidates.length === 0) return;
       if (sumOngoing(opponent, "cannotBeForcedToDiscard") > 0) return; // Iron Will
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: componentsOnly
           ? "Opponent's components — choose the one they discard"
@@ -574,6 +583,7 @@ export function makeContext(
       const components = self.discard.filter((c) => isComponentDefId(c.defId));
       if (components.length === 0) return;
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: "Your discard — choose a component to put on top of your deck",
         mode: "discardToDeckTop",
@@ -587,6 +597,7 @@ export function makeContext(
       const components = self.discard.filter((c) => isComponentDefId(c.defId));
       if (components.length === 0) return;
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason:
           n > 1
@@ -607,6 +618,7 @@ export function makeContext(
         return;
       }
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: "Search: take ANY card from your deck to hand (the rest keep their order)",
         mode: "takeToHand",
@@ -620,6 +632,7 @@ export function makeContext(
     requestDiscardForDamage() {
       if (self.hand.length === 0) return; // nothing to discard, no damage
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: "Discard a card — deal 1 damage per component symbol on it",
         mode: "discardForDamage",
@@ -637,6 +650,7 @@ export function makeContext(
       if (look === 0) return;
       const staged = deck.splice(deck.length - look, look); // top `look` cards (top = end)
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: takeN > 1 ? `Take ${Math.min(takeN, look)} of these ${look}` : `Take one of these ${look}`,
         mode: "takeToHand",
@@ -649,6 +663,7 @@ export function makeContext(
     requestBankToDeckTop(n) {
       if (self.hand.length === 0) return;
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: "Put a card on top of your Resource Deck",
         mode: "bankToDeckTop",
@@ -856,7 +871,7 @@ export function makeContext(
       const ward = self.wards[0];
       if (ward) {
         ward.hp += addHp;
-        events.push({ type: "wardCreated", player: selfId, hp: ward.hp }); // reuse as ward-changed marker
+        events.push({ type: "wardCreated", player: selfId, hp: ward.hp, wid: ward.wid }); // reuse as ward-changed marker
       } else {
         createWard(state, selfId, createHp, events);
       }
@@ -904,6 +919,7 @@ export function makeContext(
         .filter(({ p }) => !p.cast && !p.sealed);
       if (targets.length === 0) return;
       state.pendingChoice = {
+        sourceDefId: card.defId,
         player: selfId,
         reason: "Seal target prepared spell — it cannot be cast this round",
         mode: "sealPrepared",

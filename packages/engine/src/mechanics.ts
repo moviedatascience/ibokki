@@ -4,7 +4,7 @@
  * round → level-up transition.
  */
 import { MAX_LEVEL, tierForLevel } from "./levels.ts";
-import { dealDamageToPlayer, dealDamageToWard, drawN, endGame, sumOngoing, wardShielded, winnerByHp } from "./state-ops.ts";
+import { dealDamageToPlayer, dealDamageToWard, drawN, endGame, stampSource, sumOngoing, wardShielded, winnerByHp } from "./state-ops.ts";
 import { otherPlayer, type GameEvent, type GameState, type PlayerId } from "./types.ts";
 
 /**
@@ -87,17 +87,21 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
   const opp = state.players[otherPlayer(player.id)];
   if (player.burn > 0) {
     const dmg = player.burn * (1 + sumOngoing(opp, "burnDoubleDamage"));
+    const at = events.length;
     events.push({ type: "burnTick", player: player.id, amount: dmg });
     dealDamageToPlayer(state, player.id, dmg, events);
     player.burn--;
+    stampSource(events, at, { kind: "burn", player: player.id });
     if (state.phase === "gameover") return;
   }
   // Wildfire: while the active player owns this, the opponent's Burn also ticks (and decays) now.
   if (sumOngoing(player, "burnAlsoTicksOwnTurn") > 0 && opp.burn > 0) {
     const dmg = opp.burn * (1 + sumOngoing(player, "burnDoubleDamage"));
+    const at = events.length;
     events.push({ type: "burnTick", player: opp.id, amount: dmg });
     dealDamageToPlayer(state, opp.id, dmg, events);
     opp.burn--;
+    stampSource(events, at, { kind: "burn", player: opp.id });
     if (state.phase === "gameover") return;
   }
 
@@ -115,6 +119,7 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
       return false;
     });
     for (const p of firing) {
+      const at = events.length;
       events.push({ type: "prophecyFired", player: player.id, amount: p.amount, defId: p.defId });
       if (p.payload === "collapseLargestWard") {
         // Exp-8 suite: the doom's payload is ward economy, not HP. Targeted ward
@@ -134,6 +139,8 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
         // walling the clock costs ward stock; exact-size wards are the clean block.
         dealDamageToPlayer(state, player.id, p.amount, events, { shatterWards: true });
       }
+      // Prophecies are inscribed on the opponent, so the doom's owner is the other wizard.
+      stampSource(events, at, { kind: "prophecy", defId: p.defId, player: otherPlayer(player.id) });
       if (state.phase === "gameover") return;
     }
   }
@@ -143,7 +150,9 @@ export function beginTurn(state: GameState, events: GameEvent[]): void {
     .filter((o) => o.kind === "selfDamageEachTurn")
     .reduce((acc, o) => acc + o.value, 0);
   if (selfDmg > 0) {
+    const at = events.length;
     dealDamageToPlayer(state, player.id, selfDmg, events);
+    stampSource(events, at, { kind: "ongoing", effect: "selfDamageEachTurn", player: player.id });
     if (state.phase === "gameover") return;
   }
 

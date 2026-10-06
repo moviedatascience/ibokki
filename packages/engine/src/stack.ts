@@ -5,7 +5,7 @@
  */
 import { getCard } from "@ibokki/cards";
 import { MIN_DAMAGE, REACTION_PROOF, UNPREVENTABLE, UNSTOPPABLE } from "./cardFlags.ts";
-import { dealDamageToPlayer, drawN, sumOngoing } from "./state-ops.ts";
+import { dealDamageToPlayer, drawN, stampSource, sumOngoing } from "./state-ops.ts";
 import { getEffect, makeContext } from "./effects/index.ts";
 import { otherPlayer, type GameEvent, type GameState, type PlayerId, type StackItem } from "./types.ts";
 
@@ -58,15 +58,22 @@ export function pushToStack(
     events.push({ type: "reactionCast", player: controller, spellDefId: item.defId, targetSid });
     // Reaction-punish: the opponent owns the punisher; the reactor pays the toll.
     const punish = sumOngoing(opponent, "reactionPunish");
-    if (punish > 0) dealDamageToPlayer(state, controller, punish, events);
+    if (punish > 0) {
+      const at = events.length;
+      dealDamageToPlayer(state, controller, punish, events);
+      stampSource(events, at, { kind: "ongoing", effect: "reactionPunish", player: opponent.id });
+    }
   } else {
     player.slotsUsedThisRound++;
     player.spellsCastThisRound++;
     events.push({ type: "cast", player: controller, preparedIndex, spellDefId: item.defId });
     // First-cast-each-round ward trigger (Watchfire): the opponent's ward owner draws.
-    if (player.spellsCastThisRound === 1 && opponent.wards.some((w) => w.firstOppCastDraw)) {
+    const watch = player.spellsCastThisRound === 1 ? opponent.wards.find((w) => w.firstOppCastDraw) : undefined;
+    if (watch) {
+      const at = events.length;
       const drawn = drawN(state, opponent.id, 1, events);
       if (drawn > 0) events.push({ type: "drew", player: opponent.id, count: drawn });
+      stampSource(events, at, { kind: "ward", player: opponent.id, wid: watch.wid });
     }
   }
 }
@@ -88,6 +95,12 @@ export function resolveTop(state: GameState, events: GameEvent[]): void {
     !item.isReaction &&
     ((item.componentCount === 1 && sumOngoing(targetP, "untargetableBySingle") > 0) ||
       (item.level === 1 && targetP.wards.some((w) => w.level1Immunity)));
+
+  // Bracket the resolution: clients animate "this card does the following", telemetry
+  // credits the following to this card. Every event until the closing
+  // spellResolved/spellCancelled/targetImmune is also stamped with the spell as cause.
+  events.push({ type: "resolveBegin", controller: item.controller, spellDefId: item.defId, sid: item.sid, isReaction: item.isReaction });
+  const resolveBase = events.length;
 
   if (item.cancelled) {
     events.push({ type: "spellCancelled", controller: item.controller, spellDefId: item.defId });
@@ -118,6 +131,7 @@ export function resolveTop(state: GameState, events: GameEvent[]): void {
     if (item.reflect > 0 && state.phase !== "gameover") dealDamageToPlayer(state, item.controller, item.reflect, events);
     events.push({ type: "spellResolved", controller: item.controller, spellDefId: item.defId });
   }
+  stampSource(events, resolveBase, { kind: "spell", defId: item.defId, player: item.controller, sid: item.sid, isReaction: item.isReaction });
 
   // Components used to cast are discarded; the spell stays in prepared, face-up.
   if (prep) {

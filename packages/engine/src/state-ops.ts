@@ -8,6 +8,7 @@ import { rngInt, shuffleInPlace } from "./rng.ts";
 import {
   otherPlayer,
   type CardInstance,
+  type EventSource,
   type GameEvent,
   type GameState,
   type OngoingExpiry,
@@ -16,6 +17,19 @@ import {
   type PlayerState,
   type Ward,
 } from "./types.ts";
+
+/**
+ * Attribute every event from index `from` onward to `src` — unless it already has a
+ * cause (innermost wins: a ward trigger inside a spell's damage stays "ward"). Called
+ * post-hoc by the few places that RUN an effect, so the ~100 `events.push` sites
+ * never need to know who is running them.
+ */
+export function stampSource(events: GameEvent[], from: number, src: EventSource): void {
+  for (let i = from; i < events.length; i++) {
+    const e = events[i]!;
+    if (!e.src) e.src = src;
+  }
+}
 
 export function winnerByHp(state: GameState): PlayerId | null {
   const [a, b] = state.players;
@@ -58,13 +72,14 @@ export function drawN(state: GameState, playerId: PlayerId, n: number, events: G
       state.rngState = shuffleInPlace(player.resourceDeck, state.rngState);
       player.reshuffles++;
       const damage = 2 * player.reshuffles;
+      const at = events.length;
       events.push({ type: "reshuffled", player: playerId, count: player.reshuffles, damage });
       player.hp -= damage; // unpreventable: no wards, no reduction, no heal-conversion
       events.push({ type: "damage", target: playerId, amount: damage });
-      if (player.hp <= 0) {
-        endGame(state, otherPlayer(playerId), "hp", events);
-        return drawn;
-      }
+      if (player.hp <= 0) endGame(state, otherPlayer(playerId), "hp", events);
+      // Exhaustion is its own cause, even mid-spell: the spell drew, the deck bit.
+      stampSource(events, at, { kind: "exhaustion", player: playerId });
+      if (player.hp <= 0) return drawn;
       continue;
     }
     player.hand.push(player.resourceDeck.pop()!);
@@ -121,19 +136,22 @@ export function dealDamageToPlayer(
     ward.hp -= absorbed;
     dealt -= absorbed;
     if (absorbed > 0) target.damagePreventedTotal = (target.damagePreventedTotal ?? 0) + absorbed;
-    events.push({ type: "wardDamaged", player: targetId, amount: absorbed });
+    events.push({ type: "wardDamaged", player: targetId, amount: absorbed, wid: ward.wid });
     if (ward.reflectOnPrevent && absorbed > 0) {
       const oid = otherPlayer(targetId); // chip damage (no further ward routing) avoids reflect loops
       state.players[oid].hp -= ward.reflectOnPrevent;
-      events.push({ type: "damage", target: oid, amount: ward.reflectOnPrevent });
+      const wardSrc: EventSource = { kind: "ward", player: targetId, wid: ward.wid };
+      events.push({ type: "damage", target: oid, amount: ward.reflectOnPrevent, src: wardSrc });
       if (state.players[oid].hp <= 0) {
+        const at = events.length;
         endGame(state, targetId, "hp", events);
+        stampSource(events, at, wardSrc);
         return;
       }
     }
     if (ward.hp <= 0) {
       target.wards.shift();
-      events.push({ type: "wardDestroyed", player: targetId });
+      events.push({ type: "wardDestroyed", player: targetId, wid: ward.wid });
       fireWardDestroyed(state, targetId, ward, events);
       if (state.phase === "gameover") return;
     } else if (opts?.shatterWards && absorbed > 0 && !wardShielded(target, ward)) {
@@ -143,7 +161,7 @@ export function dealDamageToPlayer(
       // evaporates UNCREDITED. `protected` wards (Sanctum-class) are the
       // printed tech answer; on-destroy triggers still fire (real destruction).
       target.wards.shift();
-      events.push({ type: "wardDestroyed", player: targetId });
+      events.push({ type: "wardDestroyed", player: targetId, wid: ward.wid });
       fireWardDestroyed(state, targetId, ward, events);
       if (state.phase === "gameover") return;
     }
@@ -156,6 +174,7 @@ export function dealDamageToPlayer(
 
 /** Fire a ward's on-destroy trigger (combat destruction only): refuel / replace / heal. */
 function fireWardDestroyed(state: GameState, ownerId: PlayerId, ward: Ward, events: GameEvent[]): void {
+  const at = events.length;
   if (ward.onDestroy === "draw2") {
     const d = drawN(state, ownerId, 2, events);
     if (d > 0) events.push({ type: "drew", player: ownerId, count: d });
@@ -164,6 +183,8 @@ function fireWardDestroyed(state: GameState, ownerId: PlayerId, ward: Ward, even
   } else if (ward.onDestroy === "heal5") {
     healPlayer(state, ownerId, 5, events);
   }
+  // The ward's own trigger did this, not the spell that broke it (innermost cause wins).
+  stampSource(events, at, { kind: "ward", player: ownerId, wid: ward.wid });
 }
 
 export function healPlayer(state: GameState, id: PlayerId, amount: number, events: GameEvent[]): void {
@@ -191,7 +212,7 @@ export function createWard(
 ): Ward {
   const ward: Ward = { wid: state.nextIid++, hp, ...flags };
   state.players[ownerId].wards.push(ward);
-  events.push({ type: "wardCreated", player: ownerId, hp });
+  events.push({ type: "wardCreated", player: ownerId, hp, wid: ward.wid });
   return ward;
 }
 
@@ -211,11 +232,11 @@ export function dealDamageToWard(
 ): void {
   if (amount <= 0) return;
   ward.hp -= amount;
-  events.push({ type: "wardDamaged", player: ownerId, amount });
+  events.push({ type: "wardDamaged", player: ownerId, amount, wid: ward.wid });
   if (ward.hp <= 0) {
     const player = state.players[ownerId];
     player.wards = player.wards.filter((w) => w.wid !== ward.wid);
-    events.push({ type: "wardDestroyed", player: ownerId });
+    events.push({ type: "wardDestroyed", player: ownerId, wid: ward.wid });
   }
 }
 
@@ -244,7 +265,7 @@ export function destroyAllWards(
   let total = 0;
   for (const ward of doomed) total += Math.max(0, ward.hp);
   if (doomed.length > 0) {
-    for (let i = 0; i < doomed.length; i++) events.push({ type: "wardDestroyed", player: ownerId });
+    for (const w of doomed) events.push({ type: "wardDestroyed", player: ownerId, wid: w.wid });
     const doomedIds = new Set(doomed.map((w) => w.wid));
     player.wards = player.wards.filter((w) => !doomedIds.has(w.wid));
   }

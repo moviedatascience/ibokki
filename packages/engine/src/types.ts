@@ -286,6 +286,9 @@ export interface PendingChoice {
   /** treatAsSymbol: the hand component (iid + printed defId) chosen in the first step. */
   carryIid?: number;
   carryDefId?: string;
+  /** The card whose effect paused for this choice — events emitted while the choice
+   *  resolves are attributed to it (`EventSource` kind "choice"). */
+  sourceDefId?: string;
 }
 
 export type Phase = "prepare" | "main" | "gameover";
@@ -346,7 +349,31 @@ export type Action =
   | { type: "choose"; iid: number }
   | { type: "pass" };
 
-export type GameEvent =
+/**
+ * What caused an event (2026-10-06). Every event emitted while a card's effect runs
+ * is stamped with that card (innermost cause wins: a ward's on-destroy draw inside a
+ * spell's damage says "ward", the damage itself says the spell). Clients group a
+ * frame's events by cause to animate "Fireball resolves → -4, ward -2"; telemetry
+ * credits damage dealt / soaked to the right card. `player` is whose card or
+ * marker it is (the controller / owner), never the victim.
+ */
+export type EventSource =
+  | { kind: "spell"; defId: string; player: PlayerId; sid: number; isReaction: boolean }
+  | { kind: "trainer"; defId: string; player: PlayerId }
+  /** An armed trap Reaction firing on its printed trigger (no stack). */
+  | { kind: "trap"; defId: string; player: PlayerId }
+  /** The continuation of a card's effect after a pending choice (defId null if unknown). */
+  | { kind: "choice"; defId: string | null; player: PlayerId }
+  | { kind: "burn"; player: PlayerId }
+  | { kind: "prophecy"; defId: string; player: PlayerId }
+  /** A ward's own trigger: reflect-on-absorb, on-destroy draw/replace/heal, first-cast draw. */
+  | { kind: "ward"; player: PlayerId; wid: number }
+  | { kind: "ongoing"; effect: OngoingKind; player: PlayerId }
+  /** Exhaustion damage from reshuffling an empty Resource Deck. */
+  | { kind: "exhaustion"; player: PlayerId };
+
+/** The event union proper; `GameEvent` adds the optional cause to every member. */
+export type GameEventBody =
   | { type: "turnBegan"; player: PlayerId; round: number }
   | { type: "drew"; player: PlayerId; count: number }
   | { type: "mulliganed"; player: PlayerId; newHandSize: number }
@@ -354,6 +381,9 @@ export type GameEvent =
   | { type: "cast"; player: PlayerId; preparedIndex: number; spellDefId: string }
   | { type: "trainerPlayed"; player: PlayerId; defId: string }
   | { type: "reactionCast"; player: PlayerId; spellDefId: string; targetSid: number | null }
+  /** Opens a stack item's resolution; everything until its `spellResolved` /
+   *  `spellCancelled` / `targetImmune` is that spell's doing (also stamped via `src`). */
+  | { type: "resolveBegin"; controller: PlayerId; spellDefId: string; sid: number; isReaction: boolean }
   | { type: "spellResolved"; controller: PlayerId; spellDefId: string }
   | { type: "spellCancelled"; controller: PlayerId; spellDefId: string }
   | { type: "spellRedirected"; player: PlayerId; spellDefId: string }
@@ -375,9 +405,10 @@ export type GameEvent =
   /** A card bounced to the top of its owner's deck (Disarm) — public. */
   | { type: "bounced"; player: PlayerId; defId: string }
   | { type: "shuffledIn"; player: PlayerId; count: number }
-  | { type: "wardCreated"; player: PlayerId; hp: number }
-  | { type: "wardDamaged"; player: PlayerId; amount: number }
-  | { type: "wardDestroyed"; player: PlayerId }
+  /** `wid` identifies the ward so later soak/destroy events can be credited to the card that made it. */
+  | { type: "wardCreated"; player: PlayerId; hp: number; wid: number }
+  | { type: "wardDamaged"; player: PlayerId; amount: number; wid: number }
+  | { type: "wardDestroyed"; player: PlayerId; wid: number }
   | { type: "ongoingAdded"; player: PlayerId; kind: OngoingKind }
   | { type: "ongoingRemoved"; player: PlayerId }
   | { type: "choicePending"; player: PlayerId; reason: string }
@@ -393,6 +424,8 @@ export type GameEvent =
   | { type: "handCapDiscard"; player: PlayerId; count: number }
   | { type: "leveledUp"; player: PlayerId; level: number }
   | { type: "gameOver"; winner: PlayerId | null; reason: EndReason };
+
+export type GameEvent = GameEventBody & { src?: EventSource };
 
 export interface ApplyResult {
   state: GameState;

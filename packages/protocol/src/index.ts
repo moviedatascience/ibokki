@@ -147,6 +147,8 @@ export function eventForViewer(e: GameEvent, viewer: PlayerId, relative: boolean
       const v = out[k];
       if (v === 0 || v === 1) out[k] = relSide(viewer, v as PlayerId);
     }
+    // The cause's owner is a PlayerId too (always a public card / marker — no redaction).
+    if (e.src) out.src = { ...e.src, player: relSide(viewer, e.src.player) };
   }
   return out as ViewerEvent;
 }
