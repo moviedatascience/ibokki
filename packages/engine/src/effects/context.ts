@@ -499,6 +499,7 @@ export function makeContext(
         player: selfId,
         reason: "Opponent's hand — you MAY put one component on top of their deck",
         mode: "bounceToOwnersDeckTop",
+        target: opponentId,
         candidates: [...opponent.hand], // the whole hand is revealed to you
         picksRemaining: 1,
         leftover: "top",
@@ -520,6 +521,7 @@ export function makeContext(
             ? `Opponent's hand and their top ${top.length} deck card${top.length === 1 ? "" : "s"} — Done to continue`
             : "Opponent's hand — Done to continue",
         mode: "reveal",
+        target: opponentId,
         candidates,
         picksRemaining: 0,
         leftover: "top",
@@ -573,6 +575,7 @@ export function makeContext(
           ? "Opponent's components — choose the one they discard"
           : "Opponent's hand — choose the card they discard",
         mode: "discardFromOpponentHand",
+        target: opponentId,
         candidates,
         picksRemaining: 1,
         leftover: "top",
@@ -923,14 +926,18 @@ export function makeContext(
         player: selfId,
         reason: "Seal target prepared spell — it cannot be cast this round",
         mode: "sealPrepared",
-        // Targeting is by SLOT: face-down spells stay hidden behind a positional descriptor.
+        target: opponentId,
+        // Targeting is by SLOT: face-down spells stay hidden behind a positional descriptor
+        // AND a synthetic iid — the real iid would name the spell (iids follow decklist
+        // order), which the hidden-information test caught (2026-10-06).
         candidates: targets.map(({ p, slot }) => ({
-          iid: p.spell.iid,
+          iid: state.nextIid++,
           defId: p.faceDown ? `FACEDOWN-${slot}` : p.spell.defId,
         })),
         picksRemaining: 1,
         leftover: "top",
       };
+      state.pendingChoice.slotByIid = Object.fromEntries(state.pendingChoice.candidates.map((c, i) => [c.iid, targets[i]!.slot]));
       events.push({ type: "choicePending", player: selfId, reason: "seal" });
     },
 

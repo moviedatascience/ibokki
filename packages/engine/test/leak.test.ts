@@ -82,8 +82,8 @@ describe("legalActions leaks no hidden information", () => {
   });
 });
 
-describe("known leaks (it.fails — flip to it() when fixed)", () => {
-  it.fails("a seal choice's legal actions don't depend on which spell hides in a face-down slot", async () => {
+describe("fixed leaks (2026-10-06)", () => {
+  it("a seal choice's legal actions don't depend on which spell hides in a face-down slot", async () => {
     // ABJ-010 Iron Brand / ABJ-030 Welded Shut: context.ts shows face-down slots as
     // FACEDOWN-<slot> descriptors but keeps the hidden spell's REAL iid as the choose
     // key, and iids are dealt in decklist order at createGame — so `choose {iid}` (and

@@ -289,6 +289,14 @@ export interface PendingChoice {
   /** The card whose effect paused for this choice — events emitted while the choice
    *  resolves are attributed to it (`EventSource` kind "choice"). */
   sourceDefId?: string;
+  /** Whose zones the candidates of an opponent-facing mode (bounce / discardFromOpponentHand /
+   *  sealPrepared / reveal) alias. Defaults to the chooser's opponent; a spell turned on its
+   *  caster (Misdirection / Flame Mirror) stages the CASTER'S cards, and resolving against
+   *  the other player would move a card that isn't there (duplication bug, 2026-10-06). */
+  target?: PlayerId;
+  /** sealPrepared: candidates are SYNTHETIC descriptors (a real iid would identify the
+   *  face-down spell — iids are dealt in decklist order); this maps each to its slot. */
+  slotByIid?: Record<number, number>;
 }
 
 export type Phase = "prepare" | "main" | "gameover";

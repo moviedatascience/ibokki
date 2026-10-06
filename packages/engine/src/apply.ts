@@ -528,17 +528,19 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
           (pc.picked ??= []).push(card); // laid back on top at completion, first pick topmost
           break;
         case "bounceToOwnersDeckTop": {
-          // Disarm: the pick is in the OPPONENT'S hand; it goes on top of their deck.
-          const owner = state.players[otherPlayer(pc.player)];
+          // Disarm: the pick is in the TARGET'S hand (the opponent — or the caster, when the
+          // spell was turned on them); it goes on top of their deck.
+          const owner = state.players[pc.target ?? otherPlayer(pc.player)];
           const hidx = owner.hand.findIndex((c) => c.iid === card.iid);
-          if (hidx >= 0) owner.hand.splice(hidx, 1);
+          if (hidx < 0) break; // not where the choice said — never duplicate a card
+          owner.hand.splice(hidx, 1);
           owner.resourceDeck.push(card);
           events.push({ type: "bounced", player: owner.id, defId: card.defId });
           break;
         }
         case "millFromTop": {
-          // Short Wick: the pick was staged off the OPPONENT'S deck top; discard it.
-          const owner = state.players[otherPlayer(pc.player)];
+          // Short Wick: the pick was staged off the TARGET'S deck top; discard it.
+          const owner = state.players[pc.target ?? otherPlayer(pc.player)];
           owner.discard.push(card);
           events.push({ type: "milled", player: owner.id, count: 1 });
           break;
@@ -555,10 +557,11 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
           break;
         }
         case "discardFromOpponentHand": {
-          // Burn the Letter: the pick is in the OPPONENT'S hand; it goes to their discard.
-          const owner = state.players[otherPlayer(pc.player)];
+          // Burn the Letter: the pick is in the TARGET'S hand; it goes to their discard.
+          const owner = state.players[pc.target ?? otherPlayer(pc.player)];
           const hidx = owner.hand.findIndex((c) => c.iid === card.iid);
-          if (hidx >= 0) owner.hand.splice(hidx, 1);
+          if (hidx < 0) break; // not where the choice said — never duplicate a card
+          owner.hand.splice(hidx, 1);
           owner.discard.push(card);
           events.push({ type: "discarded", player: owner.id, count: 1 });
           break;
@@ -578,12 +581,13 @@ function applyInner(prev: GameState, action: Action, actor?: PlayerId): ApplyRes
           break;
         }
         case "sealPrepared": {
-          // Runic/Welded Shut: the pick is an OPPONENT'S prepared spell, addressed
-          // by its instance id (face-down candidates carry FACEDOWN-<slot> descriptors
-          // so the pick never reveals the identity). Seal it for the round.
-          const owner = state.players[otherPlayer(pc.player)];
-          const prep = owner.prepared.find((pr) => pr.spell.iid === card.iid);
-          if (prep) prep.sealed = true;
+          // Runic/Welded Shut: the pick is a TARGET'S prepared slot, addressed by a
+          // synthetic descriptor (FACEDOWN-<slot> for hidden spells) mapped to its slot
+          // via slotByIid — the pick never reveals an identity. Seal it for the round.
+          const owner = state.players[pc.target ?? otherPlayer(pc.player)];
+          const slot = pc.slotByIid?.[card.iid];
+          const prep = slot !== undefined ? owner.prepared[slot] : owner.prepared.find((pr) => pr.spell.iid === card.iid);
+          if (prep && !prep.cast) prep.sealed = true;
           break;
         }
         case "treatAsComponent": {

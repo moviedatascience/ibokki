@@ -148,11 +148,21 @@ export function checkInvariants(state: GameState, opts: InvariantOptions = {}): 
   // ── 6. Pending choice: candidates exist; only the chooser acts, and can. ──────────
   if (pc) {
     if (!nonNegInt(pc.picksRemaining)) v(`pendingChoice.picksRemaining = ${pc.picksRemaining}`);
-    if (!STAGED_MODES.has(pc.mode) && pc.mode !== "treatAsSymbol") {
+    const target = pc.target ?? otherPlayer(pc.player);
+    if (pc.mode === "sealPrepared") {
+      // Synthetic descriptors (no zone); each must map to a live, uncast, unsealed slot of the target.
+      for (const c of pc.candidates) {
+        const slot = pc.slotByIid?.[c.iid];
+        const prep = slot === undefined ? undefined : state.players[target].prepared[slot];
+        if (!prep) v(`pendingChoice(sealPrepared) candidate ${c.iid} (${c.defId}) maps to no prepared slot of P${target}`);
+        else if (prep.cast || prep.sealed) v(`pendingChoice(sealPrepared) candidate ${c.iid} points at a slot that is already cast/sealed`);
+        else if (prep.faceDown && !c.defId.startsWith("FACEDOWN-")) v(`pendingChoice(sealPrepared) candidate ${c.iid} names a face-down spell (${c.defId})`);
+      }
+    } else if (!STAGED_MODES.has(pc.mode) && pc.mode !== "treatAsSymbol") {
       // Aliased candidates must sit in the zone the resolving `choose` handler reads
       // (apply.ts) — otherwise the pick moves a card that isn't there and duplicates it.
       const me = `P${pc.player}`;
-      const opp = `P${otherPlayer(pc.player)}`;
+      const opp = `P${target}`;
       const expected: Partial<Record<string, RegExp>> = {
         bankToDeckTop: new RegExp(`^${me} hand$`),
         discardForDamage: new RegExp(`^${me} hand$`),
@@ -164,7 +174,6 @@ export function checkInvariants(state: GameState, opts: InvariantOptions = {}): 
         reveal: new RegExp(`^${opp} (hand|deck)$`),
         discardToDeckTop: new RegExp(`^${me} discard$`),
         discardToHand: new RegExp(`^${me} discard$`),
-        sealPrepared: new RegExp(`^${opp} prepared\\[\\d+\\]$`),
       };
       const want = expected[pc.mode];
       for (const c of pc.candidates) {

@@ -116,6 +116,9 @@ describe("checkInvariants", () => {
     if (["takeToHand", "orderToTop", "millFromTop"].includes(pc.mode)) {
       pc.candidates.push({ ...ghost.players[0].spellbook[0] ?? ghost.players[1].spellbook[0] ?? pc.candidates[0]! });
       expect(has(ghost, /is in BOTH|card count/, { cardCount: countCards(s) })).toBe(true);
+    } else if (pc.mode === "sealPrepared") {
+      // Synthetic descriptors: the ghost maps to no slot of the target.
+      expect(has(ghost, /candidate 999999 \(CMP-V\) maps to no prepared slot/)).toBe(true);
     } else {
       expect(has(ghost, /candidate 999999 \(CMP-V\) is in no zone/)).toBe(true);
     }
@@ -126,8 +129,8 @@ describe("checkInvariants", () => {
   });
 });
 
-describe("known engine bugs found by the checker (it.fails — flip to it() when fixed)", () => {
-  it.fails("a Flame-Mirror-redirected Burn the Letter keeps cards in exactly one zone", async () => {
+describe("engine bugs found by the checker (fixed 2026-10-06)", () => {
+  it("a Flame-Mirror-redirected Burn the Letter keeps cards in exactly one zone", async () => {
     // DIV-039 redirected onto its caster (DIV-026 sets item.redirected): context.ts
     // stages candidates from the CASTER'S hand, but apply's discardFromOpponentHand
     // pushes the pick into otherPlayer(chooser)'s discard — the card ends up in P0's
