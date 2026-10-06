@@ -120,6 +120,26 @@ The user is the art director: every batch is an `/art` session they run and judg
 - #28 **P0** Release cut + deploy
 - #26 P1 Version 1.0.0 + changelog
 
+## From the OpenSky review (2026-10-06)
+
+`OPENSKY_REVIEW.md` (DECISIONS #7). Patterns from the open-sourced Skyweaver code,
+filed as issues on the board under their workstreams. Landed on
+`claude/opensky-patterns`: #74 #75 #76 #77 #78 #80 #81 #82; the rest are open.
+
+- **Verified gaps (Online play / Match info):** #74 WS heartbeat · #75 stale-act epoch
+  echo · #76 rules-hash stamp on match rows · #77 clock grace
+- **The stack reads as a story (First solo session):** #78 frame player + per-move bot
+  frames (the #45 mechanism) · #79 sequenced FX / catch-up speed · #80 events carry
+  their cause
+- **Card legibility:** #81 text tokens · #82 token conversion · #83 text-implemented
+  ledger · #88 `whyNot` (P1, estimate in the issue)
+- **Rules & balance instrument:** #84 hidden-info leak test · #85 invariant checker ·
+  #86 simultaneity twin tests · #87 auto-resolve audit
+- **Backlog the user may pull into 1.0 (P2):** #89 Glicko ladder · #90 match-end settle +
+  reward envelope · #91 `match_players` · #92 replay-driven live card telemetry · #93
+  tasks table · #94 deck codes · #95 route allow-list · #96 art build cache · #97
+  saved-game URL + cheats + card gallery · #98 tutorial design (1.5)
+
 ## Suggested sequence
 
 1. **Now:** #72 decisions · #36 + #37 (card tags, vocabulary) · #35 (Evo/Div pilots).

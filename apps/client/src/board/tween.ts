@@ -24,6 +24,8 @@ export interface TweenSpec {
   delay?: number;
   ease?: Easing;
   tag?: string;
+  /** Cancellation group (see `cancelGroup`): unlike `tag`, many live tweens may share one. */
+  group?: string;
   onUpdate: (p: number) => void;
   onComplete?: () => void;
 }
@@ -34,10 +36,22 @@ interface Live extends TweenSpec {
 
 export class Tweener {
   private items: Live[] = [];
+  /** Playback rate for every tween (catch-up: >1 when frames are backlogged, see FramePlayer). */
+  timeScale = 1;
 
   add(spec: TweenSpec): void {
     if (spec.tag) this.items = this.items.filter((it) => it.tag !== spec.tag);
     this.items.push({ ...spec, elapsed: 0 });
+  }
+
+  /** Run `fn` after `ms` (scaled) — a scheduling primitive for presentation scripts. */
+  at(ms: number, fn: () => void, group?: string): void {
+    this.add({ delay: ms, duration: 1, group, onUpdate: () => {}, onComplete: fn });
+  }
+
+  /** Drop every tween in `group` WITHOUT completing it (a superseded presentation). */
+  cancelGroup(group: string): void {
+    this.items = this.items.filter((it) => it.group !== group);
   }
 
   /**
@@ -58,9 +72,10 @@ export class Tweener {
   /** Advance all tweens by `dtMs`. Call once per frame from the ticker. */
   update(dtMs: number): void {
     if (!this.items.length) return;
+    const dt = dtMs * this.timeScale;
     const survivors: Live[] = [];
     for (const it of this.items) {
-      it.elapsed += dtMs;
+      it.elapsed += dt;
       const active = it.elapsed - (it.delay ?? 0);
       if (active < 0) {
         survivors.push(it);

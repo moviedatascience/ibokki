@@ -59,6 +59,68 @@ export function isStackEvent(e: GameEvent): boolean {
   return e.type === "cast" || e.type === "reactionCast" || e.type === "spellResolved" || e.type === "spellCancelled";
 }
 
+/** Events that are pure bookkeeping — a frame made only of these needs no dwell. */
+const SILENT = new Set(["priorityPassed", "passed", "choicePending", "prepareComplete", "turnBegan", "finalTurn"]);
+
+/** Does this frame show the player anything that deserves a beat of their attention? */
+export function isVisibleFrame(events: readonly GameEvent[]): boolean {
+  return events.some((e) => !SILENT.has(e.type));
+}
+
+/** Events a player's ACTION emits first — whoever they name acted this frame. */
+const ACTION_EVENTS = new Set([
+  "cast", "reactionCast", "attached", "detached", "trainerPlayed", "spellPrepared", "spellReplaced",
+  "priorityPassed", "passed", "chose", "retracted", "mulliganed",
+]);
+
+/**
+ * Who acted to produce this frame (viewer-relative: 0 = you, 1 = opponent), or null when
+ * it is a server-side beat (a timeout, a rematch start). Your own actions must never be
+ * held back by a dwell — you clicked, you know what happened — only the opponent's are.
+ */
+export function frameActor(events: readonly GameEvent[]): 0 | 1 | null {
+  for (const e of events) {
+    if (ACTION_EVENTS.has(e.type) && (e.player === 0 || e.player === 1)) return e.player as 0 | 1;
+  }
+  return null;
+}
+
+/** One stack item's resolution (#80 brackets): the opener, what it did, how it closed. */
+export interface ResolutionGroup {
+  opener: GameEvent; // resolveBegin {controller, spellDefId, sid, isReaction}
+  children: GameEvent[];
+  closer: GameEvent | null; // spellResolved | spellCancelled | targetImmune
+}
+
+const CLOSERS = new Set(["spellResolved", "spellCancelled", "targetImmune"]);
+
+/**
+ * Split a frame's events into the resolutions it contains (each animated on the OLD
+ * layout: pulse the stack card, play its consequences, let it leave) and everything
+ * else (played once the new layout is on the table). Order within each list is kept.
+ */
+export function resolutionGroups(events: readonly GameEvent[]): { groups: ResolutionGroup[]; rest: GameEvent[] } {
+  const groups: ResolutionGroup[] = [];
+  const rest: GameEvent[] = [];
+  let open: ResolutionGroup | null = null;
+  for (const e of events) {
+    if (e.type === "resolveBegin") {
+      open = { opener: e, children: [], closer: null };
+      groups.push(open);
+      continue;
+    }
+    if (open) {
+      if (CLOSERS.has(e.type)) {
+        open.closer = e;
+        open = null;
+      } else open.children.push(e);
+      continue;
+    }
+    rest.push(e);
+  }
+  return { groups, rest };
+}
+
 /**
  * Spawn one floating number in `layer`, drifting `dir` (-1 = up, +1 = down) and fading over ~1.2s.
  * `stagger` offsets stacked hits. Opponent-side floaters drift DOWN — their plate hugs the top edge,

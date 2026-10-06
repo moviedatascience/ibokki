@@ -18,7 +18,9 @@ type Screen = "home" | "match" | "builder";
 
 export function App() {
   const auth = useAuth();
-  const { cards, state, error, leaveLocalMatch, act, newGame, localAvailable, online } = useMatch();
+  // `state` is the newest frame (truth, used for leave/unload guards); every match
+  // component renders `shown` — the frame the board has finished presenting (#78).
+  const { cards, state, shown, player, error, leaveLocalMatch, act, newGame, localAvailable, online } = useMatch();
   const [screen, setScreen] = useState<Screen>("home");
   const [deckData, setDeckData] = useState<DeckListResponse | null>(null);
   const [builderDeck, setBuilderDeck] = useState<Deck | null>(null);
@@ -102,8 +104,8 @@ export function App() {
 
   // A fresh match (local new game or online rematch) re-arms the game-over summary.
   useEffect(() => {
-    if (state && !state.gameOver) setSummaryDismissed(false);
-  }, [state]);
+    if (shown && !shown.gameOver) setSummaryDismissed(false);
+  }, [shown]);
 
   const updateBanner = online.updateAvailable ? (
     <div className="updatebar">
@@ -164,24 +166,24 @@ export function App() {
   return (
     <div className="app">
       {updateBanner}
-      <TopBar state={state} onMenu={toMenu} />
+      <TopBar state={shown} onMenu={toMenu} />
       <div className="main">
         <div className="stage">
           <div className="boardwrap">
-            <Board state={state} cards={cards} onAction={act} onHover={setHoverDef} onStatusHover={setStatusHover} onSelection={setSelectionActive} onInspect={setPinnedDef} onBrowseDiscard={setBrowseDiscard} onReady={onReady} />
-            <Prompt state={state} cards={cards} onAction={act} cardName={cardName} onHover={setHoverDef} />
-            <SpellbookTray state={state} cards={cards} onAction={act} onHover={setHoverDef} onInspect={setPinnedDef} />
-            {browseDiscard !== null && state && (
-              <DiscardBrowser side={browseDiscard} state={state} cards={cards} onClose={() => setBrowseDiscard(null)} onHover={setHoverDef} onInspect={setPinnedDef} />
+            <Board state={shown} player={player} cards={cards} onAction={act} onHover={setHoverDef} onStatusHover={setStatusHover} onSelection={setSelectionActive} onInspect={setPinnedDef} onBrowseDiscard={setBrowseDiscard} onReady={onReady} />
+            <Prompt state={shown} cards={cards} onAction={act} cardName={cardName} onHover={setHoverDef} />
+            <SpellbookTray state={shown} cards={cards} onAction={act} onHover={setHoverDef} onInspect={setPinnedDef} />
+            {browseDiscard !== null && shown && (
+              <DiscardBrowser side={browseDiscard} state={shown} cards={cards} onClose={() => setBrowseDiscard(null)} onHover={setHoverDef} onInspect={setPinnedDef} />
             )}
             {!summaryDismissed && (
-              <GameOverSummary state={state} onDismiss={() => setSummaryDismissed(true)} onRematch={onRematch} />
+              <GameOverSummary state={shown} onDismiss={() => setSummaryDismissed(true)} onRematch={onRematch} />
             )}
           </div>
-          <ActionBar state={state} cards={cards} selectionActive={selectionActive} onAction={act} onCancel={() => boardRef.current?.clearSelection()} error={error} onlineStatus={online.status} />
+          <ActionBar state={shown} cards={cards} selectionActive={selectionActive} onAction={act} onCancel={() => boardRef.current?.clearSelection()} error={error} onlineStatus={online.status} />
         </div>
         <SidePanels
-          state={state}
+          state={shown}
           cards={cards}
           hoverDef={hoverDef}
           statusHover={statusHover}

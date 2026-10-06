@@ -2,7 +2,7 @@ import { Application, Assets, Container, Graphics, Sprite as PixiSprite, Text, t
 import { BASE } from "../api.ts";
 import { CardVisual, type CardFace, type EdgeSide, type Highlight } from "./cardSprite.ts";
 import { Tweener, easeInOutCubic, easeOutCubic, lerp } from "./tween.ts";
-import { eventToFloater, isStackEvent, spawnFloater } from "./animations.ts";
+import { eventToFloater, frameActor, isStackEvent, isVisibleFrame, resolutionGroups, spawnFloater, type Floater } from "./animations.ts";
 import { icon, loadIcons, type IconName } from "./icons.ts";
 import { ongoingDesc, ongoingLabel } from "../ongoing.ts";
 import { SCHOOL_CREST, SCHOOL_TINT, schoolOf } from "../schools.ts";
@@ -23,7 +23,7 @@ import {
   stackCenter,
   type Pt,
 } from "./layout.ts";
-import type { CardCatalog, LegalAction, MatchState, PlayerView } from "../api.ts";
+import type { CardCatalog, GameEvent, LegalAction, MatchState, PlayerView } from "../api.ts";
 
 const HP_MAX = 30;
 
@@ -138,6 +138,8 @@ export class PixiBoard {
   private cards: CardCatalog = {};
   private last: MatchState | null = null;
   private lastEpoch = -1;
+  /** The in-flight presentation (see `present`): resolves its promise when the beat lands. */
+  private presenting: { frame: MatchState; drawn: boolean; done: () => void } | null = null;
   /** Turn-clock snapshot from the latest frame: remaining ms per seat at `at` (perf-clock). */
   private clockSync: { self: number | null; opp: number | null; at: number } | null = null;
   /** mount() awaits asset loads; sync() calls that arrive earlier are buffered and replayed. */
@@ -435,26 +437,191 @@ export class PixiBoard {
     apply(this.oppPlate, cs?.opp ?? null);
   }
 
+  /** Fire-and-forget presentation (the replay viewer's path; live play goes through FramePlayer). */
   sync(state: MatchState, cards: CardCatalog): void {
     this.cards = cards;
-    this.last = state;
+    void this.present(state, 1);
+  }
+
+  setCards(cards: CardCatalog): void {
+    this.cards = cards;
+    if (this.mounted && this.last) this.draw();
+  }
+
+  /** Catch-up rate for the beat in flight (FramePlayer raises it as frames back up). */
+  setSpeed(speed: number): void {
+    this.tweener.timeScale = speed;
+  }
+
+  /**
+   * Show one frame (#78/#79). A quiet frame (same epoch, or nothing happened) just
+   * redraws. A new frame with events becomes a short script: each stack resolution
+   * plays on the OLD layout — the resolving card pulses, its consequences float up
+   * one by one with a cause line to the struck nameplate, a cancelled card is
+   * stamped — then the table reconciles to the new layout, then the remaining
+   * events (turn-start ticks, draws, level-ups) play on it. The promise resolves
+   * after a minimum dwell so a streamed bot turn reads beat by beat; `speed` scales
+   * every duration (catch-up). A newer frame arriving mid-beat supersedes this one:
+   * its layout snaps in and its promise resolves at once.
+   */
+  present(frame: MatchState, speed = 1): Promise<void> {
+    this.tweener.timeScale = speed;
     // Convert absolute server deadlines to remaining-ms so client/server clock skew cancels.
-    this.clockSync = state.clock
+    this.clockSync = frame.clock
       ? {
-          self: state.clock.self === null ? null : state.clock.self - state.clock.now,
-          opp: state.clock.opp === null ? null : state.clock.opp - state.clock.now,
+          self: frame.clock.self === null ? null : frame.clock.self - frame.clock.now,
+          opp: frame.clock.opp === null ? null : frame.clock.opp - frame.clock.now,
           at: performance.now(),
         }
       : null;
-    if (this.mounted && this.lastEpoch !== -1 && state.epoch !== this.lastEpoch) {
-      if (this.selHandDef) {
-        this.selHandDef = null;
-        this.cb.onSelection?.(false);
-      }
-      this.runEvents(state);
+    this.finishPresentation();
+    const isNew = this.lastEpoch !== -1 && frame.epoch !== this.lastEpoch;
+    this.lastEpoch = frame.epoch;
+    if (!this.mounted || !isNew || frame.events.length === 0) {
+      this.last = frame;
+      if (this.mounted) this.draw();
+      return Promise.resolve();
     }
-    this.lastEpoch = state.epoch;
-    if (this.mounted) this.draw();
+    if (this.selHandDef) {
+      this.selHandDef = null;
+      this.cb.onSelection?.(false);
+    }
+    const prev = this.last;
+    const { groups, rest } = resolutionGroups(frame.events);
+    const G = "present";
+    let t = 0;
+    let beats = 0; // scheduled visuals — a frame with none lands as soon as it is drawn
+    // 1. Resolutions, on the layout the player is still looking at.
+    for (const g of groups) {
+      const sprite = prev ? this.stackSpriteFor(prev, g.opener) : null;
+      if (sprite) {
+        const sp = sprite;
+        this.tweener.at(t, () => this.pulseCard(sp), G);
+        t += 260;
+        beats++;
+      }
+      const t0 = t;
+      t = this.scheduleFloaters(g.children, t, sprite, G);
+      if (t > t0) beats++;
+      if (g.closer?.type === "spellCancelled" && sprite) {
+        const sp = sprite;
+        this.tweener.at(t, () => sp.visual.setStamp(true), G);
+        t += 220;
+        beats++;
+      } else if (g.closer?.type === "targetImmune") {
+        const side = (g.closer.player as 0 | 1) ?? 0;
+        this.tweener.at(t, () => this.floater({ side, text: "immune", color: 0x8fd0ff, struck: false }, null), G);
+        t += 220;
+        beats++;
+      }
+    }
+    // 2. The table becomes the new frame.
+    const drawAt = t;
+    this.tweener.at(
+      drawAt,
+      () => {
+        if (this.presenting) this.presenting.drawn = true;
+        this.last = frame;
+        this.draw();
+        if (frame.events.some(isStackEvent)) this.flashStack();
+      },
+      G,
+    );
+    t += 120;
+    // 3. Everything that happened outside a resolution plays on the new layout.
+    const t1 = t;
+    t = this.scheduleFloaters(rest, t, null, G);
+    if (t > t1) beats++;
+    // Dwell: the OPPONENT's visible moves hold the frame so a streamed turn reads beat by
+    // beat; your own moves never wait (you clicked — you know), and a frame with no
+    // visuals lands the moment it is drawn.
+    const theirs = frameActor(frame.events) === 1;
+    const minDwell = theirs && isVisibleFrame(frame.events) ? 420 : 0;
+    const end = beats ? Math.max(t + 300, drawAt + minDwell) : drawAt + minDwell;
+    return new Promise<void>((done) => {
+      this.presenting = { frame, drawn: false, done };
+      this.tweener.at(end, () => this.finishPresentation(), G);
+    });
+  }
+
+  /** Land the in-flight presentation now: snap its layout if it hasn't drawn, resolve it. */
+  private finishPresentation(): void {
+    const p = this.presenting;
+    if (!p) return;
+    this.presenting = null;
+    this.tweener.cancelGroup("present");
+    if (!p.drawn) {
+      this.last = p.frame;
+      if (this.mounted) this.draw();
+    }
+    p.done();
+  }
+
+  /** The stack sprite a resolution opener refers to, in the layout being replaced. */
+  private stackSpriteFor(prev: MatchState, opener: GameEvent): Sprite | null {
+    const stack = prev.view.stack;
+    for (let i = stack.length - 1; i >= 0; i--) {
+      const it = stack[i]!;
+      if (it.spellDefId === opener.spellDefId && it.controller === opener.controller) return this.sprites.get(`s:${i}`) ?? null;
+    }
+    return null;
+  }
+
+  /**
+   * Schedule floaters for `events` from time `t` on; returns the end time. Repeats of
+   * one floater kind compress their gap (ten burn ticks shouldn't take four seconds —
+   * OpenSky's "yada-yada" durations). A struck plate gets a cause line from `source`.
+   */
+  private scheduleFloaters(events: readonly GameEvent[], t: number, source: Sprite | null, group: string): number {
+    let prevKind: string | null = null;
+    for (const e of events) {
+      const f = eventToFloater(e);
+      if (!f) continue;
+      const kind = `${e.type}:${f.side}`;
+      const gap = prevKind === kind ? 130 : 230;
+      this.tweener.at(t, () => this.floater(f, source), group);
+      t += gap;
+      prevKind = kind;
+    }
+    return t;
+  }
+
+  private floater(f: Floater, source: Sprite | null): void {
+    const plate = f.side === 0 ? this.youPlate : this.oppPlate;
+    spawnFloater(this.fxLayer, this.tweener, plate.anchor.x, plate.anchor.y, f.text, f.color, 0, f.side === 0 ? -1 : 1, f.icon);
+    this.flashPlate(plate, f.struck);
+    if (source && f.struck) this.causeLine(source, plate, f.color);
+  }
+
+  /** A thin stroke from the card that did it to the plate it hit — cause and effect, then gone. */
+  private causeLine(source: Sprite, plate: Plate, color: number): void {
+    const from = source.visual.root.position;
+    const line = new Graphics();
+    line.moveTo(from.x, from.y).lineTo(plate.anchor.x, plate.anchor.y).stroke({ width: 2, color, alpha: 0.9 });
+    this.fxLayer.addChild(line);
+    this.tweener.add({ duration: 420, onUpdate: (p) => (line.alpha = 1 - p), onComplete: () => line.destroy() });
+  }
+
+  /** The resolving card swells for a beat: "this one is doing something". */
+  private pulseCard(sp: Sprite): void {
+    const v = sp.visual;
+    const ring = new Graphics();
+    ring.roundRect(-CARD_W / 2 - 6, -CARD_H / 2 - 6, CARD_W + 12, CARD_H + 12, 10).stroke({ width: 3, color: 0xffd36b });
+    ring.position.set(v.root.x, v.root.y);
+    this.fxLayer.addChild(ring);
+    this.tweener.add({
+      duration: 260,
+      tag: `pulse:${v.root.uid}`,
+      onUpdate: (p) => {
+        const s = p < 0.5 ? lerp(1, 1.1, p / 0.5) : lerp(1.1, 1, (p - 0.5) / 0.5);
+        v.root.scale.set(s);
+        ring.alpha = 1 - p;
+      },
+      onComplete: () => {
+        v.root.scale.set(1);
+        ring.destroy();
+      },
+    });
   }
 
   /** Recompute desired card views from the last state (+ local selection) and reconcile. */
@@ -751,21 +918,7 @@ export class PixiBoard {
     return this.selHandDef !== null;
   }
 
-  // ---- event-driven floaters / flashes ----
-  private runEvents(state: MatchState): void {
-    const stagger: [number, number] = [0, 0];
-    let stackMoved = false;
-    for (const e of state.events) {
-      if (isStackEvent(e)) stackMoved = true;
-      const f = eventToFloater(e);
-      if (!f) continue;
-      const plate = f.side === 0 ? this.youPlate : this.oppPlate;
-      spawnFloater(this.fxLayer, this.tweener, plate.anchor.x, plate.anchor.y, f.text, f.color, stagger[f.side]++, f.side === 0 ? -1 : 1, f.icon);
-      this.flashPlate(plate, f.struck);
-    }
-    if (stackMoved) this.flashStack();
-  }
-
+  // ---- flashes ----
   private flashPlate(plate: Plate, struck: boolean): void {
     const { x, y, w, h } = plate.box;
     const flash = new Graphics();
@@ -782,6 +935,7 @@ export class PixiBoard {
   }
 
   destroy(): void {
+    this.finishPresentation(); // never leave a FramePlayer awaiting a dead board
     this.ro?.disconnect();
     this.tweener.clear();
     this.app?.destroy(true, { children: true });

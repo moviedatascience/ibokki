@@ -93,7 +93,7 @@ async function playRandom(clients: TestClient[], rand: () => number, stop: () =>
     if (!actor) continue;
     const legal = actor.latest!.legal;
     const before = actor.states.length;
-    actor.send({ t: "act", indices: [Math.floor(rand() * legal.length)] });
+    actor.send({ t: "act", indices: [Math.floor(rand() * legal.length)], epoch: actor.latest!.epoch }); // echo the frame we chose on (#75)
     await until(() => actor.states.length > before, "state frame after acting");
   }
 }

@@ -27,6 +27,8 @@ const startDriver = (page: Page) =>
     let stall = 0;
     w.__driver = window.setInterval(() => {
       const s = w.__ibokki?.state as HookState | null;
+      const player = (w.__ibokki as unknown as { player?: { speedOverride: number | null } } | undefined)?.player;
+      if (player) player.speedOverride = 20; // machine-speed driver: skip per-frame pacing (#78)
       if (!w.__ibokki || !s || !s.yourTurn || s.gameOver || s.legal.length === 0) return;
       if (s === lastState && ++stall < 50) return;
       lastState = s;

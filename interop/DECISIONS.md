@@ -124,6 +124,26 @@ and reversible.
 
 ---
 
+## DECISIONS #7 — adopt the OpenSky patterns, as patterns (2026-10-06)
+
+- **What:** the open-sourced Skyweaver repo (horizon-games/OpenSky) was reviewed at
+  source level (`OPENSKY_REVIEW.md`). Its CODE is not reused — Rust/wasm state
+  channel, Three.js ECS, Go/Redis/Postgres services — but these patterns are adopted:
+  frames presented one at a time with legal actions released only after the board
+  catches up (frame player, per-move bot frames); engine events stamped with their
+  cause and bracketed resolutions; card text authored in `{tokens}` validated at
+  import; a text-implemented ledger; hidden-information, invariant and simultaneity
+  tests as standing instruments; plus the three verified server gaps (heartbeat,
+  stale-act epoch, rules-hash stamp). The post-1.0 systems (ladder, settle/rewards,
+  `match_players`, replay telemetry, tasks table, deck codes, allow-list, art cache,
+  debug tooling, tutorial-as-filter) are on the board as P2 so they are never lost;
+  whether any ships in 1.0 is a later decision.
+- **Who:** the user, on Claude's review; `whyNot` (#88) left open pending an estimate
+  the issue now carries.
+- **Reversible:** each item is its own issue/commit.
+
+---
+
 ## Open / undecided
 
 (none — add blocks here as disagreements arise)

@@ -172,7 +172,7 @@ describe("online server", () => {
       expect(legal.length, "a player on turn must have legal actions").toBeGreaterThan(0);
       const idx = Math.floor(rand() * legal.length);
       const before = actor.states.length;
-      actor.send({ t: "act", indices: [idx] });
+      actor.send({ t: "act", indices: [idx], epoch: actor.latest!.epoch }); // echo the frame we chose on (#75): a stale pick resyncs instead of erroring
       await until(() => actor.states.length > before, "state frame after acting");
       actions++;
     }
@@ -227,7 +227,7 @@ describe("online server", () => {
       expect(legal.length, "human on turn must have legal actions").toBeGreaterThan(0);
       const idx = Math.floor(rand() * legal.length);
       const before = a.states.length;
-      a.send({ t: "act", indices: [idx] });
+      a.send({ t: "act", indices: [idx], epoch: a.latest!.epoch }); // streamed bot frames can predate our last act — echo the epoch (#75)
       await until(() => a.states.length > before, "state frame after acting");
       actions++;
     }

@@ -250,7 +250,8 @@ const postJson = <T>(url: string, body: unknown) =>
 export const api = {
   cards: () => getJson<CardCatalog>(`${BASE}api/cards`),
   state: () => getJson<MatchState>(`${BASE}api/state?side=${SIDE}`),
-  act: (index: number) => postJson<MatchState>(`${BASE}api/act?side=${SIDE}`, { index }),
+  /** `epoch` = the frame the player was looking at; a stale one is answered with a resync, not applied (#75). */
+  act: (index: number, epoch?: number) => postJson<MatchState>(`${BASE}api/act?side=${SIDE}`, { index, ...(epoch !== undefined ? { epoch } : {}) }),
   newGame: (p0: School, p1: School, mode: "bot" | "agent") =>
     postJson<MatchState>(`${BASE}api/new`, { p0, p1, bots: mode === "bot" ? [1] : [] }),
 

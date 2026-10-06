@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type CardCatalog, type MatchState, type School } from "./api.ts";
+import { FramePlayer } from "./framePlayer.ts";
 import { OnlineClient, storedSeat, storeSeat, type BotLevel, type DeckChoice } from "./online.ts";
 
 export type OnlineStatus = "idle" | "connecting" | "waiting" | "playing";
@@ -23,7 +24,13 @@ export interface OnlineApi {
 
 export interface UseMatch {
   cards: CardCatalog;
+  /** The newest frame received (truth). The UI renders `shown`, not this. */
   state: MatchState | null;
+  /** The frame the board has finished presenting — what every match component renders,
+   *  and the epoch an `act` echoes. Lags `state` while a bot turn is being paced. */
+  shown: MatchState | null;
+  /** Owns frame pacing; the Board attaches to it as presenter. */
+  player: FramePlayer;
   busy: boolean;
   error: string | null;
   /** Leave a local (vs-bot) match: stop polling and clear any error, so a later poll
@@ -61,7 +68,23 @@ const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
  */
 export function useMatch(): UseMatch {
   const [cards, setCards] = useState<CardCatalog>({});
-  const [state, setState] = useState<MatchState | null>(null);
+  const [state, setStateRaw] = useState<MatchState | null>(null);
+  const [shown, setShown] = useState<MatchState | null>(null);
+  const shownRef = useRef<MatchState | null>(null);
+  shownRef.current = shown;
+  // One player for the life of the hook: every frame from either transport goes through it.
+  const playerRef = useRef<FramePlayer | null>(null);
+  if (!playerRef.current) playerRef.current = new FramePlayer((f) => setShown(f));
+  const player = playerRef.current;
+  /** Record a frame: `state` is the latest truth, the player decides when it is shown. */
+  const setState = useCallback(
+    (s: MatchState | null) => {
+      setStateRaw(s);
+      if (s) player.push(s);
+      else player.reset();
+    },
+    [player],
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [localAvailable, setLocalAvailable] = useState(false);
@@ -238,14 +261,17 @@ export function useMatch(): UseMatch {
 
   const act = useCallback(
     async (index: number) => {
+      // The index was chosen on the SHOWN frame — echo its epoch so a click against a
+      // board the server has moved past is resynced, never misapplied (#75).
+      const epoch = shownRef.current?.epoch;
       if (statusRef.current !== "idle") {
-        onlineRef.current?.act(index);
+        onlineRef.current?.act(index, epoch);
         return;
       }
       clearPoll();
       setBusy(true);
       try {
-        const s = await api.act(index);
+        const s = await api.act(index, epoch);
         setState(s);
         setError(s.error ?? null);
         schedulePoll(s);
@@ -266,6 +292,7 @@ export function useMatch(): UseMatch {
       setBusy(true);
       try {
         const s = await api.newGame(p0, p1, mode);
+        player.reset(); // a fresh game: nothing from the previous one may still be queued
         setState(s);
         setError(null);
         setLocalAvailable(true);
@@ -308,10 +335,11 @@ export function useMatch(): UseMatch {
     setError(null);
   }, []);
 
-  // Test/debug hook: lets headless drivers read the frame and act by index.
+  // Test/debug hook: lets headless drivers read the frame and act by index. `state` is
+  // the SHOWN frame (what a player could click on); `latest` is the newest received.
   useEffect(() => {
-    (window as unknown as Record<string, unknown>).__ibokki = { state, act, online };
+    (window as unknown as Record<string, unknown>).__ibokki = { state: shown, latest: state, act, online, player };
   });
 
-  return { cards, state, busy, error, leaveLocalMatch, act, newGame, localAvailable, online };
+  return { cards, state, shown, player, busy, error, leaveLocalMatch, act, newGame, localAvailable, online };
 }

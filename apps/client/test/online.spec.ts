@@ -28,8 +28,8 @@ const hookState = (page: Page) =>
  * moving at WS speed — one Playwright round-trip per action was far too slow on
  * CI runners (the match timed out mid-game). Each server frame builds a NEW
  * state object, so act once per state identity (with a 500ms stall re-try in
- * case an intent was rejected as stale). NB: `epoch` is HTTP-transport-only —
- * online frames don't carry it.
+ * case an intent was rejected as stale). `act` echoes the shown frame's epoch (#75),
+ * so a stale pick is resynced, never misapplied; `speedOverride` skips frame pacing.
  */
 const startDriver = (page: Page) =>
   page.evaluate(() => {
@@ -42,6 +42,8 @@ const startDriver = (page: Page) =>
     let stall = 0;
     w.__driver = window.setInterval(() => {
       const s = w.__ibokki?.state as HookState | null;
+      const player = (w.__ibokki as unknown as { player?: { speedOverride: number | null } } | undefined)?.player;
+      if (player) player.speedOverride = 20; // machine-speed driver: skip per-frame pacing (#78)
       if (!w.__ibokki || !s || !s.yourTurn || s.gameOver || s.legal.length === 0) return;
       if (s === lastState && ++stall < 50) return;
       lastState = s;

@@ -58,9 +58,15 @@ export function storeSeat(seat: { code: string; token: string } | null): void {
   }
 }
 
+/** Keepalive (#74): ping this often, and treat the link as dead after this long without ANY message. */
+const PING_MS = 10_000;
+const DEAD_MS = 25_000;
+
 export class OnlineClient {
   private ws: WebSocket | null = null;
   private cb: OnlineCallbacks;
+  private keepalive: ReturnType<typeof setInterval> | null = null;
+  private lastHeard = 0;
 
   constructor(cb: OnlineCallbacks) {
     this.cb = cb;
@@ -73,17 +79,40 @@ export class OnlineClient {
     // BASE_URL is "/" in dev, "/play/" when mounted inside the site.
     const ws = new WebSocket(`${proto}//${location.host}${import.meta.env.BASE_URL}ws`);
     this.ws = ws;
-    ws.onopen = () => ws.send(JSON.stringify(hello));
-    ws.onmessage = (ev) => this.onMessage(String(ev.data));
+    ws.onopen = () => {
+      ws.send(JSON.stringify(hello));
+      this.lastHeard = Date.now();
+      // Browsers hide WS protocol pings, so a link that died without a FIN looks open
+      // forever from here. Ask for a pong; silence past DEAD_MS closes the socket,
+      // which runs the normal onclose → rejoin loop.
+      this.keepalive = setInterval(() => {
+        if (this.ws !== ws) return;
+        if (Date.now() - this.lastHeard > DEAD_MS) {
+          ws.close();
+          return;
+        }
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ t: "ping" }));
+      }, PING_MS);
+    };
+    ws.onmessage = (ev) => {
+      this.lastHeard = Date.now();
+      this.onMessage(String(ev.data));
+    };
     ws.onclose = () => {
       if (this.ws === ws) {
         this.ws = null;
+        this.stopKeepalive();
         this.cb.onClose();
       }
     };
     ws.onerror = () => {
       if (this.ws === ws) this.cb.onError("connection error");
     };
+  }
+
+  private stopKeepalive(): void {
+    if (this.keepalive) clearInterval(this.keepalive);
+    this.keepalive = null;
   }
 
   private onMessage(raw: string): void {
@@ -94,6 +123,8 @@ export class OnlineClient {
       return;
     }
     switch (msg.t) {
+      case "pong":
+        return; // lastHeard already bumped
       case "created":
       case "joined": {
         const info = { code: msg.code as string, side: msg.side as number, token: msg.token as string };
@@ -138,8 +169,9 @@ export class OnlineClient {
     this.open({ t: "rejoin", code, token });
   }
 
-  act(index: number): void {
-    this.ws?.send(JSON.stringify({ t: "act", indices: [index] }));
+  /** `epoch` = the frame the player was looking at when they clicked (#75). */
+  act(index: number, epoch?: number): void {
+    this.ws?.send(JSON.stringify({ t: "act", indices: [index], ...(epoch !== undefined ? { epoch } : {}) }));
   }
 
   rematch(): void {
@@ -153,6 +185,7 @@ export class OnlineClient {
   close(): void {
     const ws = this.ws;
     this.ws = null; // silence onclose callback for a deliberate close
+    this.stopKeepalive();
     ws?.close();
   }
 }
