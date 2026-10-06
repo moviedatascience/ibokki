@@ -10,6 +10,8 @@
  * --paired plays each seed twice with the seats swapped (variance reduction) — with
  * the same base seed, two --paired runs are directly comparable A/B measurements.
  * --cards prints per-card telemetry (cast counts, resolve rates, win rate when used).
+ * --check runs the engine invariant checker after every action of every game (throws
+ * with the seed on the first violation) — slower; use for regression sweeps.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { SPELLS, TRAINERS } from "@ibokki/cards";
@@ -22,6 +24,7 @@ import {
   type PlayableSchool,
 } from "./report.ts";
 import { CardStatsCollector } from "./telemetry.ts";
+import { RUN_MATCH_DEFAULTS } from "./runMatch.ts";
 
 function coverageLine(): string {
   const implemented = new Set(implementedIds());
@@ -72,6 +75,8 @@ interface Args {
    *  Compare a forced run against the same-seed unforced baseline: winrate up
    *  = bot undervaluation (quarantine the card verdict); flat = real verdict. */
   force: string | undefined;
+  /** Assert engine invariants after every action (RUN_MATCH_DEFAULTS.checkInvariants). */
+  check: boolean;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -93,6 +98,7 @@ function parseArgs(argv: string[]): Args {
     iters: undefined,
     bias: undefined,
     force: undefined,
+    check: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -147,6 +153,9 @@ function parseArgs(argv: string[]): Args {
       case "--bias":
         args.bias = Number(next());
         break;
+      case "--check":
+        args.check = true;
+        break;
       case "--force":
         args.force = next().toUpperCase();
         break;
@@ -163,6 +172,7 @@ function pct(x: number): string {
 
 function main(): void {
   const args = parseArgs(process.argv.slice(2));
+  if (args.check) RUN_MATCH_DEFAULTS.checkInvariants = true;
 
   if (args.matrix) {
     console.log(`School win-rate matrix — ${args.n} games/cell, agent="${args.p1}" (mirror)${args.paired ? ", paired seats" : ""}`);

@@ -279,6 +279,11 @@ elements is decided with the second element, not before.
 - A Wizard keeps priority after casting (they may retract a spell or add more to the
   stack); Wizards continue passing priority back and forth, and the top of the stack
   resolves once both players pass in succession.
+- Damage is sequential, never simultaneous: the first Wizard to reach 0 HP loses, even in
+  the middle of one spell's resolution (a reflecting Ward can kill the attacker before the
+  spell's overflow lands; a lethal Burn tick comes before a Prophecy firing the same turn;
+  lethal exhaustion from a draw ends the game before the spell's later steps can change
+  the winner). *(pinned 2026-10-06, engine tests)*
 
 ---
 

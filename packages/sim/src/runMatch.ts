@@ -1,6 +1,8 @@
 /** Headless match runner: pit two agents against each other to completion. */
 import {
   apply,
+  assertInvariants,
+  countCards,
   createGame,
   isTerminal,
   legalActions,
@@ -30,7 +32,16 @@ export interface RunMatchConfig {
   startingHp?: number;
   /** Tap the engine's event stream (telemetry); called after every applied action. */
   onEvents?: (events: GameEvent[], state: GameState) => void;
+  /** Run the engine invariant checker (card conservation, ids, stack/choice/priority
+   *  sanity — packages/engine/src/invariants.ts) after EVERY action; a violation throws
+   *  with the seed, ply and action. Default: RUN_MATCH_DEFAULTS.checkInvariants
+   *  (the sim CLI's --check sets it). Costs ~one extra legalActions per ply. */
+  checkInvariants?: boolean;
 }
+
+/** Process-wide defaults for runMatch options the batch runners don't plumb through
+ *  (`npm run sim -- --check` flips checkInvariants here). */
+export const RUN_MATCH_DEFAULTS: { checkInvariants: boolean } = { checkInvariants: false };
 
 export function runMatch(cfg: RunMatchConfig): MatchResult {
   let state = createGame({
@@ -48,6 +59,10 @@ export function runMatch(cfg: RunMatchConfig): MatchResult {
   // impossible without a loop. The prepare phase parks turnCount too, but both
   // players placing every slot stays far under the bound.
   const TURN_PLY_CAP = 400;
+  const check = cfg.checkInvariants ?? RUN_MATCH_DEFAULTS.checkInvariants;
+  const cardCount = check ? countCards(state) : 0;
+  if (check) assertInvariants(state, `seed ${cfg.seed} initial state`, { cardCount });
+  let ply = 0;
   let lastTurnCount = -1;
   let pliesThisTurn = 0;
   while (!isTerminal(state)) {
@@ -67,6 +82,8 @@ export function runMatch(cfg: RunMatchConfig): MatchResult {
     const action = cfg.agents[actor].chooseAction(view, legal, state);
     const applied = apply(state, action, actor);
     state = applied.state;
+    ply++;
+    if (check) assertInvariants(state, `seed ${cfg.seed} ply ${ply} (P${actor} ${JSON.stringify(action)})`, { cardCount });
     cfg.onEvents?.(applied.events, state);
   }
 

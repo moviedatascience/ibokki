@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   apply,
+  assertInvariants,
   createGame,
   deckFor,
   determinize,
@@ -25,6 +26,7 @@ function walk(start: GameState, steps: number, rngSeed: number): GameState {
     let pick: number;
     [pick, rs] = rngInt(rs, legal.length);
     state = apply(state, legal[pick]!, actor).state;
+    assertInvariants(state, `walk rng ${rngSeed} step ${i}`);
   }
   return state;
 }
