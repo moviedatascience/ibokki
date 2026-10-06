@@ -40,6 +40,7 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
 | `npm run import-cards` | xlsx → cards.json, then derives tags.json (run after any xlsx edit) |
 | `npm run retext -- <pass.json>` | rewrite card cells in the xlsx from a pass map — `{texts, names, flavors, elements}`, each `{id: value}` (pass files live in `packages/cards/data/rewrites/`; missing columns are created); then `npm run import-cards`. Text must say what the engine does — log any text↔engine gap in a playtests parity file |
 | `npm run derive-tags` | engine effects + cardFlags → `packages/cards/data/tags.json` (run after ANY edit in `packages/engine/src/effects/` or `cardFlags.ts`; the derive test fails when stale) |
+| `npm run text-implemented -- status` / `-- stamp <id>...` / `-- stamp --all` | text-implemented ledger (`packages/cards/data/text-implemented.json`): `status` lists cards whose text drifted from what the engine was last verified against (+ file to re-check; exit 1 on drift); after re-verifying the engine, `stamp` them. A vitest fails on drift |
 | `npm run build:client` | vite build → apps/client/dist |
 
 ## Environment quirks
@@ -63,6 +64,8 @@ npm-workspaces monorepo (NOT pnpm). One deterministic headless engine shared by 
   `packages/cards/data/tag-overrides.json` (with a `why`), never by hand-editing `tags.json`.
 - New `PlayerState`/`StackItem` fields must also be added to the hand-built literals in
   `packages/engine/test/effects.test.ts` and `interactions.test.ts`.
+
+- **Editing card text means re-verifying the engine:** the `text-implemented` test fails when a card's `text` differs from its ledger entry. Check the effect (`status` names the file), then `npm run text-implemented -- stamp <id>`; register()-without-card is an error, card-without-effect only warns.
 
 ## Testing for bugs — what works
 

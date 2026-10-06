@@ -1,0 +1,11 @@
+{
+  "name": "@ibokki/text-implemented",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ledger of the card text each engine effect was last verified against (packages/cards/data/text-implemented.json). Zero runtime deps.",
+  "main": "./src/ledger.ts",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  }
+}
