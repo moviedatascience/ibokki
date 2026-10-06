@@ -137,6 +137,8 @@ interface Hub {
   bots: BotPool;
   /** Error funnel: console + errors table + rate-limited alert mail. */
   monitor: Monitor;
+  /** Set once the HTTP server has closed (db gone): async bot loops must stop, not persist. */
+  closed?: boolean;
 }
 
 interface Seat {
@@ -375,6 +377,7 @@ async function autoPlayBot(room: Room): Promise<void> {
       const before: GameState = room.state;
       if (legalActions(before, 1).length === 0) break;
       const action = await room.hub.bots.compute(room.botLevel ?? "easy", newSeed(), before);
+      if (room.hub.closed) break; // the server shut down mid-think — nothing to persist to
       if (room.state !== before) continue; // world moved on while thinking — recompute
       if (action === null) break;
       applyAction(room, 1, action);
@@ -1215,6 +1218,7 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
   }, SWEEP_MS);
   sweep.unref();
   http.on("close", () => {
+    hub.closed = true;
     clearInterval(sweep);
     if (heartbeat) clearInterval(heartbeat);
     for (const room of rooms.values()) clearRoomTimers(room);

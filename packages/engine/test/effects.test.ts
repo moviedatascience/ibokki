@@ -357,9 +357,10 @@ describe("Abjuration effects", () => {
     // about which slot will be picked (sealing must never reveal a face-down identity).
     expect(redact(state, 0).pendingChoice!.candidates.slice().sort()).toEqual(["FACEDOWN-0", "FACEDOWN-2"]);
     expect(redact(state, 1).pendingChoice!.candidates).toEqual([]);
-    // Pick the second slot; only THAT prepared spell is sealed.
-    const target = state.players[1].prepared[2]!;
-    const after = apply(state, { type: "choose", iid: target.spell.iid }).state;
+    // Pick the second slot via its DESCRIPTOR (candidates carry synthetic iids — the
+    // real iid would name the hidden spell); only THAT prepared spell is sealed.
+    const pickSlot2 = pc.candidates.find((c) => c.defId === "FACEDOWN-2")!;
+    const after = apply(state, { type: "choose", iid: pickSlot2.iid }).state;
     expect(after.players[1].prepared[2]!.sealed).toBe(true);
     expect(after.players[1].prepared[0]!.sealed).toBe(false);
     expect(after.pendingChoice).toBeNull();

@@ -211,9 +211,10 @@ describe("Iron Brand (ABJ-010) interactive target through the full stack (m4 fix
     expect(pc.candidates.map((c) => c.defId)).toEqual(["FACEDOWN-0", "FACEDOWN-1"]);
     // Only the chosen legal actions are the two picks.
     expect(legalActions(st, 0).filter((a) => a.type === "choose")).toHaveLength(2);
-    // Pick slot 1: it becomes uncastable; slot 0 stays free.
-    const target = st.players[1].prepared[1]!;
-    st = apply(st, { type: "choose", iid: target.spell.iid }).state;
+    // Pick slot 1 via its descriptor (synthetic iid — never the hidden spell's own):
+    // it becomes uncastable; slot 0 stays free.
+    const pickSlot1 = pc.candidates.find((c) => c.defId === "FACEDOWN-1")!;
+    st = apply(st, { type: "choose", iid: pickSlot1.iid }).state;
     expect(st.players[1].prepared[1]!.sealed).toBe(true);
     expect(st.players[1].prepared[0]!.sealed).toBe(false);
     expect(st.pendingChoice).toBeNull();
