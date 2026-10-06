@@ -7,6 +7,7 @@
  * strip) and the DOM (RulesText, prompt chips, builder rows).
  */
 import raw from "../../../packages/cards/data/keywords.json";
+import { configureText } from "./textTokens.ts";
 
 export interface Keyword {
   id: string;
@@ -39,3 +40,6 @@ export function tintNumber(hex: string): number {
 
 /** Every glyph name the vocabulary references (for preloading / probing). */
 export const KEYWORD_GLYPHS: string[] = [...new Set(KEYWORDS.map((k) => k.glyph))];
+
+// Bare `{id}` tokens in card text display as the keyword's label; unknown ids are an error.
+configureText({ keywordIds: new Set(KEYWORD_BY_ID.keys()), labels: new Map(KEYWORDS.map((k) => [k.id, k.label])) });

@@ -349,6 +349,8 @@ b.kw {
   color: var(--kw, inherit); font-weight: 700; cursor: help;
   border-bottom: 1px dotted color-mix(in srgb, var(--kw, currentColor) 55%, transparent);
 }
+b.kw .icn { margin-right: 2px; vertical-align: -1px; }
+b.cardref { font-weight: 700; font-style: italic; cursor: help; }
 
 /* ---- prompt chips + builder preview (card legibility #41/#42) ---- */
 .prompt .choice { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }

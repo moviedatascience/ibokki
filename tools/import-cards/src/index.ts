@@ -10,6 +10,7 @@ import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readWorkbook } from "./xlsx.ts";
+import { cardTextErrors } from "../../../packages/cards/src/cardtext.ts";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const XLSX_PATH = resolve(REPO_ROOT, "ibokki_spell_cards.xlsx");
@@ -145,6 +146,11 @@ function main(): void {
     ids.add(c.id);
   }
   if (cards.length === 0) throw new Error("No cards imported — check the spreadsheet path/format.");
+  // Card-text tokens ({keyword}, {kw|display}, {V}, {card:ID}) must all resolve — fail before writing.
+  const textErrors = cardTextErrors(cards);
+  if (textErrors.length) {
+    throw new Error(`card text has ${textErrors.length} token error(s) — cards.json NOT written:\n  ${textErrors.join("\n  ")}`);
+  }
 
   mkdirSync(dirname(OUT_PATH), { recursive: true });
   writeFileSync(OUT_PATH, JSON.stringify(cards, null, 2) + "\n", "utf8");

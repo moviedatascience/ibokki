@@ -47,3 +47,38 @@ Pass file: `packages/cards/data/rewrites/2026-10-03-keyword-pass.json` (applied 
 - Durations: "this turn" · "this round" · "until the start of your next turn".
 - "cancel" (never negate/counter); "cancelled" spelling throughout.
 - "your deck" for the Resource Deck inside card text.
+
+## 2026-10-06 token conversion
+
+Card text is now authored with tokens instead of being keyword-bolded by regex at render
+time: `{id}` / `{id|display}` for keywords, `{V}`/`{S}`/`{M}` pips, `{card:DEFID}` refs
+(grammar: `packages/cards/src/text.ts`; client mirror `apps/client/src/textTokens.ts`).
+Tokens are validated at `npm run import-cards` and at load (all errors collected).
+
+The conversion was **mechanical and rendering-preserving**: `tools/import-cards/src/tokenize-pass.ts`
+replaced exactly the spans the old `TERM_RE` bolded (longest term first, whole word,
+case-insensitive) and asserted, per card, `plainText(new) === old` and that the keyword
+spans equal the old bold spans. 166 of 167 cards changed, 312 keyword tokens (damage 88,
+ward 34, draw 29, prevent 22, cancel 21, scry 20, discard 14, cost 10, heal 9, disrupt 9,
+burn 9, recover 9, lock 7, prophecy 7, reveal 6, empower 4, ledger 4, unravel 4, trap 3,
+seal 3). Pass: `packages/cards/data/rewrites/2026-10-06-tokens.json`.
+
+Review list (34 items, full list in `packages/cards/data/rewrites/2026-10-06-tokens.review.md`)
+— places where the old regex already bolded a word that may be prose, now visible as
+authored tokens to fix by hand:
+
+- **Cost phrases that aren't costs** — ABJ-034 / GAM-018 "they {cost|take 3 damage}" is
+  damage to the *opponent* shown as the Cost keyword; EVO-023's drawback "you take 1
+  damage at the start of each of your turns" likewise. (Real costs: EVO-008, EVO-039,
+  GAM-008, GAM-010, ABJ-013, ABJ-021, ABJ-036.)
+- **"redirected" rendered as Cancel** — EVO-035, EVO-045, DIV-026, DIV-040, GAM-014.
+- **"damage" inside prevention sentences** — ABJ-005, ABJ-011 ×2, ABJ-012 ×2, ABJ-021,
+  ABJ-022, EVO-014 ×2, EVO-018, DIV-002.
+- **draw/discard with the opponent (or nobody) as subject** — ABJ-028 "They draw",
+  GAM-017 "their normal turn draw", GAM-015, DIV-044 "discard pile", EVO-021/EVO-034
+  "each card discarded".
+- **The opponent's Wards** — EVO-040.
+
+Non-fatal `TEXT_WARNINGS` (exported by `@ibokki/cards`): 56 cards whose text mentions a
+keyword their tags don't project to — mostly the items above plus Ward/damage mentions on
+prevention cards.

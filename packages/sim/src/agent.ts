@@ -1,5 +1,5 @@
 /** Agent interface — anything that can choose an action from a redacted view. */
-import { getCard, getComponent, type CardDef, type Cost } from "@ibokki/cards";
+import { getCard, getComponent, plainText, type CardDef, type Cost } from "@ibokki/cards";
 import { combinedSymbols, emptyCost, rngInt, type Action, type GameState, type PlayerView, type PreparedView } from "@ibokki/engine";
 
 export interface Agent {
@@ -274,15 +274,23 @@ function symbolCost(defId: string): number {
   return cost ? cost.V + cost.S + cost.M : 1;
 }
 
+/** A card's rules text as plain English (tokens resolved), memoized — the heuristics below regex over it. */
+const plainCache = new Map<string, string>();
+function rulesOf(def: CardDef): string {
+  let t = plainCache.get(def.id);
+  if (t === undefined) plainCache.set(def.id, (t = plainText(def.text)));
+  return t;
+}
+
 /** Rough defensive worth of a spell: ward HP it creates or adds, healing, prevention. */
 function defenseValue(defId: string): number {
   const def = getCard(defId);
   if (!def) return 0;
   let v = 0;
-  for (const m of def.text.matchAll(/ward with (\d+) hp/gi)) v += Number(m[1]);
-  for (const m of def.text.matchAll(/add (\d+) hp/gi)) v += Number(m[1]);
-  for (const m of def.text.matchAll(/gains? (\d+) hp/gi)) v += Number(m[1]);
-  for (const m of def.text.matchAll(/prevent (\d+)/gi)) v += Number(m[1]);
+  for (const m of rulesOf(def).matchAll(/ward with (\d+) hp/gi)) v += Number(m[1]);
+  for (const m of rulesOf(def).matchAll(/add (\d+) hp/gi)) v += Number(m[1]);
+  for (const m of rulesOf(def).matchAll(/gains? (\d+) hp/gi)) v += Number(m[1]);
+  for (const m of rulesOf(def).matchAll(/prevent (\d+)/gi)) v += Number(m[1]);
   return v;
 }
 
@@ -292,8 +300,8 @@ function threatValue(defId: string): number {
   const def = getCard(defId);
   if (!def) return 1;
   let v = 0;
-  for (const m of def.text.matchAll(/deal (\d+)/gi)) v = Math.max(v, Number(m[1]));
-  if (/burn marker/i.test(def.text)) v += 2;
+  for (const m of rulesOf(def).matchAll(/deal (\d+)/gi)) v = Math.max(v, Number(m[1]));
+  if (/burn marker/i.test(rulesOf(def))) v += 2;
   if (v === 0) v = (def.level ?? 1) >= 2 ? 3 : 1;
   return v;
 }

@@ -2,12 +2,19 @@
 export * from "./types.ts";
 export * from "./components.ts";
 export * from "./keywords.ts";
+export * from "./text.ts";
+export { cardTextErrors, cardTextWarnings, textOptionsFor, type TextWarning } from "./cardtext.ts";
 
 import type { CardDef, School } from "./types.ts";
-import { CARDS } from "./loader.ts";
+import { CARDS, TEXT_WARNINGS, validateCards, cardErrors } from "./loader.ts";
+import { configureText } from "./text.ts";
+import { textOptionsFor } from "./cardtext.ts";
 
 /** Every designed card (spells, reactions, items, gambits), loaded from cards.json. */
-export { CARDS };
+export { CARDS, TEXT_WARNINGS, validateCards, cardErrors };
+
+// plainText(card.text) / tokenizeText(card.text) resolve against the real vocabulary by default.
+configureText(textOptionsFor(CARDS));
 
 export const CARDS_BY_ID: Map<string, CardDef> = new Map(CARDS.map((c) => [c.id, c]));
 

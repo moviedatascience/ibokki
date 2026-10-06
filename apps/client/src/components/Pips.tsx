@@ -47,3 +47,12 @@ export function Pips({ cost }: { cost: string | null | undefined }) {
     </span>
   );
 }
+
+/** One component pip inline in rules text (a `{V}`/`{S}`/`{M}` card-text token). */
+export function Pip({ sym, size = 11 }: { sym: string; size?: number }) {
+  return (
+    <span className="pips" aria-label={sym}>
+      <Icon name={sym.toLowerCase()} color={PIP_COLOR[sym] ?? "currentColor"} size={size} title={sym} />
+    </span>
+  );
+}

@@ -8,7 +8,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { getCard, CARDS } from "@ibokki/cards";
+import { getCard, CARDS, plainText } from "@ibokki/cards";
 import { runMatchup } from "@ibokki/sim";
 import { act, autoplay, autoPlayBots, createMatch, getMatch, pvpState, renderState, savePlaytest } from "./matches.ts";
 import type { PlayerId } from "@ibokki/engine";
@@ -166,7 +166,7 @@ server.tool(
       const c = getCard(id);
       if (!c) return text(`No card ${id}.`);
       return text(
-        `${c.name} [${c.id}] — ${c.school} ${c.type}${c.level ? ` L${c.level}` : ""}${c.costText ? ` cost ${c.costText}` : ""}\n${c.text}\ntags: ${c.tags.join(", ")}`,
+        `${c.name} [${c.id}] — ${c.school} ${c.type}${c.level ? ` L${c.level}` : ""}${c.costText ? ` cost ${c.costText}` : ""}\n${plainText(c.text)}\ntags: ${c.tags.join(", ")}`,
       );
     }
     const list = CARDS.filter((c) => (!school || c.school === school) && (!type || c.type === type));

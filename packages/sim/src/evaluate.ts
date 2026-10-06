@@ -8,7 +8,7 @@
  * Scores are roughly HP-denominated: 1.0 ≈ one point of life. Symmetric by
  * construction (my side minus opponent's side), so evaluate(s, 0) === -evaluate(s, 1).
  */
-import { getCard, getComponent, type Cost } from "@ibokki/cards";
+import { getCard, getComponent, plainText, type Cost } from "@ibokki/cards";
 import {
   addCost,
   attachedSymbols,
@@ -168,7 +168,7 @@ const prophecyCache = new Map<string, boolean>();
 export function isProphecySpell(defId: string): boolean {
   let v = prophecyCache.get(defId);
   if (v === undefined) {
-    v = /^Prophecy\b/i.test(getCard(defId)?.text ?? "");
+    v = /^Prophecy\b/i.test(plainText(getCard(defId)?.text ?? ""));
     prophecyCache.set(defId, v);
   }
   return v;
@@ -178,7 +178,7 @@ function isCancelReaction(defId: string): boolean {
   let v = cancelCache.get(defId);
   if (v === undefined) {
     const def = getCard(defId);
-    v = def?.type === "Reaction" && /\bcancel target spell\b/i.test(def.text ?? "");
+    v = def?.type === "Reaction" && /\bcancel target spell\b/i.test(plainText(def.text ?? ""));
     cancelCache.set(defId, v);
   }
   return v;

@@ -205,6 +205,21 @@ $("p1").value = "Abjuration";
 
 function info(defId) { return CARDS[defId] || { name: defId, school: "Neutral", type: "?", level: null, cost: null, text: "" }; }
 
+/**
+ * Card text arrives tokenized ({burn}, {cancel|cancelled}, {V}, {card:EVO-017} — grammar in
+ * packages/cards/src/text.ts). This zero-dep board just strips tokens to plain text:
+ * `{x|display}` → display, `{card:ID}` → that card's name, `{id}` → the keyword label
+ * (every label is its id capitalized — keywords.json).
+ */
+function plain(text) {
+  return String(text || "").replace(/\{([^{}|]+)(?:\|([^{}]*))?\}/g, (_, id, display) => {
+    if (display) return display;
+    if (id.startsWith("card:")) return (CARDS[id.slice(5)] || {}).name || id.slice(5);
+    if (id === "V" || id === "S" || id === "M") return id;
+    return id.charAt(0).toUpperCase() + id.slice(1);
+  });
+}
+
 function pipsHtml(cost) {
   if (!cost) return "";
   let h = '<span class="pips">';
@@ -221,7 +236,7 @@ function spellCard(defId, opts = {}) {
   const lvl = c.level ? `L${c.level}` : (c.type === "Item" || c.type === "Gambit" ? "TR" : "");
   el.innerHTML =
     `<div class="head"><span>${esc(c.name)}</span><span class="lvl">${lvl}</span></div>` +
-    `<div class="body">${esc(c.text || "")}</div>` +
+    `<div class="body">${esc(plain(c.text))}</div>` +
     `<div class="foot"><span>${esc(c.type)}</span>${pipsHtml(c.cost)}</div>`;
   el.onmouseenter = () => showDetail(defId);
   if (opts.onClick) { el.classList.add("clickable"); el.onclick = opts.onClick; }
@@ -276,7 +291,7 @@ function backCard(small) { const el = document.createElement("div"); el.classNam
 function showDetail(defId) {
   const c = info(defId);
   const meta = [c.cost ? "cost " + c.cost : null, c.level ? "L" + c.level : null, c.type].filter(Boolean).join(" · ");
-  $("detail").innerHTML = `<div class="dname">${esc(c.name)}</div><div class="hint">${esc(meta)}</div><div>${esc(c.text || "")}</div>`;
+  $("detail").innerHTML = `<div class="dname">${esc(c.name)}</div><div class="hint">${esc(meta)}</div><div>${esc(plain(c.text))}</div>`;
 }
 
 function sideHeader(v, who, schoolName, isYou) {
