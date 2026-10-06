@@ -61,6 +61,11 @@ export interface MatchRow {
   result: string | null;
   /** HP the game was created with; NULL = the engine default (and rows predating the column). */
   starting_hp: number | null;
+  /** Build (git sha) the match was played on; NULL on rows predating the column. History only. */
+  engine_version: string | null;
+  /** Rules fingerprint (see rules.ts) the match was played under. A live row whose hash
+   *  differs from the running server's is abandoned on boot, never replayed (#76). */
+  rules_hash: string | null;
   started_at: number;
   updated_at: number;
   ended_at: number | null;
@@ -170,6 +175,14 @@ export class Db {
       this.db.exec("ALTER TABLE matches ADD COLUMN starting_hp INTEGER");
     } catch {
       /* column already exists */
+    }
+    // Additive migrations for the engine-version / rules-hash stamp (#76).
+    for (const col of ["engine_version TEXT", "rules_hash TEXT"]) {
+      try {
+        this.db.exec(`ALTER TABLE matches ADD COLUMN ${col}`);
+      } catch {
+        /* column already exists */
+      }
     }
     // Replay share links: one token per (match, seat) — the replay renders that seat's
     // view. Deliberate exception to the hash-only token rule above: the unguessable
@@ -323,11 +336,22 @@ export class Db {
 
   // ---- matches (persistence: live rooms survive a restart; finished rows are history) ----
 
-  createMatch(code: string, seed: number, seatsJson: string, bot: boolean, botLevel: string | null = null, startingHp: number | null = null): number {
+  createMatch(
+    code: string,
+    seed: number,
+    seatsJson: string,
+    bot: boolean,
+    botLevel: string | null = null,
+    startingHp: number | null = null,
+    engineVersion: string | null = null,
+    rulesHash: string | null = null,
+  ): number {
     const now = Date.now();
     const info = this.db
-      .prepare("INSERT INTO matches (code, seed, seats, bot, bot_level, starting_hp, started_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-      .run(code, seed, seatsJson, bot ? 1 : 0, bot ? botLevel : null, startingHp, now, now);
+      .prepare(
+        "INSERT INTO matches (code, seed, seats, bot, bot_level, starting_hp, engine_version, rules_hash, started_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      )
+      .run(code, seed, seatsJson, bot ? 1 : 0, bot ? botLevel : null, startingHp, engineVersion, rulesHash, now, now);
     return Number(info.lastInsertRowid);
   }
 
@@ -372,7 +396,7 @@ export class Db {
     return this.db
       .prepare(
         `SELECT id, code, seed, seats, bot, bot_level, '[]' AS actions, result,
-                starting_hp, started_at, updated_at, ended_at
+                starting_hp, engine_version, rules_hash, started_at, updated_at, ended_at
          FROM matches
          WHERE result IS NOT NULL
            AND json_extract(result, '$.endReason') IS NOT 'abandoned'

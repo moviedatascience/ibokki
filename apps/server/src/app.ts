@@ -58,6 +58,7 @@ import { Db } from "./db.ts";
 import { createMailer, type Mailer } from "./mail.ts";
 import { createMonitor, type Monitor } from "./monitor.ts";
 import { handleApi, oidcFromEnv, userFromRequest, type ApiContext, type OidcConfig } from "./api.ts";
+import { computeRulesHash } from "./rules.ts";
 
 const CATALOG = buildCardCatalog();
 const BUILD = process.env.IBOKKI_BUILD ?? "dev";
@@ -96,6 +97,14 @@ interface Config {
    *  slow runners). Replay determinism: rehydration re-creates games with the CURRENT
    *  value, so never change it on a server that has live persisted matches. */
   startingHp: number | undefined;
+  /** Late-move grace (#77): the deadline ADVERTISED to clients is this much earlier
+   *  than the timer that actually fires, so an action in flight at 0:00 still lands. */
+  clockGraceMs: number;
+  /** WS heartbeat period (#74): sockets that miss a protocol ping are terminated so a
+   *  silently dropped link enters disconnect grace instead of stalling the match. 0 = off. */
+  heartbeatMs: number;
+  /** Rules fingerprint stamped on every match row (#76; see rules.ts). */
+  rulesHash: string;
 }
 
 function resolveConfig(opts: ServerOptions): Config {
@@ -113,6 +122,9 @@ function resolveConfig(opts: ServerOptions): Config {
     msgRefillPerSec: opts.msgRefillPerSec ?? envInt("IBOKKI_MSG_REFILL_PER_SEC") ?? 100,
     startingHp: opts.startingHp ?? envInt("IBOKKI_START_HP"),
     allowedOrigins: origins ? origins.split(",").map((s) => s.trim()).filter(Boolean) : null,
+    clockGraceMs: opts.clockGraceMs ?? envInt("IBOKKI_CLOCK_GRACE_MS") ?? 2_000,
+    heartbeatMs: opts.heartbeatMs ?? envInt("IBOKKI_HEARTBEAT_MS") ?? 15_000,
+    rulesHash: opts.rulesHash ?? computeRulesHash(),
   };
 }
 
@@ -289,7 +301,7 @@ function startMatch(room: Room): void {
     // Record the RESOLVED starting HP (not the raw knob) so replays and rehydration
     // rebuild this game exactly even if the server knob changes later; NULL now
     // unambiguously means "row predates the column".
-    room.matchId = room.hub.db.createMatch(room.code, seed, JSON.stringify(seats), !!room.bot, room.botLevel, hpOverride || DEFAULT_STARTING_HP);
+    room.matchId = room.hub.db.createMatch(room.code, seed, JSON.stringify(seats), !!room.bot, room.botLevel, hpOverride || DEFAULT_STARTING_HP, BUILD, room.hub.cfg.rulesHash);
   } catch (err) {
     room.hub.monitor.report("persist-match", err, `room ${room.code}`); // the match still plays, it just won't survive a restart
   }
@@ -366,6 +378,12 @@ async function autoPlayBot(room: Room): Promise<void> {
       if (room.state !== before) continue; // world moved on while thinking — recompute
       if (action === null) break;
       applyAction(room, 1, action);
+      // One frame per bot move (#78): the client paces the opponent's turn beat by beat
+      // instead of receiving the whole turn as one teleporting snapshot. Each frame
+      // carries only its own events and its own epoch.
+      room.epoch++;
+      pushBoth(room);
+      room.recentEvents = [];
     }
   } finally {
     room.botBusy = false;
@@ -410,7 +428,7 @@ function applyAction(room: Room, side: PlayerId, action: Action, record = true):
  *  reflect the bot moves its action provoked, or the client acts on stale
  *  indices (the exact race CI caught). Other rooms are NOT blocked by the await
  *  — the bot computes on the worker thread. */
-async function handleAct(room: Room, side: PlayerId, indices: number[]): Promise<void> {
+async function handleAct(room: Room, side: PlayerId, indices: number[], epoch?: number): Promise<void> {
   if (!room.state) {
     pushError(room.seats[side]?.ws ?? null, "waiting for an opponent to join");
     return;
@@ -419,6 +437,14 @@ async function handleAct(room: Room, side: PlayerId, indices: number[]): Promise
   // epoch or wiping pending events — just resync the confused sender. Otherwise an opponent
   // spamming "act" during your turn would churn empty frames and desync animations.
   if (isTerminal(room.state) || legalActions(room.state, side).length === 0) {
+    pushState(room, side);
+    return;
+  }
+  // Stale click (#75): the indices were chosen against a frame this room has moved past
+  // (a timeout auto-pass, a streamed bot move still animating on the client). Applying
+  // them would pick a DIFFERENT action than the one the player saw. Resync, no error —
+  // late moves are routine, not faults.
+  if (epoch !== undefined && epoch !== room.epoch) {
     pushState(room, side);
     return;
   }
@@ -438,10 +464,15 @@ async function handleAct(room: Room, side: PlayerId, indices: number[]): Promise
     }
     applyAction(room, side, legal[idx]!);
   }
-  await autoPlayBot(room);
+  // The player's own action is a frame of its own; a bot's reply then streams one frame
+  // per move (autoPlayBot) so the client can pace it (#78). Stale indices from a client
+  // still animating are caught by the epoch check above, so nothing waits on the bot.
   armClocks(room); // deadlines must be current BEFORE the frames below carry them
   pushState(room, side, error ?? undefined);
   pushState(room, (side ^ 1) as PlayerId);
+  room.recentEvents = [];
+  await autoPlayBot(room);
+  armClocks(room);
   armInactivity(room); // any action resets the idle clock for whoever is now on the clock
 }
 
@@ -530,7 +561,11 @@ function armClocks(room: Room): void {
     stopClock(room, side);
     const budget = reaction ? cfg.reactionMs : cfg.turnMs + room.clock.bank[side];
     room.clock.keys[side] = key;
-    room.clock.deadlines[side] = Date.now() + budget;
+    // Late-move grace (#77): clients see a deadline a little EARLIER than the timer that
+    // fires, so an action sent at 0:00 on their clock is still in time. Capped at a
+    // quarter of the budget so tiny test budgets keep a visible countdown.
+    const grace = Math.min(cfg.clockGraceMs, Math.floor(budget / 4));
+    room.clock.deadlines[side] = Date.now() + budget - grace;
     const t = setTimeout(() => {
       try {
         onClockTimeout(room, side);
@@ -769,8 +804,8 @@ async function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db
       send(ws, { t: "created", code: room.code, side: 0, token: room.seats[0].token, catalog: CATALOG, build: BUILD });
       if (room.bot) {
         startMatch(room);
-        await autoPlayBot(room); // bot lays its prepare-phase spells before the first frame
-        send(ws, { t: "presence", opponentConnected: true });
+        send(ws, { t: "presence", opponentConnected: true }); // before any frame: the bot is always "present"
+        await autoPlayBot(room); // bot lays its prepare-phase spells, one streamed frame per move
         pushState(room, 0);
         armInactivity(room);
         armClocks(room);
@@ -823,7 +858,7 @@ async function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db
     case "act": {
       const at = seatBySocket.get(ws);
       if (!at) return pushError(ws, "not seated in a room");
-      await handleAct(at.room, at.side, Array.isArray(msg.indices) ? msg.indices : []);
+      await handleAct(at.room, at.side, Array.isArray(msg.indices) ? msg.indices : [], typeof msg.epoch === "number" ? msg.epoch : undefined);
       return;
     }
     case "rematch": {
@@ -832,6 +867,9 @@ async function handleMessage(hub: Hub, ws: WebSocket, msg: ClientMessage, db: Db
       await handleRematch(at.room, at.side);
       return;
     }
+    case "ping":
+      send(ws, { t: "pong" });
+      return;
     default:
       pushError(ws, `unknown message type`);
   }
@@ -856,7 +894,20 @@ function rehydrateRooms(hub: Hub): void {
     hub.monitor.report("sweep-stale-rows", err);
     return; // a broken matches table must not stop the server from booting
   }
+  let rulesChanged = 0;
   for (const row of hub.db.liveMatches()) {
+    // Rules drift (#76): this row was played under different rules than this server
+    // runs. Replaying it would silently produce a game that never happened (only
+    // ILLEGAL actions throw; a changed number does not) — close it out instead.
+    if (row.rules_hash && row.rules_hash !== hub.cfg.rulesHash) {
+      try {
+        hub.db.finishMatch(row.id, JSON.stringify({ winner: null, endReason: "abandoned", forfeit: null, rulesChanged: true }));
+      } catch (err) {
+        hub.monitor.report("rehydrate", err, `match ${row.id}: abandoning after rules change`);
+      }
+      rulesChanged++;
+      continue;
+    }
     try {
       const seats = JSON.parse(row.seats) as SeatRecord[];
       if (!seats[0] || !seats[1]) throw new Error("row predates both seats");
@@ -907,6 +958,7 @@ function rehydrateRooms(hub: Hub): void {
     }
   }
   if (hub.rooms.size > 0) console.log(`restored ${hub.rooms.size} live match(es) from the database`);
+  if (rulesChanged > 0) console.log(`abandoned ${rulesChanged} live match(es) recorded under different rules (hash ${hub.cfg.rulesHash})`);
 }
 
 export interface ServerOptions {
@@ -939,6 +991,12 @@ export interface ServerOptions {
   alertEmail?: string;
   /** Minimum gap between alert mails. Default: env IBOKKI_ALERT_MIN_INTERVAL_MS or 15 min. */
   alertMinIntervalMs?: number;
+  /** Advertised-deadline grace (ms) for in-flight moves. Default 2000 (#77). */
+  clockGraceMs?: number;
+  /** WS protocol-ping period (ms); 0 disables. Default 15000 (#74). */
+  heartbeatMs?: number;
+  /** Rules fingerprint override — a TEST knob to simulate a rules change across restarts (#76). */
+  rulesHash?: string;
 }
 
 export interface OnlineServer {
@@ -1025,6 +1083,7 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
     secureCookies: opts.secureCookies ?? process.env.IBOKKI_SECURE_COOKIES === "1",
     oidc: opts.oidc ?? oidcFromEnv(),
     startingHp: cfg.startingHp,
+    rulesHash: cfg.rulesHash,
   };
 
   const distDir = resolve(process.env.IBOKKI_CLIENT_DIST ?? DEFAULT_DIST);
@@ -1059,7 +1118,30 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
   // for sockets we are deliberately closing.
   let closing = false;
 
+  // Heartbeat (#74): a link that dies without a FIN (mobile sleep, NAT timeout, pulled
+  // cable) never fires `close` on its own — nginx holds reads for a day — so the seat
+  // would stay "connected" and the match would stall until the idle forfeit. Ping every
+  // period; a socket that hasn't answered the previous ping is terminated, which runs
+  // the normal close path (presence off, disconnect grace).
+  const alive = new WeakMap<WebSocket, boolean>();
+  const heartbeat =
+    cfg.heartbeatMs > 0
+      ? setInterval(() => {
+          for (const client of wss.clients) {
+            if (alive.get(client) === false) {
+              client.terminate();
+              continue;
+            }
+            alive.set(client, false);
+            client.ping();
+          }
+        }, cfg.heartbeatMs)
+      : null;
+  heartbeat?.unref();
+
   wss.on("connection", (ws, req) => {
+    alive.set(ws, true);
+    ws.on("pong", () => alive.set(ws, true));
     // The session cookie rides the WS handshake — saved-deck picks are checked
     // against this user. Resolved once per connection.
     const userId = userFromRequest(req, db)?.id;
@@ -1134,6 +1216,7 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
   sweep.unref();
   http.on("close", () => {
     clearInterval(sweep);
+    if (heartbeat) clearInterval(heartbeat);
     for (const room of rooms.values()) clearRoomTimers(room);
     hub.bots.dispose();
     monitor.dispose();
@@ -1144,6 +1227,7 @@ export function createOnlineServer(opts: ServerOptions = {}): OnlineServer {
     if (closing) return;
     closing = true;
     clearInterval(sweep);
+    if (heartbeat) clearInterval(heartbeat);
     for (const room of rooms.values()) {
       clearRoomTimers(room);
       for (const seat of room.seats) {

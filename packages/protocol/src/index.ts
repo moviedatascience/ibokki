@@ -314,8 +314,15 @@ export type ClientMessage =
   | { t: "create"; school?: SchoolName; deck?: DeckChoice; bot?: boolean; botDeck?: DeckChoice; botLevel?: BotLevel }
   | { t: "join"; code: string; school?: SchoolName; deck?: DeckChoice }
   | { t: "rejoin"; code: string; token: string }
-  | { t: "act"; indices: number[] }
-  | { t: "rematch" };
+  /** `epoch` = the frame the player was LOOKING AT when they clicked. A mismatch with
+   *  the room's current epoch means the indices belong to a board they no longer see
+   *  (a timeout auto-pass, a streamed bot move): the server ignores the act and
+   *  resyncs them instead of applying a different action (#75). */
+  | { t: "act"; indices: number[]; epoch?: number }
+  | { t: "rematch" }
+  /** Application-level keepalive: browsers can't observe WS protocol pings, so a client
+   *  that stops hearing `pong`s knows its link is dead and can rejoin (#74). */
+  | { t: "ping" };
 
 /** Server → client. `build` lets a tab that outlived a redeploy detect it is
  *  running an outdated bundle and prompt for a refresh. `notice` is an out-of-band
@@ -326,4 +333,5 @@ export type ServerMessage =
   | { t: "state"; state: MatchStatePayload; error?: string }
   | { t: "presence"; opponentConnected: boolean }
   | { t: "notice"; message: string }
-  | { t: "error"; message: string };
+  | { t: "error"; message: string }
+  | { t: "pong" };

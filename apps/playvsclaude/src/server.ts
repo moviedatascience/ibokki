@@ -174,8 +174,14 @@ const server = createServer(async (req, res) => {
 
     if (req.method === "POST" && path === "/api/act") {
       const side = (Number(url.searchParams.get("side")) === 1 ? 1 : 0) as PlayerId;
-      const body = (await readBody(req)) as { index?: number; indices?: number[] };
+      const body = (await readBody(req)) as { index?: number; indices?: number[]; epoch?: number };
       const indices = body.indices ?? (typeof body.index === "number" ? [body.index] : []);
+      // Stale click (#75): indices chosen against a frame that has since moved on would
+      // map to a different action — answer with the current frame instead of applying.
+      if (typeof body.epoch === "number" && body.epoch !== actionEpoch) {
+        sendJson(res, stateJson(match, side));
+        return;
+      }
       match.recentEvents = []; // fresh batch for this human action (+ any bot response)
       actionEpoch++;
       let error: string | null = null;

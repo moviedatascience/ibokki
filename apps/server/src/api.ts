@@ -88,6 +88,8 @@ export interface ApiContext {
   oidc?: OidcConfig;
   /** The server's startingHp override — replay fallback for rows predating starting_hp. */
   startingHp?: number;
+  /** The running rules fingerprint (#76): replays of rows stamped with another are refused. */
+  rulesHash?: string;
 }
 
 const SESSION_COOKIE = "ibokki_session";
@@ -293,11 +295,17 @@ function sendReplayJson(req: IncomingMessage, res: ServerResponse, body: string,
 }
 
 /** Serve one frames chunk for a replayable row (shared by the token and own-history routes). */
-function serveFrames(req: IncomingMessage, res: ServerResponse, url: URL, db: Db, row: MatchRow, seat: 0 | 1, cacheable: boolean, fallbackHp?: number): void {
+function serveFrames(req: IncomingMessage, res: ServerResponse, url: URL, db: Db, row: MatchRow, seat: 0 | 1, cacheable: boolean, fallbackHp?: number, rulesHash?: string): void {
   const fromRaw = url.searchParams.get("from");
   const from = fromRaw === null ? 0 : Number(fromRaw);
   if (!Number.isInteger(from) || from < 0) return sendJson(res, { error: "'from' must be a non-negative integer" }, 400);
   const count = Math.min(200, Math.max(1, Math.trunc(Number(url.searchParams.get("count")) || 100)));
+  // Rules drift (#76): a values-only rules change can replay a stored log cleanly to a
+  // game that never happened — the outcome check below only catches it on finished
+  // natural endings. The stamp says for certain.
+  if (rulesHash && row.rules_hash && row.rules_hash !== rulesHash) {
+    return sendJson(res, { error: "this replay was recorded under an older version of the game rules" }, 410);
+  }
   try {
     const frames = cachedFrames(db, row, seat, fallbackHp);
     sendReplayJson(req, res, `{"from":${from},"total":${frames.length},"frames":[${frames.slice(from, from + count).join(",")}]}`, cacheable);
@@ -588,7 +596,7 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse, ctx: 
       if (blocked) return sendJson(res, { error: blocked }, 409), true;
       if (matchAction[2] === "share") sendJson(res, { token: db.getOrCreateShare(row.id, seat) });
       else if (matchAction[2] === "replay") sendJson(res, replayMetaJson(row, seat));
-      else serveFrames(req, res, url, db, row, seat, false, ctx.startingHp);
+      else serveFrames(req, res, url, db, row, seat, false, ctx.startingHp, ctx.rulesHash);
       return true;
     }
 
@@ -606,7 +614,7 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse, ctx: 
     if (replayRoute && method === "GET") {
       const found = db.matchByShareToken(replayRoute[1]!);
       if (!found) return sendJson(res, { error: "no such replay" }, 404), true;
-      if (replayRoute[2]) serveFrames(req, res, url, db, found.row, found.seat, true, ctx.startingHp);
+      if (replayRoute[2]) serveFrames(req, res, url, db, found.row, found.seat, true, ctx.startingHp, ctx.rulesHash);
       else sendJson(res, replayMetaJson(found.row, found.seat));
       return true;
     }
