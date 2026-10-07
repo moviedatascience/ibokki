@@ -34,7 +34,7 @@ import { describeAction } from "@ibokki/sim";
 // Static card catalog
 // ---------------------------------------------------------------------------
 
-/** Static card info for the UI: id -> { name, school, element, type, level, cost, text, flavor }. */
+/** Static card info for the UI: id -> { name, school, element, type, level, cost, text, tags }. */
 export interface CardInfo {
   name: string;
   school: string;
@@ -44,8 +44,6 @@ export interface CardInfo {
   level: number | null;
   cost: string | null;
   text: string;
-  /** One-line flavor text (school cards only). */
-  flavor?: string;
   /** Effect tags from @ibokki/cards CARD_TAGS; empty for components. */
   tags: string[];
 }
@@ -54,7 +52,6 @@ export function buildCardCatalog(): Record<string, CardInfo> {
   const catalog: Record<string, CardInfo> = {};
   for (const c of CARDS) {
     catalog[c.id] = { name: c.name, school: c.school, element: c.element, type: c.type, level: c.level, cost: c.costText, text: c.text, tags: c.tags };
-    if (c.flavor) catalog[c.id]!.flavor = c.flavor;
   }
   for (const c of COMPONENTS) {
     const sym = "V".repeat(c.symbols.V) + "S".repeat(c.symbols.S) + "M".repeat(c.symbols.M);

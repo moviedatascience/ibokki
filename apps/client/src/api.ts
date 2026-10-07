@@ -17,8 +17,6 @@ export interface CardInfo {
   level: number | null;
   cost: string | null; // symbol string like "VV", "SM", ...
   text: string;
-  /** One-line flavor text (school cards only). */
-  flavor?: string;
   /** Effect tags (what the card does) — drives the icon strip. */
   tags?: string[];
 }

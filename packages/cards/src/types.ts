@@ -76,8 +76,6 @@ export interface CardDef {
   cost: Cost | null;
   /** Effect text (rules text to be implemented by the effect engine). */
   text: string;
-  /** One-line player-facing flavor text, in the world's voice (spellbook / detail surfaces only). */
-  flavor?: string;
   /** Effect tags (see CARD_TAGS) — attached by the loader from data/tags.json. */
   tags: CardTag[];
   role?: string;

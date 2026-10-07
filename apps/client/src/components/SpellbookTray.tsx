@@ -116,7 +116,6 @@ export function SpellbookTray({ state, cards, onAction, onHover, onInspect }: { 
                 <div className="sbtext">
                   <KeywordStrip tags={info?.tags} label={false} size={11} />
                   <RulesText text={info?.text ?? ""} />
-                  {info?.flavor && <div className="flavor">{info.flavor}</div>}
                 </div>
                 {!prep && repl.length > 0 && (
                   <div className="sbslots">

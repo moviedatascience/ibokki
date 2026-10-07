@@ -36,7 +36,6 @@ export function cardErrors(data: unknown, tagMap: Record<string, string[]> = TAG
     } else if (!ELEMENT_SET.has(card.element as string)) {
       err(`cards.json: ${id} has invalid element "${card.element}"`);
     }
-    if (card.flavor !== undefined && typeof card.flavor !== "string") err(`cards.json: ${id} flavor must be a string`);
     if (typeof card.text !== "string") err(`cards.json: ${id} is missing effect text`);
     const tags = tagMap[id];
     if (!Array.isArray(tags) || tags.length === 0) err(`tags.json: ${id} has no effect tags — run npm run derive-tags`);

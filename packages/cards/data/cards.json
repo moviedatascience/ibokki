@@ -13,7 +13,6 @@
       "M": 0
     },
     "text": "A {ward} you control gains 2 HP (create a 2 HP {ward} if you have none). {heal|Remove 1 Burn} from yourself.",
-    "flavor": "Steel is not strong until it has been through the fire and out again.",
     "comment": "Good early-game Ward sustain. Rewards players who already established a Ward on a prior turn."
   },
   {
@@ -30,7 +29,6 @@
       "M": 0
     },
     "text": "Create a {ward} with 1 HP. If it is destroyed this round, {draw|draw} 2 cards.",
-    "flavor": "A thin shell of cooled slag. When it cracks, it tells you something.",
     "comment": "Lightweight Ward that cycles on destruction — encourages opponent to attack it and rewards the Abjuration player for taking hits."
   },
   {
@@ -47,7 +45,6 @@
       "M": 0
     },
     "text": "Each {ward} you control gains 1 HP. If you control a {ward}, deal 1 {damage|damage} to your opponent.",
-    "flavor": "Every ward grows a little hotter, and one breath escapes toward the foe.",
     "comment": "Scales with Ward density. Weak early but synergizes with multi-Ward strategies at higher levels."
   },
   {
@@ -64,7 +61,6 @@
       "M": 0
     },
     "text": "Until the start of your next turn, spells with only 1 component attached {prevent|cannot target} you.",
-    "flavor": "Small spells lose their aim in the air above a furnace.",
     "comment": "Punishes opponents who haven't fully loaded their spells. Creates counterplay window pressure."
   },
   {
@@ -81,7 +77,6 @@
       "M": 0
     },
     "text": "This round, spell damage dealt to you is {prevent|reduced by} 2.",
-    "flavor": "A cloak of cold ash. It takes the edge off anything that lands.",
     "comment": "Round-long -2 to incoming spell damage - the anti-cantrip tax. Charges Reckoning while it blunts aggro; near-irrelevant against big single hits."
   },
   {
@@ -98,7 +93,6 @@
       "M": 0
     },
     "text": "Target spell deals 1 {prevent|less damage}.",
-    "flavor": "Rake the coals over and the flame has less to feed on.",
     "comment": "Simple but versatile. Pairs with other damage-prevention Reactions to stack reduction."
   },
   {
@@ -115,7 +109,6 @@
       "M": 0
     },
     "text": "Target spell deals 1 {prevent|less damage}, or 2 less if you control a {ward}.",
-    "flavor": "Kiln brick turns heat. It turns more when the kiln is standing.",
     "comment": "Rewards proactive Ward setup. A tempo puzzle for the opponent: destroy the Ward first or risk extra mitigation."
   },
   {
@@ -132,7 +125,6 @@
       "M": 0
     },
     "text": "Target spell deals 1 {prevent|less damage}. {draw} 1 card.",
-    "flavor": "Open the flue, let the heat out, and look at what the draft brings in.",
     "comment": "Rare card draw for Abjuration. Small upside turns a pure-prevention Reaction into a slight tempo gain."
   },
   {
@@ -149,7 +141,6 @@
       "M": 0
     },
     "text": "{trap}: when your opponent attaches a component to a prepared spell, return that component {disrupt|to their hand}.",
-    "flavor": "A mesh over the chimney. What they throw on comes straight back.",
     "comment": "High disruption ceiling — delays a spell by a full turn. Telegraphed once face-up, so opponent can play around it."
   },
   {
@@ -166,7 +157,6 @@
       "M": 0
     },
     "text": "{seal} target prepared spell your opponent controls: it cannot be cast this round.",
-    "flavor": "Pressed hot against the page. The spell cannot be spoken past the mark.",
     "comment": "Strong soft-lock. Costs 2 S symbols at Level 1, which makes it a premium Level 1 opener."
   },
   {
@@ -183,7 +173,6 @@
       "M": 0
     },
     "text": "{prevent} all damage from target spell. {heal} half the damage {prevent|prevented}, rounded down.",
-    "flavor": "Berenice takes the whole blast in and keeps half of it as warmth.",
     "comment": "Full prevention with a heal attached — turns the opponent's single biggest hit into HP for you. A strong reactive swing."
   },
   {
@@ -200,7 +189,6 @@
       "M": 0
     },
     "text": "Create a {ward} with 3 HP. Whenever it absorbs damage, deal 1 {damage|damage} to your opponent.",
-    "flavor": "Touch the wall and the wall touches back.",
     "comment": "Turns defense into slow chip damage. Synergizes with anything that buffs Ward HP (Fortify / Ward Pulse)."
   },
   {
@@ -217,7 +205,6 @@
       "M": 0
     },
     "text": "Remove all components from target spell; if it no longer meets its cost, {cancel|cancel} it. {cost|Your opponent draws} 1 card.",
-    "flavor": "Pull the fuel from under the spell and watch it gutter.",
     "comment": "Strips a nearly-ready spell back to zero. The draw softens the hit but opponent loses tempo and the surprise factor."
   },
   {
@@ -234,7 +221,6 @@
       "M": 0
     },
     "text": "{cancel} target spell. You may {empower|immediately attach} 1 component from your hand to a prepared spell.",
-    "flavor": "Pinched out between finger and thumb, with the other hand already moving.",
     "comment": "Combines cancellation with forward progression — reacts and sets up your own next cast simultaneously."
   },
   {
@@ -251,7 +237,6 @@
       "M": 1
     },
     "text": "{cancel} target spell that requires a Material (M) component.",
-    "flavor": "A spell is only as whole as the ingredients it stands on.",
     "comment": "Tag-sensitive counter for Material (M) spells. Punishes the Divination school specifically; the off-color SM cost signals cross-school tech."
   },
   {
@@ -268,7 +253,6 @@
       "M": 0
     },
     "text": "{cancel} target spell that requires a Somatic (S) component.",
-    "flavor": "The gesture half-formed, the fingers already blistering.",
     "comment": "Anti-Abjuration tool that is itself an Abjuration card — great in the mirror match. Forms the Somatic (S) half of the tag-based cancel suite alongside Counterbind (M)."
   },
   {
@@ -285,7 +269,6 @@
       "M": 0
     },
     "text": "Until the start of your next turn, your opponent {lock|cannot play Reactions}.",
-    "flavor": "Nothing can be heard over a forge at full heat. Nothing can be answered.",
     "comment": "Offensive play for a defensive deck — punch your own spells through without fear of a Reaction. High-value surprise."
   },
   {
@@ -302,7 +285,6 @@
       "M": 0
     },
     "text": "This round, your opponent's Reactions {lock|cost 1 additional} component to play.",
-    "flavor": "The air is too thick to react in.",
     "comment": "Soft-taxes Reactions rather than banning them. Particularly brutal against opposing Abjuration mirrors."
   },
   {
@@ -319,7 +301,6 @@
       "M": 0
     },
     "text": "Create a {ward} with 2 HP. While it stands, Level 1 spells {prevent|cannot target} you.",
-    "flavor": "A squat ward of fired clay. Small things do not get past it.",
     "comment": "Provides blanket immunity to the entire early-game toolbox. Pressures opponent to commit higher-level spells to break through."
   },
   {
@@ -336,7 +317,6 @@
       "M": 0
     },
     "text": "Create a {ward} with 3 HP. While it stands, the first time each round your opponent casts a spell, {draw|draw} 1 card.",
-    "flavor": "Lit on the wall. When the enemy moves, it tells you first.",
     "comment": "Off-color cost (VS) signals it's a cross-school hybrid. Rewards sitting on the Ward — persistent card advantage as long as it lives."
   },
   {
@@ -353,7 +333,6 @@
       "M": 0
     },
     "text": "{cost|Sacrifice} one of your {ward|Wards}. {prevent} all damage from target spell.",
-    "flavor": "Break the crust to save the metal underneath.",
     "comment": "Converts an expendable Ward into a full cancel. Great with low-HP Wards like Arcane Shell that are about to break anyway."
   },
   {
@@ -370,7 +349,6 @@
       "M": 0
     },
     "text": "Create a {ward} with 6 HP. This round, damage dealt to you is {prevent|reduced by} 1.",
-    "flavor": "The oldest fire in the house. It has never once gone out.",
     "comment": "Mid-level defensive anchor. The passive reduction stacks with Dampen and other prevention effects for near-immunity turns."
   },
   {
@@ -387,7 +365,6 @@
       "M": 0
     },
     "text": "{cancel} target spell. Your opponent {lock|cannot cast} more spells this turn.",
-    "flavor": "The spell dies on the tongue, and nothing lights behind it.",
     "comment": "The heavyweight Reaction payoff. Costs a full round of S-component investment but ends an opponent's offensive turn entirely."
   },
   {
@@ -404,7 +381,6 @@
       "M": 1
     },
     "text": "This round, spell {damage|damage} that would hit you {heal|heals} you instead (up to 5 HP).",
-    "flavor": "The creature that lives in the forge and thinks of fire as a bath.",
     "comment": "Reverses an all-in offensive turn into a healing windfall. Costs SSM to balance — opponents who read it can pivot, making it a bluffing tool."
   },
   {
@@ -421,7 +397,6 @@
       "M": 0
     },
     "text": "Each {ward} you control gains 2 HP.",
-    "flavor": "Back into the fire, out again stronger. Every ward on the wall.",
     "comment": "Combines forced targeting with a Ward buff — either opponent grinds through buffed Wards or wastes their turn."
   },
   {
@@ -438,7 +413,6 @@
       "M": 0
     },
     "text": "{cancel} target spell. Deal 2 {damage|damage} to your opponent for each component attached to it.",
-    "flavor": "Everything they piled onto the spell goes under the hammer with it.",
     "comment": "Punishes fully loaded spells most — a 3-component VSM spell results in 6 damage on cancel. Off-color V cost signals aggression."
   },
   {
@@ -455,7 +429,6 @@
       "M": 1
     },
     "text": "Create a {ward} with 5 HP. When it is destroyed, create a {ward} with 2 HP.",
-    "flavor": "Break the coal and there is still a live ember inside it.",
     "comment": "Double-life Ward. The replacement is weak enough to be cleared but forces the opponent to commit two removal actions."
   },
   {
@@ -472,7 +445,6 @@
       "M": 0
     },
     "text": "{disrupt|Strip} every component from your opponent's prepared spells; {cancel|cancel} target spell if it no longer meets its cost. They draw 1 card per spell stripped.",
-    "flavor": "Kick the fire apart and nothing on it stays lit.",
     "comment": "Nuclear disruption. Opponent draws cards, which softens the blow and prevents feel-bad moments, but they lose all setup simultaneously."
   },
   {
@@ -489,7 +461,6 @@
       "M": 0
     },
     "text": "Create a {ward} with 4 HP. This round, your opponent {prevent|cannot target} or destroy your {ward|Wards}.",
-    "flavor": "While it stands, nothing of theirs reaches the wards behind it.",
     "comment": "Protects your Ward infrastructure from removal effects. Forces the opponent to grind through your Wards the hard way."
   },
   {
@@ -506,7 +477,6 @@
       "M": 1
     },
     "text": "{seal} target prepared spell your opponent controls: it cannot be cast this round.",
-    "flavor": "Sealed with a bead of molten iron. Not this round.",
     "comment": "Temporarily removes a threat without destroying it — stalls their gameplan for a full round. Flavor: the spell is locked in magical shadow."
   },
   {
@@ -523,7 +493,6 @@
       "M": 0
     },
     "text": "Destroy one of your {ward|Wards}. Deal {damage|damage} equal to its remaining HP to your opponent.",
-    "flavor": "Open the furnace and the melt goes where you point it.",
     "comment": "The core damage finisher for a Ward-heavy game. Converts a large late-game Ward (Aegis Eternal, Ritual Ward, Ward Eternal) into a direct damage burst. Rewards players who built Ward HP up with Fortify and Ward Pulse earlier."
   },
   {
@@ -540,7 +509,6 @@
       "M": 0
     },
     "text": "Deal {damage|damage} to your opponent equal to half your {ledger|ledger}, rounded up.",
-    "flavor": "Every blow the forge turned aside, it kept as heat. This is the heat.",
     "comment": "Rewards a patient defensive game — the more attacks you've weathered and mitigated, the harder this hits. Pairs naturally with Absorb and other prevention effects to set up a large burst in the same round."
   },
   {
@@ -557,7 +525,6 @@
       "M": 1
     },
     "text": "Deal 3 {damage|damage} to your opponent for each Reaction you have played this round.",
-    "flavor": "Each Reaction was a stroke on the anvil. Here is what was made.",
     "comment": "Turns a reactive turn into an offensive payoff — a player who has played 3 Reactions this round deals 9 damage. The SSM cost mirrors Inversion Field, reading the M component as the 'calculation and timing' cost."
   },
   {
@@ -574,7 +541,6 @@
       "M": 0
     },
     "text": "This round, whenever your opponent plays a Reaction, they take 3 {damage|damage}.",
-    "flavor": "The circle is a kiln. Every answer they give costs them skin.",
     "comment": "Punishes a reactive opponent: every Reaction they play costs them 3 HP. Forces a dilemma — keep reacting and bleed out, or sit on their cards and let your spells through."
   },
   {
@@ -591,7 +557,6 @@
       "M": 0
     },
     "text": "Deal 5 {damage|damage} to your opponent, or 7 if you control a {ward}.",
-    "flavor": "Hot from the forge. Hotter if the kiln is lit.",
     "comment": "Simple and readable. The Ward bonus is modest enough that it isn't mandatory but rewards having one up. A pure damage card with a defensive condition — feels like Abjuration without being mechanical about it."
   },
   {
@@ -608,7 +573,6 @@
       "M": 0
     },
     "text": "{cost|Sacrifice} all your {ward|Wards}. Deal 2 {damage|damage} to your opponent for each HP they had.",
-    "flavor": "Every ward on the wall, poured out at once.",
     "comment": "High-risk, high-reward. A player sitting on Aegis Eternal (6 HP), Ritual Ward (5 HP), and a Reflective Ward (3 HP) could deal 28 damage in one cast. The SSV cost signals this is a deliberate off-school spike — you're converting your entire defensive position into a kill shot."
   },
   {
@@ -625,7 +589,6 @@
       "M": 0
     },
     "text": "{cancel} target spell. Deal twice the {damage|damage} it would have dealt to your opponent.",
-    "flavor": "Strike the anvil and the anvil strikes back harder.",
     "comment": "A damage-reflection Reaction that doesn't just mirror an incoming hit — it doubles it. The full SSS cost makes it compete with Total Negation for the same slot: a safe cancel versus a risky double-damage gamble."
   },
   {
@@ -642,7 +605,6 @@
       "M": 1
     },
     "text": "Deal 4 {damage|damage} to your opponent. If they control a {ward}, destroy it and deal 8 {damage|damage} instead.",
-    "flavor": "Built for walls. Finds them, and is glad.",
     "comment": "Anti-Ward finisher for the mirror matchup. Removes the opponent's protection AND punishes them for having had it. Strong in any matchup where the opponent runs Wards, negligible bonus against Evocation."
   },
   {
@@ -659,7 +621,6 @@
       "M": 0
     },
     "text": "This round, spells {prevent|cannot damage you} and your opponent {lock|cannot play Reactions}.",
-    "flavor": "The one metal magic will not touch. For a round, she is made of it.",
     "comment": "Full immunity. Requires two SS dual-component cards to satisfy the 2-card cap. Reserved for Level 15+ late-game dominance."
   },
   {
@@ -676,7 +637,6 @@
       "M": 1
     },
     "text": "Create a {ward} with 10 HP that your opponent {prevent|cannot target} or destroy. When it breaks, {heal|heal} 5.",
-    "flavor": "Berenice's epithet, earned. Nothing has ever gone through.",
     "comment": "The ultimate Ward. Needs SSM + S or SS + SM component pairing. Aspirational card players build toward — rarely seen but devastating."
   },
   {
@@ -693,7 +653,6 @@
       "M": 0
     },
     "text": "{cancel} every spell on the stack. Your opponent {lock|cannot cast} spells this turn or play Reactions until the start of your next turn.",
-    "flavor": "Everything on the stack hisses out at once, and the circle goes quiet.",
     "comment": "Board-reset Reaction. Wipes the entire stack, not just one spell. For epic late-game stalebreaks. A true Archmage moment."
   },
   {
@@ -710,7 +669,6 @@
       "M": 0
     },
     "text": "Deal {damage|damage} to your opponent equal to your current HP.",
-    "flavor": "Every point of her that still stands, delivered as heat.",
     "comment": "Scales with survivability — the more damage you have absorbed and prevented over the course of the game"
   },
   {
@@ -727,7 +685,6 @@
       "M": 1
     },
     "text": "Deal 4 {damage|damage} to your opponent for each round of this match so far.",
-    "flavor": "A kiln fired for rounds on end. Open it and see what it made.",
     "comment": "Late-game bomb that rewards survival over time. In a round 7-8 game this deals 28-32 damage — enough to close from nearly full HP. The SSSM cost mirrors Ward Eternal, putting both at the same premium. A player has to choose which Level 4 bomb to build their deck toward."
   },
   {
@@ -744,7 +701,6 @@
       "M": 0
     },
     "text": "{cancel} every spell your opponent has on the stack. Deal 3 {damage|damage} to them for each spell {cancel|cancelled}.",
-    "flavor": "Their whole stack, dropped in the water trough together.",
     "comment": "Offensive version of Archmage's Seal. Where Archmage's Seal stops everything and freezes the game, Null Burst stops everything and punishes it. If your opponent has 3 spells on the stack this hits for 9. Rewards understanding when your opponent is likely to stack multiple casts."
   },
   {
@@ -761,7 +717,6 @@
       "M": 0
     },
     "text": "Destroy every {ward} on both sides. Deal 3 {damage|damage} to your opponent for each {ward} destroyed.",
-    "flavor": "Every ward on the circle, hers and theirs, broken for the heat inside.",
     "comment": "Board wipe for the Ward layer. Destroys everything — including your own — and deals 3 per Ward. Creates a dramatic reset moment late in the game and rewards whoever had more Wards built up. The self-destruction cost prevents it from being purely one-sided."
   },
   {
@@ -778,7 +733,6 @@
       "M": 0
     },
     "text": "Spend up to 4 from your {ledger|ledger}. Create a {ward} with HP equal to the amount spent.",
-    "flavor": "Heat set aside earlier, raked back into a wall.",
     "comment": "Ledger family (2026-08-13). Spends the Reckoning bank for tempo - every point spent is a point the late nuke loses. Gives prevention a use against doom decks that never touch wards."
   },
   {
@@ -795,7 +749,6 @@
       "M": 0
     },
     "text": "Spend 6 from your {ledger|ledger} to {cancel|cancel} target spell. Castable only with 6 or more banked.",
-    "flavor": "She spends banked heat to end the argument.",
     "comment": "Ledger family. A cancel funded by the bank instead of scarce attached fuel - the extra answer per round Abjuration lacked against multi-doom turns."
   },
   {
@@ -812,7 +765,6 @@
       "M": 0
     },
     "text": "Spend up to 6 from your {ledger|ledger}. {heal} half the amount spent, rounded down.",
-    "flavor": "Heat saved from old blows, spent now on the body that took them.",
     "comment": "Ledger family. Sustain option - trades future Reckoning payload for present HP."
   },
   {
@@ -829,7 +781,6 @@
       "M": 0
     },
     "text": "Deal 2 {damage|damage} to your opponent.",
-    "flavor": "Every blaze that ever ate a city began as something this small.",
     "comment": "Baseline 1V damage. Mirrors Echo Shield as a clean reference point: a 1V spark hits for exactly the amount Echo Shield prevents on a Warded opponent."
   },
   {
@@ -846,7 +797,6 @@
       "M": 0
     },
     "text": "Deal 3 {damage|damage} to your opponent. {discard} 1 random card.",
-    "flavor": "Thrown, not aimed. Aiming is for people with time.",
     "comment": "Premium 1V damage that burns a card to push damage through — captures the school's identity of spending resources faster than recovery."
   },
   {
@@ -863,7 +813,6 @@
       "M": 0
     },
     "text": "Deal 1 {damage|damage} to your opponent and give them 1 {burn}.",
-    "flavor": "The rune is spoken into the palm. The palm remembers it for days.",
     "comment": "First Burn card establishes the keyword. DoT is Evocation's answer to Abjuration's slow defensive game — it ticks while the opponent is busy building Wards."
   },
   {
@@ -879,8 +828,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 1 {damage|damage} to your opponent. {disrupt|They discard} 1 random component.",
-    "flavor": "One syllable, and the reagent in their hand is ash."
+    "text": "Deal 1 {damage|damage} to your opponent. {disrupt|They discard} 1 random component."
   },
   {
     "id": "EVO-005",
@@ -895,8 +843,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "This round, your damaging spells deal +1 {damage|damage}.",
-    "flavor": "Cinder says the trick is not more fire. It is less patience."
+    "text": "This round, your damaging spells deal +1 {damage|damage}."
   },
   {
     "id": "EVO-006",
@@ -911,8 +858,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Return up to 2 Verbal-providing components {recover|from your discard pile} to your hand.",
-    "flavor": "What burned once will burn again, if you ask it nicely."
+    "text": "Return up to 2 Verbal-providing components {recover|from your discard pile} to your hand."
   },
   {
     "id": "EVO-007",
@@ -928,7 +874,6 @@
       "M": 0
     },
     "text": "{discard} 1 card. Deal 1 {damage|damage} to your opponent for each symbol on it.",
-    "flavor": "Feed it anything. It is not particular.",
     "comment": "Rewards decks that lean into multi-symbol cards. A discarded VSM tri-component deals 3 damage for a single V cast."
   },
   {
@@ -944,8 +889,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "{cost|Take 1 damage}. Deal 3 {damage|damage} to your opponent.",
-    "flavor": "The rune bites the caster first. That is how you know it is loaded."
+    "text": "{cost|Take 1 damage}. Deal 3 {damage|damage} to your opponent."
   },
   {
     "id": "EVO-009",
@@ -961,7 +905,6 @@
       "M": 1
     },
     "text": "Deal 2 {damage|damage} to your opponent. {draw} 1 card.",
-    "flavor": "Dry wood, a breath, and the lesson arrives on its own.",
     "comment": "The signature Evocation/Divination splash card. Costs the dual to discourage pure Evo decks from running it for free card advantage."
   },
   {
@@ -977,8 +920,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 1 {damage|damage} to your opponent and 2 {damage|damage} to a {ward} they control.",
-    "flavor": "A flick of ember at the ward, a flick at the wizard. Both notice."
+    "text": "Deal 1 {damage|damage} to your opponent and 2 {damage|damage} to a {ward} they control."
   },
   {
     "id": "EVO-011",
@@ -993,8 +935,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 5 {damage|damage} to your opponent.",
-    "flavor": "A line of fire with a point on it."
+    "text": "Deal 5 {damage|damage} to your opponent."
   },
   {
     "id": "EVO-012",
@@ -1010,7 +951,6 @@
       "M": 0
     },
     "text": "Deal 3 {damage|damage} to your opponent. {prevent|Reactions cannot target} this spell.",
-    "flavor": "Spoken too quickly to be answered.",
     "comment": "Direct counterplay to Phase Shift and other Reaction-based removal — Evocation's tax on Abjuration's reaction-heavy gameplan."
   },
   {
@@ -1026,8 +966,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "When your opponent casts a spell, deal 2 {damage|damage} to them. The spell still resolves.",
-    "flavor": "Open the door to cast, and the room comes out to meet you."
+    "text": "When your opponent casts a spell, deal 2 {damage|damage} to them. The spell still resolves."
   },
   {
     "id": "EVO-014",
@@ -1043,7 +982,6 @@
       "M": 0
     },
     "text": "{trap}: when your opponent {prevent|prevents} or reduces damage you deal, deal 2 {damage|damage} to them.",
-    "flavor": "Turn the blow aside if you like. The heat goes where it pleases.",
     "comment": "Punishes Echo Shield and Dampen specifically. Recovers tempo when the opponent successfully blunts your offense."
   },
   {
@@ -1060,7 +998,6 @@
       "M": 0
     },
     "text": "{trap}: when your opponent attaches a Material (M) component to a prepared spell, deal 2 {damage|damage} to them.",
-    "flavor": "Reagents are flammable. Cinder considers this their best quality.",
     "comment": "The Divination hate-piece. Reinforces the rock-paper-scissors triangle: Evocation should beat pure Divination strategies."
   },
   {
@@ -1076,8 +1013,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "When your opponent plays a Reaction, deal 4 {damage|damage} to them. The Reaction still resolves.",
-    "flavor": "Interrupt her and she stops being polite."
+    "text": "When your opponent plays a Reaction, deal 4 {damage|damage} to them. The Reaction still resolves."
   },
   {
     "id": "EVO-017",
@@ -1093,7 +1029,6 @@
       "M": 0
     },
     "text": "Deal 6 {damage|damage} to your opponent.",
-    "flavor": "The oldest argument in the duel circle, and still the loudest.",
     "comment": "Iconic spell at iconic cost. Anchors the L2 power curve."
   },
   {
@@ -1110,7 +1045,6 @@
       "M": 0
     },
     "text": "Deal 4 {damage|damage} to your opponent. This damage {prevent|cannot be reduced} below 1.",
-    "flavor": "Hot enough that there is nothing left to insulate against.",
     "comment": "Damage-reduction effects like Dampen can chip Evo damage to nothing — Lightning Bolt guarantees a sting always lands."
   },
   {
@@ -1126,8 +1060,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 3 {damage|damage} to your opponent and give them 2 {burn}.",
-    "flavor": "It does not finish when the spell does."
+    "text": "Deal 3 {damage|damage} to your opponent and give them 2 {burn}."
   },
   {
     "id": "EVO-020",
@@ -1143,7 +1076,6 @@
       "M": 0
     },
     "text": "Deal 2 {damage|damage} to your opponent. If they control a {ward}, 1 of that {damage|damage} hits the {ward} instead.",
-    "flavor": "Pointed at the wizard. The ward only gets what spills.",
     "comment": "Multi-target answer to Ward stacking. Lets Evocation chip through a Ritual Ward + Aegis Eternal board without overcommitting on a single spell."
   },
   {
@@ -1160,7 +1092,6 @@
       "M": 0
     },
     "text": "{discard} your hand. Deal 2 {damage|damage} to your opponent for each card discarded.",
-    "flavor": "Everything in the hand, all at once, and no regrets until later.",
     "comment": "The all-in turn. Pairs naturally with hand-fixing Items or a freshly drawn 5-card opening hand."
   },
   {
@@ -1177,7 +1108,6 @@
       "M": 0
     },
     "text": "Give your opponent 3 {burn}. This round, their {burn} also triggers at the start of your turns.",
-    "flavor": "Fire does not keep a schedule. Now neither does theirs.",
     "comment": "Doubles the Burn tick rate for the round. The Burn-archetype payoff at L2."
   },
   {
@@ -1194,7 +1124,6 @@
       "M": 0
     },
     "text": "This round, your damaging spells deal {empower|+2 damage} and you {cost|take 1 damage} at the start of each of your turns.",
-    "flavor": "The flame rides your breath for a round. It takes a toll each morning.",
     "comment": "Self-damage to power up — the school's design pillar in card form."
   },
   {
@@ -1211,7 +1140,6 @@
       "M": 1
     },
     "text": "Deal 4 {damage|damage} to your opponent. {draw} 1 card.",
-    "flavor": "A proper tantrum, with something learned from it.",
     "comment": "L2 V/M splash. Evo/Div decks get sticky tempo here."
   },
   {
@@ -1228,7 +1156,6 @@
       "M": 0
     },
     "text": "Deal 1 {damage|damage} to your opponent for each component attached to their prepared spells.",
-    "flavor": "Every component they laid out is a wick waiting to be lit.",
     "comment": "Punishes the opponent for stockpiling — strong against players setting up a big Ritual Ward or Sanctum."
   },
   {
@@ -1245,7 +1172,6 @@
       "M": 0
     },
     "text": "Deal 3 {damage|damage} to your opponent. This round, their Reactions {lock|cost 1 additional} component to play.",
-    "flavor": "Loud enough that answering costs them something.",
     "comment": "Anti-Abjuration tax card. A successful cast makes every subsequent Reaction one component more painful."
   },
   {
@@ -1262,7 +1188,6 @@
       "M": 0
     },
     "text": "Deal 2 {damage|damage} to your opponent, plus 1 for each {burn} on them.",
-    "flavor": "The moment a smoldering room becomes a burning one.",
     "comment": "Burn-archetype finisher at L2. Wildfire + Maelstrom is the natural combo line."
   },
   {
@@ -1279,7 +1204,6 @@
       "M": 0
     },
     "text": "When your opponent casts a spell, deal {damage|damage} to them equal to its attached components. The spell still resolves.",
-    "flavor": "The more they loaded onto the spell, the more there is to burn.",
     "comment": "Scales with the opponent's biggest plays. A VVV cast invites a 3-damage backlash; a VVM cast the same."
   },
   {
@@ -1296,7 +1220,6 @@
       "M": 1
     },
     "text": "{cancel} target spell that requires a Material (M) component. Deal 2 {damage|damage} to your opponent.",
-    "flavor": "Reagents catch. The spell they were feeding goes with them.",
     "comment": "The Evocation parallel to Counterbind — same anti-school role but with damage tacked on rather than pure denial."
   },
   {
@@ -1312,8 +1235,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 3 {damage|damage} to your opponent. The spell still resolves.",
-    "flavor": "She does not stop your spell. She simply answers it."
+    "text": "Deal 3 {damage|damage} to your opponent. The spell still resolves."
   },
   {
     "id": "EVO-031",
@@ -1329,7 +1251,6 @@
       "M": 0
     },
     "text": "When your opponent plays a Reaction, deal 3 {damage|damage} to them. The Reaction still resolves.",
-    "flavor": "Reacting is a kind of breathing. Breathing feeds fire.",
     "comment": "L2 upgrade of Combust. Stacking both means Reactions become extremely costly for an Abjuration opponent."
   },
   {
@@ -1346,7 +1267,6 @@
       "M": 0
     },
     "text": "Deal 7 {damage|damage} to your opponent.",
-    "flavor": "The Late Sun throws something down. Nobody asks why.",
     "comment": "L3 baseline raw damage benchmark."
   },
   {
@@ -1363,7 +1283,6 @@
       "M": 0
     },
     "text": "Deal 4 {damage|damage} to your opponent, then 2 {damage|damage} to each {ward} they control.",
-    "flavor": "It finds the wizard first, then everything they built.",
     "comment": "Sweeps a Ward-heavy board while still pressuring HP. The hard answer to a stacked Abjuration setup."
   },
   {
@@ -1380,7 +1299,6 @@
       "M": 0
     },
     "text": "{discard} your hand. Deal 2 {damage|damage} to your opponent for each card discarded.",
-    "flavor": "The hand is fuel. Cinder has never thought of it any other way.",
     "comment": "L3 version of Detonate. With a full hand this is 8-10 damage — the kind of all-in turn the doc describes as the school's core fantasy."
   },
   {
@@ -1397,7 +1315,6 @@
       "M": 0
     },
     "text": "Deal 5 {damage|damage} to your opponent. This spell {prevent|cannot be cancelled}, {cancel|redirected} or reduced.",
-    "flavor": "Some fires cannot be argued with.",
     "comment": "Hard counter to Abjuration's denial suite. Once cast it WILL resolve — the opponent's only recourse is Wards."
   },
   {
@@ -1414,7 +1331,6 @@
       "M": 0
     },
     "text": "Give your opponent 4 {burn}. This round, each of their {burn} deals 1 additional {damage|damage} when it triggers.",
-    "flavor": "Each ember remembers it was once a bonfire, and tries to be one again.",
     "comment": "Top-end Burn payoff. With Wildfire already in play this turn dials damage to absurd levels — the Burn-archetype's haymaker."
   },
   {
@@ -1431,7 +1347,6 @@
       "M": 0
     },
     "text": "Deal 3 {damage|damage} to your opponent, plus 2 for each Reaction they have cast this round.",
-    "flavor": "Every answer they gave the fire, the fire took personally.",
     "comment": "Punishes Abjuration directly. The longer they protected themselves the harder this hits."
   },
   {
@@ -1448,7 +1363,6 @@
       "M": 1
     },
     "text": "Deal 4 {damage|damage} to your opponent. {draw} 2 cards.",
-    "flavor": "Burn the ground, then read what grows in it.",
     "comment": "L3 V/M premium. Evo/Div decks chain Cataclysm into a follow-up cast next turn."
   },
   {
@@ -1465,7 +1379,6 @@
       "M": 0
     },
     "text": "{cost|Take 3 damage}. Deal 8 {damage|damage} to your opponent.",
-    "flavor": "Take the burn yourself. It is the only way to be sure it is hot enough.",
     "comment": "Net 5 damage with self-harm built in. The riskiest L3 — best when you're ahead on the race or out of safer options."
   },
   {
@@ -1482,7 +1395,6 @@
       "M": 0
     },
     "text": "Destroy all of your opponent's {ward|Wards}. Deal {damage|damage} to them equal to the HP those {ward|Wards} had.",
-    "flavor": "The ward does not melt. It simply has nowhere to put the light.",
     "comment": "The Ward-Collapse-mirrored spell. Inverts Abjuration's own win condition: instead of converting your Wards to damage you convert THEIRS."
   },
   {
@@ -1499,7 +1411,6 @@
       "M": 0
     },
     "text": "This round, whenever your opponent plays a Reaction, deal 3 {damage|damage} to them.",
-    "flavor": "Drawn on the floor of the circle. It listens for Reactions.",
     "comment": "Lock-out card for the Abjuration matchup. Once this is on the table the opponent must decide whether defending is even worth it."
   },
   {
@@ -1516,7 +1427,6 @@
       "M": 0
     },
     "text": "When your opponent casts a spell, deal {damage|damage} to them equal to twice its level. The spell still resolves.",
-    "flavor": "The bigger the spell they speak, the bigger the room it burns in.",
     "comment": "Scales 2/4/6/8 against L1/L2/L3/L4 spells. Designed to make casting big spells against you feel awful."
   },
   {
@@ -1532,8 +1442,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "When target spell deals {damage|damage} to you, deal twice that {damage|damage} to your opponent.",
-    "flavor": "What reaches her comes back doubled and still glowing."
+    "text": "When target spell deals {damage|damage} to you, deal twice that {damage|damage} to your opponent."
   },
   {
     "id": "EVO-044",
@@ -1548,8 +1457,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "When your opponent casts a spell or Reaction, deal 6 {damage|damage} to them. It still resolves.",
-    "flavor": "Grandmother lights her pipe. The rest of the circle lights itself."
+    "text": "When your opponent casts a spell or Reaction, deal 6 {damage|damage} to them. It still resolves."
   },
   {
     "id": "EVO-045",
@@ -1565,7 +1473,6 @@
       "M": 0
     },
     "text": "Deal 12 {damage|damage} to your opponent. This spell {prevent|cannot be cancelled}, {prevent|prevented}, {cancel|redirected} or reduced.",
-    "flavor": "There is no ward for this. There is barely a word for it.",
     "comment": "The signature finisher. Mirrors Absolute Defense in scope but inverted: where Absolute Defense ends a round in stalemate Apocalypse just ends the game."
   },
   {
@@ -1582,7 +1489,6 @@
       "M": 1
     },
     "text": "Deal 6 {damage|damage} to your opponent. This round, your damaging spells deal +2 {damage|damage} and your {burn} {empower|deals double}.",
-    "flavor": "Fire that rises is fire that has decided not to stop.",
     "comment": "L4 setup card for an Evo/Div deck that wants to chain spells in the same round. Best when there are still spell slots left to capitalize on."
   },
   {
@@ -1599,7 +1505,6 @@
       "M": 0
     },
     "text": "When target spell deals {damage|damage} to you, deal three times that {damage|damage} to your opponent.",
-    "flavor": "Hit her once and she will show you what you meant, three times over.",
     "comment": "The school's lone L4 Reaction. A 5-damage Fireball into Reckoning is 15 damage back — the threat of this card sitting face-down is itself the deterrent."
   },
   {
@@ -1616,7 +1521,6 @@
       "M": 1
     },
     "text": "{draw} 2 cards.",
-    "flavor": "Two more pages, read by a flame that knows what is on them.",
     "comment": "The school's baseline cantrip and clean reference point: 1 M for 1 card. The consistency engine every Divination deck is built around."
   },
   {
@@ -1633,7 +1537,6 @@
       "M": 1
     },
     "text": "{scry|Look at the top} 3 cards of your deck; take 1, put the rest back on top. This round, spell damage dealt to you is {prevent|reduced by} 1.",
-    "flavor": "The flame leans toward what comes next, and away from what hurts.",
     "comment": "Selection plus the foreseen-blow flinch - a round-long -1 against chip damage. The seer's early answer to cantrip aggro."
   },
   {
@@ -1650,7 +1553,6 @@
       "M": 1
     },
     "text": "{scry|Look at the top} 2 cards of your deck; take 1, put the other on the bottom. {heal|Remove 1 Burn} from yourself.",
-    "flavor": "Trim the flame, read what the smoke left, and burn a little less.",
     "comment": "Cheap filtering that also shrugs off a Burn you saw coming. The rider is a pure Evocation tax - dead by design against burn-less schools."
   },
   {
@@ -1667,7 +1569,6 @@
       "M": 1
     },
     "text": "{prophecy} (2 turns): destroy your opponent's {unravel|largest Ward}.",
-    "flavor": "The lamp shows their largest ward already as a drift of ash.",
     "comment": "Rewards a heavily tuned M deck — the more Material you run, the more often this draws. Quietly punishes greedy multi-school splashes."
   },
   {
@@ -1684,7 +1585,6 @@
       "M": 1
     },
     "text": "{draw} 2 cards. If either is a multi-symbol component, {draw|draw} a third.",
-    "flavor": "You smell what is coming before you see it.",
     "comment": "Pays off the dual- and tri-component cards Divination leans on to hit off-color costs. A tuned deck turns this into a two-for-one."
   },
   {
@@ -1701,7 +1601,6 @@
       "M": 1
     },
     "text": "Return a component {recover|from your discard pile} to your hand.",
-    "flavor": "Whatever burned, something of it is still in the pan.",
     "comment": "The signature Divination recursion piece named in the design doc. Recycles spent components so the deck effectively never runs dry — the core of out-resourcing a slow Abjuration opponent."
   },
   {
@@ -1718,7 +1617,6 @@
       "M": 1
     },
     "text": "Deal 2 {damage|damage} to your opponent's {unravel|weakest Ward}. {scry|Look at the top} 2 cards of your deck and {scry|put them back} in any order.",
-    "flavor": "Find the weakest ward and hold the candle to the join.",
     "comment": "Pick a component back up to re-aim it at a different spell. Pure tempo — undoes a misread or frees a piece for a better line."
   },
   {
@@ -1735,7 +1633,6 @@
       "M": 1
     },
     "text": "{reveal|Look at the components in your opponent's hand}. {disrupt|They discard} one of your choice.",
-    "flavor": "Read their hand by candle, and let one page catch.",
     "comment": "Targeted fuel denial - the seer cuts the thread the next turn hangs by. Attached components are safe, so attach-first play dodges it."
   },
   {
@@ -1752,7 +1649,6 @@
       "M": 1
     },
     "text": "Your opponent's {unravel|largest Ward} {unravel|loses half its HP}, rounded up.",
-    "flavor": "Heat a ward unevenly and it splits along its own flaw.",
     "comment": "The precision fixer: bridges an off-color cost when you're a single symbol short. Embodies the doc's 'right piece at the right time.'"
   },
   {
@@ -1769,7 +1665,6 @@
       "M": 1
     },
     "text": "{draw} 1 card, then put a card from your hand on top of your deck.",
-    "flavor": "A single flame, a single card, and a choice of what stays on top.",
     "comment": "Loots without losing cards. Stashes a situational piece for later while digging toward what you need now."
   },
   {
@@ -1786,7 +1681,6 @@
       "M": 1
     },
     "text": "Deal 2 {damage|damage} to your opponent. {reveal|Look at their hand}.",
-    "flavor": "Hold the lantern up. It hurts their eyes and shows you their hand.",
     "comment": "Cheap information. Against a reactive Abjuration deck, knowing which counters they hold lets you sequence safely around them."
   },
   {
@@ -1803,7 +1697,6 @@
       "M": 2
     },
     "text": "{prophecy} (2 turns): deal 2 {damage|damage} to your opponent.",
-    "flavor": "The smoke makes a shape. In two turns, the shape arrives.",
     "comment": "The L1 starter doom - gives the prophecy identity a presence in rounds 1-4 before the L2+ dooms unlock (m12 finding). Restored to 2-in-2 (m3 finding): at 3 the guaranteed clock outpaced Abjuration's entire wall economy."
   },
   {
@@ -1820,7 +1713,6 @@
       "M": 1
     },
     "text": "When your opponent casts a spell, {draw|draw} 1 card and deal 1 {damage|damage} to them. The spell still resolves.",
-    "flavor": "The flame jumps when they cast. The seer reads the jump.",
     "comment": "You saw it coming. A Reaction that stops nothing — it simply converts the opponent's tempo into your card advantage."
   },
   {
@@ -1837,7 +1729,6 @@
       "M": 2
     },
     "text": "Return up to 2 components {recover|from your discard pile} to your hand.",
-    "flavor": "The pan still holds what you need. Two pieces of it.",
     "comment": "Scales the recursion plan. Two pieces back from the discard in one cast is how Divination refuels mid-grind."
   },
   {
@@ -1854,7 +1745,6 @@
       "M": 2
     },
     "text": "{scry|Search your deck} for a component and put it into your hand, then shuffle.",
-    "flavor": "The one component you wanted comes to the light on its own.",
     "comment": "Consistency incarnate — fetch the exact symbol or dual you're missing. The tutor that lets Divination always have the right piece."
   },
   {
@@ -1871,7 +1761,6 @@
       "M": 2
     },
     "text": "{reveal|Look at your opponent's hand}. {draw} 1 card.",
-    "flavor": "Their hand, open on the table, and a page of your own turned.",
     "comment": "Information with a card attached — the value-positive upgrade of Foretell. Reads their plan and pays you for looking."
   },
   {
@@ -1888,7 +1777,6 @@
       "M": 2
     },
     "text": "{discard} any number of cards, then {draw|draw} that many.",
-    "flavor": "Give the lamp what you do not need. It returns the same weight in light.",
     "comment": "Mass filtering. Trade a fistful of off-color bricks for fresh cards without losing card economy."
   },
   {
@@ -1905,7 +1793,6 @@
       "M": 2
     },
     "text": "Destroy target {ward} or ongoing effect. {draw} 1 card.",
-    "flavor": "Hold the flame to the ward until it goes, and read the ash after.",
     "comment": "A big reason Divination beats Abjuration: it dismantles the Ward shell for free and replaces the card it spent. Nearly dead against Evocation, which runs no Wards."
   },
   {
@@ -1922,7 +1809,6 @@
       "M": 2
     },
     "text": "{prophecy} (2 turns): deal 4 {damage|damage} to your opponent.",
-    "flavor": "A cord lit now, burning down toward a thing that is already decided.",
     "comment": "The prophecy workhorse - a 4-damage doom on a 2-turn fuse. Announced pressure the opponent must plan around."
   },
   {
@@ -1939,7 +1825,6 @@
       "M": 2
     },
     "text": "{draw} 2 cards, then put a card from your hand on top of your deck.",
-    "flavor": "Two pages by tallow light, and one set back for the morning.",
     "comment": "Net card advantage with a setup rider. Bank a situational piece on top for next turn while pulling ahead now."
   },
   {
@@ -1956,7 +1841,6 @@
       "M": 2
     },
     "text": "{scry|Look at the top} 5 cards of your deck and {scry|put them back} in any order.",
-    "flavor": "Five curls of smoke, and the seer orders them as they please.",
     "comment": "Stacks your next several turns perfectly. Unflashy, but in a grind it is how Divination guarantees it never bricks."
   },
   {
@@ -1973,7 +1857,6 @@
       "M": 2
     },
     "text": "{scry|Look at the top} 3 cards of your deck and {scry|put them back} in any order. {prophecy} (1 turn): deal 2 {damage|damage} to your opponent.",
-    "flavor": "The candle is nearly out. Next turn, it finishes.",
     "comment": "Scry and doom in one - sculpts your next draws while a short-fuse prophecy lands next turn."
   },
   {
@@ -1990,7 +1873,6 @@
       "M": 2
     },
     "text": "Return a component attached to target spell {disrupt|to its owner's hand}. If the spell no longer meets its cost, {cancel|cancel} it.",
-    "flavor": "Take one piece from under the spell and see if it still stands.",
     "comment": "Divination's answer to the stack: not a wall, but a scalpel. Pull one symbol and a greedy, exactly-met spell fizzles itself."
   },
   {
@@ -2007,7 +1889,6 @@
       "M": 2
     },
     "text": "When your opponent casts a spell, {draw|draw} 1 card. The spell still resolves.",
-    "flavor": "Every spell they speak throws sparks. Each spark is a page.",
     "comment": "The reactive value engine. Every cast they make tells you their hand and hands you a card."
   },
   {
@@ -2024,7 +1905,6 @@
       "M": 1
     },
     "text": "{cancel|Redirect} target spell: it hits its caster instead.",
-    "flavor": "The lamp shows them their own spell, and the spell believes it.",
     "comment": "Off-color MS splash signaling Abjuration tech. Send the opponent's removal or burn into a Ward — or somewhere harmless. The classic Divination gotcha."
   },
   {
@@ -2041,7 +1921,6 @@
       "M": 1
     },
     "text": "{recover|Cast a copy} of a Level 1 spell you have already cast this round, without paying its cost.",
-    "flavor": "A spell already cast still glows. Warm it and cast it again.",
     "comment": "The Evo/Div splash payoff — recast a spent Level 1 spell from your own discard for free. Patches Divination's thin damage with borrowed offense."
   },
   {
@@ -2058,7 +1937,6 @@
       "M": 3
     },
     "text": "Shuffle your {discard|discard} pile into your deck, then {draw|draw} 2 cards.",
-    "flavor": "Rake the whole ash pan back into the lamp and read on.",
     "comment": "A free reshuffle - resets your deck WITHOUT the exhaustion damage a forced recycle costs, then draws 2. Anti-exhaustion tech."
   },
   {
@@ -2075,7 +1953,6 @@
       "M": 3
     },
     "text": "{scry|Search your deck} for any card and put it into your hand, then {draw|draw} 2 cards.",
-    "flavor": "Hold the lamp to the deck and the card you need is already lit.",
     "comment": "The payoff tutor: arrange the perfect topdeck, then bury yourself in cards. Card advantage on this scale is how Divination overpowers a defensive opponent."
   },
   {
@@ -2092,7 +1969,6 @@
       "M": 3
     },
     "text": "{scry|Look at the top} 5 cards of your deck; take 2, put the rest back on top in any order.",
-    "flavor": "Five embers, two of them worth keeping.",
     "comment": "Deep selection plus advantage. Loads your hand and stacks the deck behind it in a single cast."
   },
   {
@@ -2109,7 +1985,6 @@
       "M": 3
     },
     "text": "{reveal|Look at your opponent's hand} and the top 3 cards of their deck. {draw} 2 cards.",
-    "flavor": "Their hand, the top of their deck, and nothing left in shadow.",
     "comment": "The information bomb. Total read on their next several turns while you pull two cards ahead — the precision school at full power."
   },
   {
@@ -2126,7 +2001,6 @@
       "M": 3
     },
     "text": "{prophecy} (3 turns): deal 7 {damage|damage} to your opponent.",
-    "flavor": "Stacked now. Lit in three turns. The seer has already seen the smoke.",
     "comment": "The mid-game doom - 7 damage on a 3-turn fuse; cast early and every one of their turns becomes a countdown."
   },
   {
@@ -2143,7 +2017,6 @@
       "M": 3
     },
     "text": "{scry|Search your deck} for up to 2 components and put them into your hand, then shuffle.",
-    "flavor": "Two components from the deck, before the fire needs them.",
     "comment": "Double tutor — assemble both halves of an off-color cost at once. The setup that makes a Level 4 turn a certainty rather than a hope."
   },
   {
@@ -2160,7 +2033,6 @@
       "M": 3
     },
     "text": "{draw|Draw until} you have 7 cards in hand.",
-    "flavor": "Sit by it until the hand is full.",
     "comment": "Catch-up card advantage. The further behind on cards you are, the bigger it hits — swings a topdeck war hard in your favor."
   },
   {
@@ -2177,7 +2049,6 @@
       "M": 3
     },
     "text": "{cancel} target spell. It returns to its owner's prepared spells {seal|sealed}: it cannot be cast again this round.",
-    "flavor": "A damp cloth over the spell, and it sleeps sealed until the round ends.",
     "comment": "Borrows Abjuration's Seal counter to lock a threat down for the round. Keeps their components attached but denies the cast — pure tempo theft."
   },
   {
@@ -2194,7 +2065,6 @@
       "M": 3
     },
     "text": "{cancel} target spell and return its components {disrupt|to its owner's hand}. The spell returns to their prepared spells unspent.",
-    "flavor": "The match was never struck. The components were never spent.",
     "comment": "Not a counter — a do-over you force on the opponent. They keep the cards but lose the turn and the surprise. Divination's heaviest piece of stack interaction."
   },
   {
@@ -2211,7 +2081,6 @@
       "M": 2
     },
     "text": "{recover|Cast a copy} of a Level 1 or 2 spell either player has cast this round, without paying its cost.",
-    "flavor": "A spell lit once, on either side of the circle, can be lit from again.",
     "comment": "Off-color MMV. Recur any spent spell — yours or theirs. The Evo/Div splash that finally gives a manipulation deck a real kill turn."
   },
   {
@@ -2228,7 +2097,6 @@
       "M": 2
     },
     "text": "{draw} 2 cards. Deal 1 {damage|damage} to your opponent for each card in your hand beyond 5.",
-    "flavor": "Too much oil and the lamp spits. Every spare page is a burn.",
     "comment": "Divination's one concession to a clock: it only rewards the overflowing hand the deck naturally builds, and it costs off-color V. Still far too slow to race Evocation."
   },
   {
@@ -2245,7 +2113,6 @@
       "M": 2
     },
     "text": "{reveal|Look at your opponent's hand}. {disrupt|They discard} a card of your choice.",
-    "flavor": "Read their hand, choose a page, and hold it to the flame.",
     "comment": "Off-color MMS hand attack. Rips the specific counter or bomb you spotted with Foretell out of their plan before they can use it."
   },
   {
@@ -2262,7 +2129,6 @@
       "M": 4
     },
     "text": "{draw} 4 cards. This turn, your spells {prevent|cannot be cancelled} or {cancel|redirected}.",
-    "flavor": "For one turn the seer sees everything, and nothing can put the lamp out.",
     "comment": "The archmage's card-advantage engine. Draws into a kill and slams the door on the opponent's Reactions in the same breath."
   },
   {
@@ -2279,7 +2145,6 @@
       "M": 4
     },
     "text": "Return every component {recover|from your discard pile} to your hand.",
-    "flavor": "Every component that ever burned, back in the hand at once.",
     "comment": "Empties the discard back into your hand. After a long grind this is a dozen-plus cards at once — the ultimate refuel and the recursion school's signature."
   },
   {
@@ -2296,7 +2161,6 @@
       "M": 4
     },
     "text": "{scry|Search your deck} for up to 3 cards and put them into your hand, then shuffle.",
-    "flavor": "Walk the deck with a taper and light the three you came for.",
     "comment": "Assemble any combination you want in one cast. Total control over what comes next — the aspirational Divination payoff."
   },
   {
@@ -2313,7 +2177,6 @@
       "M": 4
     },
     "text": "{prophecy} (3 turns): deal 9 {damage|damage} to your opponent.",
-    "flavor": "Nine turns of damage in three. The lamp goes out when it lands.",
     "comment": "The prophecy haymaker - 9 unwardable damage in 3 turns. Answer it at cast time or race it."
   },
   {
@@ -2330,7 +2193,6 @@
       "M": 4
     },
     "text": "Each player shuffles their hand and discard pile into their deck, then {draw|draws} 5 cards.",
-    "flavor": "Both hands, both ash pans, back into the lamps. Everyone starts again.",
     "comment": "Symmetric on paper, lopsided in practice — you fire it when your deck is thin and your plan is set, resetting the grind entirely on your terms."
   },
   {
@@ -2347,7 +2209,6 @@
       "M": 3
     },
     "text": "{recover|Cast a copy} of any spell cast this round, without paying its cost. You may cast 1 {empower|additional spell} this turn.",
-    "flavor": "Any spell cast this round, lit again from the same flame, and one more besides.",
     "comment": "Off-color MMMV ultimate. Recur the biggest spell either player has cast and chain it into another — the Evo/Div deck's explosive finish."
   },
   {

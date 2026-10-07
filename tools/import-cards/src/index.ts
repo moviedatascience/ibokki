@@ -39,8 +39,6 @@ interface CardDef {
   costText: string | null;
   cost: Cost | null;
   text: string;
-  /** Player-facing flavor line (optional). */
-  flavor?: string;
   role?: string;
   comment?: string;
 }
@@ -95,7 +93,6 @@ function main(): void {
     const costC = cols["cost"];
     const effectC = cols["effect"];
     const elementC = cols["element"];
-    const flavorC = cols["flavor"];
     const roleC = cols["role"];
     const commentC = cols["comment"];
 
@@ -108,7 +105,6 @@ function main(): void {
       const costText = cell(row, costC);
       const role = cell(row, roleC);
       const comment = cell(row, commentC);
-      const flavor = cell(row, flavorC);
       const school = (cell(row, schoolC) || "Neutral") as School;
       // Every school card belongs to exactly one element; Neutral trainers belong to none.
       const elementText = cell(row, elementC);
@@ -129,7 +125,6 @@ function main(): void {
         cost: parseCost(costText),
         text: cell(row, effectC),
       };
-      if (flavor) card.flavor = flavor;
       if (role) card.role = role;
       if (comment) card.comment = comment;
 

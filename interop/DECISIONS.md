@@ -144,6 +144,21 @@ and reversible.
 
 ---
 
+## DECISIONS #8 — no flavor text on cards (2026-10-07)
+
+- **What:** the one-line flavor text added to every school card by DECISIONS #6 is
+  removed entirely — not hidden. The 139 Flavor cells in the sheet are cleared
+  (`packages/cards/data/rewrites/2026-10-07-drop-flavor.json`), the importer no longer
+  reads the column, `CardDef` / the protocol catalog / the client carry no `flavor`
+  field, and the spellbook tray, detail rail and deck-builder preview render none.
+  The user judged the italic lines noise where players scan rules text; the world's
+  voice belongs to other surfaces (art, the deferred VN tutorial), not card faces.
+- **Who:** the user (design authority), after seeing it live on 2026-10-06.
+- **Reversible:** a retext `flavors` pass plus re-adding the field; the empty
+  column stays in the sheet.
+
+---
+
 ## Open / undecided
 
 (none — add blocks here as disagreements arise)
