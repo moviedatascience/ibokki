@@ -1,0 +1,22 @@
+{
+  "$note": "2026-10-07 token review (user-approved 2026-10-07): opponent damage from Scalding Air/Spite is Damage not Cost; damage inside prevention sentences, opponent-subject draw/discard and the discard pile are plain prose; Channel Pyromancy buff is Empower.",
+  "texts": {
+    "ABJ-034": "This round, whenever your opponent plays a Reaction, they take 3 {damage|damage}.",
+    "GAM-018": "Until the start of your next turn, whenever your opponent plays a Reaction, they take 2 {damage|damage}.",
+    "ABJ-005": "This round, spell damage dealt to you is {prevent|reduced by} 2.",
+    "ABJ-022": "Create a {ward} with 6 HP. This round, damage dealt to you is {prevent|reduced by} 1.",
+    "DIV-002": "{scry|Look at the top} 3 cards of your deck; take 1, put the rest back on top. This round, spell damage dealt to you is {prevent|reduced by} 1.",
+    "ABJ-011": "{prevent} all damage from target spell. {heal} half the damage {prevent|prevented}, rounded down.",
+    "ABJ-021": "{cost|Sacrifice} one of your {ward|Wards}. {prevent} all damage from target spell.",
+    "ABJ-012": "Create a {ward} with 3 HP. Whenever it absorbs damage, deal 1 {damage|damage} to your opponent.",
+    "EVO-014": "{trap}: when your opponent {prevent|prevents} or reduces damage you deal, deal 2 {damage|damage} to them.",
+    "EVO-018": "Deal 4 {damage|damage} to your opponent. This damage {prevent|cannot be reduced} below 1.",
+    "EVO-023": "This round, your damaging spells deal {empower|+2 damage} and you {cost|take 1 damage} at the start of each of your turns.",
+    "ABJ-028": "{disrupt|Strip} every component from your opponent's prepared spells; {cancel|cancel} target spell if it no longer meets its cost. They draw 1 card per spell stripped.",
+    "GAM-017": "Until the start of your next turn, your opponent {lock|cannot draw} cards beyond their normal turn draw.",
+    "GAM-015": "Until the start of your next turn, your opponent cannot make you discard or {disrupt|strip} your cards or components.",
+    "DIV-044": "Each player shuffles their hand and discard pile into their deck, then {draw|draws} 5 cards.",
+    "EVO-021": "{discard} your hand. Deal 2 {damage|damage} to your opponent for each card discarded.",
+    "EVO-034": "{discard} your hand. Deal 2 {damage|damage} to your opponent for each card discarded."
+  }
+}

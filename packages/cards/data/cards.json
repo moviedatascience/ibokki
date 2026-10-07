@@ -80,7 +80,7 @@
       "S": 1,
       "M": 0
     },
-    "text": "This round, spell {damage|damage} dealt to you is {prevent|reduced by} 2.",
+    "text": "This round, spell damage dealt to you is {prevent|reduced by} 2.",
     "flavor": "A cloak of cold ash. It takes the edge off anything that lands.",
     "comment": "Round-long -2 to incoming spell damage - the anti-cantrip tax. Charges Reckoning while it blunts aggro; near-irrelevant against big single hits."
   },
@@ -182,7 +182,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "{prevent} all {damage|damage} from target spell. {heal} half the {damage|damage} {prevent|prevented}, rounded down.",
+    "text": "{prevent} all damage from target spell. {heal} half the damage {prevent|prevented}, rounded down.",
     "flavor": "Berenice takes the whole blast in and keeps half of it as warmth.",
     "comment": "Full prevention with a heal attached — turns the opponent's single biggest hit into HP for you. A strong reactive swing."
   },
@@ -199,7 +199,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "Create a {ward} with 3 HP. Whenever it absorbs {damage|damage}, deal 1 {damage|damage} to your opponent.",
+    "text": "Create a {ward} with 3 HP. Whenever it absorbs damage, deal 1 {damage|damage} to your opponent.",
     "flavor": "Touch the wall and the wall touches back.",
     "comment": "Turns defense into slow chip damage. Synergizes with anything that buffs Ward HP (Fortify / Ward Pulse)."
   },
@@ -352,7 +352,7 @@
       "S": 2,
       "M": 0
     },
-    "text": "{cost|Sacrifice} one of your {ward|Wards}. {prevent} all {damage|damage} from target spell.",
+    "text": "{cost|Sacrifice} one of your {ward|Wards}. {prevent} all damage from target spell.",
     "flavor": "Break the crust to save the metal underneath.",
     "comment": "Converts an expendable Ward into a full cancel. Great with low-HP Wards like Arcane Shell that are about to break anyway."
   },
@@ -369,7 +369,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "Create a {ward} with 6 HP. This round, {damage|damage} dealt to you is {prevent|reduced by} 1.",
+    "text": "Create a {ward} with 6 HP. This round, damage dealt to you is {prevent|reduced by} 1.",
     "flavor": "The oldest fire in the house. It has never once gone out.",
     "comment": "Mid-level defensive anchor. The passive reduction stacks with Dampen and other prevention effects for near-immunity turns."
   },
@@ -471,7 +471,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "{disrupt|Strip} every component from your opponent's prepared spells; {cancel|cancel} target spell if it no longer meets its cost. They {draw|draw} 1 card per spell stripped.",
+    "text": "{disrupt|Strip} every component from your opponent's prepared spells; {cancel|cancel} target spell if it no longer meets its cost. They draw 1 card per spell stripped.",
     "flavor": "Kick the fire apart and nothing on it stays lit.",
     "comment": "Nuclear disruption. Opponent draws cards, which softens the blow and prevents feel-bad moments, but they lose all setup simultaneously."
   },
@@ -573,7 +573,7 @@
       "S": 3,
       "M": 0
     },
-    "text": "This round, whenever your opponent plays a Reaction, they {cost|take 3 damage}.",
+    "text": "This round, whenever your opponent plays a Reaction, they take 3 {damage|damage}.",
     "flavor": "The circle is a kiln. Every answer they give costs them skin.",
     "comment": "Punishes a reactive opponent: every Reaction they play costs them 3 HP. Forces a dilemma — keep reacting and bleed out, or sit on their cards and let your spells through."
   },
@@ -1042,7 +1042,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "{trap}: when your opponent {prevent|prevents} or reduces {damage|damage} you deal, deal 2 {damage|damage} to them.",
+    "text": "{trap}: when your opponent {prevent|prevents} or reduces damage you deal, deal 2 {damage|damage} to them.",
     "flavor": "Turn the blow aside if you like. The heat goes where it pleases.",
     "comment": "Punishes Echo Shield and Dampen specifically. Recovers tempo when the opponent successfully blunts your offense."
   },
@@ -1109,7 +1109,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "Deal 4 {damage|damage} to your opponent. This {damage|damage} {prevent|cannot be reduced} below 1.",
+    "text": "Deal 4 {damage|damage} to your opponent. This damage {prevent|cannot be reduced} below 1.",
     "flavor": "Hot enough that there is nothing left to insulate against.",
     "comment": "Damage-reduction effects like Dampen can chip Evo damage to nothing — Lightning Bolt guarantees a sting always lands."
   },
@@ -1159,7 +1159,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "{discard} your hand. Deal 2 {damage|damage} to your opponent for each card {discard|discarded}.",
+    "text": "{discard} your hand. Deal 2 {damage|damage} to your opponent for each card discarded.",
     "flavor": "Everything in the hand, all at once, and no regrets until later.",
     "comment": "The all-in turn. Pairs naturally with hand-fixing Items or a freshly drawn 5-card opening hand."
   },
@@ -1193,7 +1193,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "This round, your damaging spells deal +2 {damage|damage} and you {cost|take 1 damage} at the start of each of your turns.",
+    "text": "This round, your damaging spells deal {empower|+2 damage} and you {cost|take 1 damage} at the start of each of your turns.",
     "flavor": "The flame rides your breath for a round. It takes a toll each morning.",
     "comment": "Self-damage to power up — the school's design pillar in card form."
   },
@@ -1379,7 +1379,7 @@
       "S": 0,
       "M": 0
     },
-    "text": "{discard} your hand. Deal 2 {damage|damage} to your opponent for each card {discard|discarded}.",
+    "text": "{discard} your hand. Deal 2 {damage|damage} to your opponent for each card discarded.",
     "flavor": "The hand is fuel. Cinder has never thought of it any other way.",
     "comment": "L3 version of Detonate. With a full hand this is 8-10 damage — the kind of all-in turn the doc describes as the school's core fantasy."
   },
@@ -1632,7 +1632,7 @@
       "S": 0,
       "M": 1
     },
-    "text": "{scry|Look at the top} 3 cards of your deck; take 1, put the rest back on top. This round, spell {damage|damage} dealt to you is {prevent|reduced by} 1.",
+    "text": "{scry|Look at the top} 3 cards of your deck; take 1, put the rest back on top. This round, spell damage dealt to you is {prevent|reduced by} 1.",
     "flavor": "The flame leans toward what comes next, and away from what hurts.",
     "comment": "Selection plus the foreseen-blow flinch - a round-long -1 against chip damage. The seer's early answer to cantrip aggro."
   },
@@ -2329,7 +2329,7 @@
       "S": 0,
       "M": 4
     },
-    "text": "Each player shuffles their hand and {discard|discard} pile into their deck, then {draw|draws} 5 cards.",
+    "text": "Each player shuffles their hand and discard pile into their deck, then {draw|draws} 5 cards.",
     "flavor": "Both hands, both ash pans, back into the lamps. Everyone starts again.",
     "comment": "Symmetric on paper, lopsided in practice — you fire it when your deck is thin and your plan is set, resetting the grind entirely on your terms."
   },
@@ -2645,7 +2645,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Until the start of your next turn, your opponent cannot make you {discard|discard} or {disrupt|strip} your cards or components.",
+    "text": "Until the start of your next turn, your opponent cannot make you discard or {disrupt|strip} your cards or components.",
     "role": "Counter — Divination (hand attack)",
     "comment": "Shields a planned turn from hand-stripping like Mind Theft or Interrupt. Narrow and proactive."
   },
@@ -2671,7 +2671,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Until the start of your next turn, your opponent {lock|cannot draw} cards beyond their normal turn {draw|draw}.",
+    "text": "Until the start of your next turn, your opponent {lock|cannot draw} cards beyond their normal turn draw.",
     "role": "Counter — Divination (draw engine)",
     "comment": "Shuts off the card-advantage turn. Useless against aggro, premium against a draw-heavy deck."
   },
@@ -2684,7 +2684,7 @@
     "level": null,
     "costText": null,
     "cost": null,
-    "text": "Until the start of your next turn, whenever your opponent plays a Reaction, they {cost|take 2 damage}.",
+    "text": "Until the start of your next turn, whenever your opponent plays a Reaction, they take 2 {damage|damage}.",
     "role": "Counter — Abjuration (reactive)",
     "comment": "A free, splashable version of Evocation's reaction-punishers; dead against a deck that isn't holding up Reactions."
   },
