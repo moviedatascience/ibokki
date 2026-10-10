@@ -159,6 +159,30 @@ and reversible.
 
 ---
 
+## DECISIONS #9 — card art: Magic art-box ratio, range over one hand (2026-10-09)
+
+- **What:** the first filed card illustration (Spark, EVO-001: a stained-glass
+  "chapel window", seed 909864236, `apps/client/public/art/cards/EVO-001.png`) sets
+  three rules that supersede `art/STYLE_BIBLE.md` §2/§13/§14 and `art/MANIFEST.md` §1
+  row 8 where they conflict: (1) card masters are generated at the Magic-the-Gathering
+  art-box ratio, ~1.36:1 → **1024×752**, not 2:1 and not the 5:7 card face;
+  (2) the immutable Plate/Cover prompt blocks are no longer the production rule — a
+  same-block batch was judged "all too visually similar", so each review round
+  offers options that differ in medium, palette and layout (flat, graphic, print-like
+  media with strong colour won this round); (3) every option is proposed as a short
+  in-world backstory scene followed by its art interpretation, and review runs by
+  elimination (cut-and-replace) rather than pick-one. The review gallery gained
+  `-CardCrop` / `-PreviewW -PreviewH` so the small-size read matches the new box.
+- **Who:** the user (art director), across seven review rounds.
+- **Open:** the bible's one-hand/drift-audit machinery (§13 anchoring, §14) needs
+  rewriting around a per-card range rather than a fixed block; the six 2:1 anchors are
+  now reference, not law. The client's cover-crop of the art window was written for
+  2:1 masters and should be re-checked against 1024×752.
+- **Reversible:** regenerate with the bible blocks at 2:1; the losing rounds are kept
+  in `art/review/EVO-001/` (gitignored) with seeds.
+
+---
+
 ## Open / undecided
 
 (none — add blocks here as disagreements arise)

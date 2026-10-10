@@ -14,7 +14,10 @@ param(
     [string]$Title = "Art options",
     [int]$MaxWidth = 640,
     [int]$JpegQuality = 85,
-    [int]$Columns = 0   # 0 = responsive auto-fill grid; N = fixed N-column layout (1 = full-width for detail review)
+    [int]$Columns = 0,  # 0 = responsive auto-fill grid; N = fixed N-column layout (1 = full-width for detail review)
+    [switch]$CardCrop,  # 5:7 portrait masters: preview the full card footprint (92x128) instead of the 92x74 landscape art window
+    [int]$PreviewW = 0, # explicit preview footprint (overrides the two presets), e.g. 92x68 for a Magic-style ~1.36:1 art box
+    [int]$PreviewH = 0
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -48,17 +51,20 @@ foreach ($f in $files) {
         $ms.Dispose()
         # Board-crop preview: center crop at the 92:74 aspect of the in-game art window,
         # rendered small so silhouette legibility is judged at true display size (style bible §15).
-        $aspect = 92.0 / 74.0
+        if ($PreviewW -gt 0 -and $PreviewH -gt 0) { $pw = $PreviewW; $ph = $PreviewH; $label = 'art box read at ' + $pw + '&times;' + $ph }
+        elseif ($CardCrop) { $pw = 92; $ph = 128; $label = 'card read at 92&times;128' }
+        else { $pw = 92; $ph = 74; $label = 'board read at 92&times;74' }
+        $aspect = $pw / [double]$ph
         if (($img.Width / [double]$img.Height) -gt $aspect) {
             $cH = $img.Height; $cW = [int]($img.Height * $aspect)
         } else {
             $cW = $img.Width; $cH = [int]($img.Width / $aspect)
         }
         $cX = [int](($img.Width - $cW) / 2); $cY = [int](($img.Height - $cH) / 2)
-        $cropBmp = New-Object System.Drawing.Bitmap(184, 148)
+        $cropBmp = New-Object System.Drawing.Bitmap((2 * $pw), (2 * $ph))
         $cg = [System.Drawing.Graphics]::FromImage($cropBmp)
         $cg.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-        $cg.DrawImage($img, (New-Object System.Drawing.Rectangle(0, 0, 184, 148)), (New-Object System.Drawing.Rectangle($cX, $cY, $cW, $cH)), [System.Drawing.GraphicsUnit]::Pixel)
+        $cg.DrawImage($img, (New-Object System.Drawing.Rectangle(0, 0, (2 * $pw), (2 * $ph))), (New-Object System.Drawing.Rectangle($cX, $cY, $cW, $cH)), [System.Drawing.GraphicsUnit]::Pixel)
         $cg.Dispose()
         $cms = New-Object System.IO.MemoryStream
         $cropBmp.Save($cms, $jpegCodec, $encParams)
@@ -69,7 +75,7 @@ foreach ($f in $files) {
         $tokens = $f.BaseName -split '__'
         $chips = ($tokens | Select-Object -Skip 1 | ForEach-Object { '<span class="chip">' + $_ + '</span>' }) -join ''
         $caption = '<span class="cap-name">' + $tokens[0] + '</span>' + $chips
-        $boardStrip = '<div class="board"><img src="data:image/jpeg;base64,' + $cb64 + '" alt="board crop"/><span>board read at 92&times;74</span></div>'
+        $boardStrip = '<div class="board"><img src="data:image/jpeg;base64,' + $cb64 + '" alt="board crop" style="width:' + $pw + 'px;height:' + $ph + 'px"/><span>' + $label + '</span></div>'
         $card = '<figure><img src="data:image/jpeg;base64,' + $b64 + '" alt="' + $f.BaseName + '"/>' + $boardStrip + '<figcaption>' + $caption + '</figcaption></figure>'
         [void]$cards.Add($card)
     } finally {
