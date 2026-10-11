@@ -183,6 +183,24 @@ and reversible.
 
 ---
 
+## DECISIONS #10 — module-cover house style; Level 1 art becomes alternates (2026-10-11)
+
+- **What:** the "1979 fantasy role-playing adventure module cover" register (ink
+  linework, stippling, flat dusty earth-tone washes, one ember-red accent) that won
+  From the Ashes (DIV-015) and carried Level 2 is THE house style for card art. All 37
+  Level 1 illustrations (the mixed-media set from #9) predate it and will be redone in
+  the house style. The originals are kept as unlockable alternate art (horizontal
+  progression): copied to `apps/client/public/art/cards/<defId>__alt.png`; the
+  `<defId>.png` primaries stay in place until each card's new winner is filed.
+- **Who:** the user (art director).
+- **Open:** the unlock mechanism for alternate art (client selection, account
+  ownership) is unbuilt; `chosen.json` entries for the originals should be relabelled
+  as alternates when their replacements land.
+- **Reversible:** the alternates are byte copies of the originals; seeds are in
+  `art/chosen.json`.
+
+---
+
 ## Open / undecided
 
 (none — add blocks here as disagreements arise)
