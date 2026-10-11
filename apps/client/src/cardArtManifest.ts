@@ -25,6 +25,8 @@ export function hasCardArt(defId: string): boolean {
   return available?.has(defId) ?? false;
 }
 
+/** The web-sized derivative (512x376 JPEG from `.claude/skills/art/ship-card-art.ps1`),
+ *  not the 1024x752 master PNG — board sprites are ~92 world units wide. */
 export function cardArtUrl(defId: string): string {
-  return `${BASE}art/cards/${defId}.png`;
+  return `${BASE}art/cards/web/${defId}.jpg`;
 }

@@ -98,6 +98,12 @@ tools are missing, the env var isn't set or the session predates it — tell the
    `steps` = resolved step count, `cast` = archmages depicted or [] — bible §13 drift audit
    depends on all three).
    Keep the losing options in `art/review/` (gitignored) until the user asks to clean up.
+   **Then ship the web derivative:** add the defId to `apps/client/public/art/cards/manifest.json`
+   and run `powershell -File .claude/skills/art/ship-card-art.ps1` — the client loads
+   `art/cards/web/<defId>.jpg` (512x376), never the master PNG (full-res masters on every
+   board sprite broke the online e2e on CI, 2026-10-11). `packages/cards/test/cardArt.test.ts`
+   fails when a manifest entry has no derivative. Replacing an existing card's art: the old
+   master moves to `<defId>__alt.png` (unlockable alternate, DECISIONS #10) first.
 9. **Batch mode.** For "do the next 5" style requests, run assets through steps 2–6 as a
    batch (one gallery per asset), then a single AskUserQuestion per asset (max 4 questions
    per call). Don't wire client rendering code as part of this skill unless asked.

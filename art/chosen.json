@@ -178,12 +178,13 @@
     "seed": 2133311201,
     "width": 1024,
     "height": 512,
-    "file": "art/anchors/plate-evocation__seed2133311201.png",
+    "file": "apps/client/public/art/cards/EVO-001__alt.png",
     "date": "2026-07-07",
     "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp)",
     "steps": 0,
     "cast": [],
-    "note": "Plate anchor for Evocation. Camera-distance phrasing ('seen from several steps away, parchment margin on every side') fixed the close-up crop tendency — reuse for figure subjects. In-scene book scrawl deemed acceptable texture, art-director veto welcome."
+    "note": "Plate anchor for Evocation. Camera-distance phrasing ('seen from several steps away, parchment margin on every side') fixed the close-up crop tendency — reuse for figure subjects. In-scene book scrawl deemed acceptable texture, art-director veto welcome. [2026-10-11: superseded by the module-cover redo; kept as unlockable alternate art (DECISIONS #10).]",
+    "superseded": true
   },
   {
     "asset": "cover-register-anchor (Evocation) — Meteor probe winner",
@@ -346,12 +347,13 @@
     "seed": 1781270995,
     "width": 1024,
     "height": 752,
-    "file": "apps/client/public/art/cards/EVO-002.png",
+    "file": "apps/client/public/art/cards/EVO-002__alt.png",
     "date": "2026-10-09",
     "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp; KNPV4.1_pre LoRA @1.64 switched on; negative_prompt is inert in this workflow)",
     "steps": 8,
     "cast": [],
-    "note": "Three elimination rounds. Cut: black lacquer maki-e, heraldic roll, leather shadow puppet, bazaar brush painting, weathered inn sign; survivors beside the winner were the Marseille tarot woodcut (seed 1635049277) and the showman's chromolithograph (seed 1542467387). Faint plate-rim curve at the top/bottom corners — crop if it shows in the card frame."
+    "note": "Three elimination rounds. Cut: black lacquer maki-e, heraldic roll, leather shadow puppet, bazaar brush painting, weathered inn sign; survivors beside the winner were the Marseille tarot woodcut (seed 1635049277) and the showman's chromolithograph (seed 1542467387). Faint plate-rim curve at the top/bottom corners — crop if it shows in the card frame. [2026-10-11: superseded by the module-cover redo; kept as unlockable alternate art (DECISIONS #10).]",
+    "superseded": true
   },
   {
     "asset": "card art (Abjuration L1) — Cinder Crust, 'The Palm Test' (APPROVED, round 4 winner)",
@@ -394,12 +396,13 @@
     "seed": 124662846,
     "width": 1024,
     "height": 752,
-    "file": "apps/client/public/art/cards/EVO-003.png",
+    "file": "apps/client/public/art/cards/EVO-003__alt.png",
     "date": "2026-10-09",
     "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp; KNPV4.1_pre LoRA @1.64 switched on; negative_prompt is inert in this workflow)",
     "steps": 8,
     "cast": [],
-    "note": "Eight rounds. Rounds 1-4 were cut wholesale (cart panel, cut paper, lustreware, cross-stitch; niello, ivory, Venetian glass, amber; wax moulage, expressionist woodcut, Pompeian oath-hand, charcoal; marginalia, Etruscan, cloisonné, pastel). AD then steered: 'something a little more painful' (r3), 'feminine and engulfing' (r5: reverse-glass embrace, Ashmalka's shawl on silk, sandstone mother, Nouveau hair-fire), then 'hooded woman blessing with fire from her hands' (r6-8). Original Hearth-Priestess seed 469013074 (two kneeling duelists, full-length) survived two rounds; this closer one-duelist variant won over the millefleurs 'Laying On' (seeds 783968008 / 523729110). Lesson: for this AD a pointed subject brief converges in 2-3 rounds where open medium-range exploration did not."
+    "note": "Eight rounds. Rounds 1-4 were cut wholesale (cart panel, cut paper, lustreware, cross-stitch; niello, ivory, Venetian glass, amber; wax moulage, expressionist woodcut, Pompeian oath-hand, charcoal; marginalia, Etruscan, cloisonné, pastel). AD then steered: 'something a little more painful' (r3), 'feminine and engulfing' (r5: reverse-glass embrace, Ashmalka's shawl on silk, sandstone mother, Nouveau hair-fire), then 'hooded woman blessing with fire from her hands' (r6-8). Original Hearth-Priestess seed 469013074 (two kneeling duelists, full-length) survived two rounds; this closer one-duelist variant won over the millefleurs 'Laying On' (seeds 783968008 / 523729110). Lesson: for this AD a pointed subject brief converges in 2-3 rounds where open medium-range exploration did not. [2026-10-11: superseded by the module-cover redo; kept as unlockable alternate art (DECISIONS #10).]",
+    "superseded": true
   },
   {
     "asset": "card art (Evocation L1) — Searing Word, 'Her Breath' (APPROVED, round 6 winner)",
@@ -410,12 +413,13 @@
     "seed": 829218963,
     "width": 1024,
     "height": 752,
-    "file": "apps/client/public/art/cards/EVO-004.png",
+    "file": "apps/client/public/art/cards/EVO-004__alt.png",
     "date": "2026-10-09",
     "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp; KNPV4.1_pre LoRA @1.64 switched on; negative_prompt is inert in this workflow)",
     "steps": 8,
     "cast": [],
-    "note": "Six rounds. Round 1 (lubok, Kalighat, Palekh, bodegón still life) cut whole; ukiyo-e and black-figure vase each failed QA twice (signature cartouche / cropped heads) and a Roman mosaic a third time. Round 2 (Dürer engraving, Romanesque mouth, Symbolist pastel, misericord) — the pastel survived and the AD then asked only for variants of it (seven in all, seeds 1512793770, 1986956119, 1220554723, 216540660, 658349626, 555204964, 314941145) plus a La Tour candlelit 'Bench' (564522238) and a Daumier 'Scolding' (1167817562). The original seed won. Pattern now across three cards: once an intimate two-figure piece appears, the AD iterates it by variant rather than exploring further."
+    "note": "Six rounds. Round 1 (lubok, Kalighat, Palekh, bodegón still life) cut whole; ukiyo-e and black-figure vase each failed QA twice (signature cartouche / cropped heads) and a Roman mosaic a third time. Round 2 (Dürer engraving, Romanesque mouth, Symbolist pastel, misericord) — the pastel survived and the AD then asked only for variants of it (seven in all, seeds 1512793770, 1986956119, 1220554723, 216540660, 658349626, 555204964, 314941145) plus a La Tour candlelit 'Bench' (564522238) and a Daumier 'Scolding' (1167817562). The original seed won. Pattern now across three cards: once an intimate two-figure piece appears, the AD iterates it by variant rather than exploring further. [2026-10-11: superseded by the module-cover redo; kept as unlockable alternate art (DECISIONS #10).]",
+    "superseded": true
   },
   {
     "asset": "card art (Evocation L1) — Catalyst, 'Rum and Candle' (APPROVED, round 9 winner)",
@@ -426,12 +430,13 @@
     "seed": 1494402807,
     "width": 1024,
     "height": 752,
-    "file": "apps/client/public/art/cards/EVO-005.png",
+    "file": "apps/client/public/art/cards/EVO-005__alt.png",
     "date": "2026-10-09",
     "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp; KNPV4.1_pre LoRA @1.64 switched on; negative_prompt is inert in this workflow)",
     "steps": 8,
     "cast": [],
-    "note": "Nine rounds, 30 options — the hardest card so far. Rounds 1-5 (20 options: breath/oil concepts, then Netherlandish/Vesalius/Sienese/Secession, an African set, winner-register retreads, then thangka/sumi-e/Brouwer/Longhi) were ALL cut. AD then asked for 'something creole and erotic'; the Cuban Landaluze-style hand-coloured lithograph register landed at once and the AD iterated it (cigar, fan, match — seeds 1245704931, 798965539, 903958524) before choosing the first one. Caribbean gouache and Haitian naive were kept a round then cut. Lesson: for a buff card with no natural image, the AD's taste — intimate, feminine, period-print — matters more than the mechanic."
+    "note": "Nine rounds, 30 options — the hardest card so far. Rounds 1-5 (20 options: breath/oil concepts, then Netherlandish/Vesalius/Sienese/Secession, an African set, winner-register retreads, then thangka/sumi-e/Brouwer/Longhi) were ALL cut. AD then asked for 'something creole and erotic'; the Cuban Landaluze-style hand-coloured lithograph register landed at once and the AD iterated it (cigar, fan, match — seeds 1245704931, 798965539, 903958524) before choosing the first one. Caribbean gouache and Haitian naive were kept a round then cut. Lesson: for a buff card with no natural image, the AD's taste — intimate, feminine, period-print — matters more than the mechanic. [2026-10-11: superseded by the module-cover redo; kept as unlockable alternate art (DECISIONS #10).]",
+    "superseded": true
   },
   {
     "asset": "card art (Evocation L1) — Stoke, 'Over the Kneeling One' v2 (APPROVED, round 4 winner)",
@@ -1584,5 +1589,85 @@
     "steps": 8,
     "cast": [],
     "note": "Round 2 winner; first winner from the AD's Owl-Eyed Archivists of Tharrow brief."
+  },
+  {
+    "asset": "card art (Evocation L1, module-cover redo) — Spark, 'Hush' (APPROVED, picked in round 2)",
+    "defId": "EVO-001",
+    "backstory": "The Owl-Eyed Archivists of Tharrow tolerate no noise in the stacks. A student wizard laughed too loudly; the Archivist raised one finger to her lips and, with the other hand, dropped a single spark on his head. He will not laugh in the library again.",
+    "prompt": "1979 fantasy role-playing adventure module cover illustration, bold black ink linework with stippling and flat colour washes in dusty earth tones of slate, ochre, rust and bone, one ember-red accent, eerie old-school fantasy. Composition: a dark library aisle. An Owl-Eyed Archivist, a slender grown woman with enormous gold-ringed owl eyes and soft barred plumage at her brows and shoulders, in a dark gown, holds one finger to her lips for silence and with her other hand flicks a single spark at a noisy young-looking-but-adult bearded student wizard on the right, who jumps as his sleeve catches. Filling the frame edge to edge, no text, no title, no logo, no border, one dominant subject, strong readable silhouette",
+    "negative_prompt": "modern digital painting, airbrushed digital art, glow, bloom, volumetric lighting, lens flare, cinematic lighting, HDR, artstation, octane render, 3d render, photorealistic, photograph, anime, manga, cel shading, smooth gradients, neon colors, text, letters, writing, watermark, signature, card frame, border, decorative border, plate rim, child",
+    "seed": 723500591,
+    "width": 1024,
+    "height": 752,
+    "file": "apps/client/public/art/cards/EVO-001.png",
+    "date": "2026-10-11",
+    "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp; KNPV4.1_pre LoRA @1.64 switched on; negative_prompt is inert in this workflow)",
+    "steps": 8,
+    "cast": [],
+    "note": "Level 1 redo in the house style. A round-1 option the AD came back to after a round of lapine heel-spark variants."
+  },
+  {
+    "asset": "card art (Evocation L1, module-cover redo) — Firebolt, 'Torn from the Book' (APPROVED, round 3 pick of a round-1 option)",
+    "defId": "EVO-002",
+    "backstory": "The bolt was worth three of her spells. The storm took the price as she threw it: pages torn loose from the book under her arm, each one burning before it hit the ground. She will copy them out again, if she lives.",
+    "prompt": "1979 fantasy role-playing adventure module cover illustration, bold black ink linework with stippling and flat colour washes in dusty earth tones of rust, ochre, slate and bone, one ember-red accent, old-school fantasy. Composition: a stormy hilltop. On the left, a tall dark-skinned Black sorceress in her forties with silver-streaked locs hurls a long bolt of fire from her outstretched hand. The wind tears loose pages out of the open spellbook tucked under her other arm, and they scatter and burn behind her. On the right, the bolt slams into a rival wizard's chest. Filling the frame edge to edge, no text, no title, no logo, no border, one dominant subject, strong readable silhouette",
+    "negative_prompt": "modern digital painting, airbrushed digital art, glow, bloom, volumetric lighting, lens flare, cinematic lighting, HDR, artstation, octane render, 3d render, photorealistic, photograph, anime, manga, cel shading, smooth gradients, neon colors, text, letters, writing, watermark, signature, card frame, border, decorative border, plate rim",
+    "seed": 501773529,
+    "width": 1024,
+    "height": 752,
+    "file": "apps/client/public/art/cards/EVO-002.png",
+    "date": "2026-10-11",
+    "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp; KNPV4.1_pre LoRA @1.64 switched on; negative_prompt is inert in this workflow)",
+    "steps": 8,
+    "cast": [],
+    "note": "Level 1 redo in the house style; scribble lettering on the scattered pages accepted in context."
+  },
+  {
+    "asset": "card art (Evocation L1, module-cover redo) — Burning Hands, 'The Cellar Stair' (APPROVED, round 1 winner)",
+    "defId": "EVO-003",
+    "backstory": "Every adventuring party learns it in the first cellar: the old wizard sits down on the bottom step, spreads his fingers, and the rats stop coming. The ones in front keep burning long after he has stood up again.",
+    "prompt": "1979 fantasy role-playing adventure module cover illustration, bold black ink linework with stippling and flat colour washes in dusty earth tones of rust, ochre, olive drab and grey, one ember-red accent, old-school fantasy. Composition: a dungeon at the foot of a stair. A gaunt old wizard in a red robe and pointed hat, kneeling, throws both hands forward with fingers spread, and a short wide cone of flame roars out over a swarm of giant rats and kobolds rushing at him, setting the front rank alight. Filling the frame edge to edge, no text, no title, no logo, no border, one dominant subject, strong readable silhouette",
+    "negative_prompt": "modern digital painting, airbrushed digital art, glow, bloom, volumetric lighting, lens flare, cinematic lighting, HDR, artstation, octane render, 3d render, photorealistic, photograph, anime, manga, cel shading, smooth gradients, neon colors, text, letters, writing, watermark, signature, card frame, border, decorative border, plate rim, extra fingers, malformed hands",
+    "seed": 589948545,
+    "width": 1024,
+    "height": 752,
+    "file": "apps/client/public/art/cards/EVO-003.png",
+    "date": "2026-10-11",
+    "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp; KNPV4.1_pre LoRA @1.64 switched on; negative_prompt is inert in this workflow)",
+    "steps": 8,
+    "cast": [],
+    "note": "Level 1 redo in the house style; round 1 winner. Classic D&D read of the spell."
+  },
+  {
+    "asset": "card art (Evocation L1, module-cover redo) — Searing Word, 'Hushed' (APPROVED, round 2 pick of a round-1 option)",
+    "defId": "EVO-004",
+    "backstory": "The Archivists of Tharrow speak only in a hushed voice. One of them did not look up from his book. He said one quiet word, and the crystals the scheming wizard had palmed for his spell burned away in his hand.",
+    "prompt": "1979 fantasy role-playing adventure module cover illustration, bold black ink linework with stippling and flat colour washes in dusty earth tones of slate, ochre, rust and bone, one ember-red accent, eerie old-school fantasy. Composition: a candlelit library reading room. An Owl-Eyed Archivist, an elderly man with enormous gold-ringed owl eyes and soft barred plumage at his brows and shoulders, in a dark robe, whispers one hushed word without looking up from his book. Across the table, a scheming wizard's handful of glittering crystal shards bursts into flame in his palm. Filling the frame edge to edge, no text, no title, no logo, no border, one dominant subject, strong readable silhouette",
+    "negative_prompt": "modern digital painting, airbrushed digital art, glow, bloom, volumetric lighting, lens flare, cinematic lighting, HDR, artstation, octane render, 3d render, photorealistic, photograph, anime, manga, cel shading, smooth gradients, neon colors, text, letters, writing, watermark, signature, card frame, border, decorative border, plate rim",
+    "seed": 1998000718,
+    "width": 1024,
+    "height": 752,
+    "file": "apps/client/public/art/cards/EVO-004.png",
+    "date": "2026-10-11",
+    "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp; KNPV4.1_pre LoRA @1.64 switched on; negative_prompt is inert in this workflow)",
+    "steps": 8,
+    "cast": [],
+    "note": "Level 1 redo in the house style."
+  },
+  {
+    "asset": "card art (Evocation L1, module-cover redo) — Catalyst, 'Her Hands on His Shoulders' (APPROVED, round 1 winner)",
+    "defId": "EVO-005",
+    "backstory": "Mantis duelists are devoted lovers, at least for one night. She stands behind him, rests her claws on his shoulders, and murmurs; and for as long as she stays there, every flame he makes burns hotter than it has any right to.",
+    "prompt": "1979 fantasy role-playing adventure module cover illustration, bold black ink linework with stippling and flat colour washes in dusty earth tones of rust, ochre, olive drab and bone, one ember-red accent, sensual dangerous old-school fantasy. Composition: a moonlit pavilion. An elegant mantis-folk duelist woman with a beautiful human-like face, skin green as new leaves, bladed forearms folded like ceremonial sleeves, stands behind a dark-skinned Black sorcerer with her clawed hands resting on his shoulders, murmuring encouragement, and the small flame in his cupped palms has bloomed into a roaring sphere of fire. Filling the frame edge to edge, no text, no title, no logo, no border, one dominant subject, strong readable silhouette",
+    "negative_prompt": "modern digital painting, airbrushed digital art, glow, bloom, volumetric lighting, lens flare, cinematic lighting, HDR, artstation, octane render, 3d render, photorealistic, photograph, anime, manga, cel shading, smooth gradients, neon colors, text, letters, writing, watermark, signature, card frame, border, decorative border, plate rim",
+    "seed": 1824110062,
+    "width": 1024,
+    "height": 752,
+    "file": "apps/client/public/art/cards/EVO-005.png",
+    "date": "2026-10-11",
+    "model": "Krea 2 Turbo (ComfyUI workflow default, comfyui-mcp; KNPV4.1_pre LoRA @1.64 switched on; negative_prompt is inert in this workflow)",
+    "steps": 8,
+    "cast": [],
+    "note": "Level 1 redo in the house style; round 1 winner."
   }
 ]
