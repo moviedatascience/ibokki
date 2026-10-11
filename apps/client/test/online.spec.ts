@@ -60,6 +60,10 @@ test("two tabs play a full online match to game over", async ({ browser }) => {
   test.setTimeout(360_000);
   const ctxA = await browser.newContext();
   const ctxB = await browser.newContext();
+  // No card illustrations here: CI's runners rasterize WebGL in software, and once Level 2
+  // shipped art every texture upload stalled the page ("GPU stall due to ReadPixels") until a
+  // socket dropped mid-match (2026-10-11). This spec exercises transport, not art.
+  for (const ctx of [ctxA, ctxB]) await ctx.route("**/art/cards/manifest.json", (r) => r.fulfill({ json: [] }));
   const a = await ctxA.newPage();
   const b = await ctxB.newPage();
 
